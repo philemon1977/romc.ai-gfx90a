@@ -1,0 +1,1713 @@
+{
+  "active_inferencex_path": "",
+  "agentx_epoch": 0,
+  "apply_fail_reauthor_attempts": {},
+  "apply_fail_retry_pending": [],
+  "authored_framework_levers": [],
+  "auto_roofline_pending_task_id": "",
+  "baseline_accuracy": 0.0,
+  "baseline_arg_error_streak": 0,
+  "baseline_attempts": [
+    {
+      "decision": "no_promote",
+      "error_class": "subprocess_nonzero",
+      "error_excerpt": " 16:19:38,901 - Magpie.modes.benchmark.benchmarker - INFO - Copied Magpie script xdit_mi300x.sh to /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966/benchmarks\n2026-09-15 16:19:38,901 - Magpie.modes.benchmark.benchmarker - INFO - Copied Magpie script sglang_mi355x.sh to /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966/benchmarks\n2026-09-15 16:19:38,901 - Magpie.modes.benchmark.benchmarker - INFO - Copied Magpie script xdit_bench_common.sh to /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966/benchmarks\n2026-09-15 16:19:38,902 - Magpie.modes.benchmark.benchmarker - INFO - Copied Magpie script sglang_mi300x.sh to /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966/benchmarks\n2026-09-15 16:19:38,902 - Magpie.modes.benchmark.benchmarker - INFO - Copied Magpie script atom_mi300x.sh to /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966/benchmarks\n2026-09-15 16:19:38,902 - Magpie.modes.benchmark.benchmarker - INFO - Copied Magpie script vllm_mi300x.sh to /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d55",
+      "extras": {
+        "fingerprint": {
+          "benchmark_script": null,
+          "config_path": null,
+          "disable_run_eval": null,
+          "extra_envs": [],
+          "extra_server_args": null,
+          "gpu_type": null,
+          "model_path": null,
+          "result_dir": null
+        }
+      },
+      "failure_id": null,
+      "key_metric": null,
+      "key_metric_kind": "output_throughput",
+      "raw_result_path": null,
+      "reported_success": null,
+      "status": "failed",
+      "stderr_log_path": "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/runs/baseline/f9f5f7ae4c424c41a09527ad7d95993c/baseline_stderr.log",
+      "stderr_tail": "3f9bdeb8410cd924e2c70906c966/benchmarks\n2026-09-15 16:19:38,902 - Magpie.modes.benchmark.benchmarker - INFO - Copied Magpie script vllm_mi300x.sh to /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966/benchmarks\n2026-09-15 16:19:38,902 - Magpie.modes.benchmark.benchmarker - INFO - Copied Magpie script vllm_mi355x.sh to /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966/benchmarks\n2026-09-15 16:19:38,903 - Magpie.modes.benchmark.benchmarker - INFO - Copied Magpie script vllm_mi300x_mm.sh to /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966/benchmarks\n2026-09-15 16:19:38,908 - Magpie.main - ERROR - Benchmark failed: ['Specified benchmark_script not found: vllm_mi250x.sh\\nSearched in: /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966/benchmarks (including subdirectories)\\nPlease ensure the file exists or remove the benchmark_script config.']\n",
+      "task_id": "f9f5f7ae4c424c41a09527ad7d95993c",
+      "ts": "2026-09-15T16:19:38.947515+00:00",
+      "variant_name": null,
+      "workspace": null
+    },
+    {
+      "decision": "no_promote",
+      "error_class": "server_init_dead",
+      "error_excerpt": "(Worker_TP7 pid=27151) ERROR 09-15 17:19:10 [multiproc_executor.py:1047] RuntimeError: torch._scaled_mm is only supported on CUDA devices with compute capability >= 9.0 or 8.9, or ROCm MI300+\n(Worker_TP7 pid=27151) ERROR 09-15 17:19:10 [multiproc_executor.py:1047] \n(EngineCore pid=27111) ERROR 09-15 17:19:10 [core.py:1346] EngineCore failed to start.\n(EngineCore pid=27111) ERROR 09-15 17:19:10 [core.py:1346] Traceback (most recent call last):\n(EngineCore pid=27111) ERROR 09-15 17:19:10 [core.py:1346]   File \"/opt/envs/vllm/lib/python3.12/site-packages/vllm/v1/engine/core.py\", line 1315, in run_engine_core",
+      "extras": {
+        "fingerprint": {
+          "benchmark_script": null,
+          "config_path": null,
+          "disable_run_eval": null,
+          "extra_envs": [],
+          "extra_server_args": null,
+          "gpu_type": null,
+          "model_path": null,
+          "result_dir": null
+        }
+      },
+      "failure_id": null,
+      "key_metric": null,
+      "key_metric_kind": "output_throughput",
+      "raw_result_path": null,
+      "reported_success": false,
+      "status": "failed",
+      "stderr_log_path": null,
+      "stderr_tail": "(Worker_TP7 pid=27151) ERROR 09-15 17:19:10 [multiproc_executor.py:1047] RuntimeError: torch._scaled_mm is only supported on CUDA devices with compute capability >= 9.0 or 8.9, or ROCm MI300+\n(Worker_TP7 pid=27151) ERROR 09-15 17:19:10 [multiproc_executor.py:1047] \n(EngineCore pid=27111) ERROR 09-15 17:19:10 [core.py:1346] EngineCore failed to start.\n(EngineCore pid=27111) ERROR 09-15 17:19:10 [core.py:1346] Traceback (most recent call last):\n(EngineCore pid=27111) ERROR 09-15 17:19:10 [core.py:1346]   File \"/opt/envs/vllm/lib/python3.12/site-packages/vllm/v1/engine/core.py\", line 1315, in run_engine_core",
+      "task_id": "614857fe763a4e2a821ef61850b1e81e",
+      "ts": "2026-09-15T17:20:00.375067+00:00",
+      "variant_name": null,
+      "workspace": "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/runs/baseline/614857fe763a4e2a821ef61850b1e81e/benchmark_vllm_20260915_171250"
+    },
+    {
+      "decision": "no_promote",
+      "error_class": "server_init_dead",
+      "error_excerpt": "(Worker_TP7 pid=35407) INFO 09-15 18:08:12 [rocm.py:703] Found incompatible backend(s) [TURBOQUANT] with AttentionType.DECODER. Overriding with ROCM_ATTN out of potential backends: ['ROCM_ATTN', 'TRITON_ATTN'].\n(EngineCore pid=35195) WARNING 09-15 18:08:13 [multiproc_executor.py:481] [shutdown] Executor: workers still running after grace period; sending SIGTERM count=6\n(EngineCore pid=35195) ERROR 09-15 18:08:16 [core.py:1346] EngineCore failed to start.\n(EngineCore pid=35195) ERROR 09-15 18:08:16 [core.py:1346] Traceback (most recent call last):\n(EngineCore pid=35195) ERROR 09-15 18:08:16 [core.py:1346]   File \"/opt/envs/vllm/lib/python3.12/site-packages/vllm/v1/engine/core.py\", line 1315, in run_engine_core",
+      "extras": {
+        "fingerprint": {
+          "benchmark_script": null,
+          "config_path": null,
+          "disable_run_eval": null,
+          "extra_envs": [],
+          "extra_server_args": null,
+          "gpu_type": null,
+          "model_path": null,
+          "result_dir": null
+        }
+      },
+      "failure_id": null,
+      "key_metric": null,
+      "key_metric_kind": "output_throughput",
+      "raw_result_path": null,
+      "reported_success": false,
+      "status": "failed",
+      "stderr_log_path": null,
+      "stderr_tail": "(Worker_TP7 pid=35407) INFO 09-15 18:08:12 [rocm.py:703] Found incompatible backend(s) [TURBOQUANT] with AttentionType.DECODER. Overriding with ROCM_ATTN out of potential backends: ['ROCM_ATTN', 'TRITON_ATTN'].\n(EngineCore pid=35195) WARNING 09-15 18:08:13 [multiproc_executor.py:481] [shutdown] Executor: workers still running after grace period; sending SIGTERM count=6\n(EngineCore pid=35195) ERROR 09-15 18:08:16 [core.py:1346] EngineCore failed to start.\n(EngineCore pid=35195) ERROR 09-15 18:08:16 [core.py:1346] Traceback (most recent call last):\n(EngineCore pid=35195) ERROR 09-15 18:08:16 [core.py:1346]   File \"/opt/envs/vllm/lib/python3.12/site-packages/vllm/v1/engine/core.py\", line 1315, in run_engine_core",
+      "task_id": "9d87461af4dc4507ad5113521d67e7e8",
+      "ts": "2026-09-15T18:08:25.175856+00:00",
+      "variant_name": null,
+      "workspace": "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/runs/baseline/9d87461af4dc4507ad5113521d67e7e8/benchmark_vllm_20260915_180619"
+    },
+    {
+      "decision": "no_promote",
+      "error_class": "server_init_dead",
+      "error_excerpt": "(Worker_TP5 pid=45515) ERROR 09-15 19:11:39 [multiproc_executor.py:1047] RuntimeError: torch._scaled_mm is only supported on CUDA devices with compute capability >= 9.0 or 8.9, or ROCm MI300+\n(Worker_TP5 pid=45515) ERROR 09-15 19:11:39 [multiproc_executor.py:1047] \n(EngineCore pid=45466) ERROR 09-15 19:11:39 [core.py:1346] EngineCore failed to start.\n(EngineCore pid=45466) ERROR 09-15 19:11:39 [core.py:1346] Traceback (most recent call last):\n(EngineCore pid=45466) ERROR 09-15 19:11:39 [core.py:1346]   File \"/opt/envs/vllm/lib/python3.12/site-packages/vllm/v1/engine/core.py\", line 1315, in run_engine_core",
+      "extras": {
+        "fingerprint": {
+          "benchmark_script": null,
+          "config_path": null,
+          "disable_run_eval": null,
+          "extra_envs": [],
+          "extra_server_args": null,
+          "gpu_type": null,
+          "model_path": null,
+          "result_dir": null
+        }
+      },
+      "failure_id": null,
+      "key_metric": null,
+      "key_metric_kind": "output_throughput",
+      "raw_result_path": null,
+      "reported_success": false,
+      "status": "failed",
+      "stderr_log_path": null,
+      "stderr_tail": "(Worker_TP5 pid=45515) ERROR 09-15 19:11:39 [multiproc_executor.py:1047] RuntimeError: torch._scaled_mm is only supported on CUDA devices with compute capability >= 9.0 or 8.9, or ROCm MI300+\n(Worker_TP5 pid=45515) ERROR 09-15 19:11:39 [multiproc_executor.py:1047] \n(EngineCore pid=45466) ERROR 09-15 19:11:39 [core.py:1346] EngineCore failed to start.\n(EngineCore pid=45466) ERROR 09-15 19:11:39 [core.py:1346] Traceback (most recent call last):\n(EngineCore pid=45466) ERROR 09-15 19:11:39 [core.py:1346]   File \"/opt/envs/vllm/lib/python3.12/site-packages/vllm/v1/engine/core.py\", line 1315, in run_engine_core",
+      "task_id": "1d343fd9cc0643eda773d9a19a1f7ac2",
+      "ts": "2026-09-15T19:12:24.141121+00:00",
+      "variant_name": null,
+      "workspace": "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/runs/baseline/1d343fd9cc0643eda773d9a19a1f7ac2/benchmark_vllm_20260915_190524"
+    }
+  ],
+  "baseline_config_path": "",
+  "baseline_double_run": true,
+  "baseline_eager_fallback": false,
+  "baseline_failure_streak": 1,
+  "baseline_measure_round_dropped": false,
+  "baseline_perf": {},
+  "baseline_post_ready_runtime_sec": 0.0,
+  "baseline_roofline_ceiling": {},
+  "baseline_runtime_sec": 0.0,
+  "baseline_total_failures": 1,
+  "baseline_tput": 0.0,
+  "baseline_warm_runtime_sec": 0.0,
+  "baseline_workload_extra": {},
+  "benchmark_backend": "",
+  "benchmark_mode": "synthetic",
+  "bottleneck_shift": {},
+  "bypass_scripts_dir": "",
+  "claw_session_id": "",
+  "close_sequence_done": true,
+  "closing_grace_sec": null,
+  "closing_phase": false,
+  "closing_report_task_id": "d591e8d9fde64a71a0c38142e14e2af7",
+  "closing_started_unix": 0.0,
+  "collective_attempts": [],
+  "collective_only_mode": false,
+  "compute_partition": {},
+  "conc": 64,
+  "conc_sweep_concs": [
+    256,
+    128,
+    64,
+    32,
+    16,
+    8,
+    4,
+    2
+  ],
+  "conc_sweep_enabled": false,
+  "conc_sweep_total_budget_sec": 9000,
+  "conc_sweep_variant_timeout_sec": 1800,
+  "consecutive_config_only_rounds": 0,
+  "crash_count": 0,
+  "crash_timestamps": [],
+  "cumulative_gain_validated": 0.0,
+  "cumulative_gain_validated_stack_len": 0,
+  "cumulative_gain_validated_ts": "",
+  "current_action": "",
+  "current_best": {},
+  "current_best_measurement": {},
+  "cycle_directive_history": [],
+  "cycle_minutes": 1440.0,
+  "cycle_strategy_log": [],
+  "deadline_unix": 1789499918.945039,
+  "degraded_mode": true,
+  "discovered_flags": {},
+  "discovered_flags_error": "",
+  "enable_roofline": false,
+  "enablement": {
+    "accepted_config": {
+      "args_mode": "append",
+      "extra_envs": {},
+      "extra_server_args": "--language-model-only"
+    },
+    "accepted_config_path": "",
+    "accuracy_floor": 0.0,
+    "active_runtime": {},
+    "attempt_runtimes": [],
+    "attempts": 8,
+    "baseline_eval_evidence": "",
+    "baseline_eval_kind": "",
+    "build_manifest": [],
+    "build_novelty": [],
+    "candidate_refs": [],
+    "eval_contract_fingerprint": "",
+    "framework_root": "/opt/envs/vllm/lib/python3.12/site-packages",
+    "human_review_logged": [],
+    "inflight_task_id": "",
+    "kept_artifacts": [
+      {
+        "backup": null,
+        "existed": false,
+        "kind": "benchmark_script",
+        "rel_target": "Magpie/scripts/benchmark/vllm_mi250x.sh",
+        "root": "/opt/envs/vllm/lib/python3.12/site-packages",
+        "source": "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/runs/specialist/9d27140cf07749878ef698ad2789b20d/artifacts/vllm_mi250x.sh",
+        "target": "/opt/envs/vllm/lib/python3.12/site-packages/Magpie/scripts/benchmark/vllm_mi250x.sh"
+      }
+    ],
+    "kept_patches": [
+      "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/runs/specialist/9d27140cf07749878ef698ad2789b20d/patches/001_gfx90a_fp8_w8a8_bf16_emulation.patch",
+      "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/runs/specialist/fc07edbde4c9489682f2cafa5a7d253a/patches/002_kernel_selection_invalidates_aot_cache.patch"
+    ],
+    "kept_rounds": [
+      {
+        "artifacts": [
+          {
+            "backup": null,
+            "existed": false,
+            "kind": "benchmark_script",
+            "rel_target": "Magpie/scripts/benchmark/vllm_mi250x.sh",
+            "root": "/opt/envs/vllm/lib/python3.12/site-packages",
+            "source": "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/runs/specialist/9d27140cf07749878ef698ad2789b20d/artifacts/vllm_mi250x.sh",
+            "target": "/opt/envs/vllm/lib/python3.12/site-packages/Magpie/scripts/benchmark/vllm_mi250x.sh"
+          }
+        ],
+        "patches": [
+          "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/runs/specialist/9d27140cf07749878ef698ad2789b20d/patches/001_gfx90a_fp8_w8a8_bf16_emulation.patch"
+        ]
+      },
+      {
+        "artifacts": [],
+        "patches": [
+          "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/runs/specialist/9d27140cf07749878ef698ad2789b20d/patches/001_gfx90a_fp8_w8a8_bf16_emulation.patch",
+          "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/runs/specialist/fc07edbde4c9489682f2cafa5a7d253a/patches/002_kernel_selection_invalidates_aot_cache.patch"
+        ]
+      },
+      {
+        "artifacts": [],
+        "patches": [
+          "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/runs/specialist/9d27140cf07749878ef698ad2789b20d/patches/001_gfx90a_fp8_w8a8_bf16_emulation.patch",
+          "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/runs/specialist/fc07edbde4c9489682f2cafa5a7d253a/patches/002_kernel_selection_invalidates_aot_cache.patch"
+        ]
+      }
+    ],
+    "kept_stack_action": {},
+    "last_build_failure": {},
+    "last_grounding_drop_reason": [],
+    "last_specialist_task_id": "",
+    "launch_log": "(Worker_TP5 pid=45515) ERROR 09-15 19:11:39 [multiproc_executor.py:1047] RuntimeError: torch._scaled_mm is only supported on CUDA devices with compute capability >= 9.0 or 8.9, or ROCm MI300+\n(Worker_TP5 pid=45515) ERROR 09-15 19:11:39 [multiproc_executor.py:1047] \n(EngineCore pid=45466) ERROR 09-15 19:11:39 [core.py:1346] EngineCore failed to start.\n(EngineCore pid=45466) ERROR 09-15 19:11:39 [core.py:1346] Traceback (most recent call last):\n(EngineCore pid=45466) ERROR 09-15 19:11:39 [core.py:1346]   File \"/opt/envs/vllm/lib/python3.12/site-packages/vllm/v1/engine/core.py\", line 1315, in run_engine_core",
+    "localization_manifest": [],
+    "observed_accuracy": 0.0,
+    "observed_metric": "",
+    "observed_task": "",
+    "origin": "",
+    "patches_span_multiple_roots": false,
+    "pending": false,
+    "probe_config_path": "",
+    "revalidation_generation": 0,
+    "revalidation_task_id": "",
+    "setup_commands": [],
+    "stall_streak": 5,
+    "succeeded": false,
+    "validation_pending": false
+  },
+  "enablement_mode": "all",
+  "ep": 1,
+  "eval_disabled": false,
+  "explore_attempts": [],
+  "explore_elapsed_accum_s": 0.0,
+  "explore_overtime_kill_ratio": 2.0,
+  "explore_search": {
+    "accepted": [],
+    "cursor": 0,
+    "discovered_flags": [],
+    "domains_round_summary": [],
+    "last_round": {},
+    "name_index": {},
+    "rejected": [],
+    "schema_version": 1,
+    "synergy_attempted": [],
+    "tested": {},
+    "winners_history": []
+  },
+  "explore_variant_timeout_safety_margin": 0.5,
+  "explore_variant_timeout_sec_override": 0,
+  "failures": [],
+  "framework": "vllm",
+  "framework_agent_authoring_enabled": true,
+  "framework_agent_batches": [],
+  "framework_agent_discover_failures": 0,
+  "framework_agent_empty_discoveries": 0,
+  "framework_agent_phase_done": false,
+  "framework_agent_phase_enabled": true,
+  "framework_agent_phase_progress": [
+    {
+      "accuracy_pass": null,
+      "batch_id": "",
+      "candidate_id": "9d27140cf07749878ef698ad2789b20d",
+      "cycle": 0,
+      "gain_pct": 0.0,
+      "integrate_task_id": "684650cc04404308aed3e22cffc3ed0e",
+      "kept": false,
+      "post_tput": 0.0,
+      "pre_tput": 0.0,
+      "provenance": "authored",
+      "rationale": "enablement progressed: launch probe exited 1 (still not runnable); boot advanced to a new gap (unknown) \u2014 patch recorded as a base for the next round",
+      "reauthor_attempt": null,
+      "specialist_task_id": "9d27140cf07749878ef698ad2789b20d",
+      "status": "advanced",
+      "ts": "2026-09-15T17:11:36.985663+00:00"
+    },
+    {
+      "accuracy_pass": null,
+      "batch_id": "",
+      "candidate_id": "fc07edbde4c9489682f2cafa5a7d253a",
+      "cycle": 0,
+      "gain_pct": 0.0,
+      "integrate_task_id": "a7f420759add4b1c9af14057c2734a8a",
+      "kept": false,
+      "post_tput": 0.0,
+      "pre_tput": 0.0,
+      "provenance": "authored",
+      "rationale": "enablement progressed: launch probe exited 1 (still not runnable); boot advanced to a new gap (unknown) \u2014 patch recorded as a base for the next round",
+      "reauthor_attempt": null,
+      "specialist_task_id": "fc07edbde4c9489682f2cafa5a7d253a",
+      "status": "advanced",
+      "ts": "2026-09-15T18:05:06.387503+00:00"
+    },
+    {
+      "accuracy_pass": null,
+      "batch_id": "",
+      "candidate_id": "8628519056b24176b3fa5c9a0e106dd6",
+      "cycle": 0,
+      "gain_pct": 0.0,
+      "integrate_task_id": "4618265478bb4dac9ba78741a436359b",
+      "kept": false,
+      "post_tput": 0.0,
+      "pre_tput": 0.0,
+      "provenance": "authored",
+      "rationale": "enablement progressed: launch probe exited 1 (still not runnable); boot advanced to a new gap (unknown) \u2014 patch recorded as a base for the next round",
+      "reauthor_attempt": null,
+      "specialist_task_id": "8628519056b24176b3fa5c9a0e106dd6",
+      "status": "advanced",
+      "ts": "2026-09-15T19:03:46.798979+00:00"
+    }
+  ],
+  "framework_agent_review_counts": {},
+  "framework_agent_specialist_candidate_map": {},
+  "framework_consecutive_empty_discoveries": 0,
+  "framework_local_explore_enabled": true,
+  "framework_repo_path": "",
+  "framework_version": "0.28.0",
+  "fusion_infra_aborts": 0,
+  "fusion_withheld_retries": 0,
+  "gain_at_cycle_start": 0.0,
+  "gain_per_stack_entry": [],
+  "gaps": [
+    {
+      "attempts": [
+        {
+          "action": "baseline",
+          "error_class": "subprocess_nonzero",
+          "outcome": "REVERT",
+          "ts": "2026-09-15T16:19:38.951134+00:00",
+          "variant_name": ""
+        },
+        {
+          "action": "specialist",
+          "outcome": "PROPOSALS",
+          "proposals_total": 3,
+          "ts": "2026-09-15T17:51:43.904984+00:00",
+          "variant_name": "framework_rewrite_specialist"
+        },
+        {
+          "action": "baseline",
+          "error_class": "subprocess_nonzero",
+          "outcome": "REVERT",
+          "ts": "2026-09-15T16:19:38.951134+00:00",
+          "variant_name": ""
+        },
+        {
+          "action": "baseline",
+          "error_class": "subprocess_nonzero",
+          "outcome": "REVERT",
+          "ts": "2026-09-15T16:19:38.951134+00:00",
+          "variant_name": ""
+        },
+        {
+          "action": "baseline",
+          "error_class": "subprocess_nonzero",
+          "outcome": "REVERT",
+          "ts": "2026-09-15T16:19:38.951134+00:00",
+          "variant_name": ""
+        }
+      ],
+      "canonical_id": "inference:ornith-1.5-397b-fp8:mi250x:vllm:qwen3_5_moe:qwen3_5moeforconditionalgeneration:0.28.0:fp8#fail:baseline:subprocess_nonzero",
+      "domain_hint": "system_specialist",
+      "first_seen_ts": "2026-09-15T17:01:28.292685+00:00",
+      "last_updated_ts": "2026-09-15T19:00:59.621343+00:00",
+      "layer": "system",
+      "provenance": "",
+      "severity": "medium",
+      "source": "attempts",
+      "symptom": "baseline repeatedly fails with 16:19:38,901 - Magpie.modes.benchmark.benchmarker - INFO - Copied Magpie script xdit_mi300x.sh to /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966/benchmarks"
+    },
+    {
+      "attempts": [
+        {
+          "action": "baseline",
+          "error_class": "server_init_dead",
+          "outcome": "REVERT",
+          "ts": "2026-09-15T17:20:00.407879+00:00",
+          "variant_name": ""
+        },
+        {
+          "action": "baseline",
+          "error_class": "server_init_dead",
+          "outcome": "REVERT",
+          "ts": "2026-09-15T17:20:00.407879+00:00",
+          "variant_name": ""
+        },
+        {
+          "action": "baseline",
+          "error_class": "server_init_dead",
+          "outcome": "REVERT",
+          "ts": "2026-09-15T17:20:00.407879+00:00",
+          "variant_name": ""
+        },
+        {
+          "action": "baseline",
+          "error_class": "server_init_dead",
+          "outcome": "REVERT",
+          "ts": "2026-09-15T18:08:25.184369+00:00",
+          "variant_name": ""
+        }
+      ],
+      "canonical_id": "inference:ornith-1.5-397b-fp8:mi250x:vllm:qwen3_5_moe:qwen3_5moeforconditionalgeneration:0.28.0:fp8#fail:baseline:server_init_dead",
+      "domain_hint": "system_specialist",
+      "first_seen_ts": "2026-09-15T17:51:43.907550+00:00",
+      "last_updated_ts": "2026-09-15T19:00:59.621565+00:00",
+      "layer": "system",
+      "provenance": "",
+      "severity": "medium",
+      "source": "attempts",
+      "symptom": "baseline repeatedly fails with (Worker_TP7 pid=27151) ERROR 09-15 17:19:10 [multiproc_executor.py:1047] RuntimeError: torch._scaled_mm is only supported on CUDA devices with compute capability >= 9.0 or 8.9, or ROCm MI300+"
+    }
+  ],
+  "geak_pending": {},
+  "geak_result": {},
+  "gemm_tuning_attempts": [],
+  "gpu_specialist_capacity": 8,
+  "gpu_type": "mi250x",
+  "intervention_mix": [
+    {
+      "action": "integrate_patch",
+      "change_type": "code_patch_attempt",
+      "delta_pct": null,
+      "task_id": "684650cc04404308aed3e22cffc3ed0e",
+      "ts": "2026-09-15T17:11:36.981608+00:00"
+    },
+    {
+      "action": "integrate_patch",
+      "change_type": "code_patch_attempt",
+      "delta_pct": null,
+      "task_id": "a7f420759add4b1c9af14057c2734a8a",
+      "ts": "2026-09-15T18:05:06.383149+00:00"
+    },
+    {
+      "action": "integrate_patch",
+      "change_type": "code_patch_attempt",
+      "delta_pct": null,
+      "task_id": "4618265478bb4dac9ba78741a436359b",
+      "ts": "2026-09-15T19:03:46.797842+00:00"
+    }
+  ],
+  "isl": 1024,
+  "kb_stage_dead_letter": [],
+  "kb_stage_outbox": [],
+  "kernel_enabled": false,
+  "kernel_idle_since_unix": 0.0,
+  "kernel_idle_ticks": 0,
+  "kernel_inline_step_seen_unix": 0.0,
+  "kernel_integrate_attempts": {},
+  "kernel_opt_task_attempts": {},
+  "kernel_optimizer": "geak",
+  "kernel_progress_fingerprint": "",
+  "kernel_rewrite_controller_result": {},
+  "last_action_failures": [
+    {
+      "action": "baseline",
+      "error_class": "subprocess_nonzero",
+      "error_excerpt": " 16:19:38,901 - Magpie.modes.benchmark.benchmarker - INFO - Copied Magpie script xdit_mi300x.sh to /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966/benchmarks\n2026-09-15 16:19:38,901 - Magpie.modes.benchmark.benchmarker - INFO - Copied Magpie script sglang_mi355x.sh to /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966/benchmarks\n2026-09-15 16:19:38,901 - Magpie.modes.benchmark.benchmarker - INFO - Copied Magpie script xdit_bench_common.sh to /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966/benchmarks\n2026-09-15 16:19:38,902 - Magpie.modes.benchmark.benchmarker - INFO - Copied Magpie script sglang_mi300x.sh to /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966/benchmarks\n2026-09-15 16:19:38,902 - Magpie.modes.benchmark.benchmarker - INFO - Copied Magpie script atom_mi300x.sh to /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966/benchmarks\n2026-09-15 16:19:38,902 - Magpie.modes.benchmark.benchmarker - INFO - Copied Magpie script vllm_mi300x.sh to /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d55",
+      "failure_id": null,
+      "raw_result_path": null,
+      "reported_success": null,
+      "stderr_log_path": "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/runs/baseline/f9f5f7ae4c424c41a09527ad7d95993c/baseline_stderr.log",
+      "stderr_tail": "3f9bdeb8410cd924e2c70906c966/benchmarks\n2026-09-15 16:19:38,902 - Magpie.modes.benchmark.benchmarker - INFO - Copied Magpie script vllm_mi300x.sh to /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966/benchmarks\n2026-09-15 16:19:38,902 - Magpie.modes.benchmark.benchmarker - INFO - Copied Magpie script vllm_mi355x.sh to /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966/benchmarks\n2026-09-15 16:19:38,903 - Magpie.modes.benchmark.benchmarker - INFO - Copied Magpie script vllm_mi300x_mm.sh to /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966/benchmarks\n2026-09-15 16:19:38,908 - Magpie.main - ERROR - Benchmark failed: ['Specified benchmark_script not found: vllm_mi250x.sh\\nSearched in: /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966/benchmarks (including subdirectories)\\nPlease ensure the file exists or remove the benchmark_script config.']\n",
+      "task_id": "f9f5f7ae4c424c41a09527ad7d95993c",
+      "ts": "2026-09-15T16:19:38.951134+00:00",
+      "variant_name": null,
+      "workspace": null
+    },
+    {
+      "action": "baseline",
+      "error_class": "server_init_dead",
+      "error_excerpt": "(Worker_TP7 pid=27151) ERROR 09-15 17:19:10 [multiproc_executor.py:1047] RuntimeError: torch._scaled_mm is only supported on CUDA devices with compute capability >= 9.0 or 8.9, or ROCm MI300+\n(Worker_TP7 pid=27151) ERROR 09-15 17:19:10 [multiproc_executor.py:1047] \n(EngineCore pid=27111) ERROR 09-15 17:19:10 [core.py:1346] EngineCore failed to start.\n(EngineCore pid=27111) ERROR 09-15 17:19:10 [core.py:1346] Traceback (most recent call last):\n(EngineCore pid=27111) ERROR 09-15 17:19:10 [core.py:1346]   File \"/opt/envs/vllm/lib/python3.12/site-packages/vllm/v1/engine/core.py\", line 1315, in run_engine_core",
+      "failure_id": null,
+      "raw_result_path": null,
+      "reported_success": false,
+      "stderr_log_path": null,
+      "stderr_tail": "(Worker_TP7 pid=27151) ERROR 09-15 17:19:10 [multiproc_executor.py:1047] RuntimeError: torch._scaled_mm is only supported on CUDA devices with compute capability >= 9.0 or 8.9, or ROCm MI300+\n(Worker_TP7 pid=27151) ERROR 09-15 17:19:10 [multiproc_executor.py:1047] \n(EngineCore pid=27111) ERROR 09-15 17:19:10 [core.py:1346] EngineCore failed to start.\n(EngineCore pid=27111) ERROR 09-15 17:19:10 [core.py:1346] Traceback (most recent call last):\n(EngineCore pid=27111) ERROR 09-15 17:19:10 [core.py:1346]   File \"/opt/envs/vllm/lib/python3.12/site-packages/vllm/v1/engine/core.py\", line 1315, in run_engine_core",
+      "task_id": "614857fe763a4e2a821ef61850b1e81e",
+      "ts": "2026-09-15T17:20:00.407879+00:00",
+      "variant_name": null,
+      "workspace": "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/runs/baseline/614857fe763a4e2a821ef61850b1e81e/benchmark_vllm_20260915_171250"
+    },
+    {
+      "action": "baseline",
+      "error_class": "server_init_dead",
+      "error_excerpt": "(Worker_TP7 pid=35407) INFO 09-15 18:08:12 [rocm.py:703] Found incompatible backend(s) [TURBOQUANT] with AttentionType.DECODER. Overriding with ROCM_ATTN out of potential backends: ['ROCM_ATTN', 'TRITON_ATTN'].\n(EngineCore pid=35195) WARNING 09-15 18:08:13 [multiproc_executor.py:481] [shutdown] Executor: workers still running after grace period; sending SIGTERM count=6\n(EngineCore pid=35195) ERROR 09-15 18:08:16 [core.py:1346] EngineCore failed to start.\n(EngineCore pid=35195) ERROR 09-15 18:08:16 [core.py:1346] Traceback (most recent call last):\n(EngineCore pid=35195) ERROR 09-15 18:08:16 [core.py:1346]   File \"/opt/envs/vllm/lib/python3.12/site-packages/vllm/v1/engine/core.py\", line 1315, in run_engine_core",
+      "failure_id": null,
+      "raw_result_path": null,
+      "reported_success": false,
+      "stderr_log_path": null,
+      "stderr_tail": "(Worker_TP7 pid=35407) INFO 09-15 18:08:12 [rocm.py:703] Found incompatible backend(s) [TURBOQUANT] with AttentionType.DECODER. Overriding with ROCM_ATTN out of potential backends: ['ROCM_ATTN', 'TRITON_ATTN'].\n(EngineCore pid=35195) WARNING 09-15 18:08:13 [multiproc_executor.py:481] [shutdown] Executor: workers still running after grace period; sending SIGTERM count=6\n(EngineCore pid=35195) ERROR 09-15 18:08:16 [core.py:1346] EngineCore failed to start.\n(EngineCore pid=35195) ERROR 09-15 18:08:16 [core.py:1346] Traceback (most recent call last):\n(EngineCore pid=35195) ERROR 09-15 18:08:16 [core.py:1346]   File \"/opt/envs/vllm/lib/python3.12/site-packages/vllm/v1/engine/core.py\", line 1315, in run_engine_core",
+      "task_id": "9d87461af4dc4507ad5113521d67e7e8",
+      "ts": "2026-09-15T18:08:25.184369+00:00",
+      "variant_name": null,
+      "workspace": "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/runs/baseline/9d87461af4dc4507ad5113521d67e7e8/benchmark_vllm_20260915_180619"
+    },
+    {
+      "action": "baseline",
+      "error_class": "server_init_dead",
+      "error_excerpt": "(Worker_TP5 pid=45515) ERROR 09-15 19:11:39 [multiproc_executor.py:1047] RuntimeError: torch._scaled_mm is only supported on CUDA devices with compute capability >= 9.0 or 8.9, or ROCm MI300+\n(Worker_TP5 pid=45515) ERROR 09-15 19:11:39 [multiproc_executor.py:1047] \n(EngineCore pid=45466) ERROR 09-15 19:11:39 [core.py:1346] EngineCore failed to start.\n(EngineCore pid=45466) ERROR 09-15 19:11:39 [core.py:1346] Traceback (most recent call last):\n(EngineCore pid=45466) ERROR 09-15 19:11:39 [core.py:1346]   File \"/opt/envs/vllm/lib/python3.12/site-packages/vllm/v1/engine/core.py\", line 1315, in run_engine_core",
+      "failure_id": null,
+      "raw_result_path": null,
+      "reported_success": false,
+      "stderr_log_path": null,
+      "stderr_tail": "(Worker_TP5 pid=45515) ERROR 09-15 19:11:39 [multiproc_executor.py:1047] RuntimeError: torch._scaled_mm is only supported on CUDA devices with compute capability >= 9.0 or 8.9, or ROCm MI300+\n(Worker_TP5 pid=45515) ERROR 09-15 19:11:39 [multiproc_executor.py:1047] \n(EngineCore pid=45466) ERROR 09-15 19:11:39 [core.py:1346] EngineCore failed to start.\n(EngineCore pid=45466) ERROR 09-15 19:11:39 [core.py:1346] Traceback (most recent call last):\n(EngineCore pid=45466) ERROR 09-15 19:11:39 [core.py:1346]   File \"/opt/envs/vllm/lib/python3.12/site-packages/vllm/v1/engine/core.py\", line 1315, in run_engine_core",
+      "task_id": "1d343fd9cc0643eda773d9a19a1f7ac2",
+      "ts": "2026-09-15T19:12:24.157044+00:00",
+      "variant_name": null,
+      "workspace": "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/runs/baseline/1d343fd9cc0643eda773d9a19a1f7ac2/benchmark_vllm_20260915_190524"
+    }
+  ],
+  "last_baseline": {
+    "decision": "no_promote",
+    "error_class": "server_init_dead",
+    "error_excerpt": "(Worker_TP5 pid=45515) ERROR 09-15 19:11:39 [multiproc_executor.py:1047] RuntimeError: torch._scaled_mm is only supported on CUDA devices with compute capability >= 9.0 or 8.9, or ROCm MI300+\n(Worker_TP5 pid=45515) ERROR 09-15 19:11:39 [multiproc_executor.py:1047] \n(EngineCore pid=45466) ERROR 09-15 19:11:39 [core.py:1346] EngineCore failed to start.\n(EngineCore pid=45466) ERROR 09-15 19:11:39 [core.py:1346] Traceback (most recent call last):\n(EngineCore pid=45466) ERROR 09-15 19:11:39 [core.py:1346]   File \"/opt/envs/vllm/lib/python3.12/site-packages/vllm/v1/engine/core.py\", line 1315, in run_engine_core",
+    "extras": {
+      "fingerprint": {
+        "benchmark_script": null,
+        "config_path": null,
+        "disable_run_eval": null,
+        "extra_envs": [],
+        "extra_server_args": null,
+        "gpu_type": null,
+        "model_path": null,
+        "result_dir": null
+      }
+    },
+    "failure_id": null,
+    "key_metric": null,
+    "key_metric_kind": "output_throughput",
+    "raw_result_path": null,
+    "reported_success": false,
+    "status": "failed",
+    "stderr_log_path": null,
+    "stderr_tail": "(Worker_TP5 pid=45515) ERROR 09-15 19:11:39 [multiproc_executor.py:1047] RuntimeError: torch._scaled_mm is only supported on CUDA devices with compute capability >= 9.0 or 8.9, or ROCm MI300+\n(Worker_TP5 pid=45515) ERROR 09-15 19:11:39 [multiproc_executor.py:1047] \n(EngineCore pid=45466) ERROR 09-15 19:11:39 [core.py:1346] EngineCore failed to start.\n(EngineCore pid=45466) ERROR 09-15 19:11:39 [core.py:1346] Traceback (most recent call last):\n(EngineCore pid=45466) ERROR 09-15 19:11:39 [core.py:1346]   File \"/opt/envs/vllm/lib/python3.12/site-packages/vllm/v1/engine/core.py\", line 1315, in run_engine_core",
+    "task_id": "1d343fd9cc0643eda773d9a19a1f7ac2",
+    "ts": "2026-09-15T19:12:24.141121+00:00",
+    "variant_name": null,
+    "workspace": "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/runs/baseline/1d343fd9cc0643eda773d9a19a1f7ac2/benchmark_vllm_20260915_190524"
+  },
+  "last_collective": {},
+  "last_conc_sweep": {},
+  "last_conc_sweep_watermark": {},
+  "last_consumed_escalate_hint": "",
+  "last_consumed_escalate_hint_ts": "",
+  "last_cycle_bottleneck": "",
+  "last_discarded_escalate_hint": "",
+  "last_discarded_escalate_hint_ts": "",
+  "last_explore": {},
+  "last_framework_rewrite_evidence": "",
+  "last_framework_rewrite_evidence_status": "",
+  "last_fusion": {},
+  "last_fusion_integrate": {},
+  "last_gemm_tuning": {},
+  "last_kernel_opt": {},
+  "last_profile": {},
+  "last_profile_args": "",
+  "last_profile_kernel_breakdown": "",
+  "last_profile_status": "",
+  "last_profile_trace": "",
+  "last_profile_workload": {},
+  "last_profile_workload_action": "",
+  "last_roofline": {},
+  "last_roofline_tput": 0.0,
+  "last_specialist": {
+    "confidence": 0.88,
+    "domain": "enablement_specialist",
+    "empty": false,
+    "gap_canonical_id": "gap.enablement.unknown",
+    "proposals_total": 1,
+    "reason": "",
+    "summary": "The CURRENT failure is NOT a code gap: the previous round leaked a standalone probe vLLM server (.tmp/emulation_probe/launch2.sh, pgid 35120, launched 18:06:49) whose 8 TP workers squatted 49-58 GiB on ALL 8 cards and collided with the coordinator's 18:06 baseline launch (server.log: torch.OutOfMemoryError during weight load, '13.92 GiB allocated by PyTorch... 0 bytes free'), and the same tree was still alive at my dispatch start. I killed that leaked process tree by PGID (ca",
+    "task_id": "8628519056b24176b3fa5c9a0e106dd6",
+    "ts": "2026-09-15T19:00:59.578232+00:00"
+  },
+  "last_tick_exception": {},
+  "last_trace_analyze": {},
+  "lifecycle": [
+    {
+      "artifacts": {},
+      "detail": "reason=enablement_stalled",
+      "label": "Close (report)",
+      "phase": "CLOSE",
+      "seq": 0,
+      "status": "ENTER",
+      "step": "CLOSE",
+      "ts": "2026-09-15T19:15:59.147294+00:00"
+    },
+    {
+      "artifacts": {},
+      "detail": "close_phase_entry",
+      "label": "Report",
+      "phase": "CLOSE",
+      "seq": 1,
+      "status": "START",
+      "step": "report",
+      "ts": "2026-09-15T19:16:06.675197+00:00"
+    },
+    {
+      "artifacts": {
+        "json_path": "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/reports/final.json",
+        "md_path": "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/reports/final.md"
+      },
+      "detail": "close_phase_entry",
+      "label": "Report",
+      "phase": "CLOSE",
+      "seq": 2,
+      "status": "END",
+      "step": "report",
+      "ts": "2026-09-15T19:16:06.909585+00:00"
+    }
+  ],
+  "macro_cycle": 0,
+  "max_minutes": 180,
+  "max_model_len": 6144,
+  "model_arch": {},
+  "model_architectures": [
+    "Qwen3_5MoeForConditionalGeneration"
+  ],
+  "model_class": "moe_swa",
+  "model_info": {
+    "architectures": [
+      "Qwen3_5MoeForConditionalGeneration"
+    ],
+    "attention_type": "GQA",
+    "has_shared_expert": true,
+    "head_dim": 256,
+    "hidden_size": 4096,
+    "is_moe": true,
+    "max_position_embeddings": 262144,
+    "model_family": "qwen3",
+    "model_type": "qwen3_5_moe_text",
+    "num_attention_heads": 32,
+    "num_experts": 512,
+    "num_experts_per_tok": 10,
+    "num_hidden_layers": 60,
+    "num_key_value_heads": 2,
+    "quantization": "compressed-tensors",
+    "vocab_size": 248320
+  },
+  "model_name": "Ornith-1.5-397B-FP8",
+  "model_path": "/mnt/kioxia-cm6-3t8/ai/models/ornith-ai/Ornith-1.5-397B-FP8",
+  "model_type": "qwen3_5_moe",
+  "model_warnings": [
+    {
+      "architecture": "Qwen3_5MoeForConditionalGeneration",
+      "detail": "DEGRADED MODE: model 'Ornith-1.5-397B-FP8' carries a multimodal signal (multimodal config key 'vision_config'; architecture 'Qwen3_5MoeForConditionalGeneration', model_type 'qwen3_5_moe') but exposes a text-generation path. Hyperloom is running it on the TEXT path only \u2014 any image/audio inputs are ignored, so benchmark numbers reflect the text decoder alone. Pass --no-allow-mm-text-fallback to fail-fast instead.",
+      "kind": "multimodal_text_fallback",
+      "model_name": "Ornith-1.5-397B-FP8",
+      "model_type": "qwen3_5_moe",
+      "signal": "multimodal config key 'vision_config'"
+    }
+  ],
+  "no_gain_cycle_streak": 0,
+  "nodes": 1,
+  "operator_extra_env": {},
+  "operator_server_args": "",
+  "optimization_stack": [],
+  "orchestration_memory": {
+    "checkpoint_count": 4,
+    "current_plan": "Session is at hard deadline (~1min left) in PRELUDE with baseline never established; all orchestration input is done. Report content pre-staged to Coordinator (seq=97/101) for the deadline auto-flush with honest stop_reason baseline_never_established.",
+    "hypotheses": [
+      "Baseline #4's scaled_mm regression was caused by the b254752b lm-only integration atop 001+002 (or stale AOT cache despite patch 002) \u2014 untested bisect left for next session.",
+      "Dominant perf bottleneck once a baseline exists: unfused dequant GEMMs in the 397B MoE bf16-emulation path; lm-only KV headroom is the secondary lever."
+    ],
+    "last_checkpoint_seq": 122,
+    "last_checkpoint_tick": 15,
+    "last_checkpoint_ts": "2026-09-15T19:16:06+00:00",
+    "learnings": [
+      "On this host gpu_type=mi250x (gfx90a) materializes benchmark_script={framework}_mi250x.sh everywhere (baseline, explore via last_baseline re-pin) \u2014 the enablement specialist's script covers this, but confirm explore rounds don't re-pin a missing variant.",
+      "No prior Recipe KB exists for Ornith-1.5-397B-FP8/mi250x/vllm beyond a recipe.json under kb/ that has not warm-started this session; treat all levers as untested.",
+      "Kernel phase is disabled (--no-kernel); all gains must come from config variants + framework source patches.",
+      "gpu_type=mi250x re-pins benchmark_script=vllm_mi250x.sh for every baseline/explore \u2014 enablement artifact exists now, but confirm explore doesn't re-pin a missing variant.",
+      "Kernel phase disabled (--no-kernel); all gains from explore config variants + integrate_patch source work. No warm-start recipe for this workload \u2014 all levers untested.",
+      "Specialist subprocesses cap at 600s and auto-retry twice; long authoring tasks should checkpoint findings via progress intents, not just final specialist_done.",
+      "vLLM AOT compile cache does not invalidate on kernel-SELECTION changes \u2014 any future variant that alters kernel choice needs cache clearing or it silently runs pre-patch code.",
+      "vLLM AOT compile cache does not invalidate on kernel-SELECTION changes \u2014 any variant altering kernel choice needs cache clearing (patch 002 fixes this via aot_compile_hash_factors digest).",
+      "integrate_patch's validation boot can leak its server process holding tens of GiB/GPU \u2014 always suspect orphaned GPU holders (check server.log OOM vs capability errors; ask robustness/recover) before re-proposing baseline.",
+      "On mi250x (gfx90a): FP8 linear path needs bf16 emulation patches; capability spoofing (9,0) selects torch._scaled_mm and aborts. Kernel phase disabled (--no-kernel): gains only via explore config variants + framework source patches.",
+      "Specialist subprocesses cap ~600s with retries; long authoring should checkpoint via progress intents.",
+      "PRELUDE budget cap (324s) is nominal \u2014 enablement work massively overran it (9774s) without the phase advancing; plan enablement-heavy sessions with this in mind.",
+      "Report is hard-gated on baseline_tput>0 and skip_to_close is suppressed while an enablement round is on the table \u2014 in a dead-end PRELUDE the orchestration agent has NO terminal action; the Coordinator auto-flush is the only exit. Pre-stage full report content via send_message early.",
+      "When only ~7-10min remain, a 265s-load + bench baseline is borderline \u2014 commit to it immediately after infra recovery rather than spending a tick verifying outcomes.",
+      "Robustness log-pattern alerts can re-fire on already-diagnosed stale pids \u2014 cross-check timestamps before treating them as new faults.",
+      "On mi250x (gfx90a): FP8 linear path needs bf16 emulation patches; capability spoofing selects torch._scaled_mm and aborts. AOT compile cache does not invalidate on kernel-selection changes (patch 002 adds a digest fix). integrate_patch validation boots can leak GPU-holding servers \u2014 check server.log OOM vs capability errors before re-proposing baseline.",
+      "gpu_type=mi250x re-pins benchmark_script=vllm_mi250x.sh for every baseline/explore; the enablement script now exists on this host.",
+      "PRELUDE budget cap is nominal \u2014 enablement work overran it ~32x (10600s of 324s) without phase advance; plan enablement-heavy sessions assuming PRELUDE can eat most of the budget."
+    ],
+    "next_cycle_directive": "If a new macro-cycle opens with a baseline in hand: attack the MoE dequant-GEMM bottleneck first (serving_specialist for --language-model-only / MoE runner backend / triton fp8 w8a8 integration via integrate_patch), then one explore round of chunked-prefill / max-num-batched-tokens / gpu-memory-utilization variants. Deprioritise further enablement patches \u2014 the gfx90a chain is proven working. Guard against leaked validation servers between runs (force_gpu_cleanup on recover before any baseline/explore).",
+    "parse_error": "",
+    "pending": [
+      "Nothing actionable \u2014 deadline reached; the auto-flush report and any RCA of baseline #4 belong to the Coordinator/future session."
+    ],
+    "tried_and_why": [
+      "4 baseline attempts: #1 missing vllm_mi250x.sh (fixed by enablement specialist), #2 scaled_mm capability abort (fixed by patches 001+002), #3 leaked validation server OOM (measurement artifact, cleared by robustness recover), #4 scaled_mm regression on lm-only stack (unresolved at deadline).",
+      "integrate_patch b254752b (--language-model-only over 001+002) succeeded/advanced \u2014 but the final baseline atop it regressed, making it the prime suspect.",
+      "Proposed report twice: denied by execution_order gate (needs baseline_tput>0). Proposed skip_to_close: suppressed by enablement_skip_to_close guard \u2014 Coordinator owns the terminal path.",
+      "Baseline #5 and specialist dispatches repeatedly denied by dispatch_denied_time_budget as the window closed."
+    ]
+  },
+  "orchestration_memory_history": [
+    {
+      "checkpoint_count": 1,
+      "current_plan": "Get the run past PRELUDE: enablement specialist landed the missing Magpie vllm_mi250x.sh artifact and a gfx90a FP8\u2192bf16 emulation source patch (001_gfx90a_fp8_w8a8_bf16_emulation.patch) auto-submitted for Critic review. Waiting for that integrate_patch verdict, then propose a clean baseline (no benchmark_script override needed) to unlock FRAMEWORK_AGENT. 43min of 180 burned in PRELUDE already; ~136min remain.",
+      "hypotheses": [
+        "First explore round should cast wide on vLLM config levers for the 397B MoE+SWA model on gfx90a: chunked-prefill, max-num-batched-tokens, gpu-memory-utilization, enforce-eager vs graph capture, KV dtype/fp8-cache-off (fp8 weights already on bf16 emulation).",
+        "The gfx90a FP8 bf16-emulation path may itself be the dominant perf bottleneck (unfused dequant in MoE experts) \u2014 worth a serving_specialist/framework_rewrite look at MoE runner backend choice once baseline exists."
+      ],
+      "last_checkpoint_seq": 26,
+      "last_checkpoint_tick": 3,
+      "last_checkpoint_ts": "2026-09-15T17:03:24+00:00",
+      "learnings": [
+        "On this host gpu_type=mi250x (gfx90a) materializes benchmark_script={framework}_mi250x.sh everywhere (baseline, explore via last_baseline re-pin) \u2014 the enablement specialist's script covers this, but confirm explore rounds don't re-pin a missing variant.",
+        "No prior Recipe KB exists for Ornith-1.5-397B-FP8/mi250x/vllm beyond a recipe.json under kb/ that has not warm-started this session; treat all levers as untested.",
+        "Kernel phase is disabled (--no-kernel); all gains must come from config variants + framework source patches."
+      ],
+      "next_cycle_directive": "Once baseline lands: cycle 0 in FRAMEWORK_AGENT \u2014 one wide explore grid (4 cheap config variants: batch/chunked-prefill/memory/graph levers) plus parallel static_recon/serving specialists on the MoE-FP8-emulation hot path; deprioritise anything requiring ray/GEMM tuning until confirmed healthy. If integrate_patch of the emulation patch gets rejected twice, treat the arch-enablement itself as the top gap and escalate rather than churning config grids on a broken server.",
+      "parse_error": "",
+      "pending": [
+        "Critic verdict on integrate_patch (proposal msg 93d45150ac83445a93f04d340020cc37, specialist task 9d27140cf07749878ef698ad2789b20d) \u2014 if rejected, delegate a fresh enablement fix using the rejection reason.",
+        "baseline_tput still 0.0 \u2014 everything downstream gated on it.",
+        "PRELUDE phase cap exhausted (325/324s); flagged that the integrate+baseline cycle should be absorbed rather than the run stalled.",
+        "Robustness earlier alerted 'ray head unreachable' \u2014 watch whether any GPU task dies with subprocess errors pointing at ray."
+      ],
+      "tried_and_why": [
+        "First baseline failed subprocess_nonzero: Magpie pinned vllm_mi250x.sh from runner_type=mi250x but no such script existed in the InferenceX cache \u2014 not a GPU fault. Fixed at root by enablement specialist writing /opt/envs/vllm/.../Magpie/scripts/benchmark/vllm_mi250x.sh.",
+        "My baseline-retry with benchmark_script=vllm_mi300x.sh override was policy_denied (enablement_round_in_flight); the override is now moot since the mi250x script exists.",
+        "Direct writes/copies into the .cache InferenceX tree were blocked by sandbox; param overrides and specialist artifacts are the viable routes."
+      ]
+    },
+    {
+      "checkpoint_count": 2,
+      "current_plan": "Get past PRELUDE: awaiting Critic verdict + integrate_patch run for the enablement chain (001 gfx90a FP8->bf16 emulation base + 002 AOT-cache-invalidation patch, proposal msg be6e4b7f). Once integrated, re-propose baseline (with VLLM_GFX90A_FP8_EMULATION=1 if the integrator confirms the gate, and stale /root/.cache/vllm cleared), then exactly one explore round (~2-4 config variants) and report. ~75min remained at last tick; if integrate+baseline fails again, escalate skip_to_close rather than burn the remainder.",
+      "hypotheses": [
+        "gfx90a spoofs compute capability (9,0) so vLLM 0.28 FP8 registry selects ChannelWiseTorchFP8ScaledMMLinearKernel -> torch._scaled_mm abort; the kept fix routes FP8 linears to a dequant-at-load BF16 kernel, possibly env-gated VLLM_GFX90A_FP8_EMULATION=1.",
+        "Dequant volume is small (~0.29->0.59 GiB per TP rank dense), so bf16 emulation boots but the unfused dequant GEMMs in the 397B MoE are likely the dominant perf bottleneck \u2014 first explore/specialist target once baseline exists (MoE runner backend choice, triton fp8 w8a8 path).",
+        "First explore round levers: chunked-prefill, max-num-batched-tokens, gpu-memory-utilization, enforce-eager vs graph capture, KV fp8-cache."
+      ],
+      "last_checkpoint_seq": 58,
+      "last_checkpoint_tick": 6,
+      "last_checkpoint_ts": "2026-09-15T18:05:06+00:00",
+      "learnings": [
+        "On this host gpu_type=mi250x (gfx90a) materializes benchmark_script={framework}_mi250x.sh everywhere (baseline, explore via last_baseline re-pin) \u2014 the enablement specialist's script covers this, but confirm explore rounds don't re-pin a missing variant.",
+        "No prior Recipe KB exists for Ornith-1.5-397B-FP8/mi250x/vllm beyond a recipe.json under kb/ that has not warm-started this session; treat all levers as untested.",
+        "Kernel phase is disabled (--no-kernel); all gains must come from config variants + framework source patches.",
+        "gpu_type=mi250x re-pins benchmark_script=vllm_mi250x.sh for every baseline/explore \u2014 enablement artifact exists now, but confirm explore doesn't re-pin a missing variant.",
+        "Kernel phase disabled (--no-kernel); all gains from explore config variants + integrate_patch source work. No warm-start recipe for this workload \u2014 all levers untested.",
+        "Specialist subprocesses cap at 600s and auto-retry twice; long authoring tasks should checkpoint findings via progress intents, not just final specialist_done.",
+        "vLLM AOT compile cache does not invalidate on kernel-SELECTION changes \u2014 any future variant that alters kernel choice needs cache clearing or it silently runs pre-patch code."
+      ],
+      "next_cycle_directive": "If baseline ever lands: prioritize MoE FP8 GEMM path efficiency (serving_specialist on MoE runner backend / dequant fusion) since bf16-emulated FP8 on gfx90a is bootable but perf-suspect; cast a single tight explore round (2-3 config levers) before deeper source work. Deprioritise anything requiring a fresh profile/analysis.md if time <30min \u2014 go straight to report with whatever stack exists.",
+      "parse_error": "",
+      "pending": [
+        "Critic verdict + integrate_patch execution of proposal be6e4b7f (002_kernel_selection_invalidates_aot_cache over 001 base).",
+        "baseline_tput still 0.0 \u2014 entire run gated on it; PRELUDE budget long exhausted, run is 105min into 180min with zero validated gain.",
+        "Confirm whether VLLM_GFX90A_FP8_EMULATION=1 must be set in the baseline server env, and that /root/.cache/vllm/torch_compile_cache is cleared for the patched boot.",
+        "Earlier robustness alerts (ray unreachable, server :8888 health error) resolved once by recover; not currently blocking."
+      ],
+      "tried_and_why": [
+        "Baseline #1 failed subprocess_nonzero: Magpie pinned missing vllm_mi250x.sh \u2014 fixed by enablement specialist writing the script.",
+        "Baseline #2 (task 614857fe) failed server_init_dead: all TP workers hit torch._scaled_mm capability check at vllm/.../scaled_mm/pytorch.py:227 despite 001 patch \u2014 root cause per specialists: stale torch.compile AOT cache (patch touched only untraced files) + capability spoofing selecting the Torch scaled_mm path.",
+        "My framework_rewrite_specialist (f008270e) authored the right patch but it was patch_safety-dropped (missing_target, worktree_setup_failed:no_git_framework_source_root) \u2014 the enablement_specialist (fc07edbd) patch got autosubmitted instead; endorsed with co-requirements (env gate, install-path /opt/venv vs /opt/envs check).",
+        "Direct grep/Read of /opt/envs/vllm source is sandbox-blocked for me; only the specialist/integrate lanes can verify there \u2014 route such checks into delegate payloads."
+      ]
+    },
+    {
+      "checkpoint_count": 3,
+      "current_plan": "Final 17-min window: baseline #4 proposed immediately after robustness recover cleared the leaked-GPU OOM; goal is a measured baseline_tput + validated enablement patch chain (001+002 gfx90a FP8\u2192BF16 emulation) reported at deadline. Skip explore; ask Coordinator to defer the queued lm-only integrate (b254752b) since it cannot finish in time.",
+      "hypotheses": [
+        "Baseline #4 should now succeed: 001+002 chain verified booting at ~410 tok/s by enablement specialist 8628519 with default cache root; prior failure was only the leaked probe server holding ~50GiB/GPU.",
+        "Once a baseline exists, the dominant perf bottleneck is unfused dequant GEMMs in the 397B MoE on gfx90a (bf16 emulation path); --language-model-only (KV headroom) and MoE-runner/config variants are the next levers."
+      ],
+      "last_checkpoint_seq": 86,
+      "last_checkpoint_tick": 9,
+      "last_checkpoint_ts": "2026-09-15T19:03:46+00:00",
+      "learnings": [
+        "On this host gpu_type=mi250x (gfx90a) materializes benchmark_script={framework}_mi250x.sh everywhere (baseline, explore via last_baseline re-pin) \u2014 the enablement specialist's script covers this, but confirm explore rounds don't re-pin a missing variant.",
+        "No prior Recipe KB exists for Ornith-1.5-397B-FP8/mi250x/vllm beyond a recipe.json under kb/ that has not warm-started this session; treat all levers as untested.",
+        "Kernel phase is disabled (--no-kernel); all gains must come from config variants + framework source patches.",
+        "gpu_type=mi250x re-pins benchmark_script=vllm_mi250x.sh for every baseline/explore \u2014 enablement artifact exists now, but confirm explore doesn't re-pin a missing variant.",
+        "Kernel phase disabled (--no-kernel); all gains from explore config variants + integrate_patch source work. No warm-start recipe for this workload \u2014 all levers untested.",
+        "Specialist subprocesses cap at 600s and auto-retry twice; long authoring tasks should checkpoint findings via progress intents, not just final specialist_done.",
+        "vLLM AOT compile cache does not invalidate on kernel-SELECTION changes \u2014 any future variant that alters kernel choice needs cache clearing or it silently runs pre-patch code.",
+        "vLLM AOT compile cache does not invalidate on kernel-SELECTION changes \u2014 any variant altering kernel choice needs cache clearing (patch 002 fixes this via aot_compile_hash_factors digest).",
+        "integrate_patch's validation boot can leak its server process holding tens of GiB/GPU \u2014 always suspect orphaned GPU holders (check server.log OOM vs capability errors; ask robustness/recover) before re-proposing baseline.",
+        "On mi250x (gfx90a): FP8 linear path needs bf16 emulation patches; capability spoofing (9,0) selects torch._scaled_mm and aborts. Kernel phase disabled (--no-kernel): gains only via explore config variants + framework source patches.",
+        "Specialist subprocesses cap ~600s with retries; long authoring should checkpoint via progress intents.",
+        "PRELUDE budget cap (324s) is nominal \u2014 enablement work massively overran it (9774s) without the phase advancing; plan enablement-heavy sessions with this in mind."
+      ],
+      "next_cycle_directive": "If a new macro-cycle opens with a baseline in hand: attack the MoE dequant-GEMM bottleneck first (serving_specialist for --language-model-only / MoE runner backend / triton fp8 w8a8 integration via integrate_patch), then one explore round of chunked-prefill / max-num-batched-tokens / gpu-memory-utilization variants. Deprioritise further enablement patches \u2014 the gfx90a chain is proven working. Guard against leaked validation servers between runs (force_gpu_cleanup on recover before any baseline/explore).",
+      "parse_error": "",
+      "pending": [
+        "Baseline #4 result (task pending) \u2014 if tput>0 the run reports a validated enablement; if it fails on infra, report with honest stop_reason, no more GPU work.",
+        "Queued integrate b254752b (--language-model-only over 001+002 base) \u2014 recommended defer/reject given deadline.",
+        "VLLM_GFX90A_FP8_EMULATION env gate question: the successful boot used default env per specialist notes, so baseline needs no extra env \u2014 confirmed moot unless baseline #4 contradicts."
+      ],
+      "tried_and_why": [
+        "Baseline #1 failed: missing vllm_mi250x.sh benchmark script (gpu_type=mi250x re-pins it everywhere) \u2014 fixed by enablement specialist.",
+        "Baseline #2 failed server_init_dead: torch._scaled_mm capability check \u2014 root cause stale AOT cache + capability spoofing; fixed by integrate of 001+002 patches (approved by Critic, executed OK).",
+        "Baseline #3 failed server_init_dead again but root cause was OOM from a leaked probe server (measurement artifact, NOT patch regression) \u2014 robustness recover killed leaked procs, GPUs clean.",
+        "request\u2192robustness is policy-denied for orchestration role (allowed target: kernel_agent only); robustness/coordinator handle infra on their own \u2014 use send_message to coordinator instead.",
+        "Direct Read/grep of /opt/envs/vllm source is sandbox-blocked for me; Bash works for run-workspace logs (grep server.log found the OOM root cause quickly \u2014 worth doing before re-proposing)."
+      ]
+    },
+    {
+      "checkpoint_count": 4,
+      "current_plan": "Session is at hard deadline (~1min left) in PRELUDE with baseline never established; all orchestration input is done. Report content pre-staged to Coordinator (seq=97/101) for the deadline auto-flush with honest stop_reason baseline_never_established.",
+      "hypotheses": [
+        "Baseline #4's scaled_mm regression was caused by the b254752b lm-only integration atop 001+002 (or stale AOT cache despite patch 002) \u2014 untested bisect left for next session.",
+        "Dominant perf bottleneck once a baseline exists: unfused dequant GEMMs in the 397B MoE bf16-emulation path; lm-only KV headroom is the secondary lever."
+      ],
+      "last_checkpoint_seq": 122,
+      "last_checkpoint_tick": 15,
+      "last_checkpoint_ts": "2026-09-15T19:16:06+00:00",
+      "learnings": [
+        "On this host gpu_type=mi250x (gfx90a) materializes benchmark_script={framework}_mi250x.sh everywhere (baseline, explore via last_baseline re-pin) \u2014 the enablement specialist's script covers this, but confirm explore rounds don't re-pin a missing variant.",
+        "No prior Recipe KB exists for Ornith-1.5-397B-FP8/mi250x/vllm beyond a recipe.json under kb/ that has not warm-started this session; treat all levers as untested.",
+        "Kernel phase is disabled (--no-kernel); all gains must come from config variants + framework source patches.",
+        "gpu_type=mi250x re-pins benchmark_script=vllm_mi250x.sh for every baseline/explore \u2014 enablement artifact exists now, but confirm explore doesn't re-pin a missing variant.",
+        "Kernel phase disabled (--no-kernel); all gains from explore config variants + integrate_patch source work. No warm-start recipe for this workload \u2014 all levers untested.",
+        "Specialist subprocesses cap at 600s and auto-retry twice; long authoring tasks should checkpoint findings via progress intents, not just final specialist_done.",
+        "vLLM AOT compile cache does not invalidate on kernel-SELECTION changes \u2014 any future variant that alters kernel choice needs cache clearing or it silently runs pre-patch code.",
+        "vLLM AOT compile cache does not invalidate on kernel-SELECTION changes \u2014 any variant altering kernel choice needs cache clearing (patch 002 fixes this via aot_compile_hash_factors digest).",
+        "integrate_patch's validation boot can leak its server process holding tens of GiB/GPU \u2014 always suspect orphaned GPU holders (check server.log OOM vs capability errors; ask robustness/recover) before re-proposing baseline.",
+        "On mi250x (gfx90a): FP8 linear path needs bf16 emulation patches; capability spoofing (9,0) selects torch._scaled_mm and aborts. Kernel phase disabled (--no-kernel): gains only via explore config variants + framework source patches.",
+        "Specialist subprocesses cap ~600s with retries; long authoring should checkpoint via progress intents.",
+        "PRELUDE budget cap (324s) is nominal \u2014 enablement work massively overran it (9774s) without the phase advancing; plan enablement-heavy sessions with this in mind.",
+        "Report is hard-gated on baseline_tput>0 and skip_to_close is suppressed while an enablement round is on the table \u2014 in a dead-end PRELUDE the orchestration agent has NO terminal action; the Coordinator auto-flush is the only exit. Pre-stage full report content via send_message early.",
+        "When only ~7-10min remain, a 265s-load + bench baseline is borderline \u2014 commit to it immediately after infra recovery rather than spending a tick verifying outcomes.",
+        "Robustness log-pattern alerts can re-fire on already-diagnosed stale pids \u2014 cross-check timestamps before treating them as new faults.",
+        "On mi250x (gfx90a): FP8 linear path needs bf16 emulation patches; capability spoofing selects torch._scaled_mm and aborts. AOT compile cache does not invalidate on kernel-selection changes (patch 002 adds a digest fix). integrate_patch validation boots can leak GPU-holding servers \u2014 check server.log OOM vs capability errors before re-proposing baseline.",
+        "gpu_type=mi250x re-pins benchmark_script=vllm_mi250x.sh for every baseline/explore; the enablement script now exists on this host.",
+        "PRELUDE budget cap is nominal \u2014 enablement work overran it ~32x (10600s of 324s) without phase advance; plan enablement-heavy sessions assuming PRELUDE can eat most of the budget."
+      ],
+      "next_cycle_directive": "If a new macro-cycle opens with a baseline in hand: attack the MoE dequant-GEMM bottleneck first (serving_specialist for --language-model-only / MoE runner backend / triton fp8 w8a8 integration via integrate_patch), then one explore round of chunked-prefill / max-num-batched-tokens / gpu-memory-utilization variants. Deprioritise further enablement patches \u2014 the gfx90a chain is proven working. Guard against leaked validation servers between runs (force_gpu_cleanup on recover before any baseline/explore).",
+      "parse_error": "",
+      "pending": [
+        "Nothing actionable \u2014 deadline reached; the auto-flush report and any RCA of baseline #4 belong to the Coordinator/future session."
+      ],
+      "tried_and_why": [
+        "4 baseline attempts: #1 missing vllm_mi250x.sh (fixed by enablement specialist), #2 scaled_mm capability abort (fixed by patches 001+002), #3 leaked validation server OOM (measurement artifact, cleared by robustness recover), #4 scaled_mm regression on lm-only stack (unresolved at deadline).",
+        "integrate_patch b254752b (--language-model-only over 001+002) succeeded/advanced \u2014 but the final baseline atop it regressed, making it the prime suspect.",
+        "Proposed report twice: denied by execution_order gate (needs baseline_tput>0). Proposed skip_to_close: suppressed by enablement_skip_to_close guard \u2014 Coordinator owns the terminal path.",
+        "Baseline #5 and specialist dispatches repeatedly denied by dispatch_denied_time_budget as the window closed."
+      ]
+    }
+  ],
+  "orchestration_prompt_modes": {
+    "delta": 11,
+    "seed": 4
+  },
+  "osl": 1024,
+  "params_no_promote_streak": 0,
+  "pending_bottleneck_switch": false,
+  "pending_escalate_hint": "",
+  "pending_integrate": {},
+  "pending_kernel_integrations": {},
+  "pending_stack_validation_apply_results": [],
+  "pending_stack_validation_result": {},
+  "pending_targeted_build": {},
+  "phase": "CLOSE",
+  "phase_budget_pct": {
+    "CLOSE": 0.02,
+    "FRAMEWORK_AGENT": 0.9901960784313726,
+    "KERNEL_AGENT": 0.0,
+    "PRELUDE": 0.03,
+    "SWEEP": 0.019803921568627453
+  },
+  "phase_elapsed_totals": {
+    "PRELUDE": 10638.415699958801
+  },
+  "phase_history": [
+    {
+      "cycle": 0,
+      "evidence": {
+        "trigger": "fresh_session"
+      },
+      "from_phase": "",
+      "reason": "phase_entered",
+      "to_phase": "PRELUDE",
+      "ts": "2026-09-15T16:18:40+00:00",
+      "ts_unix": 1789489120.7296963
+    },
+    {
+      "cycle": 0,
+      "evidence": {
+        "close_steps": [
+          {
+            "status": "running",
+            "step": "sequencer_started",
+            "ts": "2026-09-15T19:16:06.640720+00:00"
+          },
+          {
+            "detail": "status=written backend=local",
+            "status": "done",
+            "step": "fact_finalize",
+            "ts": "2026-09-15T19:16:06.671920+00:00"
+          },
+          {
+            "status": "done",
+            "step": "report",
+            "task_id": "d591e8d9fde64a71a0c38142e14e2af7",
+            "ts": "2026-09-15T19:16:06.904787+00:00"
+          },
+          {
+            "status": "done",
+            "step": "session_breakdown",
+            "task_id": "4b234cba2d4d4d528fd2ecabe456ecb2",
+            "ts": "2026-09-15T19:16:18.403014+00:00"
+          },
+          {
+            "detail": "/workspace/hyperloom-session-packages/Ornith-1.5-397B-FP8_20260915T161838Z_8e79dc43.zip",
+            "status": "done",
+            "step": "artifact_package",
+            "ts": "2026-09-15T19:16:41.300019+00:00"
+          },
+          {
+            "status": "skipped",
+            "step": "ndjson_drain",
+            "ts": "2026-09-15T19:16:41.304182+00:00"
+          },
+          {
+            "status": "done",
+            "step": "done",
+            "ts": "2026-09-15T19:16:41.310519+00:00"
+          }
+        ],
+        "reason_origin": "shared_state.stop_reason",
+        "terminal": true
+      },
+      "from_phase": "PRELUDE",
+      "reason": "enablement_stalled",
+      "to_phase": "CLOSE",
+      "ts": "2026-09-15T19:15:59+00:00",
+      "ts_unix": 1789499759.1453962
+    }
+  ],
+  "phase_started_ts": "2026-09-15T19:15:59+00:00",
+  "phase_started_unix": 1789499759.1453962,
+  "plateau_overrides": {},
+  "policy_denial_history": [
+    {
+      "action_name": "baseline",
+      "hint": "wait for the enablement specialist to finish and rearm before re-running baseline.",
+      "intent_payload_keys": [
+        "action_name",
+        "params"
+      ],
+      "intent_type": "delegate",
+      "rule": "enablement_round_in_flight",
+      "streak": 1,
+      "tick": 2,
+      "ts": "2026-09-15T16:24:05.383526+00:00"
+    },
+    {
+      "action_name": "",
+      "hint": "",
+      "intent_payload_keys": [
+        "body_md",
+        "kind",
+        "target_agent"
+      ],
+      "intent_type": "request",
+      "rule": "request_target",
+      "streak": 1,
+      "tick": 8,
+      "ts": "2026-09-15T18:10:20.475753+00:00"
+    },
+    {
+      "action_name": "baseline",
+      "hint": "wait for the enablement specialist to finish and rearm before re-running baseline.",
+      "intent_payload_keys": [
+        "action_name",
+        "predicted_gain_pct"
+      ],
+      "intent_type": "propose_action",
+      "rule": "enablement_round_in_flight",
+      "streak": 2,
+      "tick": 9,
+      "ts": "2026-09-15T19:02:16.073508+00:00"
+    },
+    {
+      "action_name": "report",
+      "hint": "propose/delegate `baseline` until baseline_tput > 0",
+      "intent_payload_keys": [
+        "action_name",
+        "predicted_gain_pct"
+      ],
+      "intent_type": "propose_action",
+      "rule": "execution_order",
+      "streak": 1,
+      "tick": 11,
+      "ts": "2026-09-15T19:13:04.959998+00:00"
+    }
+  ],
+  "policy_denial_streak": {
+    "*:request_target": 1,
+    "baseline:enablement_round_in_flight": 2,
+    "report:execution_order": 1
+  },
+  "precision": "fp8",
+  "profile_attempts": [],
+  "profile_osl": 0,
+  "pruned_families": [],
+  "recipe_finalize_attempts": 1,
+  "recipe_finalize_outcome": {
+    "attempt": 1,
+    "backend": "local",
+    "reason": "",
+    "source": "close",
+    "status": "written",
+    "updated_at": "2026-09-15T19:16:06.668102+00:00"
+  },
+  "recipe_finalize_status": "written",
+  "recipe_kb_session_id": "20260915T161838Z-ba2694ea",
+  "recipe_sediment_enabled": true,
+  "reference_envs": {},
+  "reference_model": "",
+  "reference_server_args": "",
+  "reference_source": "",
+  "rejected_kernel_ids": [],
+  "rejected_kernel_patches": [],
+  "research_lane_capacity": 16,
+  "research_scout_enabled": true,
+  "research_scout_interval": 3,
+  "research_scout_last_round": -1,
+  "research_scout_runs": 0,
+  "research_scout_seen_pr_ids": [],
+  "resume_pending_revalidation": false,
+  "resumed_ts": "",
+  "robustness_options": {},
+  "roofline_attempts": [],
+  "roofline_failure_streak": 0,
+  "roofline_snapshots": [],
+  "rounds_since_last_keep": {
+    "communication": 4,
+    "compiler": 4,
+    "framework": 4,
+    "kernel_agent": 4,
+    "pr_intelligence": 4,
+    "research_scout": 4,
+    "static_recon": 4,
+    "systems": 4
+  },
+  "rounds_since_last_specialist": {
+    "communication": 4,
+    "compiler": 4,
+    "framework": 0,
+    "kernel_agent": 4,
+    "pr_intelligence": 4,
+    "research_scout": 4,
+    "static_recon": 4,
+    "systems": 4
+  },
+  "sandbox_user_id": "",
+  "saturated_directions": {},
+  "schema_version": 6,
+  "session_id": "Ornith-1.5-397B-FP8_20260915T161838Z_8e79dc43",
+  "specialist_patch_verdicts": {
+    "8628519056b24176b3fa5c9a0e106dd6": "advise",
+    "9d27140cf07749878ef698ad2789b20d": "advise",
+    "fc07edbde4c9489682f2cafa5a7d253a": "approve"
+  },
+  "specialist_reauthor_attempts": {},
+  "specialist_rounds": [
+    {
+      "allocated_gpu_ids": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "completed_at": "2026-09-15T17:01:28.220276+00:00",
+      "confidence": 0.8,
+      "cycle": 0,
+      "domain": "enablement_specialist",
+      "empty": true,
+      "framework_agent_authoring": true,
+      "gap_canonical_id": "gap.enablement.unknown",
+      "new_findings": [],
+      "notes": [
+        "worktree_setup_failed:no_git_framework_source_root",
+        "patch_safety_numeric:8x",
+        "recovered_from_partial"
+      ],
+      "proposal_set": [],
+      "proposals_total": 0,
+      "reason": "",
+      "residual_questions": [],
+      "round_id": "9d27140cf07749878ef698ad2789b20d",
+      "source": "specialist:9d27140cf07749878ef698ad2789b20d",
+      "source_phase": "ENABLEMENT",
+      "summary": "DIAGNOSED two stacked boot blockers. (1) Harness: gpu_type=mi250x pins benchmark_script vllm_mi250x.sh which does not exist in Magpie/InferenceX, so the benchmark subprocess dies before the server is even launched ('Specified benchmark_script not found'). Providing the script as an artifact. (2) Real framework gap (from the previous session's server.log): arch Qwen3_5MoeForConditionalGeneration IS registered in vllm 0.28.0+rocm723 and weights load, but profile_run aborts with",
+      "tags": [
+        "framework"
+      ],
+      "task_id": "9d27140cf07749878ef698ad2789b20d"
+    },
+    {
+      "completed_at": "2026-09-15T17:51:43.854814+00:00",
+      "confidence": 0.7,
+      "cycle": 0,
+      "domain": "framework_rewrite_specialist",
+      "empty": false,
+      "gap_canonical_id": "inference:ornith-1.5-397b-fp8:mi250x:vllm:qwen3_5_moe:qwen3_5moeforconditionalgeneration:0.28.0:fp8#fail:baseline:subprocess_nonzero",
+      "new_findings": [
+        {
+          "accuracy_risk": "none (build-cache correctness)",
+          "domain_tags": [
+            "vllm",
+            "torch.compile",
+            "aot-cache",
+            "enablement",
+            "mi250x"
+          ],
+          "expected_impact": "Turns the dead baseline into a booting server and de-confounds every future kernel-selection variant on this host.",
+          "source": "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/reports/enablement/9d27140cf07749878ef698ad2789b20d/server.log:362-381,:589,:1844; /opt/envs/vllm/lib/python3.12/site-packages/vllm/compilation/decorators.py:295-311,523-563; /opt/envs/vllm/lib/python3.12/site-packages/vllm/envs.py:34,697",
+          "what": "vLLM 0.28's AOT compile cache does NOT invalidate on kernel-SELECTION changes, so any enablement patch touching the scaled_mm registry is unreproducible on a host with a warm /root/.cache/vllm. The AOT dir hash covers config factors + _model_hash_key(forward) only (decorators.py:537-546) and _verify_source_unchanged re-checks only the traced files recorded by the EXISTING artifact. A patch that edits just the registry __init__ and adds a new kernel module changes neither set, so the pre-patch graph (which hard-codes extern_kernels._scaled_mm on an FP8 [K,N] column-major weight) is replayed against the new BF16 [N,K] row-major weight and dies on inductor's arg guard - the artifact, not the patch, is incompatible. Correct probe: VLLM_DISABLE_COMPILE_CACHE=1, or better a per-run VLLM_CACHE_ROOT (decorators.py:543-545 reads it)."
+        },
+        {
+          "accuracy_risk": "none",
+          "domain_tags": [
+            "vllm",
+            "rocm",
+            "gfx90a",
+            "fp8",
+            "kernel-selection"
+          ],
+          "expected_impact": "Explains why 0 variants of the baseline config can boot and scopes the fix to exactly one registry insertion point.",
+          "source": "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/runs/baseline/614857fe763a4e2a821ef61850b1e81e/benchmark_vllm_20260915_171250/server.log:52,:229-300; /opt/envs/vllm/lib/python3.12/site-packages/vllm/model_executor/kernels/linear/__init__.py:296-340,407-415,596-628; /opt/envs/vllm/lib/python3.12/site-packages/vllm/model_executor/kernels/linear/scaled_mm/pytorch.py:227; get_cdna_version()==2 for gfx90a (/opt/envs/vllm/lib/python3.12/site-packages/vllm/platforms/rocm.py:362-371)",
+          "what": "On gfx90a the FP8 registry deterministically selects ChannelWiseTorchFP8ScaledMMLinearKernel and aborts, because gfx90a reports capability (9,0) and the Torch scaled_mm kernels gate on '>= 89'. The aiter FP8 kernels ranked above it are correctly arch-gated off, so the first kernel that passes is one that cannot execute. Engine-level, independent of TP/concurrency/params, and NOT avoidable by any existing --quantization or --linear-backend value ('emulation' maps only to MXFP4/6/8+NVFP4, 'torch' maps exactly to the three aborting kernels, 'triton' has no ROCm bucket so _resolve_backend_kernels warns and falls back) - a source patch is mandatory to close this gap."
+        },
+        {
+          "accuracy_risk": "low - E4M3->BF16 is an exact cast (3+1 mantissa / 4-bit exponent fit BF16) and dropping the activation FP8 requant removes one error term versus a true w8a8 scaled GEMM, so this path is expected to be at or slightly ABOVE the FP8 reference in accuracy.",
+          "domain_tags": [
+            "vllm",
+            "memory",
+            "moe",
+            "fp8",
+            "numerics"
+          ],
+          "expected_impact": "Bounds P1's memory/perf downside and predicts the MoE side, not the dense side, as the next thing to break.",
+          "source": "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/reports/enablement/9d27140cf07749878ef698ad2789b20d/server.log:192-211,:54; /opt/envs/vllm/lib/python3.12/site-packages/vllm/model_executor/kernels/linear/scaled_mm/ScaledMMLinearKernel.py:108-170 (base apply_weights quantizes the activation, this override does not)",
+          "what": "The gfx90a dequant blast radius is tiny: the dense FP8 volume rewritten per TP rank is ~0.29 GiB -> ~0.59 GiB BF16 (log 'So far 0.29 GiB of FP8 weights -> 0.59 GiB'), because the 397B model's expert weights never take this path - fp8.py:411 selects TRITON Fp8 MoE independently. The dequant happens inside process_weights_after_loading, so it is a load-time event, not per-step work, and it also removes the activation FP8 requant entirely (input_quant_key() returns None so no manual-fusion pass hoists act-quant upstream of it)."
+        }
+      ],
+      "notes": [
+        "worktree_setup_failed:no_git_framework_source_root",
+        "patch_safety_dropped:/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/runs/specialist/f008270e09ad48e7afc9b262b3aacada/patches/001_gfx90a_fp8_emulation_defaultoff.patch(missing_target)",
+        "patch_safety_missing_target:no_matching_root \u2014 the patch names a file that does not exist in any allowlisted framework source tree; verify the target path with Glob/Grep before authoring the diff."
+      ],
+      "proposal_set": [
+        {
+          "args_mode": "append",
+          "atomic": true,
+          "extra_args": "",
+          "extra_envs": {
+            "VLLM_DISABLE_COMPILE_CACHE": "1",
+            "VLLM_GFX90A_FP8_EMULATION": "1"
+          },
+          "kb_evidence": [],
+          "name": "gfx90a-fp8-emulation+fresh-compile",
+          "pr_evidence": [],
+          "reason": "Coupled pair, bench as one variant. (1) New default-OFF FP8 w8a8 dense-linear kernel dequantizes the FP8 weight to BF16 ONCE at load time and runs plain F.linear, replacing the ChannelWiseTorchFP8ScaledMMLinearKernel that vLLM selects on gfx90a and that dies in torch._scaled_mm: CDNA2 has no FP8 MMA yet reports capability (9,0), so the Torch kernels' own >=89 arch gate never fires, and the aiter kernels above them are correctly gated off. No config-only route exists - 'emulation' maps only to MXFP4/6/8+NVFP4, 'torch' maps exactly to the three aborting kernels, 'triton' has no ROCm bucket in _LINEAR_BACKEND_KERNEL_MAP so it warns and falls back. (2) VLLM_DISABLE_COMPILE_CACHE=1 is co-required: the AOT artifact hash covers config factors + _model_hash_key(forward) only, and _verify_source_unchanged re-checks just the files the OLD artifact traced, so a registry-only patch never invalidates it - the 17:05 patched boot logged 'Directly load AOT compilation from .../63eba2e7...' and then died on that stale graph's guard assert_size_stride(arg10_1,(4096,2560),(1,4096)) against the now-BF16 [2560,4096] weight. Split them and each half fails: the switch alone hits the stale graph; a fresh compile without the switch reproduces the baseline scaled_mm abort. Blast radius is small and bounded - the dense FP8 volume rewritten is only ~0.29->0.59 GiB per TP rank, the 397B expert weights stay on their own TRITON Fp8 MoE backend.",
+          "remove_args": [],
+          "scope": "domain",
+          "source_evidence": [
+            "/opt/envs/vllm/lib/python3.12/site-packages/vllm/model_executor/kernels/linear/__init__.py:407-415 (_POSSIBLE_FP8_KERNELS[ROCM] priority list; patched kernel inserted ahead of the three Torch kernels) and :576-660 (is_supported+can_implement first-fit selection)",
+            "/opt/envs/vllm/lib/python3.12/site-packages/vllm/model_executor/kernels/linear/scaled_mm/pytorch.py:227 (the hard PyTorch gate)",
+            "/opt/envs/vllm/lib/python3.12/site-packages/vllm/compilation/decorators.py:295-311,523-563 (AOT hash dir + 'Directly load AOT compilation' + _verify_source_unchanged)",
+            "/opt/envs/vllm/lib/python3.12/site-packages/vllm/envs.py:158,354,1404 (VLLM_DISABLE_COMPILE_CACHE)",
+            "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/runs/baseline/614857fe763a4e2a821ef61850b1e81e/benchmark_vllm_20260915_171250/server.log:52,229-300",
+            "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/reports/enablement/9d27140cf07749878ef698ad2789b20d/server.log:53,192-211,362-381,589,1844",
+            "patches/001_gfx90a_fp8_emulation_defaultoff.patch"
+          ],
+          "unset_envs": []
+        },
+        {
+          "args_mode": "append",
+          "atomic": true,
+          "extra_args": "--linear-backend emulation",
+          "extra_envs": {
+            "VLLM_DISABLE_COMPILE_CACHE": "1",
+            "VLLM_GFX90A_FP8_EMULATION": "1"
+          },
+          "kb_evidence": [],
+          "name": "gfx90a-fp8-emulation-forced-via-linear-backend-emulation",
+          "pr_evidence": [],
+          "reason": "Same enablement as P1 plus a deterministic-selection probe, kept atomic because the flag only means something with the patch armed. --linear-backend filters the scaled-MM registry through _resolve_backend_kernels, which falls back to normal selection WITH A WARNING for any layer type the named backend has no kernel for, so it cannot strand MoE (fp8.py:411 picks the TRITON Fp8 MoE backend independently) and cannot strand block-wise dense layers either. Because the patch also registers FP8W8A8EmulationLinearKernel in the emulation bucket, this makes the emulation kernel win by construction instead of by list order - it is the leg to run if P1 boots but P1 s regress, or if a future rebase reshuffles _POSSIBLE_FP8_KERNELS and silently re-selects a Torch kernel. It is NOT expected to beat P1 on throughput: the two differ only in how the winner is chosen, so measure it as a selection-robustness check, not as a gain.",
+          "remove_args": [],
+          "scope": "domain",
+          "source_evidence": [
+            "/opt/envs/vllm/lib/python3.12/site-packages/vllm/model_executor/kernels/linear/__init__.py:596-628 (_resolve_backend_kernels: empty-bucket fallback), :296-340 (_LINEAR_BACKEND_KERNEL_MAP keys)",
+            "/opt/envs/vllm/lib/python3.12/site-packages/vllm/config/kernel.py:142-237 (LinearBackend literals, incl. 'emulation' = 'dequantizing weights and running bf16/fp16 GEMM')",
+            "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/runs/baseline/614857fe763a4e2a821ef61850b1e81e/benchmark_vllm_20260915_171250/server.log:52-54 (dense=ChannelWiseTorch..., MoE=TRITON selected independently in fp8.py:411)"
+          ],
+          "unset_envs": []
+        },
+        {
+          "args_mode": "append",
+          "atomic": false,
+          "extra_args": "",
+          "extra_envs": {
+            "VLLM_DISABLE_COMPILE_CACHE": "1"
+          },
+          "kb_evidence": [],
+          "name": "no-patch-fresh-compile-probe",
+          "pr_evidence": [],
+          "reason": "Cheapest discriminator and the only variant needing no source change: re-benches the ALREADY-INTEGRATED (status=advanced, task 684650cc) gfx90a emulation patch with the stale AOT artifact ruled out. If the engine boots, the patch was never the problem and the 17:10 'expected size 2560==4096' assert is confirmed as cache replay; if it still dies, the new traceback is the genuine second gap and is what the next round needs. Cannot perturb the sealed baseline (with the emulation switch unset, selection is unchanged), and it also tests the open question of whether the patch reaches the interpreter that actually serves - /opt/venv/bin/vllm resolves to /opt/venv/lib/python3.12/site-packages/vllm, a DIFFERENT tree from the read-only /opt/envs/... one, whose baseline log shows no emulation.py lines at all.",
+          "remove_args": [],
+          "scope": "domain",
+          "source_evidence": [
+            "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/reports/enablement/9d27140cf07749878ef698ad2789b20d/server.log:53 (patched tree does log 'Selected FP8W8A8EmulationLinearKernel for CompressedTensorsW8A8Fp8')",
+            "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/reports/enablement/9d27140cf07749878ef698ad2789b20d/server.log:362-381,:589,:1844 (stale artifact loaded, then its guard asserts)",
+            "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/runs/baseline/614857fe763a4e2a821ef61850b1e81e/benchmark_vllm_20260915_171250/server.log (grep -c Emulat = 0 -> baseline leg never ran the patch)"
+          ],
+          "unset_envs": []
+        }
+      ],
+      "proposals_total": 3,
+      "reason": "",
+      "residual_questions": [
+        "Does integrate_patch install into /opt/venv/lib/python3.12/site-packages/vllm (which is where /opt/venv/bin/vllm resolves) or into the read-only /opt/envs/vllm/lib/python3.12/site-packages/vllm? The two trees are distinct and /opt/envs/... still has no scaled_mm/emulation.py. The current baseline leg logs ZERO 'Emulating FP8 w8a8' lines, so either the advanced patch never reached the serving interpreter or that log predates the install. If it is not landing, P1/P2 must be re-targeted before benchmarking or they will be measured as plain diffs.",
+        "Is /root/.cache/vllm/torch_compile_cache persistent across Hyperloom sessions on this host? If it is, every kernel-selection variant measured this session is confounded by a pre-patch artifact, and a per-run VLLM_CACHE_ROOT is preferable to VLLM_DISABLE_COMPILE_CACHE=1 (which costs a full compile - roughly the 17:05->17:09 gap in the enablement log).",
+        "Both observed failures died inside profile_run, i.e. no expert GEMM has ever executed on this stack. Confirm from a fresh boot whether the MoE side (TRITON Fp8, block-wise scales) actually runs on CDNA2 - it is the predicted next blocker and no amount of dense-linear work will surface it.",
+        "KB/RecipeKB question for a future round: is there a known-good gfx90a/MI250X FP8 checkpoint recipe at all (this stack has no hardware FP8), or should the session consider a BF16 or compressed-tensors-INT8 weight route (the session lesson says 8114 proved w8a8-INT8 runs here) as the primary arm rather than FP8 emulation?"
+      ],
+      "round_id": "f008270e09ad48e7afc9b262b3aacada",
+      "source": "specialist:f008270e09ad48e7afc9b262b3aacada",
+      "source_phase": "EXPLORE",
+      "summary": "Baseline is still dead for TWO stacked reasons, and I shipped a default-OFF rewrite for the first and a co-required env for the second. (1) gfx90a selects ChannelWiseTorchFP8ScaledMMLinearKernel (capability spoofed as (9,0) defeats its >=89 gate) and torch._scaled_mm aborts; new FP8W8A8EmulationLinearKernel dequantizes FP8->BF16 once at load and runs F.linear, gated on VLLM_GFX90A_FP8_EMULATION=1. (2) vLLM replays a hash-keyed AOT graph that a selection-only patch cannot inva",
+      "tags": [
+        "framework"
+      ],
+      "task_id": "f008270e09ad48e7afc9b262b3aacada"
+    },
+    {
+      "allocated_gpu_ids": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "completed_at": "2026-09-15T18:02:54.253517+00:00",
+      "confidence": 0.82,
+      "cycle": 0,
+      "domain": "enablement_specialist",
+      "empty": false,
+      "framework_agent_authoring": true,
+      "gap_canonical_id": "gap.enablement.unknown",
+      "new_findings": [
+        {
+          "accuracy_risk": "none (pure build-cache correctness; the recompiled graph is semantically identical to the correct eager path)",
+          "domain_tags": [
+            "vllm",
+            "torch.compile",
+            "aot-cache-invalidation",
+            "fp8-emulation",
+            "enablement",
+            "gfx90a"
+          ],
+          "expected_impact": "Unblocks the full enablement ladder for FP8-emulation combos on pre-MI300 ROCm: with the key invalidated the graph is re-traced against the dequantized BF16 weights, profile_run completes, CUDA graphs capture, and the server serves.",
+          "source": "/opt/envs/vllm/lib/python3.12/site-packages/vllm/compilation/caching.py:573-620 (aot_compile_hash_factors/_verify_source_unchanged), decorators.py:560-575 (load path), /root/.cache/vllm/torch_compile_cache/torch_aot_compile/63eba2e.../rank_0_0/model (mtime 15:13, pre-17:03 patched run), integrate_patch server.log assert_size_stride arg10_1",
+          "what": "vLLM 0.28 AOT compile-cache invalidation gap: envs.compile_factors() + VllmConfig.compute_hash() + _model_hash_key(forward) form the artifact dir key, and caching._verify_source_unchanged only re-checks the TRACED files recorded inside the EXISTING artifact. A kernel-selection patch (swap which linear/MoE kernel is chosen, changing weight layout/dtype) touches files that were NEVER in the traced set, so the stale artifact still verifies and is silently replayed -> wrong-shape assert_size_stride in profile_run even though the eager path is correct. Kernel-enablement patches therefore REQUIRE a cold compile."
+        },
+        {
+          "accuracy_risk": "low; dense FP8 linears dequantize exactly (E4M3->BF16) and activations stay BF16, so quality is >= true w8a8. 4% VRAM headroom is tight at concurrency 64 / 6144 ctx.",
+          "domain_tags": [
+            "vllm",
+            "mi250x",
+            "qwen3_5_moe",
+            "enablement",
+            "runnability"
+          ],
+          "expected_impact": "Confirms the gap closes to a runnable, graph-captured server (not just one boot step). Coordinator's E2E gate should now pass runnability.",
+          "source": "verify_server.log (this dispatch: patched worktree + fresh VLLM_CACHE_ROOT, TP8, gpu_mem_util 0.95, max_model_len 6144)",
+          "what": "End-to-end runnability evidence for Ornith-1.5-397B-FP8 (Qwen3_5MoeForConditionalGeneration, 60-layer hybrid GDN+full-attn, 512-expert MoE, compressed-tensors FP8 w8a8 channel/token) on 8xMI250X TP8: model load 48.3 GiB/GPU (~4% VRAM headroom after ~0.59 GiB BF16 dense dequant), cold torch.compile ~127 s, KV cache 3.48 GiB / 154,624 tokens, both PIECEWISE(51) and FULL(35) CUDA graph capture complete, Application startup, and coherent greedy generations. MoE FP8 path runs with VLLM_ROCM_USE_AITER=0 (triton/emulated experts) without error."
+        }
+      ],
+      "notes": [
+        "worktree_setup_failed:no_git_framework_source_root"
+      ],
+      "proposal_set": [
+        {
+          "args_mode": "append",
+          "atomic": false,
+          "extra_args": "",
+          "extra_envs": {
+            "VLLM_DISABLE_COMPILE_CACHE": "1"
+          },
+          "kb_evidence": [],
+          "name": "cold-compile-fallback-no-cache",
+          "pr_evidence": [],
+          "reason": "Patch-free fallback that independently clears the CURRENT (stale-AOT-cache) failure: forcing a cold compile guarantees the pre-patch FP8-layout graph (built before patch 001) is never reloaded, so the dequantized BF16 weights are traced correctly. Use if patch 002 cannot be applied or a poisoned artifact would otherwise share the new key. Cost: ~127 s extra cold compile on warm start (irrelevant here since the baseline never booted, so no valid throughput baseline exists yet).",
+          "scope": "domain",
+          "source_evidence": [
+            "vllm/compilation/decorators.py:564 (load skipped when VLLM_DISABLE_COMPILE_CACHE=1)",
+            "vllm/compilation/decorators.py:689 (save skipped when VLLM_DISABLE_COMPILE_CACHE=1)",
+            "verify_server.log: fresh-cache boot of the 001-patched tree cleared profile_run, captured CUDA graphs, served coherent tokens"
+          ]
+        },
+        {
+          "args_mode": "append",
+          "atomic": false,
+          "extra_args": "",
+          "extra_envs": {
+            "VLLM_CACHE_ROOT": "/home/qiba/ROCm.AI/hyperloom/.cache/vllm_ornith397b_enable"
+          },
+          "kb_evidence": [],
+          "name": "patched-tree-fresh-cache-root",
+          "pr_evidence": [],
+          "reason": "Second patch-free fallback: points VLLM's cache root at a fresh, writable directory that does not contain the stale torch_aot_compile/63eba2e... artifact, so the engine cold-compiles against the dequantized weights. Safer than disabling the cache entirely (a correct artifact IS saved for later warm starts). Applies on top of patch 001 (+ optional 002).",
+          "scope": "domain",
+          "source_evidence": [
+            "vllm/envs.py:2229 (VLLM_CACHE_ROOT is in compile_factors() ignored_factors, i.e. relocating the root does NOT change the AOT hash -> guarantees the existing poisoned 63eba2e... artifact is bypassed)",
+            "vllm/compilation/decorators.py:544-563 (aot_compilation_path derived from envs.VLLM_CACHE_ROOT)"
+          ]
+        }
+      ],
+      "proposals_total": 2,
+      "reason": "",
+      "residual_questions": [
+        "If the Coordinator benches patch 002 but a stale artifact under an OLD key still exists, confirm the E2E gate is launched with the patched vllm tree importable (integrate_patch applies against /opt/envs/vllm/lib/python3.12/site-packages) so the new cache key takes effect; otherwise prefer proposal cold-compile-fallback-no-cache.",
+        "VRAM headroom at gpu_memory_utilization 0.95 is ~4% after the dense FP8->BF16 dequant (+~0.59 GiB/GPU). If concurrency-64 / 6144-ctx eval OOMs at KV allocation, the next rung is lowering a non-expert dense budget or --gpu-memory-utilization, not a code gap."
+      ],
+      "round_id": "fc07edbde4c9489682f2cafa5a7d253a",
+      "source": "specialist:fc07edbde4c9489682f2cafa5a7d253a",
+      "source_phase": "ENABLEMENT",
+      "summary": "Diagnosed the CURRENT (deeper) boot failure as a stale vLLM torch.compile AOT cache, NOT a new code gap. The kept FP8-emulation patch (001) edits only UNTRACED files (kernel registry __init__.py + new scaled_mm/emulation.py), so vllm/compilation/caching.py keeps the same cache key and reloads the pre-patch artifact (torch_aot_compile/63eba2e.../rank_*_0/model, mtime 15:13, built for FP8 [K,N] aten._scaled_mm). Replaying that graph against the now-BF16 [N,K] dequantized weight",
+      "tags": [
+        "framework"
+      ],
+      "task_id": "fc07edbde4c9489682f2cafa5a7d253a"
+    },
+    {
+      "allocated_gpu_ids": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "completed_at": "2026-09-15T19:00:59.546724+00:00",
+      "confidence": 0.88,
+      "cycle": 0,
+      "domain": "enablement_specialist",
+      "empty": false,
+      "framework_agent_authoring": true,
+      "gap_canonical_id": "gap.enablement.unknown",
+      "new_findings": [
+        {
+          "accuracy_risk": "none",
+          "domain_tags": [
+            "operations",
+            "measurement-integrity",
+            "mi250x",
+            "enablement",
+            "gpu-exclusivity"
+          ],
+          "expected_impact": "Removes the false 'not runnable' verdict: with cards exclusive, the SAME stacked base that failed the 18:05 probe boots fully. Any enablement verdict taken while another TP8 tree co-resides on the cards is invalid.",
+          "source": "/proc/35539/fd -> /home/qiba/ROCm.AI/hyperloom/.tmp/emulation_probe/server.log; .tmp/emulation_probe/probe.log (pgid 35120, started 18:06:49); runs/baseline/9d87461af4dc4507ad5113521d67e7e8/benchmark_vllm_20260915_180619/server.log:504 (OOM 'tried to allocate 20.00 MiB ... 0 bytes free', 13.92 GiB PyTorch); rocm-smi --showmeminfo vram before (52-58 GiB/GPU used) and after my kill (11 MiB/GPU)",
+          "what": "Root cause of baseline REVERT (server_init_dead, 18:08) = a leaked probe server from round fc07edbde4c9489682f2cafa5a7d253a holding 49-58 GiB/GPU on all 8 allocated cards; its launch2.sh started at 18:06:49, 30 s after the baseline's own server (pid 35052) began loading the 397B checkpoint, so both TP8 trees raced for the same VRAM and the baseline OOM'd mid weight-load with 'Selected ChannelWiseTorchFP8ScaledMMLinearKernel' (i.e. the baseline ran on the UNPATCHED tree - integrate_patch had already reverted 001/002 at 18:05). Kill the PGID, not just the APIServer: workers 35539-35546 outlived their reparented pgid leader."
+        },
+        {
+          "accuracy_risk": "none (pure cache-key correctness; recompiles are semantically identical to eager)",
+          "domain_tags": [
+            "vllm",
+            "torch.compile",
+            "aot-cache-invalidation",
+            "gfx90a",
+            "enablement"
+          ],
+          "expected_impact": "Removes stale-graph flakiness permanently and cuts gate-boot time; a re-run of the same config never recompiles.",
+          "source": "runs/specialist/8628519056b24176b3fa5c9a0e106dd6/verify_server.log + verify2.log; ls -la --time-style=full-iso /root/.cache/vllm/torch_compile_cache/torch_aot_compile/",
+          "what": "Patch 002 (kernel-selection digest folded into aot_compile_hash_factors) verified end-to-end on the live poisoned cache: booting the 001+002 tree with DEFAULT VLLM_CACHE_ROOT (/root/.cache/vllm still contains the pre-patch torch_aot_compile/63eba2e71... artifact, mtime 15:13) resolved to a NEW key torch_aot_compile/e8acc36118e8... (rank_*_0/model, 2.6 GiB dir, mtime 18:33), profile_run passed, graphs captured - no VLLM_DISABLE_COMPILE_CACHE / cache-root relocation needed. The prior round's two fallback proposals are now obsolete. I additionally left BOTH compile keys warm: e8acc361... for the bare launch and e659874d78ae... for launch + --language-model-only, so the gate boot is cold-compile-free (~8-9 min instead of ~12)."
+        },
+        {
+          "accuracy_risk": "low - E4M3->BF16 dequant is exact and activations stay BF16 (no FP8 activation-quant error term); chat-path gsm8k smoke answer correct",
+          "domain_tags": [
+            "vllm",
+            "mi250x",
+            "qwen3_5_moe",
+            "runnability",
+            "enablement"
+          ],
+          "expected_impact": "The Coordinator's next gated bench of the stacked base (patches 001+002 + mi250x script artifact, cards exclusive) should clear RUNNABILITY and establish the first valid throughput baseline for this session.",
+          "source": "runs/specialist/8628519056b24176b3fa5c9a0e106dd6/verify_server.log, verify2.log, live /v1/completions + /v1/chat/completions curl probes 18:38-18:55Z",
+          "what": "Full runnability evidence for Ornith-1.5-397B-FP8 (Qwen3_5MoeForConditionalGeneration, 60-layer GDN+attn hybrid, 512-expert MoE, compressed-tensors FP8 w8a8 channel/token) on 8xMI250X TP8 with ONLY the kept patches (gmu 0.95, max-model-len 6144, trust-remote-code, VLLM_ROCM_USE_AITER=0): weights 48.27 GiB/GPU in 265 s, cold torch.compile 124 s, KV 3.48 GiB = 154,624 tokens (25.17x at 6144; workload 64x2048=131,072 fits), graph capture 116 s/6.39 GiB, Application startup ~714 s after launch; dense FP8 dequant 0.59 GiB BF16/GPU; coherent greedy completions AND chat: gsm8k-style question returned correct reasoning ending '#### 72' with finish_reason=stop; 64-way concurrent decode probe ~410 tok/s aggregate."
+        },
+        {
+          "accuracy_risk": "none for text-only eval (image/video inputs simply disabled; bench + lm-eval gsm8k never send them)",
+          "domain_tags": [
+            "vllm",
+            "serve-flag",
+            "kv-cache",
+            "enablement"
+          ],
+          "expected_impact": "+18k tokens of KV headroom at conc 64 / 6144 ctx and no mm-encoder profiling step; no throughput regression expected for text-only load.",
+          "source": "runs/specialist/8628519056b24176b3fa5c9a0e106dd6/verify2.log (boot #2 milestones vs verify_server.log)",
+          "what": "--language-model-only on this hybrid VL checkpoint: skips multimodal encoder memory profiling and zeroes all modality limits; weights load unchanged, KV grows 154,624 -> 173,056 tokens (+12%), startup path otherwise identical, and it is covered by the VllmConfig hash (new warm key e659874d...). It does NOT skip loading the vision tower (48.15 vs 48.27 GiB), so it is a pure KV/robustness lever for the text-only bench+gsm8k contract."
+        }
+      ],
+      "notes": [
+        "worktree_setup_failed:no_git_framework_source_root",
+        "patch_safety_numeric:410 tok/s"
+      ],
+      "proposal_set": [
+        {
+          "args_mode": "append",
+          "atomic": false,
+          "extra_args": "--language-model-only",
+          "extra_envs": {},
+          "kb_evidence": [],
+          "name": "lm-only-kv-headroom",
+          "pr_evidence": [],
+          "reason": "Boot-verified on my cards with the stacked base (001+002) on exclusive GPUs: Application startup complete, chat+completions coherent (gsm8k '#### 72'), and +12% KV cache (173,056 vs 154,624 tokens) because the vision encoder is excluded from memory profiling; the workload (random text + gsm8k) never uses image/video inputs so the flag is semantics-preserving here. Its compile-cache key (torch_aot_compile/e659874d78ae...) is already saved warm, so the gate boot skips the 124 s recompile.",
+          "scope": "domain",
+          "source_evidence": [
+            "vllm/config/multimodal.py:492 (language_model_only zeroes all per-prompt modality limits)",
+            "vllm/v1/worker/gpu_model_runner.py:6560-6565 (mm encoder + encoder-cache memory profiling gated on supports_mm_inputs budget)",
+            "vllm/config/model.py:457 (language_model_only is a VllmConfig hash factor -> stable dedicated compile key)",
+            "runs/specialist/8628519056b24176b3fa5c9a0e106dd6/verify2.log: KV 173,056 tokens, capture 117 s, startup complete 18:52:10Z"
+          ],
+          "unset_envs": []
+        }
+      ],
+      "proposals_total": 1,
+      "reason": "",
+      "residual_questions": [
+        "Please ensure GPU exclusivity before the next gate: at dispatch start all 8 cards carried the previous round's leaked probe (pgid 35120). I killed it; as of 18:57:43Z every GPU shows 11 MiB used and no /dev/kfd holder is alive. A quick pre-gate check: for p in /proc/[0-9]*; do ls -l $p/fd 2>/dev/null | grep -q /dev/kfd && echo LEAK $p; done",
+        "Give the enablement launch probe >= 900 s: this combo needs ~265 s weight load + compile + ~116 s graph capture + warmup (~8-9 min with the warm keys I planted, ~12 min cold). The 17:03 probe (684650cc) and the 18:05 probe (a7f42075) both died partly on timing/collision, not on code.",
+        "Do NOT revert patches 001/002 or the vllm_mi250x.sh artifact: they are verified working end-to-end this round (server booted, graphs captured, eval-path answers correct). The bare launch is covered by warm compile key e8acc36118e8..., the --language-model-only variant by e659874d78ae...."
+      ],
+      "round_id": "8628519056b24176b3fa5c9a0e106dd6",
+      "source": "specialist:8628519056b24176b3fa5c9a0e106dd6",
+      "source_phase": "ENABLEMENT",
+      "summary": "The CURRENT failure is NOT a code gap: the previous round leaked a standalone probe vLLM server (.tmp/emulation_probe/launch2.sh, pgid 35120, launched 18:06:49) whose 8 TP workers squatted 49-58 GiB on ALL 8 cards and collided with the coordinator's 18:06 baseline launch (server.log: torch.OutOfMemoryError during weight load, '13.92 GiB allocated by PyTorch... 0 bytes free'), and the same tree was still alive at my dispatch start. I killed that leaked process tree by PGID (ca",
+      "tags": [
+        "framework"
+      ],
+      "task_id": "8628519056b24176b3fa5c9a0e106dd6"
+    }
+  ],
+  "stack_fingerprint_meta": {
+    "image_digest": "rocm-ai/vllm:0.28.0-rocm7.2.4",
+    "rocm": "7.2.4",
+    "vllm": "0.28.0+rocm723"
+  },
+  "start_ts": "2026-09-15T16:18:38.945039+00:00",
+  "static_recon_enabled": true,
+  "static_recon_runs": 0,
+  "stop_reason": "enablement_stalled",
+  "stop_ts": "2026-09-15T19:15:59.131296+00:00",
+  "target_advisory_enabled": true,
+  "target_gap_pct": 30.0,
+  "target_reached_at": "",
+  "target_summary": "Establish baseline on Ornith-1.5-397B-FP8 then drive cumulative_gain_validated to >= 30.0% within 3.0h.",
+  "teardown_timings_sec": {
+    "artifact_package": 21.362,
+    "close_backends": 0.0,
+    "coordinator_stop": 0.003,
+    "final_json": 0.001,
+    "langfuse": 0.003,
+    "session_lock": 0.0,
+    "total": 21.369
+  },
+  "tick": 15,
+  "tp": 8,
+  "warm_history_injected": false,
+  "warm_kernel_kb_attempted": false,
+  "warm_kernel_kb_plan": [],
+  "warm_replay_attempted": false,
+  "warm_replay_enabled": true,
+  "warm_replay_min_confidence": 0.7,
+  "warm_replay_min_reproduce_pct": 0.8,
+  "warm_replay_outcome": {},
+  "warm_replay_pending": {},
+  "warm_start_context": {
+    "do_not_repeat": [
+      {
+        "description": "engine core init \u5728\u7b2c\u4e00\u6b21 fp8 linear apply \u5224\u6b7b\uff1atorch._scaled_mm is only supported on CUDA devices with compute capability >= 9.0 or 8.9, or ROCm MI300+",
+        "reason": "PyTorch \u786c\u95e8\uff08scaled_mm/pytorch.py:227\uff09\uff0cvLLM compressed-tensors fp8 \u5728 gfx90a \u7684\u9ed8\u8ba4 scaled_mm \u540e\u7aef\u5fc5\u7136\u89e6\u53d1\uff1b\u4e0d\u662f\u914d\u7f6e\u9879\u3001\u4e0d\u662f\u663e\u5b58\u95ee\u9898"
+      },
+      {
+        "description": "Hyperloom 3h run \u65e0\u6cd5\u5728\u6b7b\u57fa\u7ebf\u4e0a\u7ee7\u7eed\uff1abaseline server_init_dead \u540e enablement specialist \u53c8\u8d77\u4e86 orphan vllm serve\uff08\u540c\u6837\u5360 55GiB/die\uff09",
+        "reason": "\u57fa\u7ebf\u4e0d\u6210\u7acb\u65f6 explore \u65e0\u610f\u4e49\uff1b\u5e94\u53ca\u65f6\u5224\u6b7b\u6536\u5175"
+      }
+    ],
+    "lessons": [
+      {
+        "measured_impact": "torch._scaled_mm \u95e8\u662f\u5f15\u64ce\u7ea7\uff0c\u4e0e TP/\u5e76\u53d1/\u53c2\u6570\u65e0\u5173",
+        "statement": "Ornith-1.5-397B-FP8 \u5728\u672c\u673a\u7684\u5728\u5f79\u8def\u7ebf\u4ecd\u662f llama.cpp Q8_0\uff088110\uff09\uff1b\u8981 vLLM \u5c31\u5f97\u6362 BF16 \u6743\u91cd\u6216 INT8(compressed-tensors w8a8) \u8def\u7ebf\uff0c8114 \u5df2\u8bc1\u540e\u8005\u53ef\u8dd1"
+      }
+    ],
+    "match": {
+      "canonical_id": "inference:ornith-1.5-397b-fp8:mi250x:vllm:qwen3_5_moe:qwen3_5moeforconditionalgeneration:0.28.0:fp8",
+      "confidence": 1.0,
+      "source": "local-json",
+      "tier": "exact"
+    },
+    "pitfalls": [
+      {
+        "description": "fp8 \u81c2\u5931\u8d25\u65f6 orchestrator \u53ef\u80fd\u8fdb\u5165 brain-dead\uff08\u4e3b\u8fdb\u7a0b ep_poll \u5b58\u6d3b\u30010 \u5b50\u8fdb\u7a0b\u3001robustness \u9759\u9ed8\uff0c\u547d\u4e2d\u672c\u673a issue#3 Part A \u5f62\u6001\uff0cturn \u4e0a\u9650 36 \u4e5f\u5728 RCA+enablement \u8def\u5f84\u70e7\u7a7f\uff09\u2014\u2014\u5224\u6d3b\u8981\u770b tick \u662f\u5426\u63a8\u8fdb\uff0c\u522b\u4fe1 stop_reason \u4e3a\u7a7a",
+        "severity": "crash"
+      },
+      {
+        "description": "coordinator \u88ab\u6740\u540e specialist \u62c9\u8d77\u7684 vllm serve \u4f1a\u4ee5\u72ec\u7acb pgid \u5b64\u513f\u5316\u5360\u5361\uff0c\u5fc5\u987b\u679a\u4e3e PID \u663e\u5f0f\u6e05\u7406\uff08rocm-smi --showpids / ps --sort=start_time\uff09\uff0c\u4e14\u5bb9\u5668 root \u5199\u7684 kb/state \u6587\u4ef6\u56de\u8bfb\u8981 chmod",
+        "severity": "regress"
+      }
+    ],
+    "proven_prior": [
+      {
+        "description": "compressed-tensors FP8 \u6743\u91cd\u8def\u5f84\u88ab vLLM \u63a5\u53d7\u5e76\u5b8c\u6574\u52a0\u8f7d\uff1a122 \u7247 / 389.6 GiB / 49.0 GiB per die\uff0cTP8 workers \u6b63\u5e38 spawn\uff0c\u65e0 OOM\u3001\u65e0\u91cf\u5316\u683c\u5f0f\u62d2\u7edd\uff08server.log 15:05-15:14\uff0csession 20260915T150443Z-6b7d597b\uff09",
+        "measured_impact": "\u6743\u91cd\u52a0\u8f7d 5-10 min \u5168\u8fc7\uff0cengine init \u624d\u6b7b"
+      }
+    ],
+    "recommended_replay": {
+      "best_throughput": 0.0,
+      "config_confidence": 1.0,
+      "config_source": "inference:ornith-1.5-397b-fp8:mi250x:vllm:qwen3_5_moe:qwen3_5moeforconditionalgeneration:0.28.0:fp8",
+      "config_tier": "self",
+      "donor_breakdown_link": "",
+      "donor_canonical_id": "inference:ornith-1.5-397b-fp8:mi250x:vllm:qwen3_5_moe:qwen3_5moeforconditionalgeneration:0.28.0:fp8",
+      "donor_family_tags": [],
+      "donor_gain_pct": 0.0,
+      "donor_model": "Ornith-1.5-397B-FP8",
+      "donor_session_id": "20260915T150443Z-6b7d597b",
+      "expected_gain_pct": 0.0,
+      "extra_envs": {},
+      "extra_server_args": "--tensor-parallel-size 8"
+    },
+    "status": "hit"
+  },
+  "warm_start_lessons": [
+    {
+      "measured_impact": "torch._scaled_mm \u95e8\u662f\u5f15\u64ce\u7ea7\uff0c\u4e0e TP/\u5e76\u53d1/\u53c2\u6570\u65e0\u5173",
+      "statement": "Ornith-1.5-397B-FP8 \u5728\u672c\u673a\u7684\u5728\u5f79\u8def\u7ebf\u4ecd\u662f llama.cpp Q8_0\uff088110\uff09\uff1b\u8981 vLLM \u5c31\u5f97\u6362 BF16 \u6743\u91cd\u6216 INT8(compressed-tensors w8a8) \u8def\u7ebf\uff0c8114 \u5df2\u8bc1\u540e\u8005\u53ef\u8dd1"
+    }
+  ],
+  "warm_start_pitfalls": [
+    {
+      "description": "fp8 \u81c2\u5931\u8d25\u65f6 orchestrator \u53ef\u80fd\u8fdb\u5165 brain-dead\uff08\u4e3b\u8fdb\u7a0b ep_poll \u5b58\u6d3b\u30010 \u5b50\u8fdb\u7a0b\u3001robustness \u9759\u9ed8\uff0c\u547d\u4e2d\u672c\u673a issue#3 Part A \u5f62\u6001\uff0cturn \u4e0a\u9650 36 \u4e5f\u5728 RCA+enablement \u8def\u5f84\u70e7\u7a7f\uff09\u2014\u2014\u5224\u6d3b\u8981\u770b tick \u662f\u5426\u63a8\u8fdb\uff0c\u522b\u4fe1 stop_reason \u4e3a\u7a7a",
+      "severity": "crash"
+    },
+    {
+      "description": "coordinator \u88ab\u6740\u540e specialist \u62c9\u8d77\u7684 vllm serve \u4f1a\u4ee5\u72ec\u7acb pgid \u5b64\u513f\u5316\u5360\u5361\uff0c\u5fc5\u987b\u679a\u4e3e PID \u663e\u5f0f\u6e05\u7406\uff08rocm-smi --showpids / ps --sort=start_time\uff09\uff0c\u4e14\u5bb9\u5668 root \u5199\u7684 kb/state \u6587\u4ef6\u56de\u8bfb\u8981 chmod",
+      "severity": "regress"
+    }
+  ],
+  "warm_start_recipe": {
+    "confidence": 1.0,
+    "hw": "mi250x",
+    "recipe": {
+      "architectures": [
+        "Qwen3_5MoeForConditionalGeneration"
+      ],
+      "authority": "EXPERIENTIAL",
+      "best_config": {
+        "extra_envs": {},
+        "extra_server_args": "--tensor-parallel-size 8"
+      },
+      "best_throughput": 0.0,
+      "canonical_id": "inference:ornith-1.5-397b-fp8:mi250x:vllm:qwen3_5_moe:qwen3_5moeforconditionalgeneration:0.28.0:fp8",
+      "conc": 64,
+      "confidence": 0.85,
+      "created_at": "2026-09-15T15:58:00.907929+00:00",
+      "engine": "vllm",
+      "ep": 1,
+      "evidence_refs": [],
+      "framework_name": "vllm",
+      "framework_version": "0.28.0",
+      "gpus": "mi250dx8",
+      "hardware": "mi250x",
+      "image_digest": "rocm-ai/vllm:0.28.0-rocm7.2.4",
+      "isl": 1024,
+      "kernel_optimizations": [],
+      "last_profiled": "2026-09-15",
+      "lessons": [
+        {
+          "measured_impact": "torch._scaled_mm \u95e8\u662f\u5f15\u64ce\u7ea7\uff0c\u4e0e TP/\u5e76\u53d1/\u53c2\u6570\u65e0\u5173",
+          "statement": "Ornith-1.5-397B-FP8 \u5728\u672c\u673a\u7684\u5728\u5f79\u8def\u7ebf\u4ecd\u662f llama.cpp Q8_0\uff088110\uff09\uff1b\u8981 vLLM \u5c31\u5f97\u6362 BF16 \u6743\u91cd\u6216 INT8(compressed-tensors w8a8) \u8def\u7ebf\uff0c8114 \u5df2\u8bc1\u540e\u8005\u53ef\u8dd1"
+        }
+      ],
+      "max_model_len": 6144,
+      "model": "Ornith-1.5-397B-FP8",
+      "model_dir": "/mnt/kioxia-cm6-3t8/ai/models/ornith-ai/Ornith-1.5-397B-FP8",
+      "model_type": "qwen3_5_moe",
+      "osl": 1024,
+      "pitfalls": [
+        {
+          "description": "fp8 \u81c2\u5931\u8d25\u65f6 orchestrator \u53ef\u80fd\u8fdb\u5165 brain-dead\uff08\u4e3b\u8fdb\u7a0b ep_poll \u5b58\u6d3b\u30010 \u5b50\u8fdb\u7a0b\u3001robustness \u9759\u9ed8\uff0c\u547d\u4e2d\u672c\u673a issue#3 Part A \u5f62\u6001\uff0cturn \u4e0a\u9650 36 \u4e5f\u5728 RCA+enablement \u8def\u5f84\u70e7\u7a7f\uff09\u2014\u2014\u5224\u6d3b\u8981\u770b tick \u662f\u5426\u63a8\u8fdb\uff0c\u522b\u4fe1 stop_reason \u4e3a\u7a7a",
+          "severity": "crash"
+        },
+        {
+          "description": "coordinator \u88ab\u6740\u540e specialist \u62c9\u8d77\u7684 vllm serve \u4f1a\u4ee5\u72ec\u7acb pgid \u5b64\u513f\u5316\u5360\u5361\uff0c\u5fc5\u987b\u679a\u4e3e PID \u663e\u5f0f\u6e05\u7406\uff08rocm-smi --showpids / ps --sort=start_time\uff09\uff0c\u4e14\u5bb9\u5668 root \u5199\u7684 kb/state \u6587\u4ef6\u56de\u8bfb\u8981 chmod",
+          "severity": "regress"
+        }
+      ],
+      "precision": "fp8",
+      "provenance": {
+        "details": {
+          "sid": "20260915T161838Z-ba2694ea"
+        },
+        "generated_at": "2026-09-15T16:18:39.569754+00:00",
+        "generator": "t0_anchor",
+        "source": "hyperloom-inference-optimizer"
+      },
+      "remaining_gaps": [
+        {
+          "description": "vLLM fp8 weight-only bf16-dequant \u540e\u7aef\uff08\u975e scaled_mm \u8def\u5f84\uff09\u5728 gfx90a \u662f\u5426\u53ef\u7528\u4f5c\u663e\u5f0f --quantization \u8986\u76d6\uff0c\u672a\u6d4b",
+          "metrics": "N/A"
+        }
+      ],
+      "rocm_version": "7.2.4",
+      "seeded_at": "2026-09-15T16:20:00+00:00",
+      "sessions": [
+        {
+          "actions_taken": [
+            "hyperloom 3h optimize -> baseline server_init_dead",
+            "orphan serve \u6e05\u7406",
+            "verdict \u624b\u5de5\u5165\u6863"
+          ],
+          "date": "2026-09-15",
+          "gain_pct": 0.0,
+          "session_id": "20260915T150443Z-6b7d597b",
+          "stack_len": 0,
+          "throughput_after": 0.0,
+          "throughput_before": 0.0
+        }
+      ],
+      "stack_fingerprint": {
+        "aiter_commit": "",
+        "rocm_version": "7.2.4",
+        "vllm_version": "0.28.0+rocm723"
+      },
+      "status": "dead",
+      "tp": 8,
+      "updated_at": "2026-09-15T16:18:39.569886+00:00",
+      "version": 2,
+      "what_failed": [
+        {
+          "description": "engine core init \u5728\u7b2c\u4e00\u6b21 fp8 linear apply \u5224\u6b7b\uff1atorch._scaled_mm is only supported on CUDA devices with compute capability >= 9.0 or 8.9, or ROCm MI300+",
+          "reason": "PyTorch \u786c\u95e8\uff08scaled_mm/pytorch.py:227\uff09\uff0cvLLM compressed-tensors fp8 \u5728 gfx90a \u7684\u9ed8\u8ba4 scaled_mm \u540e\u7aef\u5fc5\u7136\u89e6\u53d1\uff1b\u4e0d\u662f\u914d\u7f6e\u9879\u3001\u4e0d\u662f\u663e\u5b58\u95ee\u9898"
+        },
+        {
+          "description": "Hyperloom 3h run \u65e0\u6cd5\u5728\u6b7b\u57fa\u7ebf\u4e0a\u7ee7\u7eed\uff1abaseline server_init_dead \u540e enablement specialist \u53c8\u8d77\u4e86 orphan vllm serve\uff08\u540c\u6837\u5360 55GiB/die\uff09",
+          "reason": "\u57fa\u7ebf\u4e0d\u6210\u7acb\u65f6 explore \u65e0\u610f\u4e49\uff1b\u5e94\u53ca\u65f6\u5224\u6b7b\u6536\u5175"
+        }
+      ],
+      "what_worked": [
+        {
+          "description": "compressed-tensors FP8 \u6743\u91cd\u8def\u5f84\u88ab vLLM \u63a5\u53d7\u5e76\u5b8c\u6574\u52a0\u8f7d\uff1a122 \u7247 / 389.6 GiB / 49.0 GiB per die\uff0cTP8 workers \u6b63\u5e38 spawn\uff0c\u65e0 OOM\u3001\u65e0\u91cf\u5316\u683c\u5f0f\u62d2\u7edd\uff08server.log 15:05-15:14\uff0csession 20260915T150443Z-6b7d597b\uff09",
+          "measured_impact": "\u6743\u91cd\u52a0\u8f7d 5-10 min \u5168\u8fc7\uff0cengine init \u624d\u6b7b"
+        }
+      ]
+    },
+    "tier": "exact",
+    "workload": "Ornith-1.5-397B-FP8"
+  },
+  "warm_start_ts": "2026-09-15T16:18:39+00:00"
+}

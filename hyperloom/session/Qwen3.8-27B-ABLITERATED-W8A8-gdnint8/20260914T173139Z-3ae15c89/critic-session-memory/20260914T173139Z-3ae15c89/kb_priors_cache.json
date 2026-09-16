@@ -1,0 +1,14 @@
+{
+  "framework=vllm|model=qwen3.8-27b-abliterated-w8a8-gdnint8|model_family=qwen|org=hyperloom|precision=bf16|workload={'conc': 64, 'isl': 1024, 'max_model_len': 6144, 'osl': 1024, 'precision': 'bf16'}|topic=target_analysis|limit=5": {
+    "ts": 1789407321.5533733,
+    "priors": []
+  },
+  "framework=vllm|model=qwen3.8-27b-abliterated-w8a8-gdnint8|model_family=qwen|org=hyperloom|precision=bf16|workload={'conc': 64, 'isl': 1024, 'max_model_len': 6144, 'osl': 1024, 'precision': 'bf16'}|topic=baseline|limit=5": {
+    "ts": 1789407321.5536838,
+    "priors": []
+  },
+  "framework=vllm|model=qwen3.8-27b-abliterated-w8a8-gdnint8|model_family=qwen|org=hyperloom|precision=bf16|workload={'conc': 64, 'isl': 1024, 'max_model_len': 6144, 'osl': 1024, 'precision': 'bf16'}|topic=decision-20260914t173139z-3ae15c89|limit=5": {
+    "ts": 1789411957.8749857,
+    "priors": []
+  }
+}

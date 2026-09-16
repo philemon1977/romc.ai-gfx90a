@@ -1,0 +1,104 @@
+{
+  "_specialist_notes": [
+    "worktree_setup_failed:no_git_framework_source_root",
+    "patch_safety_numeric:410 tok/s"
+  ],
+  "allocated_gpu_ids": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7
+  ],
+  "artifacts_written": [],
+  "confidence": 0.88,
+  "domain": "enablement_specialist",
+  "empty": false,
+  "gap_canonical_id": "gap.enablement.unknown",
+  "new_findings": [
+    {
+      "accuracy_risk": "none",
+      "domain_tags": [
+        "operations",
+        "measurement-integrity",
+        "mi250x",
+        "enablement",
+        "gpu-exclusivity"
+      ],
+      "expected_impact": "Removes the false 'not runnable' verdict: with cards exclusive, the SAME stacked base that failed the 18:05 probe boots fully. Any enablement verdict taken while another TP8 tree co-resides on the cards is invalid.",
+      "source": "/proc/35539/fd -> /home/qiba/ROCm.AI/hyperloom/.tmp/emulation_probe/server.log; .tmp/emulation_probe/probe.log (pgid 35120, started 18:06:49); runs/baseline/9d87461af4dc4507ad5113521d67e7e8/benchmark_vllm_20260915_180619/server.log:504 (OOM 'tried to allocate 20.00 MiB ... 0 bytes free', 13.92 GiB PyTorch); rocm-smi --showmeminfo vram before (52-58 GiB/GPU used) and after my kill (11 MiB/GPU)",
+      "what": "Root cause of baseline REVERT (server_init_dead, 18:08) = a leaked probe server from round fc07edbde4c9489682f2cafa5a7d253a holding 49-58 GiB/GPU on all 8 allocated cards; its launch2.sh started at 18:06:49, 30 s after the baseline's own server (pid 35052) began loading the 397B checkpoint, so both TP8 trees raced for the same VRAM and the baseline OOM'd mid weight-load with 'Selected ChannelWiseTorchFP8ScaledMMLinearKernel' (i.e. the baseline ran on the UNPATCHED tree - integrate_patch had already reverted 001/002 at 18:05). Kill the PGID, not just the APIServer: workers 35539-35546 outlived their reparented pgid leader."
+    },
+    {
+      "accuracy_risk": "none (pure cache-key correctness; recompiles are semantically identical to eager)",
+      "domain_tags": [
+        "vllm",
+        "torch.compile",
+        "aot-cache-invalidation",
+        "gfx90a",
+        "enablement"
+      ],
+      "expected_impact": "Removes stale-graph flakiness permanently and cuts gate-boot time; a re-run of the same config never recompiles.",
+      "source": "runs/specialist/8628519056b24176b3fa5c9a0e106dd6/verify_server.log + verify2.log; ls -la --time-style=full-iso /root/.cache/vllm/torch_compile_cache/torch_aot_compile/",
+      "what": "Patch 002 (kernel-selection digest folded into aot_compile_hash_factors) verified end-to-end on the live poisoned cache: booting the 001+002 tree with DEFAULT VLLM_CACHE_ROOT (/root/.cache/vllm still contains the pre-patch torch_aot_compile/63eba2e71... artifact, mtime 15:13) resolved to a NEW key torch_aot_compile/e8acc36118e8... (rank_*_0/model, 2.6 GiB dir, mtime 18:33), profile_run passed, graphs captured - no VLLM_DISABLE_COMPILE_CACHE / cache-root relocation needed. The prior round's two fallback proposals are now obsolete. I additionally left BOTH compile keys warm: e8acc361... for the bare launch and e659874d78ae... for launch + --language-model-only, so the gate boot is cold-compile-free (~8-9 min instead of ~12)."
+    },
+    {
+      "accuracy_risk": "low - E4M3->BF16 dequant is exact and activations stay BF16 (no FP8 activation-quant error term); chat-path gsm8k smoke answer correct",
+      "domain_tags": [
+        "vllm",
+        "mi250x",
+        "qwen3_5_moe",
+        "runnability",
+        "enablement"
+      ],
+      "expected_impact": "The Coordinator's next gated bench of the stacked base (patches 001+002 + mi250x script artifact, cards exclusive) should clear RUNNABILITY and establish the first valid throughput baseline for this session.",
+      "source": "runs/specialist/8628519056b24176b3fa5c9a0e106dd6/verify_server.log, verify2.log, live /v1/completions + /v1/chat/completions curl probes 18:38-18:55Z",
+      "what": "Full runnability evidence for Ornith-1.5-397B-FP8 (Qwen3_5MoeForConditionalGeneration, 60-layer GDN+attn hybrid, 512-expert MoE, compressed-tensors FP8 w8a8 channel/token) on 8xMI250X TP8 with ONLY the kept patches (gmu 0.95, max-model-len 6144, trust-remote-code, VLLM_ROCM_USE_AITER=0): weights 48.27 GiB/GPU in 265 s, cold torch.compile 124 s, KV 3.48 GiB = 154,624 tokens (25.17x at 6144; workload 64x2048=131,072 fits), graph capture 116 s/6.39 GiB, Application startup ~714 s after launch; dense FP8 dequant 0.59 GiB BF16/GPU; coherent greedy completions AND chat: gsm8k-style question returned correct reasoning ending '#### 72' with finish_reason=stop; 64-way concurrent decode probe ~410 tok/s aggregate."
+    },
+    {
+      "accuracy_risk": "none for text-only eval (image/video inputs simply disabled; bench + lm-eval gsm8k never send them)",
+      "domain_tags": [
+        "vllm",
+        "serve-flag",
+        "kv-cache",
+        "enablement"
+      ],
+      "expected_impact": "+18k tokens of KV headroom at conc 64 / 6144 ctx and no mm-encoder profiling step; no throughput regression expected for text-only load.",
+      "source": "runs/specialist/8628519056b24176b3fa5c9a0e106dd6/verify2.log (boot #2 milestones vs verify_server.log)",
+      "what": "--language-model-only on this hybrid VL checkpoint: skips multimodal encoder memory profiling and zeroes all modality limits; weights load unchanged, KV grows 154,624 -> 173,056 tokens (+12%), startup path otherwise identical, and it is covered by the VllmConfig hash (new warm key e659874d...). It does NOT skip loading the vision tower (48.15 vs 48.27 GiB), so it is a pure KV/robustness lever for the text-only bench+gsm8k contract."
+    }
+  ],
+  "patch_grounding": {},
+  "patches_written": [],
+  "proposal_set": [
+    {
+      "args_mode": "append",
+      "atomic": false,
+      "extra_args": "--language-model-only",
+      "extra_envs": {},
+      "kb_evidence": [],
+      "name": "lm-only-kv-headroom",
+      "pr_evidence": [],
+      "reason": "Boot-verified on my cards with the stacked base (001+002) on exclusive GPUs: Application startup complete, chat+completions coherent (gsm8k '#### 72'), and +12% KV cache (173,056 vs 154,624 tokens) because the vision encoder is excluded from memory profiling; the workload (random text + gsm8k) never uses image/video inputs so the flag is semantics-preserving here. Its compile-cache key (torch_aot_compile/e659874d78ae...) is already saved warm, so the gate boot skips the 124 s recompile.",
+      "scope": "domain",
+      "source_evidence": [
+        "vllm/config/multimodal.py:492 (language_model_only zeroes all per-prompt modality limits)",
+        "vllm/v1/worker/gpu_model_runner.py:6560-6565 (mm encoder + encoder-cache memory profiling gated on supports_mm_inputs budget)",
+        "vllm/config/model.py:457 (language_model_only is a VllmConfig hash factor -> stable dedicated compile key)",
+        "runs/specialist/8628519056b24176b3fa5c9a0e106dd6/verify2.log: KV 173,056 tokens, capture 117 s, startup complete 18:52:10Z"
+      ],
+      "unset_envs": []
+    }
+  ],
+  "residual_questions": [
+    "Please ensure GPU exclusivity before the next gate: at dispatch start all 8 cards carried the previous round's leaked probe (pgid 35120). I killed it; as of 18:57:43Z every GPU shows 11 MiB used and no /dev/kfd holder is alive. A quick pre-gate check: for p in /proc/[0-9]*; do ls -l $p/fd 2>/dev/null | grep -q /dev/kfd && echo LEAK $p; done",
+    "Give the enablement launch probe >= 900 s: this combo needs ~265 s weight load + compile + ~116 s graph capture + warmup (~8-9 min with the warm keys I planted, ~12 min cold). The 17:03 probe (684650cc) and the 18:05 probe (a7f42075) both died partly on timing/collision, not on code.",
+    "Do NOT revert patches 001/002 or the vllm_mi250x.sh artifact: they are verified working end-to-end this round (server booted, graphs captured, eval-path answers correct). The bare launch is covered by warm compile key e8acc36118e8..., the --language-model-only variant by e659874d78ae...."
+  ],
+  "setup_commands": [],
+  "summary": "The CURRENT failure is NOT a code gap: the previous round leaked a standalone probe vLLM server (.tmp/emulation_probe/launch2.sh, pgid 35120, launched 18:06:49) whose 8 TP workers squatted 49-58 GiB on ALL 8 cards and collided with the coordinator's 18:06 baseline launch (server.log: torch.OutOfMemoryError during weight load, '13.92 GiB allocated by PyTorch... 0 bytes free'), and the same tree was still alive at my dispatch start. I killed that leaked process tree by PGID (cards back to 11 MiB/GPU), then booted the EXISTING stacked base (patch 001 gfx90a FP8->BF16 emulation + patch 002 AOT-cache invalidation), unchanged, with the coordinator's exact command on my cards: Application startup complete at ~12 min, CUDA graphs captured, coherent completions ('capital of France'->' Paris.'), chat path + gsm8k-style answer '#### 72' correct, ~410 tok/s aggregate at conc-64. Patch 002 verifiably works: boot with the DEFAULT cache root bypassed the poisoned 63eba2e artifact and created/used a NEW key e8acc361... (warm for bare launch; e659874d... warm for the --language-model-only variant). No new patch needed; do NOT revert 001/002. I left cards free and planted both warm compile keys so the gate boot takes ~8-9 min, not 12.",
+  "ts": "2026-09-15T19:00:59.515725+00:00"
+}

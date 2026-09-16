@@ -1,0 +1,82 @@
+{
+  "session_id": "20260914T173139Z-3ae15c89",
+  "model": "Qwen3.8-27B-ABLITERATED-W8A8-gdnint8",
+  "hardware": "",
+  "framework": "vllm",
+  "baseline_throughput": 444.8566029611903,
+  "final_throughput": 444.8566029611903,
+  "total_gain_pct": 0.0,
+  "entries": [
+    {
+      "phase": "PRELUDE",
+      "iter": 1,
+      "kind": "other",
+      "change": "target_analysis",
+      "outcome": "KEEP",
+      "task_id": "744cfece502844f4a3910d9b3e355c3a",
+      "ts": "2026-09-14T17:38:03Z",
+      "tick": 1
+    },
+    {
+      "phase": "PRELUDE",
+      "iter": 1,
+      "kind": "baseline",
+      "change": "baseline",
+      "outcome": "KEEP",
+      "throughput_after": 444.8566029611903,
+      "task_id": "e420b1b3a97f4b7eb334a1df38a32578",
+      "ts": "2026-09-14T18:41:22Z",
+      "tick": 1
+    },
+    {
+      "phase": "PRELUDE",
+      "iter": 1,
+      "kind": "other",
+      "change": "specialist",
+      "outcome": "KEEP",
+      "task_id": "64c68e8f31c74152add8db07fc879bfc",
+      "ts": "2026-09-14T18:51:37Z",
+      "tick": 1
+    },
+    {
+      "phase": "PRELUDE",
+      "iter": 1,
+      "kind": "other",
+      "change": "specialist",
+      "outcome": "KEEP",
+      "task_id": "26d8322fb812499fb429efc87b5cc792",
+      "ts": "2026-09-14T18:51:49Z",
+      "tick": 1
+    },
+    {
+      "phase": "FRAMEWORK_AGENT",
+      "iter": 2,
+      "kind": "other",
+      "change": "specialist",
+      "outcome": "KEEP",
+      "task_id": "6d4c3306273749ef83672b8beba67023",
+      "ts": "2026-09-14T19:15:01Z",
+      "tick": 2
+    },
+    {
+      "phase": "FRAMEWORK_AGENT",
+      "iter": 2,
+      "kind": "other",
+      "change": "specialist",
+      "outcome": "KEEP",
+      "task_id": "0a310d67108e488da97b67154869c87e",
+      "ts": "2026-09-14T19:15:01Z",
+      "tick": 2
+    },
+    {
+      "phase": "CLOSE",
+      "iter": 5,
+      "kind": "other",
+      "change": "report",
+      "outcome": "KEEP",
+      "task_id": "5e02dd5cd0ba477caa20c3ebe9b520dc",
+      "ts": "2026-09-14T19:33:50Z",
+      "tick": 5
+    }
+  ]
+}

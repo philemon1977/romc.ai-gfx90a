@@ -1,0 +1,18 @@
+{
+  "framework=vllm|model=ornith-1.5-35b-a3b|org=hyperloom|precision=bf16|workload={'conc': 64, 'isl': 1024, 'max_model_len': 6144, 'osl': 1024, 'precision': 'bf16'}|topic=target_analysis|limit=5": {
+    "ts": 1789379411.8638287,
+    "priors": []
+  },
+  "framework=vllm|model=ornith-1.5-35b-a3b|org=hyperloom|precision=bf16|workload={'conc': 64, 'isl': 1024, 'max_model_len': 6144, 'osl': 1024, 'precision': 'bf16'}|topic=baseline|limit=5": {
+    "ts": 1789386559.5226324,
+    "priors": []
+  },
+  "framework=vllm|model=ornith-1.5-35b-a3b|org=hyperloom|precision=bf16|workload={'conc': 64, 'isl': 1024, 'max_model_len': 6144, 'osl': 1024, 'precision': 'bf16'}|topic=decision-20260914t094955z-aa171c76|limit=5": {
+    "ts": 1789389855.873593,
+    "priors": []
+  },
+  "framework=vllm|model=ornith-1.5-35b-a3b|org=hyperloom|precision=bf16|workload={'conc': 64, 'isl': 1024, 'max_model_len': 6144, 'osl': 1024, 'precision': 'bf16'}|topic=integrate_patch|limit=5": {
+    "ts": 1789386443.8591697,
+    "priors": []
+  }
+}

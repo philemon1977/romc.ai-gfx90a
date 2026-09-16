@@ -1,0 +1,17 @@
+{
+  "model": "Ornith-1.5-397B-FP8",
+  "framework": "vllm",
+  "gpu_type": "mi250x",
+  "model_path": "/mnt/kioxia-cm6-3t8/ai/models/ornith-ai/Ornith-1.5-397B-FP8",
+  "tp": 8,
+  "workload": {
+    "conc": 64,
+    "isl": 1024,
+    "max_model_len": 6144,
+    "osl": 1024,
+    "precision": "fp8"
+  },
+  "precision": "fp8",
+  "phase": "PRELUDE",
+  "macro_cycle": 0
+}

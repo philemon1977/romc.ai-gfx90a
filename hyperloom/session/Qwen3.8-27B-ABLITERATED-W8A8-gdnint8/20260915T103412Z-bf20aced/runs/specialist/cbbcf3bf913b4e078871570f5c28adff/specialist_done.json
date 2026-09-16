@@ -1,0 +1,172 @@
+{
+  "_specialist_notes": [
+    "patch_safety_numeric:75.4%"
+  ],
+  "confidence": 0.72,
+  "domain": "static_recon_specialist",
+  "empty": false,
+  "gap_canonical_id": "gap.static_recon.prelude",
+  "new_findings": [
+    {
+      "accuracy_risk": "none (process finding)",
+      "domain_tags": [
+        "static_recon",
+        "environment",
+        "tooling"
+      ],
+      "expected_impact": "Prevents false-negative 'no bridge available' conclusions and prevents patching a tree the server never imports.",
+      "source": "/usr/local/bin/vllm-wu1w; diff of _aiter_ops.py and qwen_gdn_linear_attn.py between the two roots",
+      "what": "The LIVE framework tree for this session is /opt/envs/wu1w/lib/python3.12/site-packages/vllm (0.28.0), reached via /usr/local/bin/vllm-wu1w -> /opt/envs/wu1w/bin/python -m vllm.entrypoints.cli.main. The hint-list root /opt/envs/vllm/lib/python3.12/site-packages/vllm is a DIFFERENT, unbridged copy: its _aiter_ops.py has no is_aiter_attention_supported() carve-out and is_linear_enabled is still decorated with @if_aiter_supported. Static recon against the hinted root would have concluded AITER INT8 is dead here, which is wrong."
+    },
+    {
+      "accuracy_risk": "Enabling is_fused_moe_enabled / is_mla_enabled wholesale is UNSAFE here (MoE model absent, and per-box law: AITER fused-MoE is dead on gfx90a). A bridge must be per-predicate, not a blanket change to is_aiter_found_and_supported().",
+      "domain_tags": [
+        "static_recon",
+        "aiter",
+        "gfx90a",
+        "dispatch"
+      ],
+      "expected_impact": "Single highest-leverage bridge on this box: one gfx9-inclusive predicate (already written as is_aiter_attention_supported()) restores the whole AITER switch family, of which only is_linear_enabled is currently wired.",
+      "source": "/opt/envs/wu1w/lib/python3.12/site-packages/vllm/_aiter_ops.py:134-155, 195-207, 1644-1655, 1810+",
+      "what": "CDNA3 umbrella gate: is_aiter_found_and_supported() returns get_cdna_version() > 2, and get_cdna_version() returns 2 for gfx90a. The @if_aiter_supported decorator then returns None (not False, and not the real value) for 22 predicates: is_enabled, is_linear_fp8_enabled, is_fused_moe_enabled, is_fusion_moe_shared_experts_enabled, is_fused_moe_situv2_a8w4_enabled, topk_softmax_supports_fused_sigmoid, fuse_sigmoid_in_kernel, is_mla_enabled, is_mha_enabled, is_custom_all_reduce_enabled, is_shuffle_kv_cache_enabled, is_triton_unified_attn_enabled, is_fp8bmm_enabled, is_fp4bmm_enabled, is_linear_hipbmm_enabled, is_asm_fp4_gemm_dynamic_quant_enabled, is_triton_rotary_embed_enabled, is_triton_gemm_enabled, is_tgemm_enabled, are_gdn_triton_kernels_available, fused_moe_supports_gate_mode, get_moe_dispatch_policy. The class docstring claims the decorator checks is_on_gfx9(); the code does not - it requires CDNA3+."
+    },
+    {
+      "accuracy_risk": "Must reproduce the interleaved->split layout remap exactly; validate_data=True in the aiter kernel is the guard that would catch a wrong remap. Keep the accuracy gate on.",
+      "domain_tags": [
+        "static_recon",
+        "gdn",
+        "aiter",
+        "decode"
+      ],
+      "expected_impact": "48 of 64 layers are GDN and the workload is decode-dominated (conc 64, OSL 1024); a fused conv1d+delta-rule decode replaces several Triton launches per layer per step.",
+      "source": "/opt/envs/wu1w/lib/python3.12/site-packages/vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py:79-90, 1202-1246, 1566-1640; /opt/envs/wu1w/lib/python3.12/site-packages/vllm/model_executor/models/qwen3_5.py:148",
+      "what": "The AITER GDN decode fast path is doubly blocked for Qwen3.5: GDN_AITER_TRITON_AVAILABLE is False on gfx90a because are_gdn_triton_kernels_available() sits under the CDNA3 umbrella, and even when True, _forward_core_rocm only dispatches to _forward_core_decode_aiter when self.gqa_interleaved_layout is True, which qwen3_5.py hardcodes to False. The comment states the fused aiter reshape/conv kernel expects Qwen3-Next's interleaved GQA layout; aiter 0.1.19 does ship layout-agnostic causal_conv1d_decode.py and gated_delta_net/fused_rearrange_sigmoid_gdr.py, so the block is a layout-contract issue, not missing hardware support."
+    },
+    {
+      "accuracy_risk": "Low for the A/B; a cPA hd256 source bridge would need numerical validation (cPA had a documented sliding-window discrepancy history).",
+      "domain_tags": [
+        "static_recon",
+        "attention",
+        "rocm_attn"
+      ],
+      "expected_impact": "Affects the 16 full-attention layers only; modest ceiling but zero-patch testable via --attention-backend TRITON_ATTN.",
+      "source": "/opt/envs/wu1w/lib/python3.12/site-packages/vllm/platforms/rocm.py:385-421; /opt/envs/wu1w/lib/python3.12/site-packages/vllm/v1/attention/ops/chunked_prefill_paged_decode.py:463; baseline server.log line 61",
+      "what": "Full-attention decode does not use a hand-tuned kernel on this model: use_rocm_custom_paged_attention() requires head_size in {64,128}, head_dim here is 256, so ROCM_ATTN falls back to Triton chunked_prefill_paged_decode with a warning that omits the reason. gqa_ratio 6 is inside the supported 1..16 window, so head_size is the sole failing conjunct, and the on_cdna() branch does include CDNA2 - this is not a gfx90a capability gate."
+    },
+    {
+      "accuracy_risk": "Do NOT set VLLM_GDN_DECODE_KERNEL=cuda as a variant - with the var explicitly in os.environ the code raises ValueError instead of falling back, which would fail the launch.",
+      "domain_tags": [
+        "static_recon",
+        "gdn",
+        "build"
+      ],
+      "expected_impact": "Redirects the GDN decode effort away from a CUDA-op build toward the AITER Triton path; also means the shipped default for VLLM_GDN_DECODE_KERNEL is misleading on this box.",
+      "source": "/opt/envs/wu1w/lib/python3.12/site-packages/vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py:505-545; /opt/envs/wu1w/lib/python3.12/site-packages/vllm/_custom_ops.py:2779-2818; baseline server.log lines 30-31",
+      "what": "Fused CUDA/hip GDN decode is genuinely absent, not merely gated: the live tree already carries a gfx90a-shaped bridge (import fused_gdn_hip + hasattr(torch.ops.fused_gdn_hip,'fused_gdn_decode_post_conv_mtp') checks at qwen_gdn_linear_attn.py:13, 538, 1819 and _custom_ops.py:2798), but neither the module nor the symbol exists (0 hits in vllm/_C.abi3.so), so VLLM_GDN_DECODE_KERNEL=cuda (the default) logs 'is not built' and self-selects triton. Note the guard also requires head_k_dim==head_v_dim==128 (satisfied) and bf16 conv state, and it hard-raises if VLLM_GDN_DECODE_KERNEL is set explicitly."
+    },
+    {
+      "accuracy_risk": "none (observation)",
+      "domain_tags": [
+        "static_recon",
+        "baseline_evidence"
+      ],
+      "expected_impact": "Scopes the remaining headroom to GDN decode and the hd256 attention kernel - the INT8 GEMM dispatch is already on the fast path, so further GEMM-backend proposals would be redundant.",
+      "source": "runs/baseline/51ac28ff8aed4ad59746fdb889fae7bb/benchmark_vllm_20260915_103510/server.log lines 28-32, 61, 68-70, 242, 407-416",
+      "what": "Baseline runtime dispatch facts: AiterInt8ScaledMMLinearKernel IS selected for CompressedTensorsW8A8Int8 (proves the is_linear_enabled gfx90a carve-out is live and working); rms_norm IR priority is ['aiter','native']; enable_prefix_caching=True with 75.4% hit rate and Mamba cache mode 'align'; ROCM_ATTN auto-selected (only TURBOQUANT rejected); 294,473-token KV pool at 47.93x concurrency for 6144 tokens, KV usage 38-48% so no preemption pressure at conc 64."
+    },
+    {
+      "accuracy_risk": "Triton unified attention may be slower than chunked_prefill_paged_decode at hd256 on CDNA2 - do not propose the env without the predicate bridge.",
+      "domain_tags": [
+        "static_recon",
+        "attention",
+        "aiter"
+      ],
+      "expected_impact": "Explains why env-only AITER proposals fail silently; a unified-attention bridge is a second-order candidate behind the GDN one.",
+      "source": "/opt/envs/wu1w/lib/python3.12/site-packages/vllm/_aiter_ops.py:1900-1990; /opt/envs/wu1w/lib/python3.12/site-packages/vllm/v1/attention/backends/rocm_aiter_fa.py:784; /opt/envs/wu1w/lib/python3.12/site-packages/vllm/v1/attention/backends/rocm_aiter_unified_attn.py:312-315",
+      "what": "AITER's own attention stack is present but unreachable on this box because of the same CDNA3 umbrella: is_mha_enabled(), is_triton_unified_attn_enabled() and is_shuffle_kv_cache_enabled() all return None on gfx90a, and rocm_aiter_fa.py:784 independently returns get_cdna_version() > 2. Per-box law 11 (head_dim=256 vs ASM FA hd128/192) means ROCM_AITER_FA is still the wrong target, but VLLM_ROCM_USE_AITER_UNIFIED_ATTENTION=1 (default False) is blocked by is_triton_unified_attn_enabled() returning None, so the env is inert until the predicate is bridged - it is not a no-op because of a hardware limit."
+    }
+  ],
+  "patch_grounding": {},
+  "patches_written": [],
+  "proposal_set": [
+    {
+      "args_mode": "append",
+      "atomic": true,
+      "extra_args": "",
+      "extra_envs": {
+        "VLLM_ROCM_USE_AITER": "1",
+        "VLLM_ROCM_USE_AITER_LINEAR": "1"
+      },
+      "kb_evidence": [],
+      "name": "gdn-aiter-decode-bridge",
+      "pr_evidence": [],
+      "reason": "Env alone is a NO-OP (already in baseline): the AITER GDN decode fast path is un-bridged on gfx90a twice over. (a) rocm_aiter_ops.are_gdn_triton_kernels_available() is @if_aiter_supported => returns None because is_aiter_found_and_supported() demands get_cdna_version()>2 and gfx90a returns 2, so GDN_AITER_TRITON_AVAILABLE=False (qwen_gdn_linear_attn.py:79) and forward() takes forward_cuda, missing the fused conv1d+recurrent-decode kernels that ARE installed in aiter 0.1.19. (b) _forward_core_rocm gates the fast path on self.gqa_interleaved_layout, hardcoded False for Qwen3.5 (qwen3_5.py:148). Patch owner: mirror the existing is_aiter_attention_supported() carve-out used by is_linear_enabled (i.e. gate on on_gfx9()), and for the layout either drop validate_data=True or call the layout-agnostic aiter kernels separately (aiter/ops/triton/causal_conv1d_decode.py + gated_delta_net/fused_rearrange_sigmoid_gdr.py) on the already-split mixed_qkv/b/a. 48 of 64 layers are GDN and the workload is 1024-in/1024-out at conc 64 (decode-dominated), so this is the highest-ceiling bridge on the box.",
+      "remove_args": [],
+      "scope": "domain",
+      "source_evidence": [
+        "/opt/envs/wu1w/lib/python3.12/site-packages/vllm/_aiter_ops.py:134-155 is_aiter_found_and_supported -> get_cdna_version() > 2",
+        "/opt/envs/wu1w/lib/python3.12/site-packages/vllm/platforms/rocm.py:362-371 get_cdna_version(): on_gfx90a() -> 2",
+        "/opt/envs/wu1w/lib/python3.12/site-packages/vllm/_aiter_ops.py:195-207 if_aiter_supported returns None (falsy) when not is_aiter_found_and_supported()",
+        "/opt/envs/wu1w/lib/python3.12/site-packages/vllm/_aiter_ops.py:2009-2018 are_gdn_triton_kernels_available = @if_aiter_supported(_AITER_ENABLED and importable)",
+        "/opt/envs/wu1w/lib/python3.12/site-packages/vllm/_aiter_ops.py:210-219 is_aiter_attention_supported() = on_gfx9() carve-out (exists, gfx90a-inclusive)",
+        "/opt/envs/wu1w/lib/python3.12/site-packages/vllm/_aiter_ops.py:1832-1837 is_linear_enabled() uses the carve-out (the one bridge already landed)",
+        "/opt/envs/wu1w/lib/python3.12/site-packages/vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py:79-90 GDN_AITER_TRITON_AVAILABLE gate + imports",
+        "/opt/envs/wu1w/lib/python3.12/site-packages/vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py:1222-1236 gqa_interleaved_layout gate on _forward_core_decode_aiter",
+        "/opt/envs/wu1w/lib/python3.12/site-packages/vllm/model_executor/models/qwen3_5.py:148 gqa_interleaved_layout=False",
+        "/opt/envs/wu1w/lib/python3.12/site-packages/aiter (amd_aiter-0.1.19): ops/triton/causal_conv1d_update_single_token.py, causal_conv1d_decode.py, gated_delta_net/fused_rearrange_sigmoid_gdr.py all present",
+        "/opt/envs/wu1w/lib/python3.12/site-packages/vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py:1638-1690 current Triton fallback (fused_recurrent_gated_delta_rule_packed_decode)"
+      ],
+      "unset_envs": []
+    },
+    {
+      "args_mode": "append",
+      "atomic": false,
+      "extra_args": "--attention-backend TRITON_ATTN",
+      "extra_envs": {},
+      "kb_evidence": [],
+      "name": "decoder-attn-triton-vs-cpa-headsize",
+      "pr_evidence": [],
+      "reason": "Un-bridged-by-design-looking but silently-unreachable fast path: use_rocm_custom_paged_attention() hard-codes head_size == 64 or head_size == 128, so this model's head_dim=256 decoder falls off the tuned CDNA cPA kernel onto the generic Triton chunked_prefill_paged_decode path. The baseline log prints only 'Cannot use ROCm custom paged attention kernel, falling back to Triton implementation.' with no head_size reason, which is why it reads as a hardware limit rather than a one-constant guard. gqa_ratio here is 24Q/4KV = 6, inside cPA's 1..16 range, so head_size is the ONLY failing conjunct. No gfx90a-specific predicate is involved (the on_cdna() branch does cover CDNA2), and no source patch is needed to A/B it: if cPA hd256 is correct-but-untuned it may beat the generic Triton path; if the head_dim is genuinely load-bearing the variant crashes or loses, which is itself the answer. Cheap, reversible, zero-patch probe of the 16 full-attention layers.",
+      "remove_args": [],
+      "scope": "domain",
+      "source_evidence": [
+        "/opt/envs/wu1w/lib/python3.12/site-packages/vllm/platforms/rocm.py:385-421 use_rocm_custom_paged_attention(): on_cdna() branch requires (head_size == 64 or head_size == 128) and 1 <= gqa_ratio <= 16",
+        "/opt/envs/wu1w/lib/python3.12/site-packages/vllm/v1/attention/ops/chunked_prefill_paged_decode.py:463 warning 'Cannot use ROCm custom paged attention kernel, falling back to Triton implementation.'",
+        "/opt/envs/wu1w/lib/python3.12/site-packages/vllm/v1/attention/backends/rocm_attn.py:446 chunked_prefill_paged_decode(...) - the fallback actually executed per decode step",
+        "baseline server.log line 61 confirms the cPA rejection at runtime; line 32 shows ROCM_ATTN selected over TRITON_ATTN",
+        "/opt/envs/wu1w/lib/python3.12/site-packages/vllm/model_executor/models/qwen3_5.py head_dim=256 family (see also model_arch.json law 11: AITER ASM FA covers hd128/hd192x128 only)"
+      ],
+      "unset_envs": []
+    },
+    {
+      "args_mode": "append",
+      "atomic": false,
+      "extra_args": "",
+      "extra_envs": {
+        "VLLM_ENABLE_FLA_PACKED_RECURRENT_DECODE": "0"
+      },
+      "kb_evidence": [],
+      "name": "gdn-packed-recurrent-decode-ab",
+      "pr_evidence": [],
+      "reason": "Cheap env-only A/B that de-risks proposal 1 and probes the same 48-layer hot path. The switch defaults ON, routing every GDN decode step through fused_recurrent_gated_delta_rule_packed_decode (3-D q/k/v + ssm_state_indices gather, built for NVIDIA Hopper wgmma per its own comment) instead of the 2-D path. On gfx90a/CDNA2 the packed 3-D indexing is a plausible pessimization rather than a win, and this is the exact kernel the AITER bridge would replace - so its sign tells the patch owner whether the GDN decode kernel choice is worth a patch at all. No capability predicate involved, so it is a pure routing A/B with a low KEEP threshold (1.0%) upside if the 2-D path schedules better on CDNA2.",
+      "remove_args": [],
+      "scope": "domain",
+      "source_evidence": [
+        "/opt/envs/wu1w/lib/python3.12/site-packages/vllm/envs.py:129,1210-1212 VLLM_ENABLE_FLA_PACKED_RECURRENT_DECODE default True",
+        "/opt/envs/wu1w/lib/python3.12/site-packages/vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py:491-493 self.enable_packed_recurrent_decode = envs.VLLM_ENABLE_FLA_PACKED_RECURRENT_DECODE",
+        "/opt/envs/wu1w/lib/python3.12/site-packages/vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py:1638-1690 _forward_core_decode_non_spec -> fused_recurrent_gated_delta_rule_packed_decode",
+        "third_party/flash_linear_attention/ops/fused_recurrent.py: 3-D qkv path commented as required for NVIDIA Hopper wgmma, 2-D otherwise"
+      ],
+      "unset_envs": []
+    }
+  ],
+  "residual_questions": [
+    "RecipeKB/Coordinator should confirm the authoritative framework_source_roots: the live server imports /opt/envs/wu1w/lib/python3.12/site-packages/vllm, but the dispatch hint list names /opt/envs/vllm/.... Any patch authored against the hinted root is dead code.",
+    "Does aiter 0.1.19's fused_reshape_causal_conv1d_update_single_token(validate_data=True) accept a Qwen3.5-order [q,k,v] qkvz packing if the heads are pre-permuted, or is the interleaved-GQA assumption hard? If hard, is the two-kernel route (causal_conv1d_decode + fused_rearrange_sigmoid_gated_delta_rule on already-split mixed_qkv/b/a) numerically equivalent to the current Triton path?",
+    "Is upstream vLLM >0.28 widening is_aiter_found_and_supported() to include gfx90a (i.e. is my proposed per-predicate bridge already upstream), or is the is_aiter_attention_supported() carve-out a local downstream patch that will keep drifting?",
+    "No fresh roofline snapshot was available at recon time - which kernel dominates decode step time between the 48 Triton GDN recurrences and the AITER a8w8 GEMMs? That ranking decides whether the GDN AITER bridge or a GEMM-shape/scheduling lever is the right next dispatch.",
+    "Prior REVERT list is empty and no lessons are recorded for this model+hw - has VLLM_ENABLE_FLA_PACKED_RECURRENT_DECODE=0 or --attention-backend TRITON_ATTN been benched on gfx90a before? (Both are cheap env/arg-only probes; a recorded prior result would let me drop proposal 3.)"
+  ],
+  "summary": "Read-only recon of the LIVE tree (/opt/envs/wu1w/.../vllm, NOT the hinted /opt/envs/vllm). gfx90a => get_cdna_version()==2, so is_aiter_found_and_supported() (CDNA3+) is False and all 22 @if_aiter_supported predicates silently return None. Only is_linear_enabled()+register_ops_once() got the gfx90a is_aiter_attention_supported() carve-out, so AITER INT8 ScaledMM is live while the AITER GDN decode, MHA and unified-attn switches stay dead. Baseline log confirms: GDN decode=triton, cPA rejected (head_size 256) -> Triton paged decode, 75.4% prefix-cache hit.",
+  "ts": "2026-09-15T11:40:11.915117+00:00"
+}

@@ -1,0 +1,50 @@
+{
+  "end_time": "2026-09-14T13:57:19+00:00",
+  "ext": {
+    "checks": [
+      {
+        "detail": {},
+        "gate_id": "unsupported_model_arch",
+        "order": 1,
+        "skip_reason": "resume",
+        "status": "skipped"
+      },
+      {
+        "detail": {},
+        "gate_id": "model_config_compat",
+        "order": 2,
+        "skip_reason": "resume",
+        "status": "skipped"
+      },
+      {
+        "detail": {},
+        "gate_id": "context_window",
+        "order": 3,
+        "skip_reason": "resume",
+        "status": "skipped"
+      }
+    ],
+    "degraded": {
+      "active": false,
+      "warnings": []
+    },
+    "failed_gate_id": null,
+    "run_kind": "resume",
+    "skip_reason": "resume",
+    "workload": {
+      "allow_mm_text_fallback": true,
+      "framework": "vllm",
+      "gpu_type": "",
+      "headroom_env": "HYPERLOOM_CONTEXT_HEADROOM_TOKENS",
+      "headroom_tokens": 512,
+      "isl": 1024,
+      "model_name": "Qwen3.8-27B-ABLITERATED-W8A8-gdnint8",
+      "model_path": "/mnt/stripe-3mix-3t2/models/davetha/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8",
+      "osl": 1024
+    }
+  },
+  "kind": "model_gate",
+  "start_time": "2026-09-14T13:57:19+00:00",
+  "status": "skipped",
+  "type": "model_gate"
+}

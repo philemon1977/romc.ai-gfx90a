@@ -1,0 +1,1661 @@
+{
+  "baseline_accuracy": 0.0,
+  "baseline_perf": {},
+  "baseline_tput": 0.0,
+  "benchmark_mode": "synthetic",
+  "compute_partition": {},
+  "crash_count": 0,
+  "cumulative_gain_validated": 0.0,
+  "cumulative_gain_validated_stack_len": 0,
+  "cumulative_gain_validated_ts": "",
+  "current_best": {},
+  "degraded_mode": true,
+  "event_counts_by_topic": {
+    "advice": 3,
+    "alert": 18,
+    "decision": 7,
+    "delegated_result": 9,
+    "event": 4,
+    "heartbeat": 24,
+    "lease_expired": 5,
+    "observation": 47,
+    "proposal": 7,
+    "review_verdict": 7,
+    "strategy_change": 2
+  },
+  "external_baseline": {
+    "all_concurrencies": [],
+    "best": null,
+    "fetched_at": "2026-09-14T13:49:44Z",
+    "query": {
+      "framework": "",
+      "gpu": "",
+      "isl": 0,
+      "model": "",
+      "osl": 0,
+      "precision": ""
+    },
+    "reason": "model_mapping_miss",
+    "row_count": 0,
+    "source": "https://inferencex.semianalysis.com/api/v1",
+    "status": "skipped",
+    "warning": "model name mapping miss for '/mnt/stripe-3mix-3t2/models/davetha/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8'; no InferenceX name found"
+  },
+  "framework": "vllm",
+  "has_unvalidated_keeps": false,
+  "highlights": [
+    {
+      "from_agent": "robustness",
+      "payload": {
+        "detail": {
+          "evidence": {
+            "cap_sec": 324,
+            "elapsed_sec": 2326,
+            "phase": "PRELUDE",
+            "used_pct": 718.0
+          },
+          "severity": "medium",
+          "source": "shared_state",
+          "subject": {},
+          "suggestion": "wind down this phase or escalate a phase change",
+          "symptom": "phase_budget_nearly_exhausted"
+        },
+        "severity": "medium",
+        "summary": "PRELUDE phase budget 718% consumed (2326s of 324s cap)"
+      },
+      "summary": "sev=medium PRELUDE phase budget 718% consumed (2326s of 324s cap)",
+      "topic": "alert"
+    },
+    {
+      "from_agent": "robustness",
+      "payload": {
+        "detail": {
+          "evidence": {
+            "count": 1,
+            "pattern": "RuntimeError: Engine core initialization failed",
+            "samples": [
+              "[server.log] (APIServer pid=22117) RuntimeError: Engine core initialization failed. See root cause above. Failed core proc(s): {}"
+            ]
+          },
+          "severity": "high",
+          "source": "local",
+          "subject": {
+            "pattern": "RuntimeError: Engine core initialization failed"
+          },
+          "suggestion": "delegate(recover, force_gpu_cleanup=True) or escalate strategy",
+          "symptom": "log_error_pattern"
+        },
+        "severity": "high",
+        "summary": "log error pattern 'RuntimeError: Engine core initialization failed' matched 1 times"
+      },
+      "summary": "sev=high log error pattern 'RuntimeError: Engine core initialization failed' matched 1 times",
+      "topic": "alert"
+    },
+    {
+      "from_agent": "robustness",
+      "payload": {
+        "detail": {
+          "evidence": {
+            "count": 9,
+            "from": "coordinator",
+            "rule_distribution": {
+              "enablement_round_in_flight": 6,
+              "execution_order": 1,
+              "integrate_patch_requires_critic_verdict": 1,
+              "request_target": 1
+            },
+            "top_rule": "enablement_round_in_flight"
+          },
+          "severity": "medium",
+          "source": "coordinator_events",
+          "subject": {
+            "agent": "coordinator"
+          },
+          "suggestion": "escalate_strategy_change to review the action catalogue / role config",
+          "symptom": "repeated_policy_denied"
+        },
+        "severity": "medium",
+        "summary": "agent coordinator hit policy_denied 9 times (>= 3); top rule=enablement_round_in_flight"
+      },
+      "summary": "sev=medium agent coordinator hit policy_denied 9 times (>= 3); top rule=enablement_round_in_flight",
+      "topic": "alert"
+    },
+    {
+      "from_agent": "robustness",
+      "payload": {
+        "detail": {
+          "evidence": {
+            "build_count": 6,
+            "jit_dir": "/opt/envs/vllm/lib/python3.12/site-packages/aiter/jit",
+            "stale_build_threshold": 1,
+            "stale_ticks": 16
+          },
+          "severity": "medium",
+          "source": "local",
+          "subject": {},
+          "suggestion": "observe; if it persists, suggest cleaning <jit_dir>/build/ manually between runs",
+          "symptom": "aiter_jit_build_stuck"
+        },
+        "severity": "medium",
+        "summary": "aiter jit build_count=6 unchanged for 16 consecutive ticks; a prior hipcc invocation likely crashed mid-build"
+      },
+      "summary": "sev=medium aiter jit build_count=6 unchanged for 16 consecutive ticks; a prior hipcc invocation likely crashed mid-build",
+      "topic": "alert"
+    },
+    {
+      "from_agent": "robustness",
+      "payload": {
+        "detail": {
+          "evidence": {
+            "count": 1,
+            "pattern": "RuntimeError",
+            "samples": [
+              "[server.log] (APIServer pid=22117)     raise RuntimeError("
+            ]
+          },
+          "severity": "medium",
+          "source": "local",
+          "subject": {
+            "pattern": "RuntimeError"
+          },
+          "suggestion": "review log evidence with RCA before further action",
+          "symptom": "log_error_pattern"
+        },
+        "severity": "medium",
+        "summary": "log error pattern 'RuntimeError' matched 1 times"
+      },
+      "summary": "sev=medium log error pattern 'RuntimeError' matched 1 times",
+      "topic": "alert"
+    },
+    {
+      "from_agent": "robustness",
+      "payload": {
+        "detail": {
+          "evidence": {
+            "count": 1,
+            "pattern": "Address already in use",
+            "samples": [
+              "[server.log] (APIServer pid=11444) OSError: [Errno 98] Address already in use"
+            ]
+          },
+          "severity": "medium",
+          "source": "local",
+          "subject": {
+            "pattern": "Address already in use"
+          },
+          "suggestion": "review log evidence with RCA before further action",
+          "symptom": "log_error_pattern"
+        },
+        "severity": "medium",
+        "summary": "log error pattern 'Address already in use' matched 1 times"
+      },
+      "summary": "sev=medium log error pattern 'Address already in use' matched 1 times",
+      "topic": "alert"
+    },
+    {
+      "from_agent": "robustness",
+      "payload": {
+        "detail": {
+          "evidence": {
+            "budget_minutes": 180.0,
+            "cumulative_gain_validated": 0.0,
+            "deadline_hard_cutoff_minutes": 5.0,
+            "elapsed_minutes": 38.1,
+            "remaining_minutes": 4.5
+          },
+          "severity": "high",
+          "source": "local",
+          "subject": {},
+          "suggestion": "propose report immediately; any new task started now will be cut by the deadline supervisor",
+          "symptom": "deadline_hard_cutoff"
+        },
+        "severity": "high",
+        "summary": "hard deadline cutoff: only 4.5min remain (<= 5min); finalize now"
+      },
+      "summary": "sev=high hard deadline cutoff: only 4.5min remain (<= 5min); finalize now",
+      "topic": "alert"
+    },
+    {
+      "from_agent": "coordinator",
+      "payload": {
+        "action_name": "integrate_patch",
+        "from_agent": "coordinator",
+        "kind": "approved_proposal",
+        "proposal_msg_id": "2a8dce703fd541beaa7698ae0047b91d",
+        "task_id": "118f40f21916486d84642ab0dee3b11d"
+      },
+      "summary": "kind=approved_proposal action=integrate_patch task=118f40f2",
+      "topic": "decision"
+    },
+    {
+      "from_agent": "critic",
+      "payload": {
+        "advice_text": "Proceed only if orchestration requires framework-agent enablement before PRELUDE baseline/target_analysis; otherwise re-sequence after baseline. The predicted_gain_pct field was ignored as a non-authoritative payload-shape claim.",
+        "notes": [
+          "KB priors are silent; cold-start enablement is not blocked by that alone.",
+          "Do not require throughput before/after or a restated rollback plan for enablement_landing.",
+          "If baseline/target_analysis has not established the model state, return to PRELUDE sequencing before landing."
+        ],
+        "packet_evidence": [
+          "params.enablement",
+          "params.framework_agent_authoring",
+          "params.provenance",
+          "params.enablement_base_patches",
+          "predicted_gain_pct"
+        ],
+        "reasoning": "Enablement landing is structurally eligible: specialist provenance, framework-agent authoring, enablement tag, and no contradicting KB prior. However, integrate_patch is atypical for PRELUDE, and the self-reported predicted_gain_pct is non-authoritative; this is a phase/payload-shape concern, not a reject.",
+        "risks": [
+          {
+            "severity": "minor",
+            "summary": "Atypical PRELUDE action plus non-authoritative predicted gain field."
+          }
+        ],
+        "target_proposal_msg_id": "2a8dce703fd541beaa7698ae0047b91d",
+        "verdict": "advise"
+      },
+      "summary": "verdict=advise reason=Enablement landing is structurally eligible: specialist prov",
+      "topic": "review_verdict"
+    },
+    {
+      "from_agent": "coordinator",
+      "payload": {
+        "action_name": "integrate_patch",
+        "needs_review": true,
+        "params": {
+          "domain": "enablement_specialist",
+          "enablement": true,
+          "enablement_base_patches": [
+            "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/specialist/b8dc969b654d45e2a1e07acf784a2a4e/patches/001_reconcile_rocm_device_masks.patch"
+          ],
+          "enablement_before_signature": {
+            "bridge_layer": "",
+            "confidence": 0.0,
+            "kind": "unknown",
+            "offending_file": "/opt/envs/wu1w/lib/python3.12/site-packages/vllm/v1/engine/core.py",
+            "offending_symbol": "",
+            "raw_excerpt": "Traceback (most recent call last): (EngineCore pid=22804) ERROR 09-14 15:52:19 [core.py:1346] File \"/opt/envs/wu1w/lib/python3.12/site-packages/vllm/v1/engine/core.py\", line 1315, in run_engine_core",
+            "secondary_kinds": []
+          },
+          "enablement_setup_commands": [
+            "/opt/venv/bin/python3 -m pip install --no-cache-dir --break-system-packages --retries 8 --timeout 120 'huggingface_hub==1.29.0' 'transformers==5.16.1'"
+          ],
+          "framework_agent_authoring": true,
+          "gap_canonical_id": "gap.enablement.unknown",
+          "gap_layer": "framework",
+          "lever_kind": "enablement",
+          "patch_name": "",
+          "provenance": "specialist:enablement_specialist",
+          "source_phase": "FRAMEWORK_AGENT",
+          "specialist_task_id": "4633d7725f7b45148bdc2e3905cd54db"
+        },
+        "predicted_gain_pct": 0.0,
+        "provenance": "specialist"
+      },
+      "summary": "action_name=integrate_patch",
+      "topic": "proposal"
+    },
+    {
+      "from_agent": "coordinator",
+      "payload": {
+        "error": null,
+        "kind": "specialist",
+        "result": {
+          "allocated_gpu_ids": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7
+          ],
+          "domain": "enablement_specialist",
+          "done_path": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/specialist/4633d7725f7b45148bdc2e3905cd54db/specialist_done.json",
+          "error": "",
+          "gap_canonical_id": "gap.enablement.unknown",
+          "notes": [
+            "worktree_setup_failed:no_git_framework_source_root"
+          ],
+          "runner_status": "succeeded",
+          "specialist_done": {
+            "_specialist_notes": [
+              "worktree_setup_failed:no_git_framework_source_root"
+            ],
+            "allocated_gpu_ids": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7
+            ],
+            "artifacts_written": [],
+            "confidence": 0.82,
+            "domain": "enablement_specialist",
+            "empty": false,
+            "gap_canonical_id": "gap.enablement.unknown",
+            "new_findings": [
+              {
+                "accuracy_risk": "none",
+                "domain_tags": [
+                  "rocm",
+                  "device-visibility",
+                  "enablement",
+                  "vllm",
+                  "gfx90a",
+                  "misclassification"
+                ],
+                "expected_impact": "Removes the 'unknown' label and pins the fix to exactly one layer; unblocks every downstream round (boot + eval + throughput) which currently cannot start at all.",
+                "source": "/opt/envs/wu1w/lib/python3.12/site-packages/torch/cuda/__init__.py:830-861 (_parse_visible_devices); runs/baseline/0668d71b42d54c559c36634e823a55a5/benchmark_vllm_20260914_155130/server.log; in-session torch probes of all four mask combinations",
+                "what": "The 'unknown' launch failure is a MISCLASSIFIED, fully-legible crash: `RuntimeError: No CUDA GPUs are available` at vllm/v1/worker/gpu_worker.py:379 -> torch._C._cuda_init(), in the 15:51 gate attempt (runs/baseline/0668d71b.../benchmark_vllm_20260914_155130/server.log). The mechanism is a ROCm device-mask index-space contradiction, NOT model-side: Qwen3_5ForConditionalGeneration resolves fine (server.log line 'Resolved architecture: Qwen3_5ForConditionalGeneration'), weights/graphs are never reached. Two leak shapes, both reproduced in-session against the live serving interpreter /opt/envs/wu1w: (a) ROCR='0' + HIP='2' -> torch parses [2], device_count()==1 but is_available()==False -> 'No CUDA GPUs are available' (the 15:51 failure); (b) ROCR='0' + HIP='0,1,2,3,4,5,6,7' -> torch.cuda._parse_visible_devices() RAISES 'HIP_VISIBLE_DEVICES contains more devices than ROCR_VISIBLE_DEVICES'. Shape (b) is what MY subprocess inherits today (HIP/ROCR both 8-wide), so the harness-wide leak is live and reproducible."
+              },
+              {
+                "accuracy_risk": "none",
+                "domain_tags": [
+                  "hyperloom",
+                  "env_safety",
+                  "allowlist",
+                  "integration",
+                  "magpie",
+                  "root_cause"
+                ],
+                "expected_impact": "Stops the next round from re-proposing an env pin as the baseline remedy (it is only honoured on the variant path) and identifies the one shared layer that can fix it durably.",
+                "source": "hyperloom/common/visible_devices.py:52-96; hyperloom/common/env_safety.py:286-357 (is_allowed_variant_env_key / BLOCKED_* sets, probed live in-session); executors/_workload_envs.py:1054-1097; executors/baseline.py:3519-3532; executors/_grid_runner.py:664-671; runs/baseline/48e0ae2b0af74c03b4b40c847fc99d3b/baseline_config.with_envs.yaml and runs/baseline/0668d71b42d54c559c36634e823a55a5/baseline_config.with_envs.yaml; runs/integrate_patch/*/patch_backups/",
+                "what": "WHY THE PRIOR ROUND'S FIX DID NOT HOLD \u2014 two verified reasons, and they explain the whole stall_streak. (1) The accepted env pin never reached the BASELINE launch. Verified semantics: HIP/CUDA_VISIBLE_DEVICES are in GPU_MASK_ENV_NAMES (hyperloom/common/visible_devices.py:96) which is ORed into BLOCKED_EXTERNAL_ENV_NAMES (common/env_safety.py:286-289, used by remote-recipe/framework-switch sanitisation) but are NOT in BLOCKED_VARIANT_ENV_NAMES, so is_allowed_variant_env_key('HIP_VISIBLE_DEVICES') == True and the materializer would keep them if handed. Decisive artefact: they were NOT handed to the two failing baseline attempts \u2014 runs/baseline/48e0ae2b(15:14)/baseline_config.with_envs.yaml and 0668d71b(15:51)/... both render `ROCR_VISIBLE_DEVICES: '0'` with NO HIP/CUDA key, while baseline.py:3519 takes them only from params['extra_envs']. The grid path does apply a variant's extra_envs unfiltered (_grid_runner.py:670), which is exactly why the prior round's own rebench SUCCEEDED while the gate's baseline kept failing: the fix was only ever wired into the variant path, and the gate is sealed against the baseline. A source-level fix in the layer both paths share is therefore required, not another env pin. (2) The kept Magpie patch is not permanent: integrate_patch backs up the target (patch_backups/*__0000.bak) and restores it on REVERT, so grep -c _reconcile_rocm_device_masks /opt/envs/vllm/.../Magpie/modes/benchmark/benchmarker.py == 0 right now \u2014 the tree is unpatched again."
+              },
+              {
+                "accuracy_risk": "none \u2014 it changes only which physical device the child is allowed to see (already the harness's intent via ROCR), no numerics, no kernels, no sampling.",
+                "expected_impact": "Clears the current boot failure durably on the baseline AND variant paths; this is the enabling delta for the whole session (nothing can be measured or evaluated until the server boots).",
+                "source": "patches/002_reconcile_inherited_device_masks.patch (this round); verified with `git apply --check` + `patch --dry-run --fuzz=0` against the live tree",
+                "what": "AUTHORED AND PROVEN: patches/002_reconcile_inherited_device_masks.patch (165 lines, +129/-0, `git apply --check` PASS against the live /opt/envs/vllm/lib/python3.12/site-packages tree). It adds reconcile_rocm_device_masks() to hyperloom/orchestrator/actions/executors/_workload_envs.py \u2014 the single layer that OWNS the ROCR pin and that EVERY launch path (baseline.py:3528, integrate_patch.py:4503, explore/grid) traverses, so unlike a variant extra_envs it cannot be scrubbed \u2014 and calls it (i) immediately after the TP-derived ROCR write, (ii) once more at the final sink before yaml.safe_dump, plus a call in _grid_runner.py after the variant extra_envs merge so an explicit variant pin is honoured and then validated. The key design point: the leak lives in the PARENT os.environ, not in the YAML, so the helper reads `envs` first and falls back to os.environ, and WRITES the corrected logical 0..N-1 mask into benchmark.envs (which Magpie overlays on os.environ.copy() at Magpie/modes/benchmark/benchmarker.py:776,800) so it overrides the inherited carve. It is conservative: inert off ROCm (no /dev/kfd or /sys/module/amdgpu), inert with no effective ROCR mask, inert when the mask already validly indexes the ROCR set (an intentional TP=2 multi-card launch stays 2-wide), it never modifies/removes ROCR, it leaves UUID masks to the runtime, and it is wrapped in a blanket try/except so env hygiene can never itself break a launch."
+              },
+              {
+                "accuracy_risk": "none",
+                "expected_impact": "Demonstrates the gap is cleared rather than shifted; the Coordinator's own gate run should now boot.",
+                "source": "scratch/lp2/variant_00_specialist-rebench/config.yaml + benchmark_vllm_20260914_163507/server.log + scratch/lp2.out (this round)",
+                "what": "END-TO-END PROOF ON THE REAL GATE PATH (not a hand-rolled server). With the patch overlaid via PYTHONPATH and the parent env deliberately re-leaking the exact 15:51 killer (ROCR_VISIBLE_DEVICES=0 HIP_VISIBLE_DEVICES=2 CUDA_VISIBLE_DEVICES=2), running hyperloom.orchestrator.specialists.rebench (i.e. Magpie -> InferenceX vllm_mi300x.sh -> /usr/local/bin/vllm-wu1w, the same chain the Coordinator benches) on my leased card: the materializer logs `materialize: ROCR_VISIBLE_DEVICES='0' re-indexes the visible set to 0..0; reconciled HIP_VISIBLE_DEVICES: '2' -> '0'; CUDA_VISIBLE_DEVICES: '2' -> '0'`; the rendered variant config.yaml carries ROCR='0' HIP='0' CUDA='0'; server.log contains ZERO occurrences of 'No CUDA GPUs are available' / 'HIP_VISIBLE_DEVICES contains more devices' / 'EngineCore failed'; and it reached `init engine (profile, create kv cache, warmup model) took 167.61 s (compilation: 91.93 s)` followed by `Application startup complete` \u2014 strictly past gpu_worker.py:379, the exact line where the sealed baseline died. The control (unpatched) at 15:51 died at that line in 26 s."
+              },
+              {
+                "accuracy_risk": "none",
+                "domain_tags": [
+                  "triton",
+                  "rocm",
+                  "symptom",
+                  "misclassification"
+                ],
+                "expected_impact": "Prevents a wasted Rung-5 targeted-build request on a phantom kernel gap.",
+                "source": "grep -c hip_utils over runs/baseline/0668d71b.../server.log (2) vs scratch/lp2/.../server.log (0) and runs/specialist/30ccc757.../scratch/e2e_fixed/.../server.log (0)",
+                "what": "SECONDARY, NOT-YET-BLOCKING observation (recorded so a future round does not mistake it for the root cause): `Triton cache error: compiled module hip_utils.so could not be loaded` appears twice in the failing 15:51 log but ZERO times in the successful patched boot above, and zero times in the prior round's successful boot. It is a downstream symptom of the same dead device context (Triton's ROCm helper cannot dlopen without a usable agent), not an independent kernel-availability gap \u2014 no AITER/HIP build is needed. Corroborating: /root/.triton/cache/*/hip_utils.cpython-312-x86_64-linux-gnu.so exists on disk and the aiter a8w8 ScaledMM path selects and runs normally in the successful boot."
+              }
+            ],
+            "patch_grounding": {
+              "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/specialist/4633d7725f7b45148bdc2e3905cd54db/patches/002_reconcile_inherited_device_masks.patch": "applies"
+            },
+            "patches_written": [
+              "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/specialist/4633d7725f7b45148bdc2e3905cd54db/patches/002_reconcile_inherited_device_masks.patch"
+            ],
+            "proposal_set": [],
+            "residual_questions": [
+              "Patch 002 is the mechanism; please do not rely on the accepted env pin alone. Measured: is_allowed_variant_env_key('HIP_VISIBLE_DEVICES')==True, so a pin survives materialisation IF handed \u2014 but baseline.py:3519 only reads params['extra_envs'], and both failing baselines (48e0ae2b 15:14, 0668d71b 15:51) rendered ROCR='0' with no HIP/CUDA key, i.e. the accumulated accepted_config never reached the baseline launch, only the grid/variant path (_grid_runner.py:670). That asymmetry is why the prior round's rebench passed while the gate kept failing. With 002 integrated the pin is redundant (002 writes the same logical mask on every path); if 002 is rejected, the pin alone will not rescue the baseline.",
+              "The kept Magpie patch 001 is currently NOT live in /opt/envs/vllm/.../Magpie/modes/benchmark/benchmarker.py (grep -c _reconcile_rocm_device_masks == 0) because integrate_patch restores patch_backups on REVERT. Patch 002 deliberately does NOT depend on 001 and fixes a path 001 cannot reach (001 lives in Magpie's child-env builder; 002 fixes the YAML hyperloom renders, so the correct mask is what gets handed to Magpie in the first place). Are stacked patches meant to be re-applied every attempt, or should I have assumed 001 is gone?",
+              "Confirm the gate's `gpu_selection.auto: false` is intentional: with auto:true, Magpie's _apply_gpu_selection (benchmarker.py:513-523) already writes the CORRECT logical HIP mask and this whole class of failure cannot occur. The session pins ROCR=0 in the YAML but exports an 8-wide HIP/ROCR lease, which is the specific combination that produces the contradiction.",
+              "Unchanged carry-over from the prior round (I did not touch the eval contract): this checkpoint's chat_template.jinja injects a ~1.2k-token operator system prompt plus CoT instructions, and generation_config.json forces temperature=1.0/top_k=20/top_p=0.95 (vLLM logs 'Default vLLM sampling parameters have been overridden'). If the accuracy gate runs /v1/chat/completions against max_model_len=6144 that prefix plus a reasoning tail is a real eval risk once the server boots."
+            ],
+            "setup_commands": [],
+            "summary": "Reclassified 'unknown' -> ROCm device-mask index-space contradiction (torch 'No CUDA GPUs are available' at gpu_worker.py:379). Model arch is fine. Prior fix could not hold: HIP/CUDA are scrubbed from every untrusted env path (GPU_MASK_ENV_NAMES subset BLOCKED_EXTERNAL_ENV_NAMES) and the materializer only pins ROCR, so both failing baselines render ROCR=0 with NO HIP/CUDA key while the lease leaks a physical carve. Authored patch 002 in the layer that owns the ROCR pin; proven on the real Magpie+InferenceX path under the exact leak: boots to 'Application startup complete', 0 device errors."
+          },
+          "task_id": "4633d7725f7b45148bdc2e3905cd54db",
+          "transcript_path": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/specialist/4633d7725f7b45148bdc2e3905cd54db/transcript.jsonl",
+          "turns_used": 1,
+          "workspace": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/specialist/4633d7725f7b45148bdc2e3905cd54db"
+        },
+        "state": "succeeded",
+        "task_id": "4633d7725f7b45148bdc2e3905cd54db"
+      },
+      "summary": "kind=specialist state=succeeded tput=None decision=None",
+      "topic": "delegated_result"
+    },
+    {
+      "from_agent": "robustness",
+      "payload": {
+        "detail": {
+          "evidence": {
+            "cap_sec": 324,
+            "elapsed_sec": 345,
+            "phase": "PRELUDE",
+            "used_pct": 107.0
+          },
+          "severity": "medium",
+          "source": "shared_state",
+          "subject": {},
+          "suggestion": "wind down this phase or escalate a phase change",
+          "symptom": "phase_budget_nearly_exhausted"
+        },
+        "severity": "medium",
+        "summary": "PRELUDE phase budget 107% consumed (345s of 324s cap)"
+      },
+      "summary": "sev=medium PRELUDE phase budget 107% consumed (345s of 324s cap)",
+      "topic": "alert"
+    },
+    {
+      "from_agent": "robustness",
+      "payload": {
+        "detail": {
+          "evidence": {
+            "count": 1,
+            "pattern": "RuntimeError: Engine core initialization failed",
+            "samples": [
+              "[server.log] (APIServer pid=22117) RuntimeError: Engine core initialization failed. See root cause above. Failed core proc(s): {}"
+            ]
+          },
+          "severity": "high",
+          "source": "local",
+          "subject": {
+            "pattern": "RuntimeError: Engine core initialization failed"
+          },
+          "suggestion": "delegate(recover, force_gpu_cleanup=True) or escalate strategy",
+          "symptom": "log_error_pattern"
+        },
+        "severity": "high",
+        "summary": "log error pattern 'RuntimeError: Engine core initialization failed' matched 1 times"
+      },
+      "summary": "sev=high log error pattern 'RuntimeError: Engine core initialization failed' matched 1 times",
+      "topic": "alert"
+    },
+    {
+      "from_agent": "coordinator",
+      "payload": {
+        "error": null,
+        "kind": "baseline",
+        "result": {
+          "error": "(EngineCore pid=22804) Triton cache error: compiled module hip_utils.so could not be loaded\n(EngineCore pid=22804) INFO 09-14 15:52:19 [registry.py:141] All limits of multimodal modalities supported by the model are set to 0, running in text-only mode.\n(EngineCore pid=22804) ERROR 09-14 15:52:19 [core.py:1346] EngineCore failed to start.\n(EngineCore pid=22804) ERROR 09-14 15:52:19 [core.py:1346] Traceback (most recent call last):\n(EngineCore pid=22804) ERROR 09-14 15:52:19 [core.py:1346]   File \"/opt/envs/wu1w/lib/python3.12/site-packages/vllm/v1/engine/core.py\", line 1315, in run_engine_core",
+          "error_class": "server_init_dead",
+          "materialized_config": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/baseline/0668d71b42d54c559c36634e823a55a5/baseline_config.with_envs.yaml",
+          "nonfatal_warnings": [
+            "benchmark_report_success_false"
+          ],
+          "output_dir": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/baseline/0668d71b42d54c559c36634e823a55a5",
+          "report_path": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/baseline/0668d71b42d54c559c36634e823a55a5/benchmark_vllm_20260914_155130/benchmark_report.json",
+          "reported_success": false,
+          "result_dir": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/baseline/0668d71b42d54c559c36634e823a55a5",
+          "returncode": 1,
+          "run_eval_disabled": false,
+          "status": "failed",
+          "subprocess_runtime_sec": 89.24,
+          "workspace": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/baseline/0668d71b42d54c559c36634e823a55a5/benchmark_vllm_20260914_155130"
+        },
+        "state": "succeeded",
+        "task_id": "0668d71b42d54c559c36634e823a55a5"
+      },
+      "summary": "kind=baseline state=succeeded tput=None decision=None",
+      "topic": "delegated_result"
+    },
+    {
+      "from_agent": "robustness",
+      "payload": {
+        "detail": {
+          "evidence": {
+            "count": 5,
+            "from": "coordinator",
+            "rule_distribution": {
+              "enablement_round_in_flight": 4,
+              "integrate_patch_requires_critic_verdict": 1
+            },
+            "top_rule": "enablement_round_in_flight"
+          },
+          "severity": "medium",
+          "source": "coordinator_events",
+          "subject": {
+            "agent": "coordinator"
+          },
+          "suggestion": "escalate_strategy_change to review the action catalogue / role config",
+          "symptom": "repeated_policy_denied"
+        },
+        "severity": "medium",
+        "summary": "agent coordinator hit policy_denied 5 times (>= 3); top rule=enablement_round_in_flight"
+      },
+      "summary": "sev=medium agent coordinator hit policy_denied 5 times (>= 3); top rule=enablement_round_in_flight",
+      "topic": "alert"
+    },
+    {
+      "from_agent": "robustness",
+      "payload": {
+        "detail": {
+          "evidence": {
+            "build_count": 6,
+            "jit_dir": "/opt/envs/vllm/lib/python3.12/site-packages/aiter/jit",
+            "stale_build_threshold": 1,
+            "stale_ticks": 10
+          },
+          "severity": "medium",
+          "source": "local",
+          "subject": {},
+          "suggestion": "observe; if it persists, suggest cleaning <jit_dir>/build/ manually between runs",
+          "symptom": "aiter_jit_build_stuck"
+        },
+        "severity": "medium",
+        "summary": "aiter jit build_count=6 unchanged for 10 consecutive ticks; a prior hipcc invocation likely crashed mid-build"
+      },
+      "summary": "sev=medium aiter jit build_count=6 unchanged for 10 consecutive ticks; a prior hipcc invocation likely crashed mid-build",
+      "topic": "alert"
+    },
+    {
+      "from_agent": "coordinator",
+      "payload": {
+        "action_name": "baseline",
+        "from_agent": "orchestration",
+        "kind": "approved_proposal",
+        "proposal_msg_id": "a8b34140219845c6aa75dd9e2be56ce8",
+        "task_id": "0668d71b42d54c559c36634e823a55a5"
+      },
+      "summary": "kind=approved_proposal action=baseline task=0668d71b",
+      "topic": "decision"
+    },
+    {
+      "from_agent": "critic",
+      "payload": {
+        "notes": [
+          "Self-reported predicted_gain_pct was ignored as a format-only signal and is not grounds for rejection.",
+          "Missing baseline_tput/current_best context is expected here because this action produces the baseline evidence."
+        ],
+        "packet_evidence": [
+          "review_constraints.phase",
+          "review_constraints.action_verdict_policy.baseline",
+          "review_constraints.proposal_action_classes.a8b34140219845c6aa75dd9e2be56ce8"
+        ],
+        "reasoning": "Baseline is a PRELUDE exploration/framework_op action and is the natural next TODO to generate missing baseline evidence. The before/after benchmark and promotion gates do not apply, and no contradicting KB prior was recalled.",
+        "target_proposal_msg_id": "a8b34140219845c6aa75dd9e2be56ce8",
+        "verdict": "approve"
+      },
+      "summary": "verdict=approve reason=Baseline is a PRELUDE exploration/framework_op action and is",
+      "topic": "review_verdict"
+    },
+    {
+      "from_agent": "orchestration",
+      "payload": {
+        "action_name": "baseline",
+        "extra_envs": {
+          "CUDA_VISIBLE_DEVICES": "0",
+          "HIP_VISIBLE_DEVICES": "0"
+        },
+        "idempotency_key": "baseline-hip-pin-4",
+        "needs_review": true,
+        "predicted_gain_pct": 0
+      },
+      "summary": "action_name=baseline",
+      "topic": "proposal"
+    },
+    {
+      "from_agent": "coordinator",
+      "payload": {
+        "error": null,
+        "kind": "integrate_patch",
+        "result": {
+          "accuracy_metric": "",
+          "accuracy_task": "",
+          "advanced": true,
+          "after_signature": {
+            "bridge_layer": "",
+            "confidence": 0.0,
+            "kind": "unknown",
+            "offending_file": "",
+            "offending_symbol": "",
+            "raw_excerpt": "session wall-clock budget exhausted before this round ran",
+            "secondary_kinds": []
+          },
+          "artifacts_applied": [],
+          "artifacts_reverted": [],
+          "bench_result": {
+            "effective_config": {
+              "args_mode": "append",
+              "extra_envs": {
+                "CUDA_VISIBLE_DEVICES": "0",
+                "HIP_VISIBLE_DEVICES": "0"
+              },
+              "extra_server_args": "",
+              "remove_args": [],
+              "unset_envs": []
+            },
+            "error": "session wall-clock budget exhausted before this round ran",
+            "error_class": "session_time_exhausted",
+            "itl_ms": null,
+            "launch_evidence": {},
+            "launch_evidence_path": "",
+            "materialized_config": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/integrate_patch/34d103b9030d45bca38b9c671b5a2add/integrate_patch.with_envs.yaml",
+            "name": "integrate-patch-30ccc757",
+            "nonfatal_warnings": [],
+            "output_throughput": null,
+            "server_log_path": "",
+            "status": "skipped",
+            "ttft_ms": null,
+            "workspace": ""
+          },
+          "config_changes_applied": {
+            "CUDA_VISIBLE_DEVICES": "0",
+            "HIP_VISIBLE_DEVICES": "0"
+          },
+          "correctness_verified": false,
+          "enablement": true,
+          "enablement_accuracy_floor": 0.5,
+          "enablement_eval_failure_kind": "accuracy_unavailable",
+          "enablement_launch_log": "session wall-clock budget exhausted before this round ran",
+          "enablement_observed_accuracy": null,
+          "enablement_origin": "",
+          "extra_envs_applied": {
+            "CUDA_VISIBLE_DEVICES": "0",
+            "HIP_VISIBLE_DEVICES": "0"
+          },
+          "extra_server_args_applied": "",
+          "framework_root": "/opt/envs/vllm/lib/python3.12/site-packages",
+          "framework_switch_problems": [],
+          "output_throughput": null,
+          "patches_applied": [
+            "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/specialist/b8dc969b654d45e2a1e07acf784a2a4e/patches/001_reconcile_rocm_device_masks.patch"
+          ],
+          "patches_reverted": [
+            "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/specialist/b8dc969b654d45e2a1e07acf784a2a4e/patches/001_reconcile_rocm_device_masks.patch"
+          ],
+          "reason": "enablement progressed: launch probe exited 1 (still not runnable); boot advanced to a new gap (unknown) \u2014 patch recorded as a base for the next round",
+          "runnable": false,
+          "setup_commands_applied": [
+            "/opt/venv/bin/python3 -m pip install --no-cache-dir --break-system-packages --retries 8 --timeout 120 'huggingface_hub==1.29.0' 'transformers==5.16.1'"
+          ],
+          "setup_commands_skipped": [],
+          "specialist_task_id": "30ccc757c22d476390bae0873bfa153b",
+          "status": "advanced",
+          "workspace": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/integrate_patch/34d103b9030d45bca38b9c671b5a2add"
+        },
+        "state": "succeeded",
+        "task_id": "34d103b9030d45bca38b9c671b5a2add"
+      },
+      "summary": "kind=integrate_patch state=succeeded tput=None decision=None",
+      "topic": "delegated_result"
+    },
+    {
+      "from_agent": "coordinator",
+      "payload": {
+        "action_name": "integrate_patch",
+        "from_agent": "coordinator",
+        "kind": "approved_proposal",
+        "proposal_msg_id": "ff0adceba2cb463eb65fcce51682967f",
+        "task_id": "34d103b9030d45bca38b9c671b5a2add"
+      },
+      "summary": "kind=approved_proposal action=integrate_patch task=34d103b9",
+      "topic": "decision"
+    },
+    {
+      "from_agent": "critic",
+      "payload": {
+        "advice_text": "This enablement patch looks structurally eligible for cold-start review, but PRELUDE is normally for target_analysis and baseline. If the server cannot boot, mark it as a pre-baseline enablement exception or resubmit it from the enablement/framework-agent phase with orchestration rationale; otherwise let PRELUDE analysis proceed first.",
+        "notes": [
+          "required_context is empty.",
+          "KB read was not skipped, but KB priors are silent.",
+          "No throughput before/after or rollback plan is required for enablement_landing; the concern is phase sequencing only."
+        ],
+        "packet_evidence": [
+          "review_constraints.proposal_action_classes.ff0adceba2cb463eb65fcce51682967f",
+          "review_constraints.phase",
+          "review_constraints.phase_orientation",
+          "proposals[0].payload.params.provenance",
+          "proposals[0].payload.params.enablement",
+          "proposals[0].payload.params.framework_agent_authoring",
+          "kb_priors_by_proposal.ff0adceba2cb463eb65fcce51682967f"
+        ],
+        "reasoning": "Enablement patch has specialist provenance and no contradicting KB prior, but integrate_patch is not a natural PRELUDE action; PRELUDE orientation is target_analysis/baseline. Recommend sequencing it through the enablement/framework-agent phase or adding orchestration justification that baseline cannot boot.",
+        "risks": [
+          {
+            "severity": "minor",
+            "summary": "Out-of-phase patch integration before PRELUDE target_analysis/baseline."
+          },
+          {
+            "severity": "minor",
+            "summary": "Self-reported predicted_gain_pct present; ignored as format."
+          }
+        ],
+        "target_proposal_msg_id": "ff0adceba2cb463eb65fcce51682967f",
+        "verdict": "advise"
+      },
+      "summary": "verdict=advise reason=Enablement patch has specialist provenance and no contradict",
+      "topic": "review_verdict"
+    },
+    {
+      "from_agent": "coordinator",
+      "payload": {
+        "action_name": "integrate_patch",
+        "needs_review": true,
+        "params": {
+          "domain": "enablement_specialist",
+          "enablement": true,
+          "enablement_base_patches": [
+            "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/specialist/b8dc969b654d45e2a1e07acf784a2a4e/patches/001_reconcile_rocm_device_masks.patch"
+          ],
+          "enablement_before_signature": {
+            "bridge_layer": "",
+            "confidence": 0.0,
+            "kind": "unknown",
+            "offending_file": "",
+            "offending_symbol": "",
+            "raw_excerpt": "ied before http://0.0.0.0:8888/health became ready.\\n', 'server.log errors: (APIServer pid=11444) Traceback (most recent call last):\\n(APIServer pid=11444) OSError: [Errno 98] Address already in use']",
+            "secondary_kinds": []
+          },
+          "enablement_setup_commands": [
+            "/opt/venv/bin/python3 -m pip install --no-cache-dir --break-system-packages --retries 8 --timeout 120 'huggingface_hub==1.29.0' 'transformers==5.16.1'"
+          ],
+          "extra_envs": {
+            "CUDA_VISIBLE_DEVICES": "0",
+            "HIP_VISIBLE_DEVICES": "0"
+          },
+          "extra_server_args": "",
+          "framework_agent_authoring": true,
+          "gap_canonical_id": "gap.enablement.unknown",
+          "gap_layer": "framework",
+          "lever_kind": "enablement",
+          "patch_name": "rocm_logical_hip_mask_pin",
+          "provenance": "specialist:enablement_specialist",
+          "source_phase": "FRAMEWORK_AGENT",
+          "specialist_task_id": "30ccc757c22d476390bae0873bfa153b"
+        },
+        "predicted_gain_pct": 0.0,
+        "provenance": "specialist"
+      },
+      "summary": "action_name=integrate_patch",
+      "topic": "proposal"
+    },
+    {
+      "from_agent": "coordinator",
+      "payload": {
+        "error": null,
+        "kind": "specialist",
+        "result": {
+          "allocated_gpu_ids": [
+            0
+          ],
+          "domain": "enablement_specialist",
+          "done_path": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/specialist/30ccc757c22d476390bae0873bfa153b/specialist_done.json",
+          "error": "",
+          "gap_canonical_id": "gap.enablement.unknown",
+          "notes": [
+            "worktree_setup_failed:no_git_framework_source_root"
+          ],
+          "runner_status": "succeeded",
+          "specialist_done": {
+            "_specialist_notes": [
+              "worktree_setup_failed:no_git_framework_source_root"
+            ],
+            "allocated_gpu_ids": [
+              0
+            ],
+            "artifacts_written": [],
+            "confidence": 0.9,
+            "domain": "enablement_specialist",
+            "empty": false,
+            "gap_canonical_id": "gap.enablement.unknown",
+            "new_findings": [
+              {
+                "accuracy_risk": "none",
+                "domain_tags": [
+                  "vllm",
+                  "qwen3_5",
+                  "gdn",
+                  "hybrid_attention",
+                  "runnability",
+                  "enablement",
+                  "gfx90a"
+                ],
+                "expected_impact": "Reframes the round entirely: no ladder climb (Rung 2-5) is needed for this model, so a config-only delta is the correct and sufficient deliverable.",
+                "source": "/mnt/stripe-3mix-3t2/models/davetha/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/config.json; /opt/envs/wu1w/lib/python3.12/site-packages/vllm/model_executor/models/registry.py:203-204,592-595; in-session logs/repro_server.log + logs/reproB_fixed.log (port 8899, GPU 0, exact production server_args from manifest.json)",
+                "what": "The gap 'vllm cannot launch Qwen3.8-27B-ABLITERATED-W8A8-gdnint8: unknown' is NOT an architecture/weight/kernel enablement gap. architectures=['Qwen3_5ForConditionalGeneration'] / model_type=qwen3_5 IS in the LIVE serving env's registry (registry.py:592 -> qwen3_5.Qwen3_5ForConditionalGeneration), and a full clean boot was reproduced: 64-layer hybrid GDN (48 linear_attention) + full_attention (16) per layer_types, AITER INT8 a8w8 ScaledMM selected for the Linear GEMMs under VLLM_ROCM_USE_AITER[_LINEAR]=1, weights 27.47 GiB, 35/35 CUDA graphs captured (FULL_DECODE_ONLY), engine init 16-17 s, GET /health 200, and correct tokens on both endpoints ('The capital of France is' -> ' Paris. The capital of Germany is Berlin.'; chat '17+25' -> '42')."
+              },
+              {
+                "accuracy_risk": "none",
+                "domain_tags": [
+                  "rocm",
+                  "device-visibility",
+                  "enablement",
+                  "magpie",
+                  "inferencex"
+                ],
+                "expected_impact": "This is the single blocker to booting at all; pinning HIP/CUDA to the logical index clears it (measured, not inferred).",
+                "source": "in-session scratch/e2e_control/variant_00_specialist-rebench/benchmark_vllm_20260914_153851/server.log (gpu_worker.py:379 -> torch/cuda/__init__.py:501) vs scratch/e2e_fixed/variant_00_specialist-rebench/benchmark_vllm_20260914_153258/inferencex_result.json + logs/e2e_fixed.json; /opt/envs/wu1w/lib/python3.12/site-packages/vllm/platforms/rocm.py:127-156",
+                "what": "PROVEN BY A/B ON THE PRODUCTION GATE PATH with the kept Magpie patch NOT live (it applies cleanly but is currently reverted in the tree): the harness inherits ROCR_VISIBLE_DEVICES=0 + HIP_VISIBLE_DEVICES=2. Counts are equal, so torch._parse_visible_devices() passes and vLLM binds the socket, then EngineCore dies deeper and illegibly at worker init_device -> torch.accelerator.set_device_index -> torch._C._cuda_init() -> 'RuntimeError: No CUDA GPUs are available'. ROCR filters at the HSA agent layer and re-indexes survivors to 0..n-1, so a PHYSICAL id 2 in HIP selects nothing. Control (same leaked env, no delta) = that exact traceback + 'Process died before http://0.0.0.0:8932/health became ready'; candidate (only extra_envs HIP/CUDA_VISIBLE_DEVICES=0) = status SUCCESS, /health 200, inferencex_result.json produced."
+              },
+              {
+                "accuracy_risk": "none",
+                "domain_tags": [
+                  "hyperloom",
+                  "magpie",
+                  "grid_semantics",
+                  "enablement"
+                ],
+                "expected_impact": "Prevents a future round from proposing unset_envs or 'just unset HIP', which look correct but are provably inert against an inherited var.",
+                "source": "/opt/envs/vllm/lib/python3.12/site-packages/Magpie/modes/benchmark/benchmarker.py:776,800; /opt/envs/vllm/lib/python3.12/site-packages/hyperloom/orchestrator/actions/executors/_grid_runner.py:664-671; InferenceX@3d55815/benchmarks/vllm_mi300x.sh:63-68",
+                "what": "Only one config mechanism can fix the leak, and the obvious alternative cannot. A variant's extra_envs is written into benchmark.envs, which Magpie applies OVER an os.environ.copy() in _build_local_command (benchmarker.py:776 'env = os.environ.copy()', then :800 'for key, value in env_vars.items(): env[key] = str(value)') -> it DOES override an inherited leak. unset_envs only pops the key from the YAML dict (_grid_runner.py:664-669), after which Magpie re-adds the inherited value from os.environ -> it CANNOT remove an inherited var. Simply removing HIP does not work either: the InferenceX launcher derives HIP from ROCR only under '[ -z \"$HIP_VISIBLE_DEVICES\" ]' (vllm_mi300x.sh:65-68), which an inherited value defeats. HIP must therefore be SET to a value via extra_envs."
+              },
+              {
+                "accuracy_risk": "none",
+                "domain_tags": [
+                  "vllm",
+                  "rocm",
+                  "device-visibility",
+                  "enablement"
+                ],
+                "expected_impact": "Makes the enablement delta robust to whichever mask the harness leaks, instead of trading one failure mode for another.",
+                "source": "/opt/envs/wu1w/lib/python3.12/site-packages/vllm/platforms/rocm.py:127-156; in-session scratch/e2e_fixed/variant_00_specialist-rebench/config.yaml (ROCR=0, HIP=0, CUDA=0) + its server.log",
+                "what": "HIP_VISIBLE_DEVICES and CUDA_VISIBLE_DEVICES must be set TOGETHER and EQUAL, so the delta is atomic. vLLM's _sync_hip_cuda_env_vars() runs at import, raises a hard ValueError on any HIP/CUDA disagreement, and copies an inherited CUDA value onto HIP when HIP is unset. A one-sided pin (HIP=0 while CUDA leaks a physical id) converts a device-selection bug into an import-time crash. Validated empirically: the successful boot had ROCR=0 + HIP=0 + CUDA=0 all set, emitting only the benign 'Using CUDA_VISIBLE_DEVICES on ROCm is deprecated' warning."
+              },
+              {
+                "accuracy_risk": "none",
+                "domain_tags": [
+                  "environment",
+                  "magpie",
+                  "inferencex",
+                  "lifecycle",
+                  "enablement"
+                ],
+                "expected_impact": "Removes two phantom gaps so the next round spends its budget on the real gate (accuracy/throughput) instead of re-diagnosing the launcher.",
+                "source": "in-session /opt/venv/bin/python3 -c 'import huggingface_hub, transformers'; InferenceX@3d55815/benchmarks/benchmark_lib.sh:682,870-885; runs/baseline/48e0ae2b0af74c03b4b40c847fc99d3b/benchmark_vllm_20260914_151400/server.log; ps/ss/rocm-smi probes",
+                "what": "Both blockers the prior round named as its 'next domino' are ALREADY resolved, so neither needs re-authoring. (1) bench-client deps: /opt/venv/bin/python3 (first on the gate's PATH, and the bare 'python3' benchmark_lib.sh:682 uses) now imports huggingface_hub 1.29.0 + transformers 5.16.1, i.e. the recorded setup_commands were replayed and the ModuleNotFoundError that killed the earlier client is gone. (2) lm-eval needs no pre-provisioning - it self-installs at eval time (benchmark_lib.sh:870-885, pip guarded with '|| true'). (3) attempt[1]'s 'OSError: [Errno 98] Address already in use' on port 8888 was a stale server inherited from failed attempt[0], not a model gap: nothing listens on 88xx/89xx now and GPU 0 VRAM returned to ~11 MB; the mechanism is real (an APIServer that dies leaves VLLM::EngineCore orphaned - observed in-session as pid 12279 still holding memory after its parent exited)."
+              },
+              {
+                "accuracy_risk": "none",
+                "domain_tags": [
+                  "integration",
+                  "allowlist",
+                  "venv-routing",
+                  "enablement",
+                  "aiter",
+                  "gdn"
+                ],
+                "expected_impact": "Explains how a prior round's patch could be approved and integrated yet change nothing, and redirects future vllm-side authoring to the live tree or to a proposal.",
+                "source": "/usr/local/bin/vllm-wu1w; diff -rq --exclude=__pycache__ of the two vllm trees; state.json enablement.framework_root; manifest.json dependencies.magpie.path",
+                "what": "ROUTING FACT for any future patch authoring here: the serving interpreter is NOT the allowlisted /opt/envs/vllm tree. VLLM_BIN=/usr/local/bin/vllm-wu1w execs /opt/envs/wu1w/bin/python -m vllm.entrypoints.cli.main, so a vllm-side patch authored against /opt/envs/vllm/.../vllm is INERT on the gate. The two trees are near-identical 0.28.0 builds differing in exactly 3 source files (_aiter_ops.py, _custom_ops.py, model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py); /opt/envs/wu1w carries prior optimization work - an is_aiter_attention_supported() gfx90a carve-out widening AITER Linear past the stock CDNA3-only gate, a fused_gdn_hip op fallback, and GDN MTP head divisibility relaxed from num_v_heads==8*num_k_heads to a remainder test. Magpie itself ships only in /opt/envs/vllm, which is why the kept patch targets Magpie and IS on the serving path."
+              }
+            ],
+            "patch_grounding": {},
+            "patches_written": [],
+            "proposal_set": [
+              {
+                "args_mode": "append",
+                "atomic": true,
+                "extra_args": "",
+                "extra_envs": {
+                  "CUDA_VISIBLE_DEVICES": "0",
+                  "HIP_VISIBLE_DEVICES": "0"
+                },
+                "kb_evidence": [
+                  "framework: ROCR re-indexes the visible set to 0..n-1, so HIP takes logical indices - Magpie's own documented rule at benchmarker.py:517-522",
+                  "in-session A/B: leaked HIP=2 -> EngineCore 'No CUDA GPUs are available'; HIP=0 -> full boot, 35/35 CUDA graphs, /health 200, correct tokens"
+                ],
+                "name": "rocm_logical_hip_mask_pin",
+                "pr_evidence": [],
+                "reason": "Makes the combo boot. The harness inherits HIP_VISIBLE_DEVICES=2 (a PHYSICAL id) while the gate config pins ROCR_VISIBLE_DEVICES=0; ROCR filters at the HSA layer and re-indexes survivors to 0..n-1, so HIP must carry the LOGICAL index. Because the counts are equal, torch's length check passes and the failure lands deep and illegibly: EngineCore 'RuntimeError: No CUDA GPUs are available' at init_device. PROVEN by A/B on the real Magpie/InferenceX gate path under the identical inherited leak and with the kept patch NOT applied: control reproduced the crash, this delta alone yielded status SUCCESS, /health 200 and a produced inferencex_result.json (110.19 tok/s on a deliberately reduced 8-prompt/conc=4 config used only to keep the proof fast - NOT a baseline-comparable number). extra_envs rather than unset_envs is required: unset only pops the YAML dict while Magpie re-adds the inherited value from os.environ, and the launcher's '[ -z HIP ]' derivation cannot fire on an inherited value. Both vars are pinned equal and together because vLLM raises ValueError on a HIP/CUDA disagreement and copies an inherited CUDA onto HIP. Scoped to TP=1 (this session's fixed TP), where the logical set is exactly {0}; mirrors Magpie's own documented gpu_selection rule (benchmarker.py:519-522).",
+                "remove_args": [],
+                "scope": "domain",
+                "source_evidence": [
+                  "/opt/envs/vllm/lib/python3.12/site-packages/Magpie/modes/benchmark/benchmarker.py:776,800 (config envs override the os.environ copy)",
+                  "/opt/envs/vllm/lib/python3.12/site-packages/Magpie/modes/benchmark/benchmarker.py:517-522 (HIP must be logical 0..N-1 after ROCR filtering)",
+                  "/opt/envs/vllm/lib/python3.12/site-packages/hyperloom/orchestrator/actions/executors/_grid_runner.py:664-671 (unset_envs pops only from the YAML dict)",
+                  "/opt/envs/wu1w/lib/python3.12/site-packages/vllm/platforms/rocm.py:127-156 (_sync_hip_cuda_env_vars raises on HIP/CUDA disagreement)",
+                  "/home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966/benchmarks/vllm_mi300x.sh:63-68 (derivation guarded by -z HIP, cannot repair an inherited value)",
+                  "scratch/e2e_fixed/variant_00_specialist-rebench/benchmark_vllm_20260914_153258/inferencex_result.json (SUCCESS)",
+                  "scratch/e2e_control/variant_00_specialist-rebench/benchmark_vllm_20260914_153851/server.log (No CUDA GPUs are available)"
+                ],
+                "unset_envs": []
+              }
+            ],
+            "residual_questions": [
+              "EVAL-PATH RISK for the accuracy gate (I deliberately did NOT touch it - altering it would be changing the eval contract): this checkpoint's chat_template.jinja injects a large built-in operator system prompt plus xhigh reasoning-effort instructions. Measured live: a 12-token one-line user question cost prompt_tokens=1225, and the model emits a long <|im_start|> reasoning block before its answer (the chat probe reasoned out loud, then printed '42'). If the gate's gsm8k eval goes through /v1/chat/completions, that ~1.2k-token prefix plus CoT tail can press against max_model_len=6144 and can defeat strict/regex answer extraction, so a low score there should not be read as a W8A8 quantization regression without first confirming which endpoint run_lm_eval uses.",
+              "Should the next round keep BOTH the approved Magpie reconciliation patch and this env pin? They are mutually consistent (both resolve to HIP=0), so either alone boots and both together are harmless - but if re-application of 001_reconcile_rocm_device_masks.patch ever fails, this proposal is the patch-free safety net that still boots. I authored no replacement patch to avoid duplicating already-approved work.",
+              "Port hygiene between attempts: attempt[1] died on 'OSError: [Errno 98] Address already in use' on gate port 8888 because a server from failed attempt[0] still held it. Is there a pre-flight port release before a retry? I did not kill any foreign pid (Iron Rule 7), so this can recur on a retry-after-failure and would again be misclassified as a model-side launch failure."
+            ],
+            "setup_commands": [],
+            "summary": "Gap is a ROCm device-mask leak, not a model gap: Qwen3_5ForConditionalGeneration IS registered and runnable in the live serving env (/opt/envs/wu1w). A/B on the real Magpie path under the inherited leak (ROCR=0 vs HIP=2): control -> EngineCore 'No CUDA GPUs are available'; with only the proposed extra_envs HIP/CUDA_VISIBLE_DEVICES=0 (logical index) -> SUCCESS, /health 200, result.json. No new patch: the kept reconciliation patch applies cleanly; the client install is verified live."
+          },
+          "task_id": "30ccc757c22d476390bae0873bfa153b",
+          "transcript_path": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/specialist/30ccc757c22d476390bae0873bfa153b/transcript.jsonl",
+          "turns_used": 1,
+          "workspace": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/specialist/30ccc757c22d476390bae0873bfa153b"
+        },
+        "state": "succeeded",
+        "task_id": "30ccc757c22d476390bae0873bfa153b"
+      },
+      "summary": "kind=specialist state=succeeded tput=None decision=None",
+      "topic": "delegated_result"
+    },
+    {
+      "from_agent": "robustness",
+      "payload": {
+        "detail": {
+          "evidence": {
+            "count": 2,
+            "pattern": "RuntimeError",
+            "samples": [
+              "[server.log]     raise RuntimeError(",
+              "[server.log] RuntimeError: HIP_VISIBLE_DEVICES contains more devices than ROCR_VISIBLE_DEVICES"
+            ]
+          },
+          "severity": "medium",
+          "source": "local",
+          "subject": {
+            "pattern": "RuntimeError"
+          },
+          "suggestion": "review log evidence with RCA before further action",
+          "symptom": "log_error_pattern"
+        },
+        "severity": "medium",
+        "summary": "log error pattern 'RuntimeError' matched 2 times"
+      },
+      "summary": "sev=medium log error pattern 'RuntimeError' matched 2 times",
+      "topic": "alert"
+    },
+    {
+      "from_agent": "robustness",
+      "payload": {
+        "detail": {
+          "evidence": {
+            "count": 1,
+            "pattern": "Address already in use",
+            "samples": [
+              "[server.log] (APIServer pid=11444) OSError: [Errno 98] Address already in use"
+            ]
+          },
+          "severity": "medium",
+          "source": "local",
+          "subject": {
+            "pattern": "Address already in use"
+          },
+          "suggestion": "review log evidence with RCA before further action",
+          "symptom": "log_error_pattern"
+        },
+        "severity": "medium",
+        "summary": "log error pattern 'Address already in use' matched 1 times"
+      },
+      "summary": "sev=medium log error pattern 'Address already in use' matched 1 times",
+      "topic": "alert"
+    },
+    {
+      "from_agent": "coordinator",
+      "payload": {
+        "error": null,
+        "kind": "baseline",
+        "result": {
+          "error": "4 15:14:24,118 - Magpie.modes.benchmark.benchmarker - INFO - Benchmark completed in 24.08s\n2026-09-14 15:14:24,118 - Magpie.main - ERROR - Benchmark failed: ['Benchmark process failed with code 1', 'stderr: + [[ all == \\\\s\\\\e\\\\r\\\\v\\\\e\\\\r ]]\\n+ [[ all == \\\\a\\\\l\\\\l ]]\\n+ SERVER_PID=11444\\n+ [[ all == \\\\a\\\\l\\\\l ]]\\n+ trap \\'magpie_stop_benchmark_server_stack \"$SERVER_PID\"\\' EXIT INT TERM\\n+ wait_for_server_ready --port 8888 --server-log /home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/baseline/48e0ae2b0af74c03b4b40c847fc99d3b/benchmark_vllm_20260914_151400/server.log --server-pid 11444\\n+ local port=\\n+ local server_log=\\n+ local server_pid=\\n+ local sleep_interval=5\\n+ [[ 6 -gt 0 ]]\\n+ case $1 in\\n+ port=8888\\n+ shift 2\\n+ [[ 4 -gt 0 ]]\\n+ case $1 in\\n+ server_log=/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/baseline/48e0ae2b0af74c03b4b40c847fc99d3b/benchmark_vllm_20260914_151400/server.log\\n+ shift 2\\n+ [[ 2 -gt 0 ]]\\n+ case $1 in\\n+ server_pid=11444\\n+ shift 2\\n+ [[ 0 -gt 0 ]]\\n+ [[ -z 8888 ]]\\n+ [[ -z /home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/baseli', 'inferencex_result.json not found - benchmark may have failed locally', 'stderr (last 500 chars): er.log --pid 11444 --sleep-interval 5\\n+ setsid /usr/local/bin/vllm-wu1w serve /mnt/stripe-3mix-3t2/models/davetha/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8 --port 8888 --tensor-parallel-size=1 --gpu-memory-utilization 0.95 --max-model-len 6144 --trust-remote-code --trust-remote-code --language-model-only --quantization compressed-tensors --safetensors-load-strategy eager --compilation-config \\'{\"cudagraph_mode\":\"FULL_DECODE_ONLY\"}\\'\\n+ set +x\\nProcess died before http://0.0.0.0:8888/health became ready.\\n', 'server.log errors: (APIServer pid=11444) Traceback (most recent call last):\\n(APIServer pid=11444) OSError: [Errno 98] Address already in use']\n",
+          "error_class": "subprocess_nonzero",
+          "materialized_config": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/baseline/48e0ae2b0af74c03b4b40c847fc99d3b/baseline_config.with_envs.yaml",
+          "nonfatal_warnings": [
+            "benchmark_report_success_false"
+          ],
+          "output_dir": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/baseline/48e0ae2b0af74c03b4b40c847fc99d3b",
+          "report_path": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/baseline/48e0ae2b0af74c03b4b40c847fc99d3b/benchmark_vllm_20260914_151400/benchmark_report.json",
+          "reported_success": false,
+          "result_dir": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/baseline/48e0ae2b0af74c03b4b40c847fc99d3b",
+          "returncode": 1,
+          "run_eval_disabled": false,
+          "status": "failed",
+          "subprocess_runtime_sec": 25.44,
+          "workspace": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/baseline/48e0ae2b0af74c03b4b40c847fc99d3b/benchmark_vllm_20260914_151400"
+        },
+        "state": "succeeded",
+        "task_id": "48e0ae2b0af74c03b4b40c847fc99d3b"
+      },
+      "summary": "kind=baseline state=succeeded tput=None decision=None",
+      "topic": "delegated_result"
+    },
+    {
+      "from_agent": "coordinator",
+      "payload": {
+        "action_name": "baseline",
+        "from_agent": "orchestration",
+        "kind": "approved_proposal",
+        "proposal_msg_id": "8dbca5a3361b4346b7bc704b97143c3f",
+        "task_id": "48e0ae2b0af74c03b4b40c847fc99d3b"
+      },
+      "summary": "kind=approved_proposal action=baseline task=48e0ae2b",
+      "topic": "decision"
+    },
+    {
+      "from_agent": "critic",
+      "payload": {
+        "notes": [
+          "Proposal-level predicted_gain_pct and needs_review were ignored because this is a PRELUDE baseline, not a promotion or strict patch-landing proposal."
+        ],
+        "packet_evidence": [
+          "review_constraints.phase",
+          "review_constraints.action_verdict_policy.baseline",
+          "review_constraints.proposal_action_classes.8dbca5a3361b4346b7bc704b97143c3f",
+          "merged_context.phase",
+          "required_context"
+        ],
+        "reasoning": "PRELUDE baseline is an exploration/framework action that generates the initial evidence needed for the run; the strict promotion gate does not apply. required_context is empty, KB priors are silent, and baseline is phase-appropriate.",
+        "target_proposal_msg_id": "8dbca5a3361b4346b7bc704b97143c3f",
+        "verdict": "approve"
+      },
+      "summary": "verdict=approve reason=PRELUDE baseline is an exploration/framework action that gen",
+      "topic": "review_verdict"
+    },
+    {
+      "from_agent": "orchestration",
+      "payload": {
+        "action_name": "baseline",
+        "needs_review": true,
+        "predicted_gain_pct": 0
+      },
+      "summary": "action_name=baseline",
+      "topic": "proposal"
+    },
+    {
+      "from_agent": "coordinator",
+      "payload": {
+        "error": null,
+        "kind": "integrate_patch",
+        "result": {
+          "accuracy_metric": "",
+          "accuracy_task": "",
+          "advanced": true,
+          "after_signature": {
+            "bridge_layer": "",
+            "confidence": 0.0,
+            "kind": "unknown",
+            "offending_file": "",
+            "offending_symbol": "",
+            "raw_excerpt": "session wall-clock budget exhausted before this round ran",
+            "secondary_kinds": []
+          },
+          "artifacts_applied": [],
+          "artifacts_reverted": [],
+          "bench_result": {
+            "effective_config": {
+              "args_mode": "append",
+              "extra_envs": {},
+              "extra_server_args": "",
+              "remove_args": [],
+              "unset_envs": []
+            },
+            "error": "session wall-clock budget exhausted before this round ran",
+            "error_class": "session_time_exhausted",
+            "itl_ms": null,
+            "launch_evidence": {},
+            "launch_evidence_path": "",
+            "materialized_config": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/integrate_patch/90f715c0f2ee4a75af0baf5090deda13/integrate_patch.with_envs.yaml",
+            "name": "integrate-patch-b8dc969b",
+            "nonfatal_warnings": [],
+            "output_throughput": null,
+            "server_log_path": "",
+            "status": "skipped",
+            "ttft_ms": null,
+            "workspace": ""
+          },
+          "config_changes_applied": {},
+          "correctness_verified": false,
+          "enablement": true,
+          "enablement_accuracy_floor": 0.5,
+          "enablement_eval_failure_kind": "accuracy_unavailable",
+          "enablement_launch_log": "session wall-clock budget exhausted before this round ran",
+          "enablement_observed_accuracy": null,
+          "enablement_origin": "",
+          "extra_envs_applied": {},
+          "extra_server_args_applied": "",
+          "framework_root": "/opt/envs/vllm/lib/python3.12/site-packages",
+          "framework_switch_problems": [],
+          "output_throughput": null,
+          "patches_applied": [
+            "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/specialist/b8dc969b654d45e2a1e07acf784a2a4e/patches/001_reconcile_rocm_device_masks.patch"
+          ],
+          "patches_reverted": [
+            "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/specialist/b8dc969b654d45e2a1e07acf784a2a4e/patches/001_reconcile_rocm_device_masks.patch"
+          ],
+          "reason": "enablement progressed: launch probe exited 1 (still not runnable); boot advanced to a new gap (unknown) \u2014 patch recorded as a base for the next round",
+          "runnable": false,
+          "setup_commands_applied": [
+            "/opt/venv/bin/python3 -m pip install --no-cache-dir --break-system-packages --retries 8 --timeout 120 'huggingface_hub==1.29.0' 'transformers==5.16.1'"
+          ],
+          "setup_commands_skipped": [],
+          "specialist_task_id": "b8dc969b654d45e2a1e07acf784a2a4e",
+          "status": "advanced",
+          "workspace": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/integrate_patch/90f715c0f2ee4a75af0baf5090deda13"
+        },
+        "state": "succeeded",
+        "task_id": "90f715c0f2ee4a75af0baf5090deda13"
+      },
+      "summary": "kind=integrate_patch state=succeeded tput=None decision=None",
+      "topic": "delegated_result"
+    },
+    {
+      "from_agent": "robustness",
+      "payload": {
+        "detail": {
+          "evidence": {
+            "cap_sec": 324,
+            "elapsed_sec": 3656,
+            "phase": "PRELUDE",
+            "used_pct": 1129.0
+          },
+          "severity": "medium",
+          "source": "shared_state",
+          "subject": {},
+          "suggestion": "wind down this phase or escalate a phase change",
+          "symptom": "phase_budget_nearly_exhausted"
+        },
+        "severity": "medium",
+        "summary": "PRELUDE phase budget 1129% consumed (3656s of 324s cap)"
+      },
+      "summary": "sev=medium PRELUDE phase budget 1129% consumed (3656s of 324s cap)",
+      "topic": "alert"
+    },
+    {
+      "from_agent": "coordinator",
+      "payload": {
+        "action_name": "integrate_patch",
+        "from_agent": "coordinator",
+        "kind": "approved_proposal",
+        "proposal_msg_id": "ac9bcd96d99e481e8ff04f57cd3b067c",
+        "task_id": "90f715c0f2ee4a75af0baf5090deda13"
+      },
+      "summary": "kind=approved_proposal action=integrate_patch task=90f715c0",
+      "topic": "decision"
+    },
+    {
+      "from_agent": "critic",
+      "payload": {
+        "advice_text": "After this enablement patch lands, proceed to baseline/target analysis and verify the device-mask fix against the HIP_VISIBLE_DEVICES/ROCR_VISIBLE_DEVICES mismatch. Do not treat this landing as an E2E throughput optimization until later controlled benchmark evidence exists.",
+        "notes": [
+          "KB priors are empty/silent; cold-start absence is not a blocker for enablement_landing.",
+          "The proposal-carried predicted_gain_pct=0.0 is ignored as a format artifact and treated as non-promotional enablement evidence.",
+          "Downstream runnable-decision gate remains the effective filter for patch boot correctness."
+        ],
+        "packet_evidence": [
+          "review_constraints.proposal_action_classes",
+          "review_constraints.action_verdict_policy.integrate_patch",
+          "review_constraints.approve_requires_by_class.enablement_landing",
+          "proposals[0].payload.params.provenance",
+          "proposals[0].payload.params.enablement",
+          "proposals[0].payload.params.framework_agent_authoring",
+          "proposals[0].payload.params.enablement_before_signature.raw_excerpt"
+        ],
+        "reasoning": "Classified as enablement_landing/framework-agent integrate_patch with specialist provenance and no contradicting KB prior. The packet describes a device-mask reconcile fix needed for boot/startup, so the enablement structural bar applies; missing throughput before/after is not blocking in PRELUDE.",
+        "risks": [
+          {
+            "severity": "minor",
+            "summary": "PRELUDE usually centers target_analysis/baseline, but enablement boot/device-mask landing can precede the baseline evidence cycle."
+          }
+        ],
+        "target_proposal_msg_id": "ac9bcd96d99e481e8ff04f57cd3b067c",
+        "verdict": "approve"
+      },
+      "summary": "verdict=approve reason=Classified as enablement_landing/framework-agent integrate_p",
+      "topic": "review_verdict"
+    },
+    {
+      "from_agent": "coordinator",
+      "payload": {
+        "action_name": "integrate_patch",
+        "needs_review": true,
+        "params": {
+          "domain": "enablement_specialist",
+          "enablement": true,
+          "enablement_before_signature": {
+            "bridge_layer": "",
+            "confidence": 0.0,
+            "kind": "unknown",
+            "offending_file": "",
+            "offending_symbol": "",
+            "raw_excerpt": "0.0.0:8888/health became ready.\\n', 'server.log errors: Traceback (most recent call last):\\n raise RuntimeError(\\nRuntimeError: HIP_VISIBLE_DEVICES contains more devices than ROCR_VISIBLE_DEVICES']",
+            "secondary_kinds": []
+          },
+          "framework_agent_authoring": true,
+          "gap_canonical_id": "gap.enablement.unknown",
+          "gap_layer": "framework",
+          "lever_kind": "enablement",
+          "patch_name": "device-mask-logical-reconcile",
+          "provenance": "specialist:enablement_specialist",
+          "source_phase": "FRAMEWORK_AGENT",
+          "specialist_task_id": "b8dc969b654d45e2a1e07acf784a2a4e"
+        },
+        "predicted_gain_pct": 0.0,
+        "provenance": "specialist"
+      },
+      "summary": "action_name=integrate_patch",
+      "topic": "proposal"
+    },
+    {
+      "from_agent": "coordinator",
+      "payload": {
+        "error": null,
+        "kind": "specialist",
+        "result": {
+          "allocated_gpu_ids": [
+            0
+          ],
+          "domain": "enablement_specialist",
+          "done_path": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/specialist/b8dc969b654d45e2a1e07acf784a2a4e/specialist_done.json",
+          "error": "",
+          "gap_canonical_id": "gap.enablement.unknown",
+          "notes": [
+            "worktree_setup_failed:no_git_framework_source_root"
+          ],
+          "runner_status": "succeeded",
+          "specialist_done": {
+            "_specialist_notes": [
+              "worktree_setup_failed:no_git_framework_source_root"
+            ],
+            "allocated_gpu_ids": [
+              0
+            ],
+            "confidence": 0.85,
+            "domain": "enablement_specialist",
+            "empty": false,
+            "gap_canonical_id": "gap.enablement.unknown",
+            "new_findings": [
+              {
+                "accuracy_risk": "none",
+                "domain_tags": [
+                  "enablement",
+                  "rocm",
+                  "device-visibility",
+                  "magpie"
+                ],
+                "expected_impact": "Explains 100% of this session's launch failures; blocks everything downstream of import.",
+                "source": "runs/baseline/2fc18296.../server.log; /opt/envs/wu1w/lib/python3.12/site-packages/torch/cuda/__init__.py:833-860; Magpie/modes/benchmark/benchmarker.py:776,800; reproduced in-session: HIP_VISIBLE_DEVICES=2,3 ROCR_VISIBLE_DEVICES=0 python -c 'import vllm' -> same RuntimeError",
+                "what": "ROOT CAUSE of the 'unknown' launch failure is NOT a model gap. Magpie composes the server env as os.environ.copy() overlaid with benchmark.envs (_build_local_command, benchmarker.py:776/800). benchmark.envs pins ROCR_VISIBLE_DEVICES=0 for TP=1 but never HIP/CUDA_VISIBLE_DEVICES, so the harness-inherited PHYSICAL HIP_VISIBLE_DEVICES (observed '2' live; '2,3' in the 13:50 baseline log) survives into the vllm child. torch._parse_visible_devices() hard-raises when len(HIP)>len(ROCR), and vLLM triggers it during 'import vllm' (env_override -> torch.cuda.is_available()). The process therefore dies before binding a port, so no model-side error exists to classify -> the empty/unknown failure_kind signature."
+              },
+              {
+                "accuracy_risk": "none",
+                "domain_tags": [
+                  "rocm",
+                  "device-visibility",
+                  "enablement"
+                ],
+                "expected_impact": "Explains how an env-only enablement attempt could be integrated and still fail (i.e. a REVERTED prior patch).",
+                "source": "in-session: ROCR=0 HIP=2 -> device_count 1 but is_available False, torch.ones(4,device='cuda') -> 'No CUDA GPUs are available'; ROCR=0 HIP=0 -> count 1, MI250X gfx90a, tensor OK",
+                "what": "Second, SILENT variant of the same bug: equal-count-but-out-of-range masks (ROCR=0 with HIP=2 - the exact leak present in the live coordinator env) do NOT raise; they yield torch.cuda.is_available()==False and 'No CUDA GPUs are available' at first device placement. A fix that merely satisfies torch's length check (pinning HIP to a same-length PHYSICAL id) passes validation and then dies later and less legibly. Only the LOGICAL 0..n-1 index is correct, because ROCR filters at the HSA agent layer and re-indexes what survives."
+              },
+              {
+                "accuracy_risk": "none",
+                "domain_tags": [
+                  "integration",
+                  "allowlist",
+                  "enablement"
+                ],
+                "expected_impact": "Redirects enablement authoring from an inert root to the one allowlisted file on the serving path; the most likely explanation for the reverted attempt-2 patch.",
+                "source": "/usr/local/bin/vllm-wu1w; manifest.json dependencies.magpie.path; diff -rq of both vllm trees; resolve_source_file_allowlist() (13 roots, none covering /opt/envs/wu1w)",
+                "what": "A patch against the allowed /opt/envs/vllm/.../vllm/ tree is INERT for this combo: the serving binary is VLLM_BIN=/usr/local/bin/vllm-wu1w -> 'exec /opt/envs/wu1w/bin/python -m vllm.entrypoints.cli.main', which imports vllm+torch from /opt/envs/wu1w - NOT in the allowed source roots (verified: only 3 .py files differ between the two vllm trees, both report 0.28.0). The patchable surface that actually sits on the serving path is Magpie at /opt/envs/vllm/lib/python3.12/site-packages/Magpie (= manifest.dependencies.magpie.path), the layer that composes the crashing env."
+              },
+              {
+                "accuracy_risk": "none",
+                "domain_tags": [
+                  "vllm",
+                  "qwen3_5",
+                  "gdn",
+                  "w8a8",
+                  "runnability"
+                ],
+                "expected_impact": "Clears the reported launch gap outright and advances the boot to the next domino.",
+                "source": "scratch/e2e/out/benchmark_vllm_20260914_144549/server.log (patched Magpie via PYTHONPATH, run under a DELIBERATELY leaked parent env HIP_VISIBLE_DEVICES=2) + direct /v1/completions and /v1/chat/completions probes on port 8911",
+                "what": "The model needs NO enablement code at all. With the mask reconciled, the real Magpie serving path boots completely: arch resolves natively as Qwen3_5ForConditionalGeneration, --language-model-only runs it text-only, CompressedTensorsW8A8Int8 selects AiterInt8ScaledMMLinearKernel, GDN uses the Triton/FLA prefill+decode path, 2 safetensors shards load, 35/35 FULL_DECODE CUDA graphs capture, 'init engine (profile, create kv cache, warmup model) took 73.76 s', GET /health -> 200 OK, and greedy text is coherent. No HIP/kernel/aiter build is required - do NOT request a targeted build for this gap."
+              },
+              {
+                "accuracy_risk": "none",
+                "domain_tags": [
+                  "magpie",
+                  "inferencex",
+                  "environment"
+                ],
+                "expected_impact": "Blocking for ANY throughput measurement including the sealed baseline; two pinned installs clear it.",
+                "source": "scratch/e2e/magpie.log (ModuleNotFoundError: No module named 'huggingface_hub'); InferenceX@3d55815/benchmarks/benchmark_lib.sh:682,870,1011 and utils/bench_serving/backend_request_func.py:12; verified /opt/venv/bin/python3 -c 'import huggingface_hub' -> ModuleNotFoundError and /opt/venv/bin/python3 benchmark_serving.py --help -> same crash under the gate PATH",
+                "what": "NEW DEEPER BLOCKER exposed (masked until now because every prior attempt died at the server): the benchmark CLIENT cannot import. benchmark_lib.sh:682 invokes a bare 'python3', which the gate's own PATH resolves to /opt/venv/bin/python3; that interpreter has torch/numpy/aiohttp/tqdm but NOT huggingface_hub or transformers, so utils/bench_serving/backend_request_func.py:12 'import huggingface_hub.constants' aborts with ModuleNotFoundError and no inferencex_result.json is produced. It is a chicken-and-egg gap: the harness's own _install_lm_eval_deps() (which would pull them transitively via lm-eval) is called only from run_eval at benchmark_lib.sh:1011, i.e. AFTER run_benchmark_serving has already died. vllm itself is optional in the client (guarded import), so exactly two pinned packages are missing."
+              },
+              {
+                "accuracy_risk": "none",
+                "domain_tags": [
+                  "magpie",
+                  "inferencex",
+                  "rocm"
+                ],
+                "expected_impact": "Precedent-backed, low-risk shape for the fix.",
+                "source": "/home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d55815.../benchmarks/vllm_mi300x.sh:63-68; /opt/envs/wu1w/.../vllm/platforms/rocm.py:127-156",
+                "what": "The InferenceX launcher already encodes the intended rule (benchmarks/vllm_mi300x.sh:65 derives HIP_VISIBLE_DEVICES=0..n-1 from ROCR_VISIBLE_DEVICES) but guards it with [ -z \"$HIP_VISIBLE_DEVICES\" ], so it cannot fire for a value inherited from the parent env. The authored patch is that same sanctioned reconciliation moved to the layer that owns the merge - a backport of in-tree behaviour, not a new policy, and it also covers the CUDA_VISIBLE_DEVICES leak (which vLLM's _sync_hip_cuda_env_vars copies onto HIP at import, and a HIP/CUDA disagreement is itself a hard ValueError there)."
+              }
+            ],
+            "patch_grounding": {
+              "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/specialist/b8dc969b654d45e2a1e07acf784a2a4e/patches/001_reconcile_rocm_device_masks.patch": "applies"
+            },
+            "patches_written": [
+              "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/specialist/b8dc969b654d45e2a1e07acf784a2a4e/patches/001_reconcile_rocm_device_masks.patch"
+            ],
+            "proposal_set": [
+              {
+                "args_mode": "append",
+                "atomic": true,
+                "extra_envs": {
+                  "CUDA_VISIBLE_DEVICES": "0",
+                  "HIP_VISIBLE_DEVICES": "0",
+                  "ROCR_VISIBLE_DEVICES": "0"
+                },
+                "kb_evidence": [],
+                "name": "device-mask-logical-reconcile",
+                "pr_evidence": [],
+                "reason": "Belt-and-braces companion to the patch, and the exact configuration PROVEN to boot this session (/health 200 + coherent greedy text on port 8911, and full CUDA-graph capture through the real Magpie path on port 8922). Drops the harness-inherited PHYSICAL mask and re-pins the LOGICAL index that ROCR_VISIBLE_DEVICES=0 already establishes, so torch never sees HIP count > ROCR count. atomic=true: the three keys are only self-consistent as a set (HIP without ROCR would re-target a physical card). If the patch is kept this variant is a no-op; if the patch is reverted it still unblocks the variant lane. NOTE it cannot fix the baseline - only the patch does that, since the baseline has no server-args/env delta to carry.",
+                "scope": "domain",
+                "source_evidence": [
+                  "/opt/envs/wu1w/lib/python3.12/site-packages/torch/cuda/__init__.py:833-860",
+                  "/opt/envs/vllm/lib/python3.12/site-packages/Magpie/modes/benchmark/benchmarker.py:776-803",
+                  "/home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966/benchmarks/vllm_mi300x.sh:63-68"
+                ],
+                "unset_envs": [
+                  "HIP_VISIBLE_DEVICES",
+                  "CUDA_VISIBLE_DEVICES"
+                ]
+              }
+            ],
+            "residual_questions": [
+              "The bench-client install (setup_commands) hit repeated PyPI connection resets (ProtocolError: Connection broken: IncompleteRead) and was STILL RUNNING when this round's wall-clock budget expired, so it is recorded-but-unverified. Please replay it on the integration lane and confirm '/opt/venv/bin/python3 -c \"import huggingface_hub, transformers\"' succeeds before the next baseline, otherwise the run will pass the server and then die in the client exactly as this round's E2E did.",
+              "Is /opt/venv (the interpreter the gate's PATH puts first for the bench client) expected to be provisioned by the image, or is the yaml PATH: /opt/venv/bin entry stale? If the intended client interpreter is actually /opt/envs/vllm/bin/python3 (which already has transformers 5.16.1 + huggingface_hub 1.29.0 and is what resolve_benchmark_interpreter() returns), overriding PATH is a cleaner fix than installing into /opt/venv."
+            ],
+            "setup_commands": [
+              "/opt/venv/bin/python3 -m pip install --no-cache-dir --break-system-packages --retries 8 --timeout 120 'huggingface_hub==1.29.0' 'transformers==5.16.1'"
+            ],
+            "summary": "Diagnosed the 'unknown' gap as an inherited ROCm device-mask contradiction, not a model gap: the harness leaks a PHYSICAL HIP_VISIBLE_DEVICES ('2'), Magpie overlays ROCR_VISIBLE_DEVICES=0 from the yaml without touching HIP, and torch._parse_visible_devices() then raises inside 'import vllm' - so the server dies before binding a port and nothing model-side is ever reached to classify (hence failure_kind=unknown). Authored a 158-line pure-insertion patch to Magpie's _build_local_command that reconciles HIP/CUDA to the LOGICAL 0..n-1 set ROCR re-indexes to (the rule the InferenceX launcher already states but cannot apply to an inherited value), with vendor guard + fail-open so it is inert on CUDA and on already-valid masks. PROVEN END-TO-END: ran the real Magpie serving path under a deliberately leaked parent env with the patch on PYTHONPATH -> logs 'Device-mask reconciliation for local run: HIP_VISIBLE_DEVICES: 2 -> 0', weights load, 35/35 CUDA graphs capture, GET /health 200 OK. Cleared the reported launch gap. NEXT DEEPER FAILURE now exposed: the bench CLIENT interpreter /opt/venv/bin/python3 lacks huggingface_hub+transformers (benchmark_lib.sh:682 bare 'python3'), so no inferencex_result.json is produced - a chicken-and-egg gap because the harness installs them only in run_eval, after the client has already died. Also established why attempt 2's patch was likely REVERTED: it targeted /opt/envs/vllm/.../vllm, but the server runs from /opt/envs/wu1w via VLLM_BIN, so such a patch is inert; and an env fix pinning HIP to a same-length physical id passes torch's length check yet yields is_available()==False."
+          },
+          "task_id": "b8dc969b654d45e2a1e07acf784a2a4e",
+          "transcript_path": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/specialist/b8dc969b654d45e2a1e07acf784a2a4e/transcript.jsonl",
+          "turns_used": 1,
+          "workspace": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/specialist/b8dc969b654d45e2a1e07acf784a2a4e"
+        },
+        "state": "succeeded",
+        "task_id": "b8dc969b654d45e2a1e07acf784a2a4e"
+      },
+      "summary": "kind=specialist state=succeeded tput=None decision=None",
+      "topic": "delegated_result"
+    },
+    {
+      "from_agent": "robustness",
+      "payload": {
+        "detail": {
+          "evidence": {
+            "count": 3,
+            "from": "coordinator",
+            "rule_distribution": {
+              "enablement_round_in_flight": 3
+            },
+            "top_rule": "enablement_round_in_flight"
+          },
+          "severity": "medium",
+          "source": "coordinator_events",
+          "subject": {
+            "agent": "coordinator"
+          },
+          "suggestion": "escalate_strategy_change to review the action catalogue / role config",
+          "symptom": "repeated_policy_denied"
+        },
+        "severity": "medium",
+        "summary": "agent coordinator hit policy_denied 3 times (>= 3); top rule=enablement_round_in_flight"
+      },
+      "summary": "sev=medium agent coordinator hit policy_denied 3 times (>= 3); top rule=enablement_round_in_flight",
+      "topic": "alert"
+    },
+    {
+      "from_agent": "robustness",
+      "payload": {
+        "detail": {
+          "evidence": {
+            "build_count": 6,
+            "jit_dir": "/opt/envs/vllm/lib/python3.12/site-packages/aiter/jit",
+            "stale_build_threshold": 1,
+            "stale_ticks": 5
+          },
+          "severity": "medium",
+          "source": "local",
+          "subject": {},
+          "suggestion": "observe; if it persists, suggest cleaning <jit_dir>/build/ manually between runs",
+          "symptom": "aiter_jit_build_stuck"
+        },
+        "severity": "medium",
+        "summary": "aiter jit build_count=6 unchanged for 5 consecutive ticks; a prior hipcc invocation likely crashed mid-build"
+      },
+      "summary": "sev=medium aiter jit build_count=6 unchanged for 5 consecutive ticks; a prior hipcc invocation likely crashed mid-build",
+      "topic": "alert"
+    },
+    {
+      "from_agent": "robustness",
+      "payload": {
+        "detail": {
+          "evidence": {
+            "agent": "orchestration",
+            "idle_seconds": 696,
+            "last_seen_unix": 1789394289,
+            "threshold_s": 300
+          },
+          "severity": "medium",
+          "source": "local",
+          "subject": {
+            "agent": "orchestration"
+          },
+          "suggestion": "escalate strategy if agent remains silent",
+          "symptom": "agent_stall"
+        },
+        "severity": "medium",
+        "summary": "agent orchestration silent for 696s (threshold=300s)"
+      },
+      "summary": "sev=medium agent orchestration silent for 696s (threshold=300s)",
+      "topic": "alert"
+    },
+    {
+      "from_agent": "robustness",
+      "payload": {
+        "detail": {
+          "evidence": {
+            "count": 2,
+            "pattern": "RuntimeError",
+            "samples": [
+              "[server.log]     raise RuntimeError(",
+              "[server.log] RuntimeError: HIP_VISIBLE_DEVICES contains more devices than ROCR_VISIBLE_DEVICES"
+            ]
+          },
+          "severity": "medium",
+          "source": "local",
+          "subject": {
+            "pattern": "RuntimeError"
+          },
+          "suggestion": "review log evidence with RCA before further action",
+          "symptom": "log_error_pattern"
+        },
+        "severity": "medium",
+        "summary": "log error pattern 'RuntimeError' matched 2 times"
+      },
+      "summary": "sev=medium log error pattern 'RuntimeError' matched 2 times",
+      "topic": "alert"
+    },
+    {
+      "from_agent": "coordinator",
+      "payload": {
+        "error": null,
+        "kind": "baseline",
+        "result": {
+          "error": "pie.modes.benchmark.benchmarker - INFO - Benchmark completed in 13.32s\n2026-09-14 13:50:28,123 - Magpie.main - ERROR - Benchmark failed: ['Benchmark process failed with code 1', 'stderr: + [[ all == \\\\s\\\\e\\\\r\\\\v\\\\e\\\\r ]]\\n+ [[ all == \\\\a\\\\l\\\\l ]]\\n+ SERVER_PID=11051\\n+ [[ all == \\\\a\\\\l\\\\l ]]\\n+ trap \\'magpie_stop_benchmark_server_stack \"$SERVER_PID\"\\' EXIT INT TERM\\n+ wait_for_server_ready --port 8888 --server-log /home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/baseline/2fc18296cb5e4f75846d0f0dbf143c2b/benchmark_vllm_20260914_135014/server.log --server-pid 11051\\n+ local port=\\n+ local server_log=\\n+ local server_pid=\\n+ local sleep_interval=5\\n+ [[ 6 -gt 0 ]]\\n+ case $1 in\\n+ port=8888\\n+ shift 2\\n+ [[ 4 -gt 0 ]]\\n+ case $1 in\\n+ server_log=/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/baseline/2fc18296cb5e4f75846d0f0dbf143c2b/benchmark_vllm_20260914_135014/server.log\\n+ shift 2\\n+ [[ 2 -gt 0 ]]\\n+ case $1 in\\n+ server_pid=11051\\n+ shift 2\\n+ [[ 0 -gt 0 ]]\\n+ [[ -z 8888 ]]\\n+ [[ -z /home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/baseli', 'inferencex_result.json not found - benchmark may have failed locally', 'stderr (last 500 chars): er.log --pid 11051 --sleep-interval 5\\n+ set +x\\n+ setsid /usr/local/bin/vllm-wu1w serve /mnt/stripe-3mix-3t2/models/davetha/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8 --port 8888 --tensor-parallel-size=1 --gpu-memory-utilization 0.95 --max-model-len 6144 --trust-remote-code --trust-remote-code --language-model-only --quantization compressed-tensors --safetensors-load-strategy eager --compilation-config \\'{\"cudagraph_mode\":\"FULL_DECODE_ONLY\"}\\'\\nProcess died before http://0.0.0.0:8888/health became ready.\\n', 'server.log errors: Traceback (most recent call last):\\n    raise RuntimeError(\\nRuntimeError: HIP_VISIBLE_DEVICES contains more devices than ROCR_VISIBLE_DEVICES']\n",
+          "error_class": "subprocess_nonzero",
+          "materialized_config": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/baseline/2fc18296cb5e4f75846d0f0dbf143c2b/baseline_config.with_envs.yaml",
+          "nonfatal_warnings": [
+            "benchmark_report_success_false"
+          ],
+          "output_dir": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/baseline/2fc18296cb5e4f75846d0f0dbf143c2b",
+          "report_path": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/baseline/2fc18296cb5e4f75846d0f0dbf143c2b/benchmark_vllm_20260914_135014/benchmark_report.json",
+          "reported_success": false,
+          "result_dir": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/baseline/2fc18296cb5e4f75846d0f0dbf143c2b",
+          "returncode": 1,
+          "run_eval_disabled": false,
+          "status": "failed",
+          "subprocess_runtime_sec": 44.0,
+          "workspace": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/baseline/2fc18296cb5e4f75846d0f0dbf143c2b/benchmark_vllm_20260914_135014"
+        },
+        "state": "succeeded",
+        "task_id": "2fc18296cb5e4f75846d0f0dbf143c2b"
+      },
+      "summary": "kind=baseline state=succeeded tput=None decision=None",
+      "topic": "delegated_result"
+    },
+    {
+      "from_agent": "coordinator",
+      "payload": {
+        "error": null,
+        "kind": "target_analysis",
+        "result": {
+          "baseline_status": "skipped",
+          "json_path": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/target_analysis/target_baseline.json",
+          "kind": "target_analysis",
+          "md_path": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/target_analysis/target_analysis_report.md",
+          "reason": "model_mapping_miss",
+          "row_count": 0,
+          "status": "succeeded",
+          "warning": "model name mapping miss for '/mnt/stripe-3mix-3t2/models/davetha/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8'; no InferenceX name found"
+        },
+        "state": "succeeded",
+        "task_id": "c640a9ee30214d9b865dc9314daddf6b"
+      },
+      "summary": "kind=target_analysis state=succeeded tput=None decision=None",
+      "topic": "delegated_result"
+    },
+    {
+      "from_agent": "coordinator",
+      "payload": {
+        "action_name": "target_analysis",
+        "from_agent": "orchestration",
+        "kind": "approved_proposal",
+        "proposal_msg_id": "12f705cbef9c455abbd1e1d8a28fae19",
+        "task_id": "c640a9ee30214d9b865dc9314daddf6b"
+      },
+      "summary": "kind=approved_proposal action=target_analysis task=c640a9ee",
+      "topic": "decision"
+    },
+    {
+      "from_agent": "critic",
+      "payload": {
+        "notes": [
+          "required_context is empty; missing_context is informational only.",
+          "Self-reported predicted_gain_pct on the proposal is ignored."
+        ],
+        "packet_evidence": [
+          "review_constraints.proposal_action_classes.12f705cbef9c455abbd1e1d8a28fae19",
+          "review_constraints.action_verdict_policy.target_analysis",
+          "phase"
+        ],
+        "reasoning": "target_analysis is archival/framework_op; it only transcribes existing state to disk and is always approvable without before/after promotion evidence.",
+        "target_proposal_msg_id": "12f705cbef9c455abbd1e1d8a28fae19",
+        "verdict": "approve"
+      },
+      "summary": "verdict=approve reason=target_analysis is archival/framework_op; it only transcribe",
+      "topic": "review_verdict"
+    },
+    {
+      "from_agent": "coordinator",
+      "payload": {
+        "action_name": "baseline",
+        "from_agent": "orchestration",
+        "kind": "approved_proposal",
+        "proposal_msg_id": "584e2d36702442309881a965f94d61eb",
+        "task_id": "2fc18296cb5e4f75846d0f0dbf143c2b"
+      },
+      "summary": "kind=approved_proposal action=baseline task=2fc18296",
+      "topic": "decision"
+    },
+    {
+      "from_agent": "critic",
+      "payload": {
+        "notes": [
+          "required_context is empty; missing_context is informational only.",
+          "Self-reported predicted_gain_pct on the proposal is ignored."
+        ],
+        "packet_evidence": [
+          "review_constraints.proposal_action_classes.584e2d36702442309881a965f94d61eb",
+          "review_constraints.action_verdict_policy.baseline",
+          "phase"
+        ],
+        "reasoning": "PRELUDE baseline is an exploration/framework_op action; the benchmark measurement is the evidence, so the strict promotion gate does not apply.",
+        "target_proposal_msg_id": "584e2d36702442309881a965f94d61eb",
+        "verdict": "approve"
+      },
+      "summary": "verdict=approve reason=PRELUDE baseline is an exploration/framework_op action; the ",
+      "topic": "review_verdict"
+    },
+    {
+      "from_agent": "orchestration",
+      "payload": {
+        "action_name": "target_analysis",
+        "needs_review": true,
+        "predicted_gain_pct": 0
+      },
+      "summary": "action_name=target_analysis",
+      "topic": "proposal"
+    },
+    {
+      "from_agent": "orchestration",
+      "payload": {
+        "action_name": "baseline",
+        "needs_review": true,
+        "predicted_gain_pct": 0
+      },
+      "summary": "action_name=baseline",
+      "topic": "proposal"
+    }
+  ],
+  "kernel_optimization_summary": {
+    "report_path": "reports/kernel_optimization_summary.json",
+    "totals": {
+      "attempted": 0,
+      "in_flight": 0,
+      "integrated": 0,
+      "keep_pending": 0,
+      "rejected": 0,
+      "top_candidates": 0
+    }
+  },
+  "max_minutes": 180,
+  "model_class": "dense",
+  "model_name": "Qwen3.8-27B-ABLITERATED-W8A8-gdnint8",
+  "model_path": "/mnt/stripe-3mix-3t2/models/davetha/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8",
+  "model_warnings": [
+    {
+      "architecture": "Qwen3_5ForConditionalGeneration",
+      "detail": "DEGRADED MODE: model 'Qwen3.8-27B-ABLITERATED-W8A8-gdnint8' carries a multimodal signal (multimodal config key 'vision_config'; architecture 'Qwen3_5ForConditionalGeneration', model_type 'qwen3_5') but exposes a text-generation path. Hyperloom is running it on the TEXT path only \u2014 any image/audio inputs are ignored, so benchmark numbers reflect the text decoder alone. Pass --no-allow-mm-text-fallback to fail-fast instead.",
+      "kind": "multimodal_text_fallback",
+      "model_name": "Qwen3.8-27B-ABLITERATED-W8A8-gdnint8",
+      "model_type": "qwen3_5",
+      "signal": "multimodal config key 'vision_config'"
+    }
+  ],
+  "optimization_stack_len": 0,
+  "pending_keep_kernels": [],
+  "platform": {
+    "boost": "on",
+    "cpu": "AMD EPYC 7413 24-Core Processor",
+    "governor": "schedutil",
+    "gpu": {
+      "amdgpu_driver": "6.16.13",
+      "gfx_arch": "unknown",
+      "host_count": 8
+    },
+    "host": "amd-server",
+    "kernel": "6.8.0-139-generic",
+    "multi_node_session": false,
+    "nps": "NPS1",
+    "numa_nodes": 2,
+    "smt": "off",
+    "sockets": 2,
+    "stack": {
+      "aiter": "unknown",
+      "rocm": "7.2.4",
+      "sglang": "unknown",
+      "vllm": "0.28.0+rocm723"
+    },
+    "status": "ok"
+  },
+  "pruned_families": [],
+  "report_generated_at": "2026-09-14T16:45:25.197251+00:00",
+  "server_boot_failures": 0,
+  "session_id": "Qwen3.8-27B-ABLITERATED-W8A8-gdnint8_20260914T134902Z_5ae731fb",
+  "stop_reason": "enablement_stalled",
+  "stop_reason_explanation": "The enablement loop made no forward progress for several consecutive rounds and stopped instead of re-deriving the same fix.",
+  "untried_hot_reusable_kernels": []
+}

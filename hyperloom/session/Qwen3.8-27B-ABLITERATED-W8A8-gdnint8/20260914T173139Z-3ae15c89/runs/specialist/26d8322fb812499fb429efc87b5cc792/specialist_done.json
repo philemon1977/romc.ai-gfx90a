@@ -1,0 +1,115 @@
+{
+  "confidence": 0.7,
+  "domain": "static_recon_specialist",
+  "empty": false,
+  "gap_canonical_id": "gap.static_recon.prelude",
+  "new_findings": [
+    {
+      "accuracy_risk": "none",
+      "domain_tags": [
+        "static_recon",
+        "source_layout",
+        "gfx90a"
+      ],
+      "expected_impact": "Redirects all future recon/patch work to the correct tree; avoids re-proposing an already-bridged switch.",
+      "source": "/opt/envs/wu1w/lib/python3.12/site-packages/vllm/_aiter_ops.py:210-219,1833-1837; baseline server.log:28",
+      "what": "Live vllm source is /opt/envs/wu1w/lib/python3.12/site-packages/vllm (launched via /usr/local/bin/vllm-wu1w), which differs from /opt/envs/vllm and already carries a gfx90a AITER INT8 linear bridge: is_linear_enabled() uses is_aiter_attention_supported() (on_gfx9, includes gfx90a) instead of the CDNA3-only @if_aiter_supported. Baseline server.log:28 'Selected AiterInt8ScaledMMLinearKernel' confirms it fires."
+    },
+    {
+      "accuracy_risk": "low (same attention math, different kernel)",
+      "domain_tags": [
+        "attention",
+        "aiter",
+        "gfx90a"
+      ],
+      "expected_impact": "AITER-tuned Triton attention on the 16/64 full-attn layers at conc=64 decode; explicit --attention-backend bypasses the priority gate and validate_configuration passes for this config.",
+      "source": "/opt/envs/wu1w/lib/python3.12/site-packages/vllm/platforms/rocm.py:481-495; _aiter_ops.py:145-153; v1/attention/backends/rocm_aiter_unified_attn.py:41-70,146-148; baseline server.log:32,63",
+      "what": "ROCM_AITER_UNIFIED_ATTN never enters candidate backends on gfx90a: platforms/rocm.py _get_backend_priorities only appends it under is_aiter_found_and_supported() = get_cdna_version()>2 (CDNA3+). The backend itself supports head_size>=32 (hd256 OK), block MultipleOf(16) (784 OK), bf16, and runs aiter's Triton unified_attention (arch-neutral, same kernel family as the fallback). Baseline therefore uses ROCM_ATTN whose CK custom paged kernel is rejected at hd256 ('Cannot use ROCm custom paged attention kernel, falling back to Triton implementation') = generic vLLM Triton for all 16 full-attn layers."
+    },
+    {
+      "accuracy_risk": "low-medium (fusion numerics; accuracy gate covers)",
+      "domain_tags": [
+        "fusion",
+        "aiter",
+        "compile_pass"
+      ],
+      "expected_impact": "Fuses qknorm+rope+reshape_and_cache into one AITER kernel per full-attn layer, removing 3-4 elementwise launches/layer on the decode hot path.",
+      "source": "/opt/envs/wu1w/lib/python3.12/site-packages/vllm/config/vllm.py:207-216,225-310; config/compilation.py:272-295,956-963,1356-1367; compilation/passes/pass_manager.py:207-210; v1/attention/backends/rocm_aiter_unified_attn.py:312-315",
+      "what": "AITER fused QK-norm+RoPE+KV-cache-update pass (fuse_qk_norm_rope_kvcache, ROCm-gated) is default-False at ALL optimization levels and its last gate is_custom_op_enabled('rotary_embedding') fails because baseline runs custom_ops ['none','+sparse_attn_indexer']. When enabled via -ac it appends '+rotary_embedding' itself and runs QkNormRopeKvcacheFusionPass; the fused op executes via the aiter unified-attn impl's do_qk_norm_rope_kvcache_update (fused_qk_norm_rope_kvcache_supported = rocm_aiter_ops.is_enabled(), already true here)."
+    },
+    {
+      "accuracy_risk": "medium: layout mismatch would corrupt state; kernel source must be read before patching",
+      "domain_tags": [
+        "gdn",
+        "decode",
+        "aiter",
+        "qwen3_5"
+      ],
+      "expected_impact": "Largest untapped decode lever on this model class (48 GDN layers) if the fused kernels' reshape assumptions hold for non-interleaved packing.",
+      "source": "/opt/envs/wu1w/lib/python3.12/site-packages/vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py:78-90,1216-1237,1572-1636; _aiter_ops.py:1997-2018; aiter/ops/triton/__init__.py:149; baseline server.log:29-31",
+      "what": "AITER GDN fused single-token decode fast path (_forward_core_decode_aiter: fused conv1d-update + fused_rearrange_sigmoid_gated_delta_rule, both aiter Triton) is dispatched only when self.gqa_interleaved_layout (Qwen3-Next). Qwen3.5's non-interleaved q/k/v/z packing is explicitly excluded by the gate comment ('Qwen3.5 ... must use the generic path'). 48 of 64 layers are GDN and decode is the dominant regime (conc=64, OSL=1024). Note: vllm _gdn_triton_kernels_importable() probes 'aiter.ops.triton.causal_conv1d_update_single_token' which resolves only via aiter's lazy module map (file lives at aiter/ops/triton/conv/)."
+    }
+  ],
+  "patch_grounding": {},
+  "patches_written": [],
+  "proposal_set": [
+    {
+      "args_mode": "append",
+      "atomic": false,
+      "extra_args": "--attention-backend ROCM_AITER_UNIFIED_ATTN",
+      "kb_evidence": [],
+      "name": "bridge-rocm-aiter-unified-attn-hd256",
+      "pr_evidence": [],
+      "reason": "Bridge candidate: the aiter Triton unified-attention fast path exists and validates for this model (hd256>=32, block 784%16==0, bf16, causal) but is silently excluded from auto-selection on gfx90a solely by the CDNA3-only is_aiter_found_and_supported() (get_cdna_version()>2) priority gate in platforms/rocm.py:_get_backend_priorities \u2014 the same CDNA2-ism the tree already patched around for INT8 linear (is_aiter_attention_supported). Baseline runs generic vLLM Triton attention (CK paged kernel rejected at head_dim 256). Config-only bridge: explicit --attention-backend skips the priority list and goes straight to validate_configuration, which this model passes. If it starts and the log shows 'Using ROCM_AITER_UNIFIED_ATTN backend (selected via --attention-backend)', the kernel-level A/B for the 16 full-attn layers is live.",
+      "scope": "domain",
+      "source_evidence": [
+        "/opt/envs/wu1w/lib/python3.12/site-packages/vllm/platforms/rocm.py:481-495 (_get_backend_priorities CDNA3 gate)",
+        "/opt/envs/wu1w/lib/python3.12/site-packages/vllm/_aiter_ops.py:145-153 (is_aiter_found_and_supported: get_cdna_version()>2)",
+        "/opt/envs/wu1w/lib/python3.12/site-packages/vllm/v1/attention/backends/rocm_aiter_unified_attn.py:41-70 (supports_head_size>=32, MultipleOf(16) blocks), :146-148 (aiter.ops.triton.unified_attention)",
+        "session runs/baseline server.log:32,63 (ROCM_ATTN selected; custom paged attn rejected -> Triton)"
+      ]
+    },
+    {
+      "args_mode": "append",
+      "atomic": true,
+      "extra_args": "--attention-backend ROCM_AITER_UNIFIED_ATTN --compilation-config {\"cudagraph_mode\":\"FULL_DECODE_ONLY\",\"pass_config\":{\"fuse_qk_norm_rope_kvcache\":true},\"custom_ops\":[\"none\",\"+sparse_attn_indexer\",\"+rotary_embedding\"]}",
+      "kb_evidence": [],
+      "name": "bridge-aiter-qk-norm-rope-kvcache-fusion",
+      "pr_evidence": [],
+      "reason": "Atomic coupled bridge of the AITER fused QK-norm+RoPE+KV-cache-update pass: it exists for ROCm+AITER (enable_qk_norm_rope_kvcache = rocm_aiter_ops.is_enabled() && is_custom_op_enabled('rotary_embedding')) but is default-False at every optimization level AND the fused executor (do_qk_norm_rope_kvcache_update) lives on the aiter unified-attn impl, which gfx90a auto-selection silently never picks (CDNA3-only priority gate, see sibling proposal). Both switches must flip together or the pass matches but falls back unfused: (a) --attention-backend ROCM_AITER_UNIFIED_ATTN; (b) --compilation-config replacing the base one (remove_args drops the inherited flag), keeping cudagraph_mode FULL_DECODE_ONLY and +sparse_attn_indexer, adding fuse_qk_norm_rope_kvcache and +rotary_embedding under the required 'none' base. Fuses 3-4 elementwise kernels per layer on the 16 full-attn layers' decode path.",
+      "remove_args": [
+        "--compilation-config"
+      ],
+      "scope": "domain",
+      "source_evidence": [
+        "/opt/envs/wu1w/lib/python3.12/site-packages/vllm/config/vllm.py:207-216 (enable_qk_norm_rope_kvcache), :225-310 (default-False at all opt levels)",
+        "/opt/envs/wu1w/lib/python3.12/site-packages/vllm/config/compilation.py:1356-1367 (is_custom_op_enabled), :272-295 (ROCm ok), :956-963 (+rotary_embedding append)",
+        "/opt/envs/wu1w/lib/python3.12/site-packages/vllm/compilation/passes/pass_manager.py:207-210 (QkNormRopeKvcacheFusionPass registration)",
+        "/opt/envs/wu1w/lib/python3.12/site-packages/vllm/v1/attention/backends/rocm_aiter_unified_attn.py:312-315,333 (fused_qk_norm_rope_kvcache_supported=rocm_aiter_ops.is_enabled(); impl)"
+      ]
+    },
+    {
+      "args_mode": "append",
+      "atomic": false,
+      "extra_envs": {},
+      "kb_evidence": [],
+      "name": "bridge-gdn-decode-aiter-noninterleaved-layout",
+      "pr_evidence": [],
+      "reason": "Bridge candidate for the freeform patcher (no config knob exists): _forward_core_rocm dispatches to the AITER fused GDN decode fast path (fused conv1d-update + fused_rearrange_sigmoid_gated_delta_rule, both aiter Triton, loaded on this box because GDN_AITER_TRITON_AVAILABLE) ONLY when self.gqa_interleaved_layout \u2014 i.e. Qwen3-Next. This checkpoint is Qwen3.5 with the non-interleaved q/k/v/z layout ('must use the generic path' comment), so all 48 GDN layers \u2014 the majority of the model and the entire decode-critical loop at conc=64/OSL=1024 \u2014 take the split/rearrange Triton fallback. The fused_rearrange kernel itself takes generic key_dim/value_dim/head dims (not layout-specific); the layout coupling lives in the fused conv reshape. Patch sketch: extend the dispatch gate for non-interleaved packing (feed it prepare_gdn_attention_core_inputs-style q/k/v slices, or add the qwen3_5 unpack branch inside the aiter reshape), keep gfx90a validation (symmetric bf16 in/out, state fp32/bf16), and A/B under the normal KEEP gate.",
+      "scope": "domain",
+      "source_evidence": [
+        "/opt/envs/wu1w/lib/python3.12/site-packages/vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py:78-90 (kernel imports), :1216-1237 (gqa_interleaved_layout gate + comment), :1572-1636 (_forward_core_decode_aiter)",
+        "/opt/envs/wu1w/lib/python3.12/site-packages/aiter/ops/triton/gated_delta_net/fused_rearrange_sigmoid_gdr.py:18-43 (dim-generic signature)",
+        "session runs/baseline server.log:29-31 (GDN decode kernel: triton)"
+      ]
+    }
+  ],
+  "residual_questions": [
+    "Record in KB: live tree for this session is /opt/envs/wu1w/.../vllm (vllm-wu1w), already carrying gfx90a AITER-INT8-linear and (per model_arch notes) prior bridges \u2014 future recon rounds must grep THAT tree, not /opt/envs/vllm.",
+    "Does aiter.ops.triton.conv.causal_conv1d_update_single_token.fused_reshape_causal_conv1d_update_single_token hardcode interleaved qkvz unpacking, or is it parameterized by (num_k_heads,num_v_heads,head_k,head_v) such that Qwen3.5's [k,k,v,v]-shard packing works with adjusted strides? Freeform should read the kernel source before patching candidate 3.",
+    "Config-only probe not proposed this round (budget): --mamba-cache-dtype bfloat16 (GDN conv+ssm states go BF16; FUSED_GDN_STATE_DTYPES allows bf16; bandwidth-bound 48-layer state I/O at conc=64) \u2014 worth a slot next round if accuracy gate tolerates; check RecipeKB for prior GDN-state-dtype pitfalls first.",
+    "If the unified-attn variant benches positive, should the CDNA3-only gate in _get_backend_priorities be replaced with the gfx9-inclusive is_aiter_attention_supported() (or an arch check inside the backend) as the durable upstream-style bridge instead of the per-launch flag?"
+  ],
+  "summary": "Recon of the LIVE serving tree (/opt/envs/wu1w/.../vllm via vllm-wu1w launcher; NOT /opt/envs/vllm) for gfx90a + INT8-W8A8 + bf16 Qwen3.5 hybrid-GDN. Baseline log confirms AiterInt8ScaledMMLinearKernel is already bridged+selected (no win there). Found 3 un-bridged switches: (1) ROCM_AITER_UNIFIED_ATTN backend is silently disqualified on gfx90a by the CDNA3-only is_aiter_found_and_supported() priority gate although it supports hd>=32/blk%16/bf16 \u2014 baseline runs plain vLLM Triton attention for the 16 full-attn layers (hd256 kills the CK paged kernel); bypassable config-only via --attention-backend. (2) AITER fused QK-norm+RoPE+KV-cache pass (ROCm/AITER exists) default-False at every opt level + needs +rotary_embedding under custom_ops 'none'. (3) AITER fused GDN decode fast path exists but is gated to gqa_interleaved_layout (Qwen3-Next); Qwen3.5 (non-interleaved, 48 GDN layers = dominant decode cost) always takes the generic Triton path \u2014 patch candidate for freeform.",
+  "ts": "2026-09-14T18:51:49.256375+00:00"
+}

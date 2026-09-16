@@ -1,0 +1,339 @@
+{
+  "end_time": "2026-09-14T15:52:29+00:00",
+  "ext": {
+    "actions": [
+      {
+        "accuracy_stage": null,
+        "cold_anchor": null,
+        "convergence": null,
+        "duration_sec": 44.22,
+        "end_time": "2026-09-14T13:50:28+00:00",
+        "failure": {
+          "error_class": "subprocess_nonzero",
+          "message": "pie.modes.benchmark.benchmarker - INFO - Benchmark completed in 13.32s\n2026-09-14 13:50:28,123 - Magpie.main - ERROR - Benchmark failed: ['Benchmark process failed with code 1', 'stderr: + [[ all == \\\\s\\\\e\\\\r\\\\v\\\\e\\\\r ]]\\n+ [[ all == \\\\a\\\\l\\\\l ]]\\n+ SERVER_PID=11051\\n+ [[ all == \\\\a\\\\l\\\\l ]]\\n+ trap \\'magpie_stop_benchmark_server_stack \"$SERVER_PID\"\\' EXIT INT TERM\\n+ wait_for_server_ready --port 8888 --server-log /home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/baseline/2fc18296cb5e4f75846d0f0dbf143c2b/benchmark_vllm_20260914_135014/server.log --server-pid 11051\\n+ local port=\\n+ local server_log=\\n+ local server_pid=\\n+ local sleep_interval=5\\n+ [[ 6 -gt 0 ]]\\n+ case $1 in\\n+ port=8888\\n+ shift 2\\n+ [[ 4 -gt 0 ]]\\n+ case $1 in\\n+ server_log=/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/baseline/2fc18296cb5e4f75846d0f0dbf143c2b/benchmark_vllm_20260914_135014/server.log\\n+ shift 2\\n+ [[ 2 -gt 0 ]]\\n+ case $1 in\\n+ server_pid=11051\\n+ shift 2\\n+ [[ 0 -gt 0 ]]\\n+ [[ -z 8888 ]]\\n+ [[ -z /home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/baseli', 'inferencex_result.json not found - benchmark may have failed locally', 'stderr (last 500 chars): er.log --pid 11051 --sleep-interval 5\\n+ set +x\\n+ setsid /usr/local/bin/vllm-wu1w serve /mnt/stripe-3mix-3t2/models/davetha/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8 --port 8888 --tensor-parallel-size=1 --gpu-memory-utilization 0.95 --max-model-len 6144 --trust-remote-code --trust-remote-code --language-model-only --quantization compressed-tensors --safetensors-load-strategy eager --compilation-config \\'{\"cudagraph_mode\":\"FULL_DECODE_ONLY\"}\\'\\nProcess died before http://0.0.0.0:8888/health became ready.\\n', 'server.log errors: Traceback (most recent call last):\\n    raise RuntimeError(\\nRuntimeError: HIP_VISIBLE_DEVICES contains more devices than ROCR_VISIBLE_DEVICES']\n",
+          "phase": "baseline",
+          "returncode": 1,
+          "stderr_log_path": ""
+        },
+        "in_flight_run_index": null,
+        "materialized_config": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/baseline/2fc18296cb5e4f75846d0f0dbf143c2b/baseline_config.with_envs.yaml",
+        "measurement": {
+          "accuracy": null,
+          "accuracy_metric": "",
+          "accuracy_source": "",
+          "accuracy_task": "",
+          "benchmark_report_path": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/baseline/2fc18296cb5e4f75846d0f0dbf143c2b/benchmark_vllm_20260914_135014/benchmark_report.json",
+          "e2el_mean_ms": null,
+          "throughput_tok_s_per_gpu": null,
+          "tpot_mean_ms": null,
+          "ttft_mean_ms": null,
+          "workspace": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/baseline/2fc18296cb5e4f75846d0f0dbf143c2b/benchmark_vllm_20260914_135014"
+        },
+        "request": {
+          "config_path": "",
+          "establishes_quality_ref": true,
+          "framework": "vllm",
+          "output_dir": "",
+          "reason": "",
+          "requested_timeout_sec": null,
+          "task_id": "2fc18296cb5e4f75846d0f0dbf143c2b",
+          "task_kind": "baseline"
+        },
+        "run_eval_disabled": false,
+        "runs": [
+          {
+            "attempt_reason": "initial",
+            "end_time": "2026-09-14T13:50:28+00:00",
+            "error_class": "subprocess_nonzero",
+            "rounds": [
+              {
+                "duration_sec": 44.014,
+                "end_time": "2026-09-14T13:50:28+00:00",
+                "failure": {
+                  "error_class": "subprocess_nonzero",
+                  "message": "pie.modes.benchmark.benchmarker - INFO - Benchmark completed in 13.32s\n2026-09-14 13:50:28,123 - Magpie.main - ERROR - Benchmark failed: ['Benchmark process failed with code 1', 'stderr: + [[ all == \\\\s\\\\e\\\\r\\\\v\\\\e\\\\r ]]\\n+ [[ all == \\\\a\\\\l\\\\l ]]\\n+ SERVER_PID=11051\\n+ [[ all == \\\\a\\\\l\\\\l ]]\\n+ trap \\'magpie_stop_benchmark_server_stack \"$SERVER_PID\"\\' EXIT INT TERM\\n+ wait_for_server_ready --port 8888 --server-log /home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/baseline/2fc18296cb5e4f75846d0f0dbf143c2b/benchmark_vllm_20260914_135014/server.log --server-pid 11051\\n+ local port=\\n+ local server_log=\\n+ local server_pid=\\n+ local sleep_interval=5\\n+ [[ 6 -gt 0 ]]\\n+ case $1 in\\n+ port=8888\\n+ shift 2\\n+ [[ 4 -gt 0 ]]\\n+ case $1 in\\n+ server_log=/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/baseline/2fc18296cb5e4f75846d0f0dbf143c2b/benchmark_vllm_20260914_135014/server.log\\n+ shift 2\\n+ [[ 2 -gt 0 ]]\\n+ case $1 in\\n+ server_pid=11051\\n+ shift 2\\n+ [[ 0 -gt 0 ]]\\n+ [[ -z 8888 ]]\\n+ [[ -z /home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/baseli', 'inferencex_result.json not found - benchmark may have failed locally', 'stderr (last 500 chars): er.log --pid 11051 --sleep-interval 5\\n+ set +x\\n+ setsid /usr/local/bin/vllm-wu1w serve /mnt/stripe-3mix-3t2/models/davetha/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8 --port 8888 --tensor-parallel-size=1 --gpu-memory-utilization 0.95 --max-model-len 6144 --trust-remote-code --trust-remote-code --language-model-only --quantization compressed-tensors --safetensors-load-strategy eager --compilation-config \\'{\"cudagraph_mode\":\"FULL_DECODE_ONLY\"}\\'\\nProcess died before http://0.0.0.0:8888/health became ready.\\n', 'server.log errors: Traceback (most recent call last):\\n    raise RuntimeError(\\nRuntimeError: HIP_VISIBLE_DEVICES contains more devices than ROCR_VISIBLE_DEVICES']\n",
+                  "phase": "round_single",
+                  "returncode": 1,
+                  "stderr_log_path": ""
+                },
+                "label": "single",
+                "measurement": {
+                  "accuracy": null,
+                  "accuracy_metric": "",
+                  "accuracy_source": "",
+                  "accuracy_task": "",
+                  "benchmark_report_path": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/baseline/2fc18296cb5e4f75846d0f0dbf143c2b/benchmark_vllm_20260914_135014/benchmark_report.json",
+                  "e2el_mean_ms": null,
+                  "throughput_tok_s_per_gpu": null,
+                  "tpot_mean_ms": null,
+                  "ttft_mean_ms": null,
+                  "workspace": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/baseline/2fc18296cb5e4f75846d0f0dbf143c2b/benchmark_vllm_20260914_135014"
+                },
+                "run_eval_disabled": false,
+                "start_time": "2026-09-14T13:49:44+00:00",
+                "status": "failed",
+                "timeout_sec": 7800,
+                "timing": {
+                  "post_ready_runtime_sec": null,
+                  "subprocess_runtime_sec": 44.0
+                },
+                "warnings": {
+                  "count": 1,
+                  "messages": [
+                    "benchmark_report_success_false"
+                  ]
+                }
+              }
+            ],
+            "run_index": 1,
+            "start_time": "2026-09-14T13:49:43+00:00",
+            "status": "failed",
+            "warnings": {
+              "count": 1,
+              "messages": [
+                "benchmark_report_success_false"
+              ]
+            }
+          }
+        ],
+        "start_time": "2026-09-14T13:49:43+00:00",
+        "status": "failed",
+        "task_id": "2fc18296cb5e4f75846d0f0dbf143c2b",
+        "timing": {
+          "post_ready_runtime_sec": null,
+          "subprocess_runtime_sec": 44.0
+        },
+        "warmup_round_tput": null,
+        "warnings": {
+          "count": 1,
+          "messages": [
+            "benchmark_report_success_false"
+          ]
+        }
+      },
+      {
+        "accuracy_stage": null,
+        "cold_anchor": null,
+        "convergence": null,
+        "duration_sec": 25.645,
+        "end_time": "2026-09-14T15:14:24+00:00",
+        "failure": {
+          "error_class": "subprocess_nonzero",
+          "message": "4 15:14:24,118 - Magpie.modes.benchmark.benchmarker - INFO - Benchmark completed in 24.08s\n2026-09-14 15:14:24,118 - Magpie.main - ERROR - Benchmark failed: ['Benchmark process failed with code 1', 'stderr: + [[ all == \\\\s\\\\e\\\\r\\\\v\\\\e\\\\r ]]\\n+ [[ all == \\\\a\\\\l\\\\l ]]\\n+ SERVER_PID=11444\\n+ [[ all == \\\\a\\\\l\\\\l ]]\\n+ trap \\'magpie_stop_benchmark_server_stack \"$SERVER_PID\"\\' EXIT INT TERM\\n+ wait_for_server_ready --port 8888 --server-log /home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/baseline/48e0ae2b0af74c03b4b40c847fc99d3b/benchmark_vllm_20260914_151400/server.log --server-pid 11444\\n+ local port=\\n+ local server_log=\\n+ local server_pid=\\n+ local sleep_interval=5\\n+ [[ 6 -gt 0 ]]\\n+ case $1 in\\n+ port=8888\\n+ shift 2\\n+ [[ 4 -gt 0 ]]\\n+ case $1 in\\n+ server_log=/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/baseline/48e0ae2b0af74c03b4b40c847fc99d3b/benchmark_vllm_20260914_151400/server.log\\n+ shift 2\\n+ [[ 2 -gt 0 ]]\\n+ case $1 in\\n+ server_pid=11444\\n+ shift 2\\n+ [[ 0 -gt 0 ]]\\n+ [[ -z 8888 ]]\\n+ [[ -z /home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/baseli', 'inferencex_result.json not found - benchmark may have failed locally', 'stderr (last 500 chars): er.log --pid 11444 --sleep-interval 5\\n+ setsid /usr/local/bin/vllm-wu1w serve /mnt/stripe-3mix-3t2/models/davetha/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8 --port 8888 --tensor-parallel-size=1 --gpu-memory-utilization 0.95 --max-model-len 6144 --trust-remote-code --trust-remote-code --language-model-only --quantization compressed-tensors --safetensors-load-strategy eager --compilation-config \\'{\"cudagraph_mode\":\"FULL_DECODE_ONLY\"}\\'\\n+ set +x\\nProcess died before http://0.0.0.0:8888/health became ready.\\n', 'server.log errors: (APIServer pid=11444) Traceback (most recent call last):\\n(APIServer pid=11444) OSError: [Errno 98] Address already in use']\n",
+          "phase": "baseline",
+          "returncode": 1,
+          "stderr_log_path": ""
+        },
+        "in_flight_run_index": null,
+        "materialized_config": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/baseline/48e0ae2b0af74c03b4b40c847fc99d3b/baseline_config.with_envs.yaml",
+        "measurement": {
+          "accuracy": null,
+          "accuracy_metric": "",
+          "accuracy_source": "",
+          "accuracy_task": "",
+          "benchmark_report_path": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/baseline/48e0ae2b0af74c03b4b40c847fc99d3b/benchmark_vllm_20260914_151400/benchmark_report.json",
+          "e2el_mean_ms": null,
+          "throughput_tok_s_per_gpu": null,
+          "tpot_mean_ms": null,
+          "ttft_mean_ms": null,
+          "workspace": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/baseline/48e0ae2b0af74c03b4b40c847fc99d3b/benchmark_vllm_20260914_151400"
+        },
+        "request": {
+          "config_path": "",
+          "establishes_quality_ref": true,
+          "framework": "vllm",
+          "output_dir": "",
+          "reason": "",
+          "requested_timeout_sec": null,
+          "task_id": "48e0ae2b0af74c03b4b40c847fc99d3b",
+          "task_kind": "baseline"
+        },
+        "run_eval_disabled": false,
+        "runs": [
+          {
+            "attempt_reason": "initial",
+            "end_time": "2026-09-14T15:14:24+00:00",
+            "error_class": "subprocess_nonzero",
+            "rounds": [
+              {
+                "duration_sec": 25.45,
+                "end_time": "2026-09-14T15:14:24+00:00",
+                "failure": {
+                  "error_class": "subprocess_nonzero",
+                  "message": "4 15:14:24,118 - Magpie.modes.benchmark.benchmarker - INFO - Benchmark completed in 24.08s\n2026-09-14 15:14:24,118 - Magpie.main - ERROR - Benchmark failed: ['Benchmark process failed with code 1', 'stderr: + [[ all == \\\\s\\\\e\\\\r\\\\v\\\\e\\\\r ]]\\n+ [[ all == \\\\a\\\\l\\\\l ]]\\n+ SERVER_PID=11444\\n+ [[ all == \\\\a\\\\l\\\\l ]]\\n+ trap \\'magpie_stop_benchmark_server_stack \"$SERVER_PID\"\\' EXIT INT TERM\\n+ wait_for_server_ready --port 8888 --server-log /home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/baseline/48e0ae2b0af74c03b4b40c847fc99d3b/benchmark_vllm_20260914_151400/server.log --server-pid 11444\\n+ local port=\\n+ local server_log=\\n+ local server_pid=\\n+ local sleep_interval=5\\n+ [[ 6 -gt 0 ]]\\n+ case $1 in\\n+ port=8888\\n+ shift 2\\n+ [[ 4 -gt 0 ]]\\n+ case $1 in\\n+ server_log=/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/baseline/48e0ae2b0af74c03b4b40c847fc99d3b/benchmark_vllm_20260914_151400/server.log\\n+ shift 2\\n+ [[ 2 -gt 0 ]]\\n+ case $1 in\\n+ server_pid=11444\\n+ shift 2\\n+ [[ 0 -gt 0 ]]\\n+ [[ -z 8888 ]]\\n+ [[ -z /home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/baseli', 'inferencex_result.json not found - benchmark may have failed locally', 'stderr (last 500 chars): er.log --pid 11444 --sleep-interval 5\\n+ setsid /usr/local/bin/vllm-wu1w serve /mnt/stripe-3mix-3t2/models/davetha/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8 --port 8888 --tensor-parallel-size=1 --gpu-memory-utilization 0.95 --max-model-len 6144 --trust-remote-code --trust-remote-code --language-model-only --quantization compressed-tensors --safetensors-load-strategy eager --compilation-config \\'{\"cudagraph_mode\":\"FULL_DECODE_ONLY\"}\\'\\n+ set +x\\nProcess died before http://0.0.0.0:8888/health became ready.\\n', 'server.log errors: (APIServer pid=11444) Traceback (most recent call last):\\n(APIServer pid=11444) OSError: [Errno 98] Address already in use']\n",
+                  "phase": "round_single",
+                  "returncode": 1,
+                  "stderr_log_path": ""
+                },
+                "label": "single",
+                "measurement": {
+                  "accuracy": null,
+                  "accuracy_metric": "",
+                  "accuracy_source": "",
+                  "accuracy_task": "",
+                  "benchmark_report_path": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/baseline/48e0ae2b0af74c03b4b40c847fc99d3b/benchmark_vllm_20260914_151400/benchmark_report.json",
+                  "e2el_mean_ms": null,
+                  "throughput_tok_s_per_gpu": null,
+                  "tpot_mean_ms": null,
+                  "ttft_mean_ms": null,
+                  "workspace": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/baseline/48e0ae2b0af74c03b4b40c847fc99d3b/benchmark_vllm_20260914_151400"
+                },
+                "run_eval_disabled": false,
+                "start_time": "2026-09-14T15:13:58+00:00",
+                "status": "failed",
+                "timeout_sec": 7800,
+                "timing": {
+                  "post_ready_runtime_sec": null,
+                  "subprocess_runtime_sec": 25.44
+                },
+                "warnings": {
+                  "count": 1,
+                  "messages": [
+                    "benchmark_report_success_false"
+                  ]
+                }
+              }
+            ],
+            "run_index": 1,
+            "start_time": "2026-09-14T15:13:58+00:00",
+            "status": "failed",
+            "warnings": {
+              "count": 1,
+              "messages": [
+                "benchmark_report_success_false"
+              ]
+            }
+          }
+        ],
+        "start_time": "2026-09-14T15:13:58+00:00",
+        "status": "failed",
+        "task_id": "48e0ae2b0af74c03b4b40c847fc99d3b",
+        "timing": {
+          "post_ready_runtime_sec": null,
+          "subprocess_runtime_sec": 25.44
+        },
+        "warmup_round_tput": null,
+        "warnings": {
+          "count": 1,
+          "messages": [
+            "benchmark_report_success_false"
+          ]
+        }
+      },
+      {
+        "accuracy_stage": null,
+        "cold_anchor": null,
+        "convergence": null,
+        "duration_sec": 89.434,
+        "end_time": "2026-09-14T15:52:29+00:00",
+        "failure": {
+          "error_class": "server_init_dead",
+          "message": "(EngineCore pid=22804) Triton cache error: compiled module hip_utils.so could not be loaded\n(EngineCore pid=22804) INFO 09-14 15:52:19 [registry.py:141] All limits of multimodal modalities supported by the model are set to 0, running in text-only mode.\n(EngineCore pid=22804) ERROR 09-14 15:52:19 [core.py:1346] EngineCore failed to start.\n(EngineCore pid=22804) ERROR 09-14 15:52:19 [core.py:1346] Traceback (most recent call last):\n(EngineCore pid=22804) ERROR 09-14 15:52:19 [core.py:1346]   File \"/opt/envs/wu1w/lib/python3.12/site-packages/vllm/v1/engine/core.py\", line 1315, in run_engine_core",
+          "phase": "baseline",
+          "returncode": 1,
+          "stderr_log_path": ""
+        },
+        "in_flight_run_index": null,
+        "materialized_config": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/baseline/0668d71b42d54c559c36634e823a55a5/baseline_config.with_envs.yaml",
+        "measurement": {
+          "accuracy": null,
+          "accuracy_metric": "",
+          "accuracy_source": "",
+          "accuracy_task": "",
+          "benchmark_report_path": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/baseline/0668d71b42d54c559c36634e823a55a5/benchmark_vllm_20260914_155130/benchmark_report.json",
+          "e2el_mean_ms": null,
+          "throughput_tok_s_per_gpu": null,
+          "tpot_mean_ms": null,
+          "ttft_mean_ms": null,
+          "workspace": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/baseline/0668d71b42d54c559c36634e823a55a5/benchmark_vllm_20260914_155130"
+        },
+        "request": {
+          "config_path": "",
+          "establishes_quality_ref": true,
+          "framework": "vllm",
+          "output_dir": "",
+          "reason": "",
+          "requested_timeout_sec": null,
+          "task_id": "0668d71b42d54c559c36634e823a55a5",
+          "task_kind": "baseline"
+        },
+        "run_eval_disabled": false,
+        "runs": [
+          {
+            "attempt_reason": "initial",
+            "end_time": "2026-09-14T15:52:29+00:00",
+            "error_class": "server_init_dead",
+            "rounds": [
+              {
+                "duration_sec": 89.249,
+                "end_time": "2026-09-14T15:52:29+00:00",
+                "failure": {
+                  "error_class": "server_init_dead",
+                  "message": "(EngineCore pid=22804) Triton cache error: compiled module hip_utils.so could not be loaded\n(EngineCore pid=22804) INFO 09-14 15:52:19 [registry.py:141] All limits of multimodal modalities supported by the model are set to 0, running in text-only mode.\n(EngineCore pid=22804) ERROR 09-14 15:52:19 [core.py:1346] EngineCore failed to start.\n(EngineCore pid=22804) ERROR 09-14 15:52:19 [core.py:1346] Traceback (most recent call last):\n(EngineCore pid=22804) ERROR 09-14 15:52:19 [core.py:1346]   File \"/opt/envs/wu1w/lib/python3.12/site-packages/vllm/v1/engine/core.py\", line 1315, in run_engine_core",
+                  "phase": "round_single",
+                  "returncode": 1,
+                  "stderr_log_path": ""
+                },
+                "label": "single",
+                "measurement": {
+                  "accuracy": null,
+                  "accuracy_metric": "",
+                  "accuracy_source": "",
+                  "accuracy_task": "",
+                  "benchmark_report_path": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/baseline/0668d71b42d54c559c36634e823a55a5/benchmark_vllm_20260914_155130/benchmark_report.json",
+                  "e2el_mean_ms": null,
+                  "throughput_tok_s_per_gpu": null,
+                  "tpot_mean_ms": null,
+                  "ttft_mean_ms": null,
+                  "workspace": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/baseline/0668d71b42d54c559c36634e823a55a5/benchmark_vllm_20260914_155130"
+                },
+                "run_eval_disabled": false,
+                "start_time": "2026-09-14T15:51:00+00:00",
+                "status": "failed",
+                "timeout_sec": 7800,
+                "timing": {
+                  "post_ready_runtime_sec": null,
+                  "subprocess_runtime_sec": 89.24
+                },
+                "warnings": {
+                  "count": 1,
+                  "messages": [
+                    "benchmark_report_success_false"
+                  ]
+                }
+              }
+            ],
+            "run_index": 1,
+            "start_time": "2026-09-14T15:51:00+00:00",
+            "status": "failed",
+            "warnings": {
+              "count": 1,
+              "messages": [
+                "benchmark_report_success_false"
+              ]
+            }
+          }
+        ],
+        "start_time": "2026-09-14T15:51:00+00:00",
+        "status": "failed",
+        "task_id": "0668d71b42d54c559c36634e823a55a5",
+        "timing": {
+          "post_ready_runtime_sec": null,
+          "subprocess_runtime_sec": 89.24
+        },
+        "warmup_round_tput": null,
+        "warnings": {
+          "count": 1,
+          "messages": [
+            "benchmark_report_success_false"
+          ]
+        }
+      }
+    ]
+  },
+  "id": "prelude:0:baseline",
+  "kind": "baseline",
+  "start_time": "2026-09-14T15:51:00+00:00",
+  "status": "failed",
+  "type": "baseline"
+}

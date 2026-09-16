@@ -1,0 +1,67 @@
+{
+  "claw_session_id": null,
+  "code_revision": "",
+  "created_at_utc": "2026-09-14T13:49:02+00:00",
+  "dependencies": {
+    "inferencex": {
+      "commit": "3d55815",
+      "path": "/home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966",
+      "remote": "https://github.com/SemiAnalysisAI/InferenceX.git"
+    },
+    "magpie": {
+      "commit": "",
+      "path": "/opt/envs/vllm/lib/python3.12/site-packages",
+      "remote": ""
+    }
+  },
+  "ep": 1,
+  "framework": "vllm",
+  "gfx_arch": "gfx90a",
+  "gpu_specialist_capacity": 2,
+  "gpu_type": "",
+  "graph_mode": null,
+  "host": "amd-server",
+  "image": "rocm-ai/vllm:0.28.0-rocm7.2.4",
+  "kb_degraded_reason": null,
+  "max_minutes": 180,
+  "model_name": "Qwen3.8-27B-ABLITERATED-W8A8-gdnint8",
+  "model_path": "/mnt/stripe-3mix-3t2/models/davetha/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8",
+  "objective": {
+    "kind": "gain_pct",
+    "value": 30.0
+  },
+  "pid": 7219,
+  "pr_degraded_reason": "ir3_auto",
+  "reference_script": null,
+  "research_lane_capacity": 4,
+  "sandbox_user_id": null,
+  "schema_version": 4,
+  "server_args": [
+    "--trust-remote-code",
+    "--language-model-only",
+    "--quantization",
+    "compressed-tensors",
+    "--safetensors-load-strategy",
+    "eager",
+    "--compilation-config",
+    "{\"cudagraph_mode\":\"FULL_DECODE_ONLY\"}"
+  ],
+  "server_args_hash": "18dfd55da01a1d2a00222a9afe8c009ecad20182d50ca82f77322bbcaadf47a8",
+  "session_dir": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455",
+  "session_id": "Qwen3.8-27B-ABLITERATED-W8A8-gdnint8_20260914T134902Z_5ae731fb",
+  "stack_fingerprint": {
+    "aiter": "unknown",
+    "rocm": "7.2.4",
+    "sglang": "unknown",
+    "vllm": "0.28.0+rocm723"
+  },
+  "tp": 1,
+  "user_data_path": "/home/qiba/ROCm.AI/hyperloom/session",
+  "workload": {
+    "conc": 64,
+    "isl": 1024,
+    "max_model_len": 6144,
+    "osl": 1024,
+    "precision": "bf16"
+  }
+}

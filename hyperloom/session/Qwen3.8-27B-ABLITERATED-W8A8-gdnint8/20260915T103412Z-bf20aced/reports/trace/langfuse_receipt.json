@@ -1,0 +1,38 @@
+{
+  "config": {
+    "enable_flag": false,
+    "host": null,
+    "public_key_set": false,
+    "sdk_available": false,
+    "secret_key_set": false
+  },
+  "correlated_on": "internal_session_id",
+  "counts": {
+    "breakdown_recorded": 0,
+    "errors": 0,
+    "ext_shards_read": 0,
+    "forge_steps_read": 0,
+    "gemm_tuning_read": 0,
+    "generations_failed": 0,
+    "generations_paired": 0,
+    "generations_sent": 0,
+    "generations_text_only": 0,
+    "generations_token_only": 0,
+    "kb_spans_sent": 0,
+    "recipe_audit_read": 0,
+    "recipe_write_audit_read": 0,
+    "scores_sent": 0,
+    "session_start_recorded": 0,
+    "spans_opened": 0,
+    "specialist_intel_read": 0,
+    "status_updates_sent": 0
+  },
+  "counts_final": false,
+  "disabled_reason": "disabled",
+  "enabled": false,
+  "ext_rows_sent": {},
+  "flush_steps_done": [],
+  "payload_sha256": "28119ce03f6383f2dcebbf8b84f28490f88479e542ca9d46c99a38952aff2c7c",
+  "session_id": "Qwen3.8-27B-ABLITERATED-W8A8-gdnint8_20260915T103412Z_ebc83030",
+  "trace_id": "ac74a0ed7256a1741bb0bc3730a6e945"
+}

@@ -1,0 +1,21 @@
+{
+  "session_id": "20260915T161654Z-c63294cb",
+  "model": "Ornith-1.5-397B-FP8",
+  "hardware": "",
+  "framework": "vllm",
+  "baseline_throughput": 0.0,
+  "final_throughput": null,
+  "total_gain_pct": null,
+  "entries": [
+    {
+      "phase": "PRELUDE",
+      "iter": 1,
+      "kind": "other",
+      "change": "target_analysis",
+      "outcome": "KEEP",
+      "task_id": "f3dae62aad394159a83b2237963d4b70",
+      "ts": "2026-09-15T16:17:37Z",
+      "tick": 1
+    }
+  ]
+}

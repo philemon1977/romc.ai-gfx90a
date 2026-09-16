@@ -1,0 +1,12 @@
+{
+  "confidence": 0.0,
+  "domain": "serving_specialist",
+  "empty": true,
+  "gap_canonical_id": "gap.research_hint.853bf1cf540004ac",
+  "new_findings": [],
+  "proposal_set": [],
+  "reason": "subprocess_timeout: specialist subprocess exceeded 600s wall-clock cap",
+  "residual_questions": [],
+  "summary": "subprocess_timeout: specialist subprocess exceeded 600s wall-clock cap",
+  "ts": "2026-09-15T12:01:24.630304+00:00"
+}

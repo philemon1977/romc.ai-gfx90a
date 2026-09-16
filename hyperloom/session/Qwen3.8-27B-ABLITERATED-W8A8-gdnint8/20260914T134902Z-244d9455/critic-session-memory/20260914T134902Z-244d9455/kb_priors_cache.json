@@ -1,0 +1,18 @@
+{
+  "framework=vllm|model=qwen3.8-27b-abliterated-w8a8-gdnint8|model_family=qwen|org=hyperloom|precision=bf16|workload={'conc': 64, 'isl': 1024, 'max_model_len': 6144, 'osl': 1024, 'precision': 'bf16'}|topic=baseline|limit=5": {
+    "ts": 1789398809.8546052,
+    "priors": []
+  },
+  "framework=vllm|model=qwen3.8-27b-abliterated-w8a8-gdnint8|model_family=qwen|org=hyperloom|precision=bf16|workload={'conc': 64, 'isl': 1024, 'max_model_len': 6144, 'osl': 1024, 'precision': 'bf16'}|topic=target_analysis|limit=5": {
+    "ts": 1789393754.8770678,
+    "priors": []
+  },
+  "framework=vllm|model=qwen3.8-27b-abliterated-w8a8-gdnint8|model_family=qwen|org=hyperloom|precision=bf16|workload={'conc': 64, 'isl': 1024, 'max_model_len': 6144, 'osl': 1024, 'precision': 'bf16'}|topic=decision-20260914t134902z-244d9455|limit=5": {
+    "ts": 1789404290.8909862,
+    "priors": []
+  },
+  "framework=vllm|model=qwen3.8-27b-abliterated-w8a8-gdnint8|model_family=qwen|org=hyperloom|precision=bf16|workload={'conc': 64, 'isl': 1024, 'max_model_len': 6144, 'osl': 1024, 'precision': 'bf16'}|topic=integrate_patch|limit=5": {
+    "ts": 1789404167.8350577,
+    "priors": []
+  }
+}

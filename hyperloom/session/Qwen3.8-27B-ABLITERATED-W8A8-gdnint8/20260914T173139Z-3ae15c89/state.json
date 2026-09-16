@@ -1,0 +1,1120 @@
+{
+  "active_inferencex_path": "",
+  "agentx_epoch": 0,
+  "apply_fail_reauthor_attempts": {},
+  "apply_fail_retry_pending": [],
+  "authored_framework_levers": [],
+  "auto_roofline_pending_task_id": "",
+  "baseline_accuracy": 0.9673995451099318,
+  "baseline_arg_error_streak": 0,
+  "baseline_attempts": [
+    {
+      "decision": "promoted",
+      "error_class": null,
+      "error_excerpt": null,
+      "extras": {
+        "accuracy": 0.9673995451099318,
+        "baseline_tput": 444.8566029611903,
+        "enablement_accuracy_floor": 0.0,
+        "enablement_succeeded": false,
+        "fingerprint": {
+          "benchmark_script": null,
+          "config_path": null,
+          "disable_run_eval": null,
+          "extra_envs": [],
+          "extra_server_args": null,
+          "gpu_type": null,
+          "model_path": null,
+          "result_dir": null
+        },
+        "is_revalidation": false,
+        "materialized_config": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T173139Z-3ae15c89/runs/baseline/e420b1b3a97f4b7eb334a1df38a32578/baseline_config.with_envs.yaml"
+      },
+      "failure_id": null,
+      "key_metric": 444.8566029611903,
+      "key_metric_kind": "output_throughput",
+      "raw_result_path": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T173139Z-3ae15c89/runs/baseline/e420b1b3a97f4b7eb334a1df38a32578/benchmark_vllm_20260914_173834/inferencex_result.json",
+      "reported_success": true,
+      "status": "succeeded",
+      "stderr_log_path": null,
+      "stderr_tail": null,
+      "task_id": "e420b1b3a97f4b7eb334a1df38a32578",
+      "ts": "2026-09-14T18:41:22.650574+00:00",
+      "variant_name": null,
+      "workspace": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T173139Z-3ae15c89/runs/baseline/e420b1b3a97f4b7eb334a1df38a32578/benchmark_vllm_20260914_173834"
+    }
+  ],
+  "baseline_config_path": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T173139Z-3ae15c89/runs/baseline/e420b1b3a97f4b7eb334a1df38a32578/baseline_config.with_envs.yaml",
+  "baseline_double_run": true,
+  "baseline_eager_fallback": false,
+  "baseline_failure_streak": 0,
+  "baseline_measure_round_dropped": false,
+  "baseline_perf": {},
+  "baseline_post_ready_runtime_sec": 3618.06841232872,
+  "baseline_roofline_ceiling": {},
+  "baseline_runtime_sec": 3798.87,
+  "baseline_total_failures": 0,
+  "baseline_tput": 444.8566029611903,
+  "baseline_warm_runtime_sec": 0.0,
+  "baseline_workload_extra": {},
+  "benchmark_backend": "",
+  "benchmark_mode": "synthetic",
+  "bottleneck_shift": {},
+  "bypass_scripts_dir": "",
+  "claw_session_id": "",
+  "close_sequence_done": false,
+  "closing_grace_sec": null,
+  "closing_phase": false,
+  "closing_report_task_id": "5e02dd5cd0ba477caa20c3ebe9b520dc",
+  "closing_started_unix": 1789414305.2201517,
+  "collective_attempts": [],
+  "collective_only_mode": false,
+  "compute_partition": {},
+  "conc": 64,
+  "conc_sweep_concs": [
+    256,
+    128,
+    64,
+    32,
+    16,
+    8,
+    4,
+    2
+  ],
+  "conc_sweep_enabled": false,
+  "conc_sweep_total_budget_sec": 9000,
+  "conc_sweep_variant_timeout_sec": 1800,
+  "consecutive_config_only_rounds": 0,
+  "crash_count": 0,
+  "crash_timestamps": [],
+  "cumulative_gain_validated": 0.0,
+  "cumulative_gain_validated_stack_len": 0,
+  "cumulative_gain_validated_ts": "",
+  "current_action": "",
+  "current_best": {
+    "action": "baseline",
+    "cold_tput": null,
+    "e2el_mean_ms": 147098.0696068188,
+    "hot_tput": 444.8566029611903,
+    "input_throughput": null,
+    "intvty_p90": null,
+    "measurement": {
+      "benchmark_workspace": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T173139Z-3ae15c89/runs/baseline/e420b1b3a97f4b7eb334a1df38a32578/benchmark_vllm_20260914_173834",
+      "declared_launch_identity": "sha256:c39f9b998b574e33c168d527ed7f5c76416d02f8cd6591bd5fa759f3308cb6d4",
+      "identity_verification_status": "verified_declared_only",
+      "launch_evidence": {
+        "actual_server_log_path": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T173139Z-3ae15c89/runs/baseline/e420b1b3a97f4b7eb334a1df38a32578/benchmark_vllm_20260914_173834/server.log",
+        "framework": "vllm",
+        "materialized_config_path": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T173139Z-3ae15c89/runs/baseline/e420b1b3a97f4b7eb334a1df38a32578/baseline_config.with_envs.yaml",
+        "model_path": "/mnt/stripe-3mix-3t2/models/davetha/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8",
+        "observed_server_identity": {},
+        "observed_server_launch_flags": "",
+        "recipe_digest": "sha256:61218263f822a5933973ba025c61f4891097602c63d99731aabe70a3e6d2b833",
+        "requested_server_args": "--trust-remote-code --language-model-only --quantization compressed-tensors --safetensors-load-strategy eager --compilation-config {\"cudagraph_mode\":\"FULL_DECODE_ONLY\"}",
+        "requested_server_env": {
+          "AITER_LOG_TUNED_CONFIG": "1",
+          "BENCH_TRUST_REMOTE_CODE": "1",
+          "CONC": "64",
+          "HF_HUB_TRUST_REMOTE_CODE": "1",
+          "ISL": "1024",
+          "MAGPIE_TRUST_REMOTE_CODE": "1",
+          "MAX_MODEL_LEN": "6144",
+          "NUM_PROMPTS": "320",
+          "NUM_WARMUPS": "8",
+          "OSL": "1024",
+          "PATH": "/opt/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+          "RANDOM_RANGE_RATIO": "1",
+          "ROCR_VISIBLE_DEVICES": "0",
+          "RUN_EVAL": "true",
+          "TP": "1",
+          "VLLM_BIN": "/usr/local/bin/vllm-wu1w",
+          "VLLM_CACHE_ROOT": "/tmp/vllm-cache-hl",
+          "VLLM_EXECUTE_MODEL_TIMEOUT_SECONDS": "1200",
+          "VLLM_ROCM_USE_AITER": "1",
+          "VLLM_ROCM_USE_AITER_LINEAR": "1"
+        },
+        "requested_server_flags": "--trust-remote-code --language-model-only --quantization compressed-tensors --safetensors-load-strategy eager --compilation-config {\"cudagraph_mode\":\"FULL_DECODE_ONLY\"}",
+        "schema_version": 1,
+        "warm_reuse": {
+          "provenance": "fresh_or_unobserved",
+          "reused_ready_server": false,
+          "source_server_log_path": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T173139Z-3ae15c89/runs/baseline/e420b1b3a97f4b7eb334a1df38a32578/benchmark_vllm_20260914_173834/server.log"
+        }
+      },
+      "launch_evidence_path": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T173139Z-3ae15c89/runs/baseline/e420b1b3a97f4b7eb334a1df38a32578/launch_evidence.json",
+      "launch_identity": "sha256:c39f9b998b574e33c168d527ed7f5c76416d02f8cd6591bd5fa759f3308cb6d4",
+      "observed_launch_identity": "",
+      "observed_server_identity": {},
+      "resolved_server_config": {},
+      "resolved_server_launch_flags": "",
+      "schema_version": 2,
+      "server_log_path": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T173139Z-3ae15c89/runs/baseline/e420b1b3a97f4b7eb334a1df38a32578/benchmark_vllm_20260914_173834/server.log",
+      "tput": 444.8566029611903
+    },
+    "total_throughput": 889.7132059223806,
+    "tpot_mean_ms": 137.80707888159503,
+    "tpot_p90_ms": 140.5642846123162,
+    "tput": 444.8566029611903,
+    "ttft_mean_ms": 6121.427910947114,
+    "workspace": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T173139Z-3ae15c89/runs/baseline/e420b1b3a97f4b7eb334a1df38a32578/benchmark_vllm_20260914_173834"
+  },
+  "current_best_measurement": {
+    "benchmark_workspace": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T173139Z-3ae15c89/runs/baseline/e420b1b3a97f4b7eb334a1df38a32578/benchmark_vllm_20260914_173834",
+    "declared_launch_identity": "sha256:c39f9b998b574e33c168d527ed7f5c76416d02f8cd6591bd5fa759f3308cb6d4",
+    "identity_verification_status": "verified_declared_only",
+    "launch_evidence": {
+      "actual_server_log_path": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T173139Z-3ae15c89/runs/baseline/e420b1b3a97f4b7eb334a1df38a32578/benchmark_vllm_20260914_173834/server.log",
+      "framework": "vllm",
+      "materialized_config_path": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T173139Z-3ae15c89/runs/baseline/e420b1b3a97f4b7eb334a1df38a32578/baseline_config.with_envs.yaml",
+      "model_path": "/mnt/stripe-3mix-3t2/models/davetha/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8",
+      "observed_server_identity": {},
+      "observed_server_launch_flags": "",
+      "recipe_digest": "sha256:61218263f822a5933973ba025c61f4891097602c63d99731aabe70a3e6d2b833",
+      "requested_server_args": "--trust-remote-code --language-model-only --quantization compressed-tensors --safetensors-load-strategy eager --compilation-config {\"cudagraph_mode\":\"FULL_DECODE_ONLY\"}",
+      "requested_server_env": {
+        "AITER_LOG_TUNED_CONFIG": "1",
+        "BENCH_TRUST_REMOTE_CODE": "1",
+        "CONC": "64",
+        "HF_HUB_TRUST_REMOTE_CODE": "1",
+        "ISL": "1024",
+        "MAGPIE_TRUST_REMOTE_CODE": "1",
+        "MAX_MODEL_LEN": "6144",
+        "NUM_PROMPTS": "320",
+        "NUM_WARMUPS": "8",
+        "OSL": "1024",
+        "PATH": "/opt/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+        "RANDOM_RANGE_RATIO": "1",
+        "ROCR_VISIBLE_DEVICES": "0",
+        "RUN_EVAL": "true",
+        "TP": "1",
+        "VLLM_BIN": "/usr/local/bin/vllm-wu1w",
+        "VLLM_CACHE_ROOT": "/tmp/vllm-cache-hl",
+        "VLLM_EXECUTE_MODEL_TIMEOUT_SECONDS": "1200",
+        "VLLM_ROCM_USE_AITER": "1",
+        "VLLM_ROCM_USE_AITER_LINEAR": "1"
+      },
+      "requested_server_flags": "--trust-remote-code --language-model-only --quantization compressed-tensors --safetensors-load-strategy eager --compilation-config {\"cudagraph_mode\":\"FULL_DECODE_ONLY\"}",
+      "schema_version": 1,
+      "warm_reuse": {
+        "provenance": "fresh_or_unobserved",
+        "reused_ready_server": false,
+        "source_server_log_path": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T173139Z-3ae15c89/runs/baseline/e420b1b3a97f4b7eb334a1df38a32578/benchmark_vllm_20260914_173834/server.log"
+      }
+    },
+    "launch_evidence_path": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T173139Z-3ae15c89/runs/baseline/e420b1b3a97f4b7eb334a1df38a32578/launch_evidence.json",
+    "launch_identity": "sha256:c39f9b998b574e33c168d527ed7f5c76416d02f8cd6591bd5fa759f3308cb6d4",
+    "observed_launch_identity": "",
+    "observed_server_identity": {},
+    "resolved_server_config": {},
+    "resolved_server_launch_flags": "",
+    "schema_version": 2,
+    "server_log_path": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T173139Z-3ae15c89/runs/baseline/e420b1b3a97f4b7eb334a1df38a32578/benchmark_vllm_20260914_173834/server.log",
+    "tput": 444.8566029611903
+  },
+  "cycle_directive_history": [],
+  "cycle_minutes": 1440.0,
+  "cycle_strategy_log": [],
+  "deadline_unix": 1789414299.960123,
+  "degraded_mode": true,
+  "discovered_flags": {},
+  "discovered_flags_error": "",
+  "enable_roofline": false,
+  "enablement": {
+    "accepted_config": {},
+    "accepted_config_path": "",
+    "accuracy_floor": 0.0,
+    "active_runtime": {},
+    "attempt_runtimes": [],
+    "attempts": 0,
+    "baseline_eval_evidence": "",
+    "baseline_eval_kind": "",
+    "build_manifest": [],
+    "build_novelty": [],
+    "candidate_refs": [],
+    "eval_contract_fingerprint": "",
+    "framework_root": "",
+    "human_review_logged": [],
+    "inflight_task_id": "",
+    "kept_artifacts": [],
+    "kept_patches": [],
+    "kept_rounds": [],
+    "kept_stack_action": {},
+    "last_build_failure": {},
+    "last_grounding_drop_reason": [],
+    "last_specialist_task_id": "",
+    "launch_log": "",
+    "localization_manifest": [],
+    "observed_accuracy": 0.0,
+    "observed_metric": "",
+    "observed_task": "",
+    "origin": "",
+    "patches_span_multiple_roots": false,
+    "pending": false,
+    "probe_config_path": "",
+    "revalidation_generation": 0,
+    "revalidation_task_id": "",
+    "setup_commands": [],
+    "stall_streak": 0,
+    "succeeded": false,
+    "validation_pending": false
+  },
+  "enablement_mode": "all",
+  "ep": 1,
+  "eval_disabled": false,
+  "explore_attempts": [],
+  "explore_elapsed_accum_s": 2395.9698173999786,
+  "explore_overtime_kill_ratio": 2.0,
+  "explore_search": {
+    "accepted": [],
+    "cursor": 0,
+    "discovered_flags": [],
+    "domains_round_summary": [],
+    "last_round": {},
+    "name_index": {},
+    "rejected": [],
+    "schema_version": 1,
+    "synergy_attempted": [],
+    "tested": {},
+    "winners_history": []
+  },
+  "explore_variant_timeout_safety_margin": 0.5,
+  "explore_variant_timeout_sec_override": 0,
+  "failures": [],
+  "framework": "vllm",
+  "framework_agent_authoring_enabled": true,
+  "framework_agent_batches": [],
+  "framework_agent_discover_failures": 0,
+  "framework_agent_empty_discoveries": 1,
+  "framework_agent_phase_done": false,
+  "framework_agent_phase_enabled": true,
+  "framework_agent_phase_progress": [],
+  "framework_agent_review_counts": {},
+  "framework_agent_specialist_candidate_map": {},
+  "framework_consecutive_empty_discoveries": 0,
+  "framework_local_explore_enabled": true,
+  "framework_repo_path": "",
+  "framework_version": "0.28.0",
+  "fusion_infra_aborts": 0,
+  "fusion_withheld_retries": 0,
+  "gain_at_cycle_start": 0.0,
+  "gain_per_stack_entry": [],
+  "gaps": [
+    {
+      "attempts": [
+        {
+          "action": "specialist",
+          "outcome": "EMPTY",
+          "proposals_total": 0,
+          "ts": "2026-09-14T19:15:01.807075+00:00",
+          "variant_name": "serving_specialist"
+        }
+      ],
+      "canonical_id": "inference:qwen3.8-27b-abliterated-w8a8-gdnint8:unknown_gpu:vllm:qwen3_5:qwen3_5forconditionalgeneration:0.28.0:bf16#throughput_below_target",
+      "domain_hint": "serving_specialist",
+      "first_seen_ts": "2026-09-14T18:41:22.554054+00:00",
+      "last_updated_ts": "2026-09-14T19:15:01.826403+00:00",
+      "layer": "framework",
+      "provenance": "",
+      "severity": "high",
+      "source": "baseline",
+      "symptom": "current_best is 30.0% short of the run objective target"
+    },
+    {
+      "attempts": [],
+      "canonical_id": "gap.research_hint.27670481453efc27",
+      "domain_hint": "roofline",
+      "first_seen_ts": "2026-09-14T18:51:23.656697+00:00",
+      "last_updated_ts": "2026-09-14T18:51:23.656697+00:00",
+      "layer": "research_hint",
+      "provenance": "runs/baseline/e420b1b3a97f4b7eb334a1df38a32578/benchmark_vllm_20260914_173834/summary.txt + gpu_worker.py:741 memory line",
+      "severity": "medium",
+      "source": "research_scout",
+      "symptom": "Baseline decode step costs 137.8ms at batch 64. Weight-streaming floor for 26.46GiB INT8 on one MI250X GCD (~1.23-1.6TB/s) is ~18-23ms/step, so we are ~6x off the memory roofline => the step is compute/LSU-issue bound, not weight-BW bound. Any lever that cuts per-step bytes-per-token or instruction count is worth more than another weight-BW lever."
+    },
+    {
+      "attempts": [],
+      "canonical_id": "gap.research_hint.bd6ba361f4d321ae",
+      "domain_hint": "mamba",
+      "first_seen_ts": "2026-09-14T18:51:23.656732+00:00",
+      "last_updated_ts": "2026-09-14T18:51:23.656732+00:00",
+      "layer": "research_hint",
+      "provenance": "/mnt/stripe-3mix-3t2/models/davetha/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/config.json + /opt/envs/vllm/lib/python3.12/site-packages/vllm/model_executor/models/config.py:781-805",
+      "severity": "medium",
+      "source": "research_scout",
+      "symptom": "GDN recurrent (SSM) state cache is float32. text_config.mamba_ssm_dtype='float32' and vllm/model_executor/models/config.py:786-805 (Qwen3_5ForConditionalGenerationConfig) copies it into cache_config.mamba_ssm_cache_dtype when that is 'auto'. Size: 48 value heads x 128 x 128 x 4B = 3.1MB/layer x 48 GDN layers = 151MB per in-flight request, read+written every decode step => ~19.3GB/step at conc 64 (~12-16ms/step at BW floor, and fp32 doubles the LSU/vector-register pressure at fixed sclk). --mamba-ssm-cache-dtype is a first-class CLI flag (engine/arg_utils.py:1237, MambaDType=['auto','float32','float16','bfloat16']) and an explicit user override is honoured with only a warning."
+    },
+    {
+      "attempts": [],
+      "canonical_id": "gap.research_hint.252de56de9430330",
+      "domain_hint": "environment",
+      "first_seen_ts": "2026-09-14T18:51:23.656750+00:00",
+      "last_updated_ts": "2026-09-14T18:51:23.656750+00:00",
+      "layer": "research_hint",
+      "provenance": "summary.txt 'GPU Clock: 800 - 800 MHz (avg: 800)' + rocm-smi --showclocks (read-only)",
+      "severity": "medium",
+      "source": "research_scout",
+      "symptom": "GPU clocks were reported at sclk 800 MHz / fclk 400 MHz for ALL 1748 monitoring samples across the 3766s baseline run (range '800 - 800'), at a flat 96-98W package power, and a read-only `rocm-smi --showclocks` at idle now still shows sclk level 1 (800MHz) on every GCD. MI250X boost is ~1.7GHz/300W+. If the DPM level is genuinely pinned to min, every compute/issue-bound kernel in this workload pays ~2.1x and no vLLM flag can recover it."
+    },
+    {
+      "attempts": [],
+      "canonical_id": "gap.research_hint.2e8dd87ea5885130",
+      "domain_hint": "scheduler",
+      "first_seen_ts": "2026-09-14T18:51:23.656765+00:00",
+      "last_updated_ts": "2026-09-14T18:51:23.656765+00:00",
+      "layer": "research_hint",
+      "provenance": "runs/baseline/.../server.log loggers.py:310 lines (Avg prompt ~1000-1400 tok/s vs Avg generation ~140-290 tok/s at Running: 64)",
+      "severity": "medium",
+      "source": "research_scout",
+      "symptom": "Prefill interference is NOT the bottleneck. At steady state ~70 decode steps + ~2 prefill chunks (max_num_batched_tokens=2048 default, config/scheduler.py:42) fit in a 10s window; solving 70*T_dec + 2*T_pre = 10000ms with T_dec=137ms leaves only ~410ms total for prefill => mixed/prefill steps are ~4% of wall clock. Mean ITL (137.81ms) == mean TPOT (137.81ms) confirms this. Levers aimed at prefill/decode mixing (chunked-prefill budgets, cudagraph_mode for prefill) are low-yield here."
+    },
+    {
+      "attempts": [],
+      "canonical_id": "gap.research_hint.b0ff06541a7eefa7",
+      "domain_hint": "kv-cache",
+      "first_seen_ts": "2026-09-14T18:51:23.656779+00:00",
+      "last_updated_ts": "2026-09-14T18:51:23.656779+00:00",
+      "layer": "research_hint",
+      "provenance": "runs/baseline/.../server.log lines 70-72,244 + grep -c preempt=0",
+      "severity": "medium",
+      "source": "research_scout",
+      "symptom": "KV cache is NOT the limiter either: 31.96 GiB KV / 292,717 tokens, usage peaked at 58.7%, zero 'preempt'/'retract' occurrences in 2500+ scheduler lines, Running: 64 sustained. '--kv-cache-memory=37216046080 to fully utilize gpu memory' and gpu-memory-utilization tuning will produce 0% because nothing is being evicted."
+    },
+    {
+      "attempts": [],
+      "canonical_id": "gap.research_hint.7d99243654399a1f",
+      "domain_hint": "speculative-decoding",
+      "first_seen_ts": "2026-09-14T18:51:23.656792+00:00",
+      "last_updated_ts": "2026-09-14T18:51:23.656792+00:00",
+      "layer": "research_hint",
+      "provenance": "/mnt/.../model.safetensors.index.json + vllm/model_executor/models/qwen3_5_mtp.py",
+      "severity": "medium",
+      "source": "research_scout",
+      "symptom": "KB law 'MTP is not built into 0.28.0+rocm723 here' is WRONG for this checkpoint. The target checkpoint SHIPS MTP weights (mtp.fc.weight, mtp.layers.0.{q,k,v,o_proj,q_norm,k_norm,mlp.*}) in model.safetensors.index.json, text_config has mtp_num_hidden_layers=1, and vllm/model_executor/models/qwen3_5_mtp.py + a registry entry exist. So --speculative-config {\"method\":\"mtp\",\"num_speculative_tokens\":N} should load with NO external draft path."
+    },
+    {
+      "attempts": [],
+      "canonical_id": "gap.research_hint.dba20b1ba1e168c9",
+      "domain_hint": "benchmark",
+      "first_seen_ts": "2026-09-14T18:51:23.656804+00:00",
+      "last_updated_ts": "2026-09-14T18:51:23.656804+00:00",
+      "layer": "research_hint",
+      "provenance": "runs/baseline/.../benchmark_stdout.log line 329 (argparse Namespace dump)",
+      "severity": "medium",
+      "source": "research_scout",
+      "symptom": "The sealed harness benchmark is vllm bench serve with dataset_name='random', random_input_len=1024, random_output_len=1024, random_range_ratio=1.0, max_concurrency=64, ignore_eos=True, num_prompts=320, num_warmups=128 (GEMM/graph-config-valid corpus per KB law (9); invalid for judging spec decode). Prefix cache hit rate reaches 32.8% purely from warmup/main prompt reuse, so --no-enable-prefix-caching has a real prefill cost."
+    }
+  ],
+  "geak_pending": {},
+  "geak_result": {},
+  "gemm_tuning_attempts": [],
+  "gpu_specialist_capacity": 8,
+  "gpu_type": "",
+  "intervention_mix": [],
+  "isl": 1024,
+  "kb_stage_dead_letter": [],
+  "kb_stage_outbox": [],
+  "kernel_enabled": false,
+  "kernel_idle_since_unix": 0.0,
+  "kernel_idle_ticks": 0,
+  "kernel_inline_step_seen_unix": 0.0,
+  "kernel_integrate_attempts": {},
+  "kernel_opt_task_attempts": {},
+  "kernel_optimizer": "geak",
+  "kernel_progress_fingerprint": "",
+  "kernel_rewrite_controller_result": {},
+  "last_action_failures": [],
+  "last_baseline": {
+    "decision": "promoted",
+    "error_class": null,
+    "error_excerpt": null,
+    "extras": {
+      "accuracy": 0.9673995451099318,
+      "baseline_tput": 444.8566029611903,
+      "enablement_accuracy_floor": 0.0,
+      "enablement_succeeded": false,
+      "fingerprint": {
+        "benchmark_script": null,
+        "config_path": null,
+        "disable_run_eval": null,
+        "extra_envs": [],
+        "extra_server_args": null,
+        "gpu_type": null,
+        "model_path": null,
+        "result_dir": null
+      },
+      "is_revalidation": false,
+      "materialized_config": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T173139Z-3ae15c89/runs/baseline/e420b1b3a97f4b7eb334a1df38a32578/baseline_config.with_envs.yaml"
+    },
+    "failure_id": null,
+    "key_metric": 444.8566029611903,
+    "key_metric_kind": "output_throughput",
+    "raw_result_path": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T173139Z-3ae15c89/runs/baseline/e420b1b3a97f4b7eb334a1df38a32578/benchmark_vllm_20260914_173834/inferencex_result.json",
+    "reported_success": true,
+    "status": "succeeded",
+    "stderr_log_path": null,
+    "stderr_tail": null,
+    "task_id": "e420b1b3a97f4b7eb334a1df38a32578",
+    "ts": "2026-09-14T18:41:22.650574+00:00",
+    "variant_name": null,
+    "workspace": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T173139Z-3ae15c89/runs/baseline/e420b1b3a97f4b7eb334a1df38a32578/benchmark_vllm_20260914_173834"
+  },
+  "last_collective": {},
+  "last_conc_sweep": {},
+  "last_conc_sweep_watermark": {},
+  "last_consumed_escalate_hint": "",
+  "last_consumed_escalate_hint_ts": "",
+  "last_cycle_bottleneck": "",
+  "last_discarded_escalate_hint": "",
+  "last_discarded_escalate_hint_ts": "",
+  "last_explore": {},
+  "last_framework_rewrite_evidence": "",
+  "last_framework_rewrite_evidence_status": "",
+  "last_fusion": {},
+  "last_fusion_integrate": {},
+  "last_gemm_tuning": {},
+  "last_kernel_opt": {},
+  "last_profile": {},
+  "last_profile_args": "",
+  "last_profile_kernel_breakdown": "",
+  "last_profile_status": "",
+  "last_profile_trace": "",
+  "last_profile_workload": {},
+  "last_profile_workload_action": "",
+  "last_roofline": {},
+  "last_roofline_tput": 0.0,
+  "last_specialist": {
+    "confidence": 0.0,
+    "domain": "candidate_discovery_specialist",
+    "empty": true,
+    "gap_canonical_id": "gap.framework.candidate_discovery.vllm",
+    "proposals_total": 0,
+    "reason": "subprocess_exit_code:1",
+    "summary": "subprocess_exit_code:1",
+    "task_id": "0a310d67108e488da97b67154869c87e",
+    "ts": "2026-09-14T19:15:01.820155+00:00"
+  },
+  "last_tick_exception": {},
+  "last_trace_analyze": {},
+  "lifecycle": [
+    {
+      "artifacts": {},
+      "detail": "reason=prelude_done",
+      "label": "Optimize (config / source / upstream)",
+      "phase": "FRAMEWORK_AGENT",
+      "seq": 0,
+      "status": "ENTER",
+      "step": "FRAMEWORK_AGENT",
+      "ts": "2026-09-14T18:51:49.277643+00:00"
+    },
+    {
+      "artifacts": {},
+      "detail": "reason=time_exhausted",
+      "label": "Close (report)",
+      "phase": "CLOSE",
+      "seq": 1,
+      "status": "ENTER",
+      "step": "CLOSE",
+      "ts": "2026-09-14T19:31:45.244435+00:00"
+    }
+  ],
+  "macro_cycle": 0,
+  "max_minutes": 120,
+  "max_model_len": 6144,
+  "model_arch": {},
+  "model_architectures": [
+    "Qwen3_5ForConditionalGeneration"
+  ],
+  "model_class": "dense",
+  "model_info": {
+    "architectures": [
+      "Qwen3_5ForConditionalGeneration"
+    ],
+    "attention_type": "GQA",
+    "head_dim": 256,
+    "hidden_size": 5120,
+    "intermediate_size": 17408,
+    "is_moe": false,
+    "max_position_embeddings": 262144,
+    "model_family": "qwen3",
+    "model_type": "qwen3_5_text",
+    "num_attention_heads": 24,
+    "num_hidden_layers": 64,
+    "num_key_value_heads": 4,
+    "quantization": "compressed-tensors",
+    "vocab_size": 248320
+  },
+  "model_name": "Qwen3.8-27B-ABLITERATED-W8A8-gdnint8",
+  "model_path": "/mnt/stripe-3mix-3t2/models/davetha/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8",
+  "model_type": "qwen3_5",
+  "model_warnings": [
+    {
+      "architecture": "Qwen3_5ForConditionalGeneration",
+      "detail": "DEGRADED MODE: model 'Qwen3.8-27B-ABLITERATED-W8A8-gdnint8' carries a multimodal signal (multimodal config key 'vision_config'; architecture 'Qwen3_5ForConditionalGeneration', model_type 'qwen3_5') but exposes a text-generation path. Hyperloom is running it on the TEXT path only \u2014 any image/audio inputs are ignored, so benchmark numbers reflect the text decoder alone. Pass --no-allow-mm-text-fallback to fail-fast instead.",
+      "kind": "multimodal_text_fallback",
+      "model_name": "Qwen3.8-27B-ABLITERATED-W8A8-gdnint8",
+      "model_type": "qwen3_5",
+      "signal": "multimodal config key 'vision_config'"
+    }
+  ],
+  "no_gain_cycle_streak": 0,
+  "nodes": 1,
+  "operator_extra_env": {
+    "VLLM_BIN": "/usr/local/bin/vllm-wu1w",
+    "VLLM_CACHE_ROOT": "/tmp/vllm-cache-hl",
+    "VLLM_ROCM_USE_AITER": "1",
+    "VLLM_ROCM_USE_AITER_LINEAR": "1"
+  },
+  "operator_server_args": "--trust-remote-code --language-model-only --quantization compressed-tensors --safetensors-load-strategy eager --compilation-config {\"cudagraph_mode\":\"FULL_DECODE_ONLY\"}",
+  "optimization_stack": [],
+  "orchestration_memory": {},
+  "orchestration_memory_history": [],
+  "orchestration_prompt_modes": {
+    "delta": 2,
+    "seed": 2
+  },
+  "osl": 1024,
+  "params_no_promote_streak": 0,
+  "pending_bottleneck_switch": false,
+  "pending_escalate_hint": "",
+  "pending_integrate": {},
+  "pending_kernel_integrations": {},
+  "pending_stack_validation_apply_results": [],
+  "pending_stack_validation_result": {},
+  "pending_targeted_build": {},
+  "phase": "CLOSE",
+  "phase_budget_pct": {
+    "CLOSE": 0.02,
+    "FRAMEWORK_AGENT": 0.9901960784313726,
+    "KERNEL_AGENT": 0.0,
+    "PRELUDE": 0.1,
+    "SWEEP": 0.019803921568627453
+  },
+  "phase_elapsed_totals": {
+    "FRAMEWORK_AGENT": 2395.9698173999786,
+    "PRELUDE": 4807.76513004303
+  },
+  "phase_history": [
+    {
+      "cycle": 0,
+      "evidence": {
+        "budget_dropped_arms": [
+          {
+            "affordable_sec": -702.6,
+            "arm": "initial_analysis",
+            "bound": "optimization_reserve",
+            "expected_cost_sec": 3798.9,
+            "optimization_reserve_sec": 3600.0,
+            "session_usable_sec": 2897.4
+          }
+        ],
+        "trigger": "fresh_session"
+      },
+      "from_phase": "",
+      "reason": "phase_entered",
+      "to_phase": "PRELUDE",
+      "ts": "2026-09-14T17:31:41+00:00",
+      "ts_unix": 1789407101.5078485
+    },
+    {
+      "cycle": 0,
+      "evidence": {
+        "affordable_rounds": 0.6,
+        "baseline_tput": 444.8566029611903,
+        "fits_one_optimization_round": false,
+        "measured_round_sec": 3798.9,
+        "priced_by": "boot_plus_benchmark",
+        "session_usable_sec": 2270.7
+      },
+      "from_phase": "PRELUDE",
+      "reason": "prelude_done",
+      "to_phase": "FRAMEWORK_AGENT",
+      "ts": "2026-09-14T18:51:49+00:00",
+      "ts_unix": 1789411909.2729785
+    },
+    {
+      "cycle": 0,
+      "evidence": {
+        "reason_origin": "closing_phase",
+        "terminal": true
+      },
+      "from_phase": "FRAMEWORK_AGENT",
+      "reason": "time_exhausted",
+      "to_phase": "CLOSE",
+      "ts": "2026-09-14T19:31:45+00:00",
+      "ts_unix": 1789414305.242796
+    }
+  ],
+  "phase_started_ts": "2026-09-14T19:31:45+00:00",
+  "phase_started_unix": 1789414305.242796,
+  "plateau_overrides": {},
+  "policy_denial_history": [
+    {
+      "action_name": "explore",
+      "hint": "the wall-clock budget cannot fit this action; delegate `report` to close the session, or pick an action that fits the time left",
+      "intent_payload_keys": [
+        "action_name",
+        "params"
+      ],
+      "intent_type": "delegate",
+      "rule": "time_budget",
+      "streak": 1,
+      "tick": 2,
+      "ts": "2026-09-14T18:52:37.462552+00:00"
+    }
+  ],
+  "policy_denial_streak": {
+    "explore:time_budget": 1
+  },
+  "precision": "bf16",
+  "profile_attempts": [],
+  "profile_osl": 0,
+  "pruned_families": [],
+  "recipe_finalize_attempts": 1,
+  "recipe_finalize_outcome": {
+    "attempt": 1,
+    "backend": "local",
+    "reason": "missing_model_or_hardware",
+    "source": "t4_fallback",
+    "status": "skipped",
+    "updated_at": "2026-09-14T19:33:50.547821+00:00"
+  },
+  "recipe_finalize_status": "skipped",
+  "recipe_kb_session_id": "20260914T173139Z-3ae15c89",
+  "recipe_sediment_enabled": true,
+  "reference_envs": {},
+  "reference_model": "",
+  "reference_server_args": "",
+  "reference_source": "",
+  "rejected_kernel_ids": [],
+  "rejected_kernel_patches": [],
+  "research_lane_capacity": 16,
+  "research_scout_enabled": true,
+  "research_scout_interval": 3,
+  "research_scout_last_round": 0,
+  "research_scout_runs": 1,
+  "research_scout_seen_pr_ids": [
+    "runs/baseline/e420b1b3a97f4b7eb334a1df38a32578/benchmark_vllm_20260914_173834/summary.txt + gpu_worker.py:741 memory line",
+    "/mnt/stripe-3mix-3t2/models/davetha/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/config.json + /opt/envs/vllm/lib/python3.12/site-packages/vllm/model_executor/models/config.py:781-805",
+    "summary.txt 'GPU Clock: 800 - 800 MHz (avg: 800)' + rocm-smi --showclocks (read-only)",
+    "runs/baseline/.../server.log loggers.py:310 lines (Avg prompt ~1000-1400 tok/s vs Avg generation ~140-290 tok/s at Running: 64)",
+    "runs/baseline/.../server.log lines 70-72,244 + grep -c preempt=0",
+    "/mnt/.../model.safetensors.index.json + vllm/model_executor/models/qwen3_5_mtp.py",
+    "runs/baseline/.../benchmark_stdout.log line 329 (argparse Namespace dump)"
+  ],
+  "resume_pending_revalidation": false,
+  "resumed_ts": "",
+  "robustness_options": {},
+  "roofline_attempts": [],
+  "roofline_failure_streak": 0,
+  "roofline_snapshots": [],
+  "rounds_since_last_keep": {
+    "communication": 4,
+    "compiler": 4,
+    "framework": 4,
+    "kernel_agent": 4,
+    "pr_intelligence": 4,
+    "research_scout": 4,
+    "static_recon": 4,
+    "systems": 4
+  },
+  "rounds_since_last_specialist": {
+    "communication": 4,
+    "compiler": 4,
+    "framework": 1,
+    "kernel_agent": 4,
+    "pr_intelligence": 0,
+    "research_scout": 3,
+    "static_recon": 2,
+    "systems": 4
+  },
+  "sandbox_user_id": "",
+  "saturated_directions": {},
+  "schema_version": 6,
+  "session_id": "Qwen3.8-27B-ABLITERATED-W8A8-gdnint8_20260914T173139Z_e9102f01",
+  "specialist_patch_verdicts": {},
+  "specialist_reauthor_attempts": {},
+  "specialist_rounds": [
+    {
+      "completed_at": "2026-09-14T18:51:23.647071+00:00",
+      "confidence": 0.6,
+      "cycle": 0,
+      "domain": "research_scout_specialist",
+      "empty": true,
+      "gap_canonical_id": "gap.research_scout.round0",
+      "new_findings": [
+        {
+          "accuracy_risk": "none (analysis)",
+          "domain_tags": [
+            "roofline",
+            "decode"
+          ],
+          "expected_impact": "Reframes the search: target per-step decode work, not KV/util tuning.",
+          "source": "runs/baseline/e420b1b3a97f4b7eb334a1df38a32578/benchmark_vllm_20260914_173834/summary.txt + gpu_worker.py:741 memory line",
+          "what": "Baseline decode step costs 137.8ms at batch 64. Weight-streaming floor for 26.46GiB INT8 on one MI250X GCD (~1.23-1.6TB/s) is ~18-23ms/step, so we are ~6x off the memory roofline => the step is compute/LSU-issue bound, not weight-BW bound. Any lever that cuts per-step bytes-per-token or instruction count is worth more than another weight-BW lever."
+        },
+        {
+          "accuracy_risk": "Real: bf16 recurrent state accumulates rounding over long (2048-6144) contexts. Model author shipped fp32 deliberately.",
+          "domain_tags": [
+            "mamba",
+            "gdn",
+            "kv-cache",
+            "dtype"
+          ],
+          "expected_impact": "Highest-value single byte-reduction available; 5-15% throughput if BW-relevant, more if LSU-bound at locked clocks.",
+          "source": "/mnt/stripe-3mix-3t2/models/davetha/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/config.json + /opt/envs/vllm/lib/python3.12/site-packages/vllm/model_executor/models/config.py:781-805",
+          "what": "GDN recurrent (SSM) state cache is float32. text_config.mamba_ssm_dtype='float32' and vllm/model_executor/models/config.py:786-805 (Qwen3_5ForConditionalGenerationConfig) copies it into cache_config.mamba_ssm_cache_dtype when that is 'auto'. Size: 48 value heads x 128 x 128 x 4B = 3.1MB/layer x 48 GDN layers = 151MB per in-flight request, read+written every decode step => ~19.3GB/step at conc 64 (~12-16ms/step at BW floor, and fp32 doubles the LSU/vector-register pressure at fixed sclk). --mamba-ssm-cache-dtype is a first-class CLI flag (engine/arg_utils.py:1237, MambaDType=['auto','float32','float16','bfloat16']) and an explicit user override is honoured with only a warning."
+        },
+        {
+          "accuracy_risk": "none",
+          "domain_tags": [
+            "environment",
+            "clocks",
+            "roofline"
+          ],
+          "expected_impact": "Potentially larger than all config levers combined; needs Coordinator confirmation because it is a rig property, not a serving flag.",
+          "source": "summary.txt 'GPU Clock: 800 - 800 MHz (avg: 800)' + rocm-smi --showclocks (read-only)",
+          "what": "GPU clocks were reported at sclk 800 MHz / fclk 400 MHz for ALL 1748 monitoring samples across the 3766s baseline run (range '800 - 800'), at a flat 96-98W package power, and a read-only `rocm-smi --showclocks` at idle now still shows sclk level 1 (800MHz) on every GCD. MI250X boost is ~1.7GHz/300W+. If the DPM level is genuinely pinned to min, every compute/issue-bound kernel in this workload pays ~2.1x and no vLLM flag can recover it."
+        },
+        {
+          "accuracy_risk": "none",
+          "domain_tags": [
+            "scheduler",
+            "prefill"
+          ],
+          "expected_impact": "Saves ~2 benchmark slots by ruling out the prefill-mixing family.",
+          "source": "runs/baseline/.../server.log loggers.py:310 lines (Avg prompt ~1000-1400 tok/s vs Avg generation ~140-290 tok/s at Running: 64)",
+          "what": "Prefill interference is NOT the bottleneck. At steady state ~70 decode steps + ~2 prefill chunks (max_num_batched_tokens=2048 default, config/scheduler.py:42) fit in a 10s window; solving 70*T_dec + 2*T_pre = 10000ms with T_dec=137ms leaves only ~410ms total for prefill => mixed/prefill steps are ~4% of wall clock. Mean ITL (137.81ms) == mean TPOT (137.81ms) confirms this. Levers aimed at prefill/decode mixing (chunked-prefill budgets, cudagraph_mode for prefill) are low-yield here."
+        },
+        {
+          "accuracy_risk": "none",
+          "domain_tags": [
+            "kv-cache"
+          ],
+          "expected_impact": "Rules out the memory-utilization family.",
+          "source": "runs/baseline/.../server.log lines 70-72,244 + grep -c preempt=0",
+          "what": "KV cache is NOT the limiter either: 31.96 GiB KV / 292,717 tokens, usage peaked at 58.7%, zero 'preempt'/'retract' occurrences in 2500+ scheduler lines, Running: 64 sustained. '--kv-cache-memory=37216046080 to fully utilize gpu memory' and gpu-memory-utilization tuning will produce 0% because nothing is being evicted."
+        },
+        {
+          "accuracy_risk": "none (finding)",
+          "domain_tags": [
+            "speculative-decoding",
+            "mtp"
+          ],
+          "expected_impact": "Unlocks a spec-decode lane for future rounds on a prose corpus. NOT proposed this round: the sealed benchmark uses dataset_name='random' and KB law (8) says random corpora collapse acceptance, so it would benchmark as a false negative.",
+          "source": "/mnt/.../model.safetensors.index.json + vllm/model_executor/models/qwen3_5_mtp.py",
+          "what": "KB law 'MTP is not built into 0.28.0+rocm723 here' is WRONG for this checkpoint. The target checkpoint SHIPS MTP weights (mtp.fc.weight, mtp.layers.0.{q,k,v,o_proj,q_norm,k_norm,mlp.*}) in model.safetensors.index.json, text_config has mtp_num_hidden_layers=1, and vllm/model_executor/models/qwen3_5_mtp.py + a registry entry exist. So --speculative-config {\"method\":\"mtp\",\"num_speculative_tokens\":N} should load with NO external draft path."
+        },
+        {
+          "accuracy_risk": "none",
+          "domain_tags": [
+            "benchmark",
+            "dataset"
+          ],
+          "expected_impact": "Explains why random-corpus A/B is valid for config levers and constrains the prefix-caching proposal.",
+          "source": "runs/baseline/.../benchmark_stdout.log line 329 (argparse Namespace dump)",
+          "what": "The sealed harness benchmark is vllm bench serve with dataset_name='random', random_input_len=1024, random_output_len=1024, random_range_ratio=1.0, max_concurrency=64, ignore_eos=True, num_prompts=320, num_warmups=128 (GEMM/graph-config-valid corpus per KB law (9); invalid for judging spec decode). Prefix cache hit rate reaches 32.8% purely from warmup/main prompt reuse, so --no-enable-prefix-caching has a real prefill cost."
+        }
+      ],
+      "notes": [
+        "patch_safety_numeric:5x,137.8ms,45ms",
+        "recovered_from_partial"
+      ],
+      "proposal_set": [],
+      "proposals_total": 0,
+      "reason": "",
+      "residual_questions": [],
+      "round_id": "64c68e8f31c74152add8db07fc879bfc",
+      "source": "specialist:64c68e8f31c74152add8db07fc879bfc",
+      "source_phase": "PRELUDE",
+      "summary": "WIP: baseline decode is 5x off the HBM roofline (TPOT 137.8ms vs ~23-45ms floor); GDN SSM state is fp32 (19.3GB/step traffic) and sclk logged at 800MHz all run. Curating 3-4 variants.",
+      "tags": [
+        "research_scout"
+      ],
+      "task_id": "64c68e8f31c74152add8db07fc879bfc"
+    },
+    {
+      "completed_at": "2026-09-14T18:51:49.259836+00:00",
+      "confidence": 0.7,
+      "cycle": 0,
+      "domain": "static_recon_specialist",
+      "empty": false,
+      "gap_canonical_id": "gap.static_recon.prelude",
+      "new_findings": [
+        {
+          "accuracy_risk": "none",
+          "domain_tags": [
+            "static_recon",
+            "source_layout",
+            "gfx90a"
+          ],
+          "expected_impact": "Redirects all future recon/patch work to the correct tree; avoids re-proposing an already-bridged switch.",
+          "source": "/opt/envs/wu1w/lib/python3.12/site-packages/vllm/_aiter_ops.py:210-219,1833-1837; baseline server.log:28",
+          "what": "Live vllm source is /opt/envs/wu1w/lib/python3.12/site-packages/vllm (launched via /usr/local/bin/vllm-wu1w), which differs from /opt/envs/vllm and already carries a gfx90a AITER INT8 linear bridge: is_linear_enabled() uses is_aiter_attention_supported() (on_gfx9, includes gfx90a) instead of the CDNA3-only @if_aiter_supported. Baseline server.log:28 'Selected AiterInt8ScaledMMLinearKernel' confirms it fires."
+        },
+        {
+          "accuracy_risk": "low (same attention math, different kernel)",
+          "domain_tags": [
+            "attention",
+            "aiter",
+            "gfx90a"
+          ],
+          "expected_impact": "AITER-tuned Triton attention on the 16/64 full-attn layers at conc=64 decode; explicit --attention-backend bypasses the priority gate and validate_configuration passes for this config.",
+          "source": "/opt/envs/wu1w/lib/python3.12/site-packages/vllm/platforms/rocm.py:481-495; _aiter_ops.py:145-153; v1/attention/backends/rocm_aiter_unified_attn.py:41-70,146-148; baseline server.log:32,63",
+          "what": "ROCM_AITER_UNIFIED_ATTN never enters candidate backends on gfx90a: platforms/rocm.py _get_backend_priorities only appends it under is_aiter_found_and_supported() = get_cdna_version()>2 (CDNA3+). The backend itself supports head_size>=32 (hd256 OK), block MultipleOf(16) (784 OK), bf16, and runs aiter's Triton unified_attention (arch-neutral, same kernel family as the fallback). Baseline therefore uses ROCM_ATTN whose CK custom paged kernel is rejected at hd256 ('Cannot use ROCm custom paged attention kernel, falling back to Triton implementation') = generic vLLM Triton for all 16 full-attn layers."
+        },
+        {
+          "accuracy_risk": "low-medium (fusion numerics; accuracy gate covers)",
+          "domain_tags": [
+            "fusion",
+            "aiter",
+            "compile_pass"
+          ],
+          "expected_impact": "Fuses qknorm+rope+reshape_and_cache into one AITER kernel per full-attn layer, removing 3-4 elementwise launches/layer on the decode hot path.",
+          "source": "/opt/envs/wu1w/lib/python3.12/site-packages/vllm/config/vllm.py:207-216,225-310; config/compilation.py:272-295,956-963,1356-1367; compilation/passes/pass_manager.py:207-210; v1/attention/backends/rocm_aiter_unified_attn.py:312-315",
+          "what": "AITER fused QK-norm+RoPE+KV-cache-update pass (fuse_qk_norm_rope_kvcache, ROCm-gated) is default-False at ALL optimization levels and its last gate is_custom_op_enabled('rotary_embedding') fails because baseline runs custom_ops ['none','+sparse_attn_indexer']. When enabled via -ac it appends '+rotary_embedding' itself and runs QkNormRopeKvcacheFusionPass; the fused op executes via the aiter unified-attn impl's do_qk_norm_rope_kvcache_update (fused_qk_norm_rope_kvcache_supported = rocm_aiter_ops.is_enabled(), already true here)."
+        },
+        {
+          "accuracy_risk": "medium: layout mismatch would corrupt state; kernel source must be read before patching",
+          "domain_tags": [
+            "gdn",
+            "decode",
+            "aiter",
+            "qwen3_5"
+          ],
+          "expected_impact": "Largest untapped decode lever on this model class (48 GDN layers) if the fused kernels' reshape assumptions hold for non-interleaved packing.",
+          "source": "/opt/envs/wu1w/lib/python3.12/site-packages/vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py:78-90,1216-1237,1572-1636; _aiter_ops.py:1997-2018; aiter/ops/triton/__init__.py:149; baseline server.log:29-31",
+          "what": "AITER GDN fused single-token decode fast path (_forward_core_decode_aiter: fused conv1d-update + fused_rearrange_sigmoid_gated_delta_rule, both aiter Triton) is dispatched only when self.gqa_interleaved_layout (Qwen3-Next). Qwen3.5's non-interleaved q/k/v/z packing is explicitly excluded by the gate comment ('Qwen3.5 ... must use the generic path'). 48 of 64 layers are GDN and decode is the dominant regime (conc=64, OSL=1024). Note: vllm _gdn_triton_kernels_importable() probes 'aiter.ops.triton.causal_conv1d_update_single_token' which resolves only via aiter's lazy module map (file lives at aiter/ops/triton/conv/)."
+        }
+      ],
+      "proposal_set": [
+        {
+          "args_mode": "append",
+          "atomic": false,
+          "extra_args": "--attention-backend ROCM_AITER_UNIFIED_ATTN",
+          "kb_evidence": [],
+          "name": "bridge-rocm-aiter-unified-attn-hd256",
+          "pr_evidence": [],
+          "reason": "Bridge candidate: the aiter Triton unified-attention fast path exists and validates for this model (hd256>=32, block 784%16==0, bf16, causal) but is silently excluded from auto-selection on gfx90a solely by the CDNA3-only is_aiter_found_and_supported() (get_cdna_version()>2) priority gate in platforms/rocm.py:_get_backend_priorities \u2014 the same CDNA2-ism the tree already patched around for INT8 linear (is_aiter_attention_supported). Baseline runs generic vLLM Triton attention (CK paged kernel rejected at head_dim 256). Config-only bridge: explicit --attention-backend skips the priority list and goes straight to validate_configuration, which this model passes. If it starts and the log shows 'Using ROCM_AITER_UNIFIED_ATTN backend (selected via --attention-backend)', the kernel-level A/B for the 16 full-attn layers is live.",
+          "scope": "domain",
+          "source_evidence": [
+            "/opt/envs/wu1w/lib/python3.12/site-packages/vllm/platforms/rocm.py:481-495 (_get_backend_priorities CDNA3 gate)",
+            "/opt/envs/wu1w/lib/python3.12/site-packages/vllm/_aiter_ops.py:145-153 (is_aiter_found_and_supported: get_cdna_version()>2)",
+            "/opt/envs/wu1w/lib/python3.12/site-packages/vllm/v1/attention/backends/rocm_aiter_unified_attn.py:41-70 (supports_head_size>=32, MultipleOf(16) blocks), :146-148 (aiter.ops.triton.unified_attention)",
+            "session runs/baseline server.log:32,63 (ROCM_ATTN selected; custom paged attn rejected -> Triton)"
+          ]
+        },
+        {
+          "args_mode": "append",
+          "atomic": true,
+          "extra_args": "--attention-backend ROCM_AITER_UNIFIED_ATTN --compilation-config {\"cudagraph_mode\":\"FULL_DECODE_ONLY\",\"pass_config\":{\"fuse_qk_norm_rope_kvcache\":true},\"custom_ops\":[\"none\",\"+sparse_attn_indexer\",\"+rotary_embedding\"]}",
+          "kb_evidence": [],
+          "name": "bridge-aiter-qk-norm-rope-kvcache-fusion",
+          "pr_evidence": [],
+          "reason": "Atomic coupled bridge of the AITER fused QK-norm+RoPE+KV-cache-update pass: it exists for ROCm+AITER (enable_qk_norm_rope_kvcache = rocm_aiter_ops.is_enabled() && is_custom_op_enabled('rotary_embedding')) but is default-False at every optimization level AND the fused executor (do_qk_norm_rope_kvcache_update) lives on the aiter unified-attn impl, which gfx90a auto-selection silently never picks (CDNA3-only priority gate, see sibling proposal). Both switches must flip together or the pass matches but falls back unfused: (a) --attention-backend ROCM_AITER_UNIFIED_ATTN; (b) --compilation-config replacing the base one (remove_args drops the inherited flag), keeping cudagraph_mode FULL_DECODE_ONLY and +sparse_attn_indexer, adding fuse_qk_norm_rope_kvcache and +rotary_embedding under the required 'none' base. Fuses 3-4 elementwise kernels per layer on the 16 full-attn layers' decode path.",
+          "remove_args": [
+            "--compilation-config"
+          ],
+          "scope": "domain",
+          "source_evidence": [
+            "/opt/envs/wu1w/lib/python3.12/site-packages/vllm/config/vllm.py:207-216 (enable_qk_norm_rope_kvcache), :225-310 (default-False at all opt levels)",
+            "/opt/envs/wu1w/lib/python3.12/site-packages/vllm/config/compilation.py:1356-1367 (is_custom_op_enabled), :272-295 (ROCm ok), :956-963 (+rotary_embedding append)",
+            "/opt/envs/wu1w/lib/python3.12/site-packages/vllm/compilation/passes/pass_manager.py:207-210 (QkNormRopeKvcacheFusionPass registration)",
+            "/opt/envs/wu1w/lib/python3.12/site-packages/vllm/v1/attention/backends/rocm_aiter_unified_attn.py:312-315,333 (fused_qk_norm_rope_kvcache_supported=rocm_aiter_ops.is_enabled(); impl)"
+          ]
+        },
+        {
+          "args_mode": "append",
+          "atomic": false,
+          "extra_envs": {},
+          "kb_evidence": [],
+          "name": "bridge-gdn-decode-aiter-noninterleaved-layout",
+          "pr_evidence": [],
+          "reason": "Bridge candidate for the freeform patcher (no config knob exists): _forward_core_rocm dispatches to the AITER fused GDN decode fast path (fused conv1d-update + fused_rearrange_sigmoid_gated_delta_rule, both aiter Triton, loaded on this box because GDN_AITER_TRITON_AVAILABLE) ONLY when self.gqa_interleaved_layout \u2014 i.e. Qwen3-Next. This checkpoint is Qwen3.5 with the non-interleaved q/k/v/z layout ('must use the generic path' comment), so all 48 GDN layers \u2014 the majority of the model and the entire decode-critical loop at conc=64/OSL=1024 \u2014 take the split/rearrange Triton fallback. The fused_rearrange kernel itself takes generic key_dim/value_dim/head dims (not layout-specific); the layout coupling lives in the fused conv reshape. Patch sketch: extend the dispatch gate for non-interleaved packing (feed it prepare_gdn_attention_core_inputs-style q/k/v slices, or add the qwen3_5 unpack branch inside the aiter reshape), keep gfx90a validation (symmetric bf16 in/out, state fp32/bf16), and A/B under the normal KEEP gate.",
+          "scope": "domain",
+          "source_evidence": [
+            "/opt/envs/wu1w/lib/python3.12/site-packages/vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py:78-90 (kernel imports), :1216-1237 (gqa_interleaved_layout gate + comment), :1572-1636 (_forward_core_decode_aiter)",
+            "/opt/envs/wu1w/lib/python3.12/site-packages/aiter/ops/triton/gated_delta_net/fused_rearrange_sigmoid_gdr.py:18-43 (dim-generic signature)",
+            "session runs/baseline server.log:29-31 (GDN decode kernel: triton)"
+          ]
+        }
+      ],
+      "proposals_total": 3,
+      "reason": "",
+      "residual_questions": [
+        "Record in KB: live tree for this session is /opt/envs/wu1w/.../vllm (vllm-wu1w), already carrying gfx90a AITER-INT8-linear and (per model_arch notes) prior bridges \u2014 future recon rounds must grep THAT tree, not /opt/envs/vllm.",
+        "Does aiter.ops.triton.conv.causal_conv1d_update_single_token.fused_reshape_causal_conv1d_update_single_token hardcode interleaved qkvz unpacking, or is it parameterized by (num_k_heads,num_v_heads,head_k,head_v) such that Qwen3.5's [k,k,v,v]-shard packing works with adjusted strides? Freeform should read the kernel source before patching candidate 3.",
+        "Config-only probe not proposed this round (budget): --mamba-cache-dtype bfloat16 (GDN conv+ssm states go BF16; FUSED_GDN_STATE_DTYPES allows bf16; bandwidth-bound 48-layer state I/O at conc=64) \u2014 worth a slot next round if accuracy gate tolerates; check RecipeKB for prior GDN-state-dtype pitfalls first.",
+        "If the unified-attn variant benches positive, should the CDNA3-only gate in _get_backend_priorities be replaced with the gfx9-inclusive is_aiter_attention_supported() (or an arch check inside the backend) as the durable upstream-style bridge instead of the per-launch flag?"
+      ],
+      "round_id": "26d8322fb812499fb429efc87b5cc792",
+      "scope": "domain",
+      "source": "specialist:26d8322fb812499fb429efc87b5cc792",
+      "source_phase": "PRELUDE",
+      "summary": "Recon of the LIVE serving tree (/opt/envs/wu1w/.../vllm via vllm-wu1w launcher; NOT /opt/envs/vllm) for gfx90a + INT8-W8A8 + bf16 Qwen3.5 hybrid-GDN. Baseline log confirms AiterInt8ScaledMMLinearKernel is already bridged+selected (no win there). Found 3 un-bridged switches: (1) ROCM_AITER_UNIFIED_ATTN backend is silently disqualified on gfx90a by the CDNA3-only is_aiter_found_and_supported() priority gate although it supports hd>=32/blk%16/bf16 \u2014 baseline runs plain vLLM Trit",
+      "tags": [
+        "static_recon"
+      ],
+      "task_id": "26d8322fb812499fb429efc87b5cc792"
+    },
+    {
+      "completed_at": "2026-09-14T19:15:01.794403+00:00",
+      "confidence": 0.0,
+      "cycle": 0,
+      "domain": "serving_specialist",
+      "empty": true,
+      "gap_canonical_id": "inference:qwen3.8-27b-abliterated-w8a8-gdnint8:unknown_gpu:vllm:qwen3_5:qwen3_5forconditionalgeneration:0.28.0:bf16#throughput_below_target",
+      "new_findings": [],
+      "proposal_set": [],
+      "proposals_total": 0,
+      "reason": "subprocess_exit_code:1",
+      "residual_questions": [],
+      "round_id": "6d4c3306273749ef83672b8beba67023",
+      "scope": "domain",
+      "source": "specialist:6d4c3306273749ef83672b8beba67023",
+      "source_phase": "EXPLORE",
+      "summary": "subprocess_exit_code:1",
+      "tags": [
+        "framework"
+      ],
+      "task_id": "6d4c3306273749ef83672b8beba67023"
+    },
+    {
+      "candidate_discovery": true,
+      "completed_at": "2026-09-14T19:15:01.817684+00:00",
+      "confidence": 0.0,
+      "cycle": 0,
+      "domain": "candidate_discovery_specialist",
+      "empty": true,
+      "gap_canonical_id": "gap.framework.candidate_discovery.vllm",
+      "new_findings": [],
+      "proposal_set": [],
+      "proposals_total": 0,
+      "reason": "subprocess_exit_code:1",
+      "residual_questions": [],
+      "round_id": "0a310d67108e488da97b67154869c87e",
+      "source": "specialist:0a310d67108e488da97b67154869c87e",
+      "source_phase": "FRAMEWORK_AGENT",
+      "summary": "subprocess_exit_code:1",
+      "tags": [
+        "pr_intelligence"
+      ],
+      "task_id": "0a310d67108e488da97b67154869c87e",
+      "task_kind": "candidate_discovery"
+    }
+  ],
+  "stack_fingerprint_meta": {
+    "image_digest": "rocm-ai/vllm:0.28.0-rocm7.2.4",
+    "rocm": "7.2.4",
+    "vllm": "0.28.0+rocm723"
+  },
+  "start_ts": "2026-09-14T17:31:39.960123+00:00",
+  "static_recon_enabled": true,
+  "static_recon_runs": 1,
+  "stop_reason": "time_exhausted",
+  "stop_ts": "2026-09-14T19:31:45.241883+00:00",
+  "target_advisory_enabled": true,
+  "target_gap_pct": 30.0,
+  "target_reached_at": "",
+  "target_summary": "Establish baseline on Qwen3.8-27B-ABLITERATED-W8A8-gdnint8 then drive cumulative_gain_validated to >= 30.0% within 2.0h.",
+  "teardown_timings_sec": {
+    "artifact_package": 0.051,
+    "close_backends": 0.0,
+    "coordinator_stop": 0.005,
+    "final_json": 0.0,
+    "final_md": 0.0,
+    "langfuse": 0.005,
+    "session_breakdown": 0.057,
+    "session_lock": 0.0,
+    "total": 0.118
+  },
+  "tick": 5,
+  "tp": 1,
+  "warm_history_injected": true,
+  "warm_kernel_kb_attempted": false,
+  "warm_kernel_kb_plan": [],
+  "warm_replay_attempted": true,
+  "warm_replay_enabled": true,
+  "warm_replay_min_confidence": 0.7,
+  "warm_replay_min_reproduce_pct": 0.8,
+  "warm_replay_outcome": {
+    "config_donor_tier": "self",
+    "config_source": "inference:qwen3.8-27b-abliterated-w8a8-gdnint8:unknown_gpu:vllm:qwen3_5:qwen3_5forconditionalgeneration:0.28.0:bf16",
+    "reason": "confidence_below_threshold (0.00 < 0.70)",
+    "status": "skipped",
+    "warm_recipe_conf": 0.0,
+    "warm_recipe_tier": "seed_only"
+  },
+  "warm_replay_pending": {},
+  "warm_start_context": {
+    "do_not_repeat": [],
+    "lessons": [],
+    "match": {
+      "canonical_id": "inference:qwen3.8-27b-abliterated-w8a8-gdnint8:unknown_gpu:vllm:qwen3_5:qwen3_5forconditionalgeneration:0.28.0:bf16",
+      "confidence": 0.0,
+      "source": "local-json",
+      "tier": "seed_only"
+    },
+    "pitfalls": [],
+    "proven_prior": [],
+    "status": "seed_only"
+  },
+  "warm_start_lessons": [],
+  "warm_start_pitfalls": [],
+  "warm_start_recipe": {
+    "confidence": 0.0,
+    "hw": "unknown_gpu",
+    "recipe": {
+      "architectures": [
+        "Qwen3_5ForConditionalGeneration"
+      ],
+      "authority": "EXPERIENTIAL",
+      "best_config": {},
+      "best_throughput": 0.0,
+      "canonical_id": "inference:qwen3.8-27b-abliterated-w8a8-gdnint8:unknown_gpu:vllm:qwen3_5:qwen3_5forconditionalgeneration:0.28.0:bf16",
+      "conc": 64,
+      "confidence": 0.85,
+      "created_at": "2026-09-14T13:49:03.270640+00:00",
+      "ep": 1,
+      "evidence_refs": [],
+      "framework_name": "vllm",
+      "framework_version": "0.28.0",
+      "hardware": "unknown_gpu",
+      "image_digest": "rocm-ai/vllm:0.28.0-rocm7.2.4",
+      "isl": 1024,
+      "kernel_optimizations": [],
+      "last_profiled": "",
+      "lessons": [],
+      "max_model_len": 6144,
+      "model": "Qwen3.8-27B-ABLITERATED-W8A8-gdnint8",
+      "model_class": "dense",
+      "model_type": "qwen3_5",
+      "osl": 1024,
+      "pitfalls": [],
+      "precision": "bf16",
+      "provenance": {
+        "details": {
+          "sid": "20260914T173139Z-3ae15c89"
+        },
+        "generated_at": "2026-09-14T17:31:40.147526+00:00",
+        "generator": "t0_anchor",
+        "source": "hyperloom-inference-optimizer"
+      },
+      "remaining_gaps": [],
+      "rocm_version": "7.2.4",
+      "sessions": [],
+      "stack_fingerprint": {
+        "aiter_commit": "",
+        "rocm_version": "7.2.4",
+        "vllm_version": "0.28.0+rocm723"
+      },
+      "tp": 1,
+      "updated_at": "2026-09-14T17:31:40.147813+00:00",
+      "version": 6,
+      "what_failed": [],
+      "what_worked": []
+    },
+    "tier": "seed_only",
+    "workload": "Qwen3.8-27B-ABLITERATED-W8A8-gdnint8"
+  },
+  "warm_start_ts": "2026-09-14T17:31:40+00:00"
+}

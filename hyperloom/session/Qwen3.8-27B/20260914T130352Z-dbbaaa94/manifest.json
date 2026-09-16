@@ -1,0 +1,58 @@
+{
+  "claw_session_id": null,
+  "code_revision": "",
+  "created_at_utc": "2026-09-14T13:03:52+00:00",
+  "dependencies": {
+    "inferencex": {
+      "commit": "3d55815",
+      "path": "/home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966",
+      "remote": "https://github.com/SemiAnalysisAI/InferenceX.git"
+    },
+    "magpie": {
+      "commit": "",
+      "path": "/opt/envs/vllm/lib/python3.12/site-packages",
+      "remote": ""
+    }
+  },
+  "ep": 1,
+  "framework": "vllm",
+  "gfx_arch": "gfx90a",
+  "gpu_specialist_capacity": 2,
+  "gpu_type": "",
+  "graph_mode": null,
+  "host": "amd-server",
+  "image": "rocm-ai/vllm:0.28.0-rocm7.2.4",
+  "kb_degraded_reason": null,
+  "max_minutes": 180,
+  "model_name": "Qwen3.8-27B",
+  "model_path": "/mnt/stripe-3mix-3t2/models/Qwen/Qwen3.8-27B",
+  "objective": {
+    "kind": "gain_pct",
+    "value": 30.0
+  },
+  "pid": 53378,
+  "pr_degraded_reason": "ir3_auto",
+  "reference_script": null,
+  "research_lane_capacity": 4,
+  "sandbox_user_id": null,
+  "schema_version": 4,
+  "server_args": [],
+  "server_args_hash": "",
+  "session_dir": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B/20260914T130352Z-dbbaaa94",
+  "session_id": "Qwen3.8-27B_20260914T130352Z_400d29b3",
+  "stack_fingerprint": {
+    "aiter": "unknown",
+    "rocm": "7.2.4",
+    "sglang": "unknown",
+    "vllm": "0.28.0+rocm723"
+  },
+  "tp": 2,
+  "user_data_path": "/home/qiba/ROCm.AI/hyperloom/session",
+  "workload": {
+    "conc": 64,
+    "isl": 1024,
+    "max_model_len": 6144,
+    "osl": 1024,
+    "precision": "bf16"
+  }
+}

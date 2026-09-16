@@ -1,0 +1,25 @@
+{
+  "after_signature": {
+    "bridge_layer": "",
+    "confidence": 0.0,
+    "kind": "unknown",
+    "offending_file": "",
+    "offending_symbol": "",
+    "raw_excerpt": "session wall-clock budget exhausted before this round ran",
+    "secondary_kinds": []
+  },
+  "config_changes_applied": {},
+  "dropped_env_overrides": [],
+  "enablement_accepted_config_path": "",
+  "enablement_effective_config": {},
+  "extra_envs_applied": {},
+  "extra_server_args_applied": "",
+  "framework_switch_problems": [],
+  "launch_log_excerpt": "session wall-clock budget exhausted before this round ran",
+  "patches_applied": [
+    "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-35B-A3B/20260914T094955Z-aa171c76/runs/specialist/d00cdedfc173451eaf5b312d08e00da9/patches/003_rocm_visible_devices_logical_repin.patch"
+  ],
+  "setup_commands_applied": [],
+  "specialist_task_id": "d00cdedfc173451eaf5b312d08e00da9",
+  "status": "advanced"
+}

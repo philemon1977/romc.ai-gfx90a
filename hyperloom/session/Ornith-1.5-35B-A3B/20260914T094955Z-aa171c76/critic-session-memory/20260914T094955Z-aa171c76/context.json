@@ -1,0 +1,16 @@
+{
+  "model": "Ornith-1.5-35B-A3B",
+  "framework": "vllm",
+  "model_path": "/mnt/stripe-3mix-3t2/models/ornith-ai/Ornith-1.5-35B-A3B",
+  "tp": 2,
+  "workload": {
+    "conc": 64,
+    "isl": 1024,
+    "max_model_len": 6144,
+    "osl": 1024,
+    "precision": "bf16"
+  },
+  "precision": "bf16",
+  "phase": "PRELUDE",
+  "macro_cycle": 0
+}

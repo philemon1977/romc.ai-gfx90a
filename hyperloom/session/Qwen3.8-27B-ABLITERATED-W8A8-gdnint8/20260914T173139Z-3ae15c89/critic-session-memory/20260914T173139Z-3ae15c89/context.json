@@ -1,0 +1,16 @@
+{
+  "model": "Qwen3.8-27B-ABLITERATED-W8A8-gdnint8",
+  "framework": "vllm",
+  "model_path": "/mnt/stripe-3mix-3t2/models/davetha/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8",
+  "tp": 1,
+  "workload": {
+    "conc": 64,
+    "isl": 1024,
+    "max_model_len": 6144,
+    "osl": 1024,
+    "precision": "bf16"
+  },
+  "precision": "bf16",
+  "phase": "FRAMEWORK_AGENT",
+  "macro_cycle": 0
+}

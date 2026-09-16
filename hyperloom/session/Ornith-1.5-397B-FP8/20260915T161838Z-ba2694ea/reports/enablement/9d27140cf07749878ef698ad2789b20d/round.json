@@ -1,0 +1,25 @@
+{
+  "after_signature": {
+    "bridge_layer": "",
+    "confidence": 0.0,
+    "kind": "unknown",
+    "offending_file": "/opt/envs/vllm/lib/python3.12/site-packages/vllm/v1/engine/core.py",
+    "offending_symbol": "",
+    "raw_excerpt": "Traceback (most recent call last): (EngineCore pid=25227) ERROR 09-15 17:10:45 [core.py:1346] File \"/opt/envs/vllm/lib/python3.12/site-packages/vllm/v1/engine/core.py\", line 1315, in run_engine_core",
+    "secondary_kinds": []
+  },
+  "config_changes_applied": {},
+  "dropped_env_overrides": [],
+  "enablement_accepted_config_path": "",
+  "enablement_effective_config": {},
+  "extra_envs_applied": {},
+  "extra_server_args_applied": "",
+  "framework_switch_problems": [],
+  "launch_log_excerpt": "(Worker_TP2 pid=25273) (Worker_TP6 pid=25277) ERROR 09-15 17:10:45 [multiproc_executor.py:1047] \nERROR 09-15 17:10:45 [multiproc_executor.py:1047] \n(EngineCore pid=25227) ERROR 09-15 17:10:45 [core.py:1346] EngineCore failed to start.\n(EngineCore pid=25227) ERROR 09-15 17:10:45 [core.py:1346] Traceback (most recent call last):\n(EngineCore pid=25227) ERROR 09-15 17:10:45 [core.py:1346]   File \"/opt/envs/vllm/lib/python3.12/site-packages/vllm/v1/engine/core.py\", line 1315, in run_engine_core",
+  "patches_applied": [
+    "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/runs/specialist/9d27140cf07749878ef698ad2789b20d/patches/001_gfx90a_fp8_w8a8_bf16_emulation.patch"
+  ],
+  "setup_commands_applied": [],
+  "specialist_task_id": "9d27140cf07749878ef698ad2789b20d",
+  "status": "advanced"
+}

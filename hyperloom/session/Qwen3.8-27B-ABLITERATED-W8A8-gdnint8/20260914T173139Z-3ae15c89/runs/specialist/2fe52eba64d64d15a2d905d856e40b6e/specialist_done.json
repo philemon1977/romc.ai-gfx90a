@@ -1,0 +1,12 @@
+{
+  "confidence": 0.0,
+  "domain": "candidate_discovery_specialist",
+  "empty": true,
+  "gap_canonical_id": "gap.framework.candidate_discovery.vllm",
+  "new_findings": [],
+  "proposal_set": [],
+  "reason": "subprocess_exit_code:1",
+  "residual_questions": [],
+  "summary": "subprocess_exit_code:1",
+  "ts": "2026-09-14T19:07:56.284207+00:00"
+}

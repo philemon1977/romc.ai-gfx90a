@@ -1,0 +1,64 @@
+{
+  "action_ladder": {
+    "last_emitted": {
+      "agent_stall\u001fagent=orchestration": 3,
+      "aiter_jit_build_stuck": 14,
+      "deadline_hard_cutoff": 12,
+      "log_error_pattern\u001fpattern=Address already in use": 12,
+      "log_error_pattern\u001fpattern=RuntimeError": 12,
+      "log_error_pattern\u001fpattern=RuntimeError: Engine core initialization failed": 15,
+      "phase_budget_nearly_exhausted": 15,
+      "repeated_policy_denied\u001fagent=coordinator": 14
+    }
+  },
+  "aiter_jit": {
+    "last_build_count": 6,
+    "last_so_count": 119,
+    "stale_build_streak": 17
+  },
+  "gpu_leak": {
+    "consecutive_hits": 0
+  },
+  "preflight_model_gpu_fit": {
+    "fired_fingerprint": [
+      "Qwen3.8-27B-ABLITERATED-W8A8-gdnint8",
+      "",
+      "",
+      1,
+      "bf16",
+      6144,
+      64
+    ]
+  },
+  "progress": {
+    "gain_history": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "last_tick": 15,
+    "macro_cycle": 0
+  },
+  "ray_pending": {
+    "consecutive_hits": 0,
+    "last_pending": 0
+  },
+  "rca_throttle": {
+    "last_called_unix": {
+      "deadline_hard_cutoff": 1789404273.0973043,
+      "log_error_pattern\u001fpattern=RuntimeError: Engine core initialization failed": 1789404314.4533179
+    }
+  }
+}

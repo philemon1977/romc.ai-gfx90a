@@ -1,0 +1,96 @@
+## 0. MANDATE
+
+- deliverable: a source patch and/or up to 6 ranked config variants addressing the gap below
+- anchor: `inference:ornith-1.5-397b-fp8:mi250x:vllm:qwen3_5_moe:qwen3_5moeforconditionalgeneration:0.28.0:fp8#fail:baseline:subprocess_nonzero`
+
+Run status (read-only context; do NOT re-state these as your own measurements):
+- KEEP threshold this cycle: 1.00%
+
+Judged by: the Coordinator benches your proposals end-to-end against
+the sealed baseline and decides KEEP/REVERT; the accuracy gate runs
+alongside. You are not asked to prove the number.
+
+## 2. HARDWARE CONTEXT
+
+- gpu_type: mi250x
+- TP: 8
+
+Workload:
+- precision: fp8
+- concurrency: 64
+- ISL (input seq len): 1024
+- OSL (output seq len): 1024
+- max_model_len: 6144
+
+## 2a. EXECUTION BUDGET (wall-clock)
+
+- Hard wall-clock budget for this entire dispatch: **600s (~10 min)**.
+- Dispatch started at: 2026-09-15T17:21:49.217415+00:00 (UTC).
+- The Coordinator hard-kills your subprocess when this budget is exhausted — turns are NOT the stop signal. Scope your work to reach a deliverable conclusion inside the budget.
+- Self-throttle: check elapsed wall-clock with Bash (``date -u +%s`` vs the start above), keep your ``specialist_done.partial.json`` checkpoint current, and write the final ``specialist_done.json`` before the budget runs out so your best work is never lost to a kill.
+
+## 3. GAP STATEMENT
+
+- gap_canonical_id: `inference:ornith-1.5-397b-fp8:mi250x:vllm:qwen3_5_moe:qwen3_5moeforconditionalgeneration:0.28.0:fp8#fail:baseline:subprocess_nonzero`
+- layer: system
+- symptom: baseline server init dies on gfx90a (MI250): all 8 TP workers raise 'RuntimeError: torch._scaled_mm is only supported on CUDA devices with compute capability >= 9.0 or 8.9, or ROCm MI300+' from vllm/model_executor/kernels/linear/scaled_mm/pytorch.py:227 (apply_scaled_mm), despite the already-integrated gfx90a fp8->bf16 emulation patch (integrate_patch task 684650cc04404308aed3e22cffc3ed0e, status=advanced). Hypothesis: Ornith-1.5-397B-FP8 (qwen3_5_moe) uses block-wise / DeepSeek-style FP8 scales whose kernel-selection path bypasses the patched per-tensor w8a8 emulation, or MoE expert GEMMs select the pytorch scaled_mm backend separately from dense linears. Also note an earlier 17:10 boot attempt died with 'expected size 2560==4096, stride 4096==1 at dim=0' — a second emulation-path shape bug, so the current patch is partially wired but incomplete.
+
+Most recent evidence:
+```json
+{
+  "baseline_config": "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/runs/baseline/614857fe763a4e2a821ef61850b1e81e/baseline_config.with_envs.yaml",
+  "prior_patch": "001_gfx90a_fp8_w8a8_bf16_emulation.patch",
+  "server_log_path": "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/runs/baseline/614857fe763a4e2a821ef61850b1e81e/benchmark_vllm_20260915_171250/server.log",
+  "vllm_source_root": "/opt/envs/vllm/lib/python3.12/site-packages/vllm/"
+}
+```
+
+## 4. KB CONTEXT (optional, advisory)
+
+(none)
+
+(No structured KB context supplied. Use Sections 1, 3, 5, and 6 plus source inspection; record missing RecipeKB / research / PR questions in ``residual_questions`` so a future round can warm richer advisory context.)
+
+## 4a. ROOFLINE EVIDENCE
+
+(none — no fresh roofline snapshot has been recorded yet. The Coordinator auto-enqueues `roofline` at the end of PRELUDE and again after every 10% watermark crossing; if you are seeing this, the snapshot is still in-flight.)
+
+## 5. WARM-START RECIPE SUMMARY
+
+**find-recipe result:**
+```json
+{"confidence":1.0,"hw":"mi250x","recipe":{"architectures":["Qwen3_5MoeForConditionalGeneration"],"authority":"EXPERIENTIAL","best_config":{"extra_envs":{},"extra_server_args":"--tensor-parallel-size 8"},"best_throughput":0.0,"canonical_id":"inference:ornith-1.5-397b-fp8:mi250x:vllm:qwen3_5_moe:qwen3_5moeforconditionalgeneration:0.28.0:fp8","conc":64,"confidence":0.85,"created_at":"2026-09-15T15:58:00.907929+00:00","engine":"vllm","ep":1,"evidence_refs":[],"framework_name":"vllm","framework_version":"0.28.0","gpus":"mi250dx8","hardware":"mi250x","image_digest":"rocm-ai/vllm:0.28.0-rocm7.2.4","isl":1024,"kernel_optimizations":[],"last_profiled":"2026-09-15","lessons":[{"measured_impact":"torch._scaled_mm \u95e8\u662f\u5f15\u64ce\u7ea7\uff0c\u4e0e TP/\u5e76\u53d1/\u53c2\u6570\u65e0\u5173","statement":"Ornith-1.5-397B-FP8 \u5728\u672c\u673a\u7684\u5728\u5f79\u8def\u7ebf\u4ecd\u662f llama.cpp Q8_0\uff088110\uff09\uff1b\u8981 vLLM \u5c31\u5f97\u6362 BF16 \u6743\u91cd\u6216 INT8(compressed-tensors w8a8) \u8def\u7ebf\uff0c8114 \u5df2\u8bc1\u540e\u8005\u53ef\u8dd1"}],"max_model_len":6144,"model":"Ornith-1.5-397B-FP8","model_dir":"/mnt/kioxia-cm6-3t8/ai/models/ornith-ai/Ornith-1.5-397B-FP8","model_type":"qwen3_5_moe","osl":1024,"pitfalls":[{"description":"fp8 \u81c2\u5931\u8d25\u65f6 orchestrator \u53ef\u80fd\u8fdb\u5165 brain-dead\uff08\u4e3b\u8fdb\u7a0b ep_poll \u5b58\u6d3b\u30010 \u5b50\u8fdb\u7a0b\u3001robustness \u9759\u9ed8\uff0c\u547d\u4e2d\u672c\u673a issue#3 Part A \u5f62\u6001\uff0cturn \u4e0a\u9650 36 \u4e5f\u5728 RCA+enablement \u8def\u5f84\u70e7\u7a7f\uff09\u2014\u2014\u5224\u6d3b\u8981\u770b tick \u662f\u5426\u63a8\u8fdb\uff0c\u522b\u4fe1 stop_reason \u4e3a\u7a7a","severity":"crash"},{"description":"coordinator \u88ab\u6740\u540e specialist \u62c9\u8d77\u7684 vllm serve \u4f1a\u4ee5\u72ec\u7acb pgid \u5b64\u513f\u5316\u5360\u5361\uff0c\u5fc5\u987b\u679a\u4e3e PID \u663e\u5f0f\u6e05\u7406\uff08rocm-smi --showpids / ps --sort=start_time\uff09\uff0c\u4e14\u5bb9\u5668 root \u5199\u7684 kb/state \u6587\u4ef6\u56de\u8bfb\u8981 chmod","severity":"regress"}],"precision":"fp8","provenance":{"details":{"sid":"20260915T161838Z-ba2694ea"},"generated_at":"2026-09-15T16:18:39.569754+00:00","generator":"t0_anchor","source":"hyperloom-inference-optimizer"},"remaining_gaps":[{"description":"vLLM fp8 weight-only bf16-dequant \u540e\u7aef\uff08\u975e scaled_mm \u8def\u5f84\uff09\u5728 gfx90a \u662f\u5426\u53ef\u7528\u4f5c\u663e\u5f0f --quantization \u8986\u76d6\uff0c\u672a\u6d4b","metrics":"N/A"}],"rocm_version":"7.2.4","seeded_at":"2026-09-15T16:20:00+00:00","sessions":[{"actions_taken":["hyperloom 3h optimize -> baseline server_init_dead","orphan serve \u6e05\u7406","verdict \u624b\u5de5\u5165\u6863"],"date":"2026-09-15","gain_pct":0.0,"session_id":"20260915T150443Z-6b7d597b","stack_len":0,"throughput_after":0.0,"throughput_before":0.0}],"stack_fingerprint":{"aiter_commit":"","rocm_version":"7.2.4","vllm_version":"0.28.0+rocm723"},"status":"dead","tp":8,"updated_at":"2026-09-15T16:18:39.569886+00:00","version":2,"what_failed":[{"description":"engine core init \u5728\u7b2c\u4e00\u6b21 fp8 linear apply \u5224\u6b7b\uff1atorch._scaled_mm is only supported on CUDA devices with compute capability >= 9.0 or 8.9, or ROCm MI300+","reason":"PyTorch \u786c\u95e8\uff08scaled_mm/pytorch.py:227\uff09\uff0cvLLM compressed-tensors fp8 \u5728 gfx90a \u7684\u9ed8\u8ba4 scaled_mm \u540e\u7aef\u5fc5\u7136\u89e6\u53d1\uff1b\u4e0d\u662f\u914d\u7f6e\u9879\u3001\u4e0d\u662f\u663e\u5b58\u95ee\u9898"},{"description":"Hyperloom 3h run \u65e0\u6cd5\u5728\u6b7b\u57fa\u7ebf\u4e0a\u7ee7\u7eed\uff1abaseline server_init_dead \u540e enablement specialist \u53c8\u8d77\u4e86 orphan vllm serve\uff08\u540c\u6837\u5360 55GiB/die\uff09","reason":"\u57fa\u7ebf\u4e0d\u6210\u7acb\u65f6 explore \u65e0\u610f\u4e49\uff1b\u5e94\u53ca\u65f6\u5224\u6b7b\u6536\u5175"}],"what_worked":[{"description":"compressed-tensors FP8 \u6743\u91cd\u8def\u5f84\u88ab vLLM \u63a5\u53d7\u5e76\u5b8c\u6574\u52a0\u8f7d\uff1a122 \u7247 / 389.6 GiB / 49.0 GiB per die\uff0cTP8 workers \u6b63\u5e38 spawn\uff0c\u65e0 OOM\u3001\u65e0\u91cf\u5316\u683c\u5f0f\u62d2\u7edd\uff08server.log 15:05-15:14\uff0csession 20260915T150443Z-6b7d597b\uff09","measured_impact":"\u6743\u91cd\u52a0\u8f7d 5-10 min \u5168\u8fc7\uff0cengine init \u624d\u6b7b"}]},"tier":"exact","workload":"Ornith-1.5-397B-FP8"}
+```
+
+## 5b. RELATED LESSONS (prior KEEPs on this model+hw)
+
+(none)
+
+## 5c. KNOWN PITFALLS (do NOT repeat — prior REVERTs)
+
+(none)
+
+## 6. PR MONITOR
+
+(unavailable: pr_monitor disabled)
+
+## 7. LOCAL SOURCE NAVIGATION HINT
+
+Installed source roots (read-only):
+- /sgl-workspace/aiter/
+- /sgl-workspace/sglang/
+- /sgl-workspace/vllm/
+- /app/ATOM/atom/
+- /app/xDiT/
+- /opt/envs/vllm/lib/python3.12/site-packages/
+- /opt/envs/vllm/lib/python3.12/site-packages/aiter/
+- /opt/envs/vllm/lib/python3.12/site-packages/aiter_meta/
+- /opt/envs/vllm/lib/python3.12/site-packages/vllm/
+- /opt/envs/vllm/lib/python3.1/site-packages/aiter/
+- /opt/envs/vllm/lib/python3.1/site-packages/aiter_meta/
+- /opt/envs/vllm/lib/python3.1/site-packages/vllm/
+- /opt/rocm/
+
+These trees are read-only. Use Read / Grep / Glob to navigate. Do NOT attempt Edit / Write / git apply on these trees.
+
+Use ``WebSearch`` to look up the latest upstream version of the local repo and compare the implementation you intend to modify against what is there now. Use ``WebFetch`` to read the relevant file or PR directly — before authoring a patch, confirm whether the upstream repo already contains the fix or optimization you are about to write.

@@ -1,0 +1,109 @@
+{
+  "end_time": "2026-09-15T11:30:27+00:00",
+  "ext": {
+    "actions": [
+      {
+        "accuracy_stage": null,
+        "cold_anchor": null,
+        "convergence": null,
+        "duration_sec": 3347.54,
+        "end_time": "2026-09-15T11:30:27+00:00",
+        "failure": null,
+        "in_flight_run_index": null,
+        "materialized_config": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260915T103412Z-bf20aced/runs/baseline/51ac28ff8aed4ad59746fdb889fae7bb/baseline_config.with_envs.yaml",
+        "measurement": {
+          "accuracy": 0.9673995451099318,
+          "accuracy_metric": "exact_match,strict-match",
+          "accuracy_source": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260915T103412Z-bf20aced/runs/baseline/51ac28ff8aed4ad59746fdb889fae7bb/benchmark_vllm_20260915_103510/results_2026-09-15T11-30-23.287028.json",
+          "accuracy_task": "gsm8k",
+          "benchmark_report_path": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260915T103412Z-bf20aced/runs/baseline/51ac28ff8aed4ad59746fdb889fae7bb/benchmark_vllm_20260915_103510/benchmark_report.json",
+          "e2el_mean_ms": 127638.58423805004,
+          "throughput_tok_s_per_gpu": 512.5489837765601,
+          "tpot_mean_ms": 118.47482456141253,
+          "ttft_mean_ms": 6438.83871172502,
+          "workspace": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260915T103412Z-bf20aced/runs/baseline/51ac28ff8aed4ad59746fdb889fae7bb/benchmark_vllm_20260915_103510"
+        },
+        "request": {
+          "config_path": "",
+          "establishes_quality_ref": true,
+          "framework": "vllm",
+          "output_dir": "",
+          "reason": "",
+          "requested_timeout_sec": null,
+          "task_id": "51ac28ff8aed4ad59746fdb889fae7bb",
+          "task_kind": "baseline"
+        },
+        "run_eval_disabled": false,
+        "runs": [
+          {
+            "attempt_reason": "initial",
+            "end_time": "2026-09-15T11:30:27+00:00",
+            "error_class": "",
+            "rounds": [
+              {
+                "duration_sec": 3347.34,
+                "end_time": "2026-09-15T11:30:27+00:00",
+                "failure": null,
+                "label": "single",
+                "measurement": {
+                  "accuracy": 0.9673995451099318,
+                  "accuracy_metric": "exact_match,strict-match",
+                  "accuracy_source": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260915T103412Z-bf20aced/runs/baseline/51ac28ff8aed4ad59746fdb889fae7bb/benchmark_vllm_20260915_103510/results_2026-09-15T11-30-23.287028.json",
+                  "accuracy_task": "gsm8k",
+                  "benchmark_report_path": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260915T103412Z-bf20aced/runs/baseline/51ac28ff8aed4ad59746fdb889fae7bb/benchmark_vllm_20260915_103510/benchmark_report.json",
+                  "e2el_mean_ms": 127638.58423805004,
+                  "throughput_tok_s_per_gpu": 512.5489837765601,
+                  "tpot_mean_ms": 118.47482456141253,
+                  "ttft_mean_ms": 6438.83871172502,
+                  "workspace": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260915T103412Z-bf20aced/runs/baseline/51ac28ff8aed4ad59746fdb889fae7bb/benchmark_vllm_20260915_103510"
+                },
+                "run_eval_disabled": false,
+                "start_time": "2026-09-15T10:34:39+00:00",
+                "status": "succeeded",
+                "timeout_sec": 7800,
+                "timing": {
+                  "post_ready_runtime_sec": 3233.14536123085,
+                  "subprocess_runtime_sec": 3347.32
+                },
+                "warnings": {
+                  "count": 1,
+                  "messages": [
+                    "raw_inferencex_result_used"
+                  ]
+                }
+              }
+            ],
+            "run_index": 1,
+            "start_time": "2026-09-15T10:34:39+00:00",
+            "status": "succeeded",
+            "warnings": {
+              "count": 1,
+              "messages": [
+                "raw_inferencex_result_used"
+              ]
+            }
+          }
+        ],
+        "start_time": "2026-09-15T10:34:39+00:00",
+        "status": "succeeded",
+        "task_id": "51ac28ff8aed4ad59746fdb889fae7bb",
+        "timing": {
+          "post_ready_runtime_sec": 3233.14536123085,
+          "subprocess_runtime_sec": 3347.32
+        },
+        "warmup_round_tput": null,
+        "warnings": {
+          "count": 1,
+          "messages": [
+            "raw_inferencex_result_used"
+          ]
+        }
+      }
+    ]
+  },
+  "id": "prelude:0:baseline",
+  "kind": "baseline",
+  "start_time": "2026-09-15T10:34:39+00:00",
+  "status": "succeeded",
+  "type": "baseline"
+}

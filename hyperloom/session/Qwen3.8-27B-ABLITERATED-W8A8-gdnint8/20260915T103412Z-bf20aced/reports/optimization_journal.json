@@ -1,0 +1,169 @@
+{
+  "session_id": "20260915T103412Z-bf20aced",
+  "model": "Qwen3.8-27B-ABLITERATED-W8A8-gdnint8",
+  "hardware": "",
+  "framework": "vllm",
+  "baseline_throughput": 512.5489837765601,
+  "final_throughput": 512.5489837765601,
+  "total_gain_pct": 0.0,
+  "entries": [
+    {
+      "phase": "PRELUDE",
+      "iter": 1,
+      "kind": "other",
+      "change": "target_analysis",
+      "outcome": "KEEP",
+      "task_id": "85459fbdfe84459e820851c615b0f3f2",
+      "ts": "2026-09-15T10:34:39Z",
+      "tick": 1
+    },
+    {
+      "phase": "PRELUDE",
+      "iter": 1,
+      "kind": "baseline",
+      "change": "baseline",
+      "outcome": "KEEP",
+      "throughput_after": 512.5489837765601,
+      "task_id": "51ac28ff8aed4ad59746fdb889fae7bb",
+      "ts": "2026-09-15T11:30:27Z",
+      "tick": 1
+    },
+    {
+      "phase": "PRELUDE",
+      "iter": 1,
+      "kind": "other",
+      "change": "specialist",
+      "outcome": "KEEP",
+      "task_id": "1def77a58ba3442fab227dc10d7173da",
+      "ts": "2026-09-15T11:39:14Z",
+      "tick": 1
+    },
+    {
+      "phase": "PRELUDE",
+      "iter": 1,
+      "kind": "other",
+      "change": "specialist",
+      "outcome": "KEEP",
+      "task_id": "cbbcf3bf913b4e078871570f5c28adff",
+      "ts": "2026-09-15T11:40:11Z",
+      "tick": 1
+    },
+    {
+      "phase": "FRAMEWORK_AGENT",
+      "iter": 2,
+      "kind": "other",
+      "change": "explore",
+      "outcome": "REVERT",
+      "gain_pct": 0.0,
+      "error_class": "session_time_exhausted",
+      "task_id": "8057120570b44c71be84f1c1c1796a33",
+      "ts": "2026-09-15T11:41:22Z",
+      "tick": 2
+    },
+    {
+      "phase": "FRAMEWORK_AGENT",
+      "iter": 2,
+      "kind": "other",
+      "change": "specialist",
+      "outcome": "KEEP",
+      "task_id": "29596d2569b8440f8f7dfd64b072cc18",
+      "ts": "2026-09-15T11:48:13Z",
+      "tick": 2
+    },
+    {
+      "phase": "FRAMEWORK_AGENT",
+      "iter": 2,
+      "kind": "other",
+      "change": "specialist",
+      "outcome": "KEEP",
+      "task_id": "aad01000e0044a3b88efb96d83848ae5",
+      "ts": "2026-09-15T12:01:14Z",
+      "tick": 2
+    },
+    {
+      "phase": "FRAMEWORK_AGENT",
+      "iter": 2,
+      "kind": "other",
+      "change": "specialist",
+      "outcome": "KEEP",
+      "task_id": "f2b8d641528747c18b4c7c1509d0f7fa",
+      "ts": "2026-09-15T12:11:25Z",
+      "tick": 2
+    },
+    {
+      "phase": "FRAMEWORK_AGENT",
+      "iter": 3,
+      "kind": "other",
+      "change": "explore",
+      "outcome": "REVERT",
+      "gain_pct": 0.0,
+      "error_class": "session_time_exhausted",
+      "task_id": "3343c902b850462faaf9ac8ade79c9c2",
+      "ts": "2026-09-15T12:12:15Z",
+      "tick": 3
+    },
+    {
+      "phase": "FRAMEWORK_AGENT",
+      "iter": 3,
+      "kind": "other",
+      "change": "specialist",
+      "outcome": "KEEP",
+      "task_id": "59a0b8a55f1a4aa989c15784913414fd",
+      "ts": "2026-09-15T12:19:54Z",
+      "tick": 3
+    },
+    {
+      "phase": "FRAMEWORK_AGENT",
+      "iter": 4,
+      "kind": "other",
+      "change": "explore",
+      "outcome": "REVERT",
+      "gain_pct": 0.0,
+      "error_class": "session_time_exhausted",
+      "task_id": "9cb4f35b781e442faf026adb4d52ec4f",
+      "ts": "2026-09-15T12:20:31Z",
+      "tick": 4
+    },
+    {
+      "phase": "FRAMEWORK_AGENT",
+      "iter": 4,
+      "kind": "other",
+      "change": "specialist",
+      "outcome": "KEEP",
+      "task_id": "bdfa2a5a13b4422fa31439361d165510",
+      "ts": "2026-09-15T12:30:52Z",
+      "tick": 4
+    },
+    {
+      "phase": "FRAMEWORK_AGENT",
+      "iter": 5,
+      "kind": "other",
+      "change": "specialist",
+      "outcome": "KEEP",
+      "task_id": "040d47bac9824e37a2183bd6880bda1c",
+      "ts": "2026-09-15T13:27:04Z",
+      "tick": 5
+    },
+    {
+      "phase": "CLOSE",
+      "iter": 6,
+      "kind": "other",
+      "change": "integrate_patch",
+      "outcome": "no_promote",
+      "error_class": "session_time_exhausted",
+      "task_id": "a4c1e6fb64674e70bbd87c2ba9e69256",
+      "ts": "2026-09-15T13:28:25Z",
+      "tick": 6
+    },
+    {
+      "phase": "CLOSE",
+      "iter": 6,
+      "kind": "other",
+      "change": "report",
+      "outcome": "KEEP",
+      "task_id": "2a1f3cd9f5e341c0b16e439dc26c1611",
+      "ts": "2026-09-15T13:28:25Z",
+      "tick": 6
+    }
+  ]
+}

@@ -1,0 +1,279 @@
+{
+  "end_time": "2026-09-15T16:16:48+00:00",
+  "ext": {
+    "hard_fail_step_id": null,
+    "run_kind": "fresh",
+    "runtime_snapshot": {
+      "benchmark_backend": "magpie",
+      "benchmark_interpreter": "/opt/envs/vllm/bin/python3",
+      "inferencex_path": "/home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966",
+      "magpie_path": "/opt/envs/vllm/lib/python3.12/site-packages",
+      "magpie_python": "/opt/envs/vllm/bin/python3",
+      "provider_mode": "anthropic",
+      "tracelens_required": false,
+      "tracelens_route_hint": null
+    },
+    "steps": [
+      {
+        "category": "normalize",
+        "detail": {
+          "source": null,
+          "vars_loaded": 0
+        },
+        "skip_reason": "dotenv_missing",
+        "status": "skipped",
+        "step_id": "load_dotenv"
+      },
+      {
+        "category": "normalize",
+        "detail": {
+          "corrected_keys": [],
+          "env_file": "/home/qiba/ROCm.AI/hyperloom/session/runtime/kernel-agent.env.sh",
+          "vars_loaded": 0
+        },
+        "skip_reason": null,
+        "status": "already_present",
+        "step_id": "load_kernel_agent_env"
+      },
+      {
+        "category": "normalize",
+        "detail": {
+          "keys_set": []
+        },
+        "skip_reason": "legacy_env_absent",
+        "status": "skipped",
+        "step_id": "normalize_legacy_deepseek_env"
+      },
+      {
+        "category": "check",
+        "detail": {
+          "exit_code": 0
+        },
+        "skip_reason": null,
+        "status": "applied",
+        "step_id": "validate_credentials"
+      },
+      {
+        "category": "degrade",
+        "detail": {
+          "kb_withdrawn_override": false,
+          "recipe_kb": {
+            "enabled": true,
+            "reason": null
+          }
+        },
+        "skip_reason": null,
+        "status": "applied",
+        "step_id": "prepare_kb_environment"
+      },
+      {
+        "category": "install",
+        "detail": {
+          "already_present": [
+            "claude-agent-sdk>=0.2.110",
+            "openai-codex>=0.144",
+            "openai>=1.50",
+            "httpx>=0.27"
+          ],
+          "installed": []
+        },
+        "interpreter": "/opt/envs/vllm/bin/python",
+        "skip_reason": null,
+        "status": "already_present",
+        "step_id": "ensure_python_sdks",
+        "target": "claude-agent-sdk>=0.2.110,openai-codex>=0.144,openai>=1.50,httpx>=0.27"
+      },
+      {
+        "category": "check",
+        "detail": {
+          "tp_requested": 8,
+          "visible": 8,
+          "warn": null
+        },
+        "skip_reason": null,
+        "status": "applied",
+        "step_id": "check_gpu_visibility"
+      },
+      {
+        "category": "check",
+        "detail": {
+          "min_gib": 16,
+          "shm_free_gib": 32.0
+        },
+        "skip_reason": null,
+        "status": "applied",
+        "step_id": "check_shm_disk"
+      },
+      {
+        "category": "check",
+        "detail": {
+          "cpb": true,
+          "governor": "schedutil",
+          "smt": "off"
+        },
+        "skip_reason": null,
+        "status": "warned",
+        "step_id": "check_platform_tuning"
+      },
+      {
+        "category": "install",
+        "interpreter": "/opt/envs/vllm/bin/python3",
+        "skip_reason": null,
+        "spec": "ray[default]==2.44.1",
+        "status": "already_present",
+        "step_id": "ensure_ray",
+        "target": "ray",
+        "version_after": "2.44.1"
+      },
+      {
+        "category": "install",
+        "detail": {
+          "already_present": [
+            "aiohttp",
+            "tqdm",
+            "numpy",
+            "requests",
+            "transformers",
+            "huggingface_hub",
+            "datasets",
+            "pandas"
+          ],
+          "installed": []
+        },
+        "interpreter": "/opt/envs/vllm/bin/python3",
+        "skip_reason": null,
+        "status": "already_present",
+        "step_id": "ensure_bench_serving_deps",
+        "target": "benchmark_serving client deps"
+      },
+      {
+        "category": "install",
+        "interpreter": "/opt/envs/vllm/bin/python3",
+        "message": "single-node InferenceX installs lm_eval on first use",
+        "skip_reason": "single_node_runtime_install",
+        "status": "skipped",
+        "step_id": "ensure_lm_eval",
+        "target": "lm_eval[api]"
+      },
+      {
+        "category": "install",
+        "detail": {
+          "already_present": [],
+          "failed": [],
+          "installed": [],
+          "invalid": [],
+          "manifest": "/home/qiba/ROCm.AI/hyperloom/hyperloom/inference_optimizer/assets/framework_deps/vllm.txt",
+          "refused": []
+        },
+        "interpreter": "/opt/envs/vllm/bin/python3",
+        "skip_reason": "no manifest at /home/qiba/ROCm.AI/hyperloom/hyperloom/inference_optimizer/assets/framework_deps/vllm.txt",
+        "status": "skipped",
+        "step_id": "framework_deps",
+        "target": "vllm"
+      },
+      {
+        "category": "check",
+        "detail": {
+          "probe_interpreter": "/opt/envs/vllm/bin/python3",
+          "rocm_verified": true
+        },
+        "skip_reason": null,
+        "status": "applied",
+        "step_id": "check_serving_framework",
+        "target": "vllm"
+      },
+      {
+        "category": "install",
+        "interpreter": "/opt/envs/vllm/bin/python3",
+        "skip_reason": null,
+        "status": "already_present",
+        "step_id": "ensure_magpie",
+        "target": "magpie-eval"
+      },
+      {
+        "category": "install",
+        "detail": {
+          "dest": "/home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966",
+          "exit_code": 0,
+          "ref": "3d5581562f643f9bdeb8410cd924e2c70906c966",
+          "writable": true
+        },
+        "skip_reason": null,
+        "status": "already_present",
+        "step_id": "clone_inferencex",
+        "target": "InferenceX",
+        "version_after": "3d5581562f643f9bdeb8410cd924e2c70906c966"
+      },
+      {
+        "category": "patch",
+        "detail": {
+          "client_trust_compatible": true,
+          "eval_concurrency_compatible": true,
+          "inferencex_patch_anchors_ok": true
+        },
+        "skip_reason": null,
+        "status": "applied",
+        "step_id": "patch_magpie_eval_concurrency"
+      },
+      {
+        "category": "check",
+        "skip_reason": "no_kernel_and_roofline_disabled",
+        "status": "skipped",
+        "step_id": "check_tracelens_cli",
+        "target": "TraceLens"
+      },
+      {
+        "category": "check",
+        "skip_reason": "tracelens_not_required",
+        "status": "skipped",
+        "step_id": "check_tracelens_root",
+        "target": "TRACELENS_ROOT"
+      },
+      {
+        "category": "degrade",
+        "detail": {
+          "marker": "/home/qiba/ROCm.AI/hyperloom/session/runtime/recipe_kb/.kb_preflight.json",
+          "pr_monitor": {
+            "enabled": false,
+            "reason": "ir3_unreachable"
+          }
+        },
+        "skip_reason": "ir3_unreachable",
+        "status": "warned",
+        "step_id": "ir3_pr_monitor_probe"
+      },
+      {
+        "category": "diagnostic",
+        "detail": {
+          "aiter_jit_cache": {
+            "is_cold": false,
+            "kernel_count": 124,
+            "path": "/opt/envs/vllm/lib/python3.12/site-packages/aiter/jit",
+            "probe_status": "found",
+            "size_mb": 1879
+          },
+          "anthropic_base_url": "http://127.0.0.1:9100",
+          "asset_root": "/home/qiba/ROCm.AI/hyperloom/hyperloom/inference_optimizer",
+          "cold_start_timeout_sec": 9000,
+          "inferencex_path": "/home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966",
+          "magpie_python": "/opt/envs/vllm/bin/python3",
+          "recipe_kb_queue": {
+            "dead_letter": 0,
+            "flushed": 0,
+            "pending": 0,
+            "root": "/home/qiba/ROCm.AI/hyperloom/session/runtime/recipe_kb"
+          },
+          "session_dir": "/home/qiba/ROCm.AI/hyperloom/session",
+          "warm_timeout_sec": 7800
+        },
+        "skip_reason": null,
+        "status": "applied",
+        "step_id": "diagnostics_snapshot"
+      }
+    ]
+  },
+  "kind": "install",
+  "start_time": "2026-09-15T16:16:35+00:00",
+  "status": "degraded",
+  "type": "install"
+}

@@ -1,0 +1,121 @@
+{
+  "end_time": "2026-09-15T15:15:40+00:00",
+  "ext": {
+    "actions": [
+      {
+        "accuracy_stage": null,
+        "cold_anchor": null,
+        "convergence": null,
+        "duration_sec": 625.073,
+        "end_time": "2026-09-15T15:15:40+00:00",
+        "failure": {
+          "error_class": "server_init_dead",
+          "message": "ERROR 09-15 15:14:49 [multiproc_executor.py:1047] \n(Worker_TP3 pid=6552) ERROR 09-15 15:14:49 [multiproc_executor.py:1047] \n(EngineCore pid=6514) ERROR 09-15 15:14:49 [core.py:1346] EngineCore failed to start.\n(EngineCore pid=6514) ERROR 09-15 15:14:49 [core.py:1346] Traceback (most recent call last):\n(EngineCore pid=6514) ERROR 09-15 15:14:49 [core.py:1346]   File \"/opt/envs/vllm/lib/python3.12/site-packages/vllm/v1/engine/core.py\", line 1315, in run_engine_core",
+          "phase": "baseline",
+          "returncode": 1,
+          "stderr_log_path": ""
+        },
+        "in_flight_run_index": null,
+        "materialized_config": "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T150443Z-6b7d597b/runs/baseline/a94eb5cd0057482a967dde0bc8535d9a/baseline_config.with_envs.yaml",
+        "measurement": {
+          "accuracy": null,
+          "accuracy_metric": "",
+          "accuracy_source": "",
+          "accuracy_task": "",
+          "benchmark_report_path": "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T150443Z-6b7d597b/runs/baseline/a94eb5cd0057482a967dde0bc8535d9a/benchmark_vllm_20260915_150545/benchmark_report.json",
+          "e2el_mean_ms": null,
+          "throughput_tok_s_per_gpu": null,
+          "tpot_mean_ms": null,
+          "ttft_mean_ms": null,
+          "workspace": "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T150443Z-6b7d597b/runs/baseline/a94eb5cd0057482a967dde0bc8535d9a/benchmark_vllm_20260915_150545"
+        },
+        "request": {
+          "config_path": "",
+          "establishes_quality_ref": true,
+          "framework": "vllm",
+          "output_dir": "",
+          "reason": "",
+          "requested_timeout_sec": null,
+          "task_id": "a94eb5cd0057482a967dde0bc8535d9a",
+          "task_kind": "baseline"
+        },
+        "run_eval_disabled": false,
+        "runs": [
+          {
+            "attempt_reason": "initial",
+            "end_time": "2026-09-15T15:15:40+00:00",
+            "error_class": "server_init_dead",
+            "rounds": [
+              {
+                "duration_sec": 624.745,
+                "end_time": "2026-09-15T15:15:40+00:00",
+                "failure": {
+                  "error_class": "server_init_dead",
+                  "message": "ERROR 09-15 15:14:49 [multiproc_executor.py:1047] \n(Worker_TP3 pid=6552) ERROR 09-15 15:14:49 [multiproc_executor.py:1047] \n(EngineCore pid=6514) ERROR 09-15 15:14:49 [core.py:1346] EngineCore failed to start.\n(EngineCore pid=6514) ERROR 09-15 15:14:49 [core.py:1346] Traceback (most recent call last):\n(EngineCore pid=6514) ERROR 09-15 15:14:49 [core.py:1346]   File \"/opt/envs/vllm/lib/python3.12/site-packages/vllm/v1/engine/core.py\", line 1315, in run_engine_core",
+                  "phase": "round_single",
+                  "returncode": 1,
+                  "stderr_log_path": ""
+                },
+                "label": "single",
+                "measurement": {
+                  "accuracy": null,
+                  "accuracy_metric": "",
+                  "accuracy_source": "",
+                  "accuracy_task": "",
+                  "benchmark_report_path": "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T150443Z-6b7d597b/runs/baseline/a94eb5cd0057482a967dde0bc8535d9a/benchmark_vllm_20260915_150545/benchmark_report.json",
+                  "e2el_mean_ms": null,
+                  "throughput_tok_s_per_gpu": null,
+                  "tpot_mean_ms": null,
+                  "ttft_mean_ms": null,
+                  "workspace": "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T150443Z-6b7d597b/runs/baseline/a94eb5cd0057482a967dde0bc8535d9a/benchmark_vllm_20260915_150545"
+                },
+                "run_eval_disabled": false,
+                "start_time": "2026-09-15T15:05:15+00:00",
+                "status": "failed",
+                "timeout_sec": 7800,
+                "timing": {
+                  "post_ready_runtime_sec": null,
+                  "subprocess_runtime_sec": 624.65
+                },
+                "warnings": {
+                  "count": 1,
+                  "messages": [
+                    "benchmark_report_success_false"
+                  ]
+                }
+              }
+            ],
+            "run_index": 1,
+            "start_time": "2026-09-15T15:05:15+00:00",
+            "status": "failed",
+            "warnings": {
+              "count": 1,
+              "messages": [
+                "benchmark_report_success_false"
+              ]
+            }
+          }
+        ],
+        "start_time": "2026-09-15T15:05:15+00:00",
+        "status": "failed",
+        "task_id": "a94eb5cd0057482a967dde0bc8535d9a",
+        "timing": {
+          "post_ready_runtime_sec": null,
+          "subprocess_runtime_sec": 624.65
+        },
+        "warmup_round_tput": null,
+        "warnings": {
+          "count": 1,
+          "messages": [
+            "benchmark_report_success_false"
+          ]
+        }
+      }
+    ]
+  },
+  "id": "prelude:0:baseline",
+  "kind": "baseline",
+  "start_time": "2026-09-15T15:05:15+00:00",
+  "status": "failed",
+  "type": "baseline"
+}

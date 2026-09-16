@@ -1,0 +1,71 @@
+{
+  "action_ladder": {
+    "last_emitted": {
+      "agent_stall\u001fagent=orchestration": 2,
+      "aiter_jit_build_stuck": 11,
+      "budget_strategy_drift": 6,
+      "deadline_hard_cutoff": 12,
+      "deadline_imminent": 14,
+      "deadline_warning": 9,
+      "local_server_unreachable\u001furl=http://127.0.0.1:8888/health": 8,
+      "log_error_pattern\u001fpattern=RuntimeError": 14,
+      "log_error_pattern\u001fpattern=RuntimeError: Engine core initialization failed": 14,
+      "phase_budget_nearly_exhausted": 12,
+      "ray_head_dead": 1,
+      "repeated_policy_denied\u001fagent=coordinator": 14
+    }
+  },
+  "aiter_jit": {
+    "last_build_count": 6,
+    "last_so_count": 118,
+    "stale_build_streak": 14
+  },
+  "gpu_leak": {
+    "consecutive_hits": 0
+  },
+  "preflight_model_gpu_fit": {
+    "fired_fingerprint": [
+      "Ornith-1.5-397B-FP8",
+      "",
+      "mi250x",
+      8,
+      "fp8",
+      6144,
+      64
+    ]
+  },
+  "progress": {
+    "gain_history": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "last_tick": 15,
+    "macro_cycle": 0
+  },
+  "ray_pending": {
+    "consecutive_hits": 0,
+    "last_pending": 0
+  },
+  "rca_throttle": {
+    "last_called_unix": {
+      "deadline_hard_cutoff": 1789499629.5858805,
+      "deadline_imminent": 1789499715.7378745,
+      "local_server_unreachable\u001furl=http://127.0.0.1:8888/health": 1789495829.4069867,
+      "log_error_pattern\u001fpattern=RuntimeError: Engine core initialization failed": 1789492363.390653,
+      "ray_head_dead": 1789489158.2176743
+    }
+  }
+}

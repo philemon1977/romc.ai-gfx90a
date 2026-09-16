@@ -1,0 +1,33 @@
+{
+  "_recovered_from_partial": true,
+  "_specialist_notes": [
+    "recovered_from_partial"
+  ],
+  "confidence": 0.5,
+  "domain": "serving_specialist",
+  "empty": false,
+  "gap_canonical_id": "gap.research_hint.853bf1cf540004ac",
+  "new_findings": [
+    {
+      "accuracy_risk": "none",
+      "domain_tags": [
+        "framework.batching",
+        "vllm.v1.scheduler",
+        "mamba_align"
+      ],
+      "expected_impact": "frames the fix: chunk-granularity and budget levers, not admission levers",
+      "source": "/opt/envs/vllm/lib/python3.12/site-packages/vllm/v1/core/sched/scheduler.py:317,366-441,558-620",
+      "what": "Mechanism of the prefill-window collapse is identified in source: need_mamba_block_aligned_split = has_mamba_layers and mamba_cache_mode=='align' (scheduler.py:317). With block_size=784 every prefill chunk must end on a multiple of 784 unless block_size <= max_num_scheduled_tokens, so a 1024-token prompt is force-split 784+240 and each mixed step pays a prefill-sized forward pass. long_prefill_token_threshold only feeds this clip via max_prefill_tokens=min(max_num_scheduled_tokens, threshold) (scheduler.py:406-413), so any threshold >= 784 is a NO-OP at the default budget; thresholds < 784 make chunks 0 until budget >= threshold+784 (sub-block chunks are forbidden when block_size > max_prefill_tokens)."
+    }
+  ],
+  "patch_grounding": {},
+  "patches_written": [],
+  "proposal_set": [
+    {
+      "name": "wip-mamba-dtype",
+      "scope": "domain"
+    }
+  ],
+  "summary": "WIP: source read of align-mode chunk clipping + block-size derivation; quantifying mamba page traffic before final proposal set.",
+  "ts": "2026-09-15T12:11:25.592639+00:00"
+}

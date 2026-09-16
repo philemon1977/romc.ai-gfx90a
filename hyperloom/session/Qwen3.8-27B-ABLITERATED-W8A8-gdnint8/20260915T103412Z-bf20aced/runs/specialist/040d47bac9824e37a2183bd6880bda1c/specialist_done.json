@@ -1,0 +1,143 @@
+{
+  "_specialist_notes": [
+    "worktree_setup_failed:no_git_framework_source_root",
+    "patch_safety_numeric:44%,34%,14%,22%,15.3%,260x"
+  ],
+  "allocated_gpu_ids": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7
+  ],
+  "artifacts_written": [],
+  "confidence": 0.78,
+  "domain": "serving_specialist",
+  "empty": false,
+  "gap_canonical_id": "gap.framework.local_explore.local_explore:0",
+  "new_findings": [
+    {
+      "accuracy_risk": "none (analysis only)",
+      "domain_tags": [
+        "attention",
+        "kv_cache",
+        "decode",
+        "roofline",
+        "profiling"
+      ],
+      "expected_impact": "identifies the single fixable 1/3 of the decode step; removing it entirely would be +50%, the two available replacements measured +15-22% end-to-end",
+      "source": "self-captured /tmp/prof_base trace (runs/specialist/040d.../scratch/an.py) + vllm/v1/attention/ops/chunked_prefill_paged_decode.py:461-466",
+      "what": "Decode-step GPU time budget at conc=64 measured with torch.profiler on a live self-launched server (48 steps): aiter CK a8w8 GEMM 44.2% (12336 launches, 176us avg), Triton kernel_paged_attention_2d 33.8% (2165us avg x 16 steps... i.e. ~34.6ms of a ~102ms GPU-step), fused_recurrent_gated_delta_rule_packed_decode (GDN state) 13.8% (14.1ms/step), everything else <10%. The paged-attention kernel reads only ~170MB of KV per step (64 seqs x 4 kv_heads x ~1300 ctx x 24 heads x 256 hd x 2 x bf16) => ~260x off the 1.28 TB/s roofline, because its grid is (num_seqs, num_kv_heads) = 256 programs with a fully serial context-length inner loop on a 104-CU device."
+    },
+    {
+      "accuracy_risk": "low for TRITON_ATTN (upstream standard backend, same bf16 math); low for splitKV (module ships with 576/576 float32-golden validation, greedy text matched baseline in spot check; full-corpus greedy diff was cut off by the wall clock)",
+      "domain_tags": [
+        "attention",
+        "decode",
+        "env_lever",
+        "config_lever",
+        "gfx90a"
+      ],
+      "expected_impact": "+15 to +22% output tok/s vs the sealed baseline on this exact workload shape",
+      "source": "runs/specialist/040d.../logs/{bench,seq}_*.log + logs/srv_splitkv.log takeover lines",
+      "what": "A/B on identical workloads (128 prompts x ISL1024 x OSL512 x conc64, one server per MI250X card, 2-3 repeats, all servers launched with the exact sealed base args): baseline replica 440.2/442.2/444.6 tok/s; --attention-backend TRITON_ATTN 536.6 (sequential) and 523.3 tok/s => +18 to +22%; VLLM_ROCM_SPLITKV_PA=1 + VLLM_ROCM_SPLITKV_PA_MAX_SEQS=1024 => 512.4/510.4 tok/s => +15.3/+15.4%. Greedy text spot-check identical between base and splitKV. The two levers hit the SAME bottleneck (see prior finding) via different kernels and are mutually exclusive (splitKV hooks only the ROCM_ATTN path)."
+    },
+    {
+      "accuracy_risk": "none",
+      "domain_tags": [
+        "attention",
+        "pitfall",
+        "env_lever"
+      ],
+      "expected_impact": "makes the +15% variant actually fire; prevents the -10% scratch-budget trap",
+      "source": "vllm/v1/attention/ops/rocm_splitkv_pa.py:106-107,578-700 + bench_8907_r1.log vs bench_8903_r*.log",
+      "what": "The split-KV takeover gate num_seqs*num_kv_heads <= DEFAULT_MAX_SEQS=64 silently rejects this workload (64 seqs x 4 kv_heads = 256 base programs), so VLLM_ROCM_SPLITKV_PA=1 alone is a NO-OP here; VLLM_ROCM_SPLITKV_PA_MAX_SEQS must be raised too. Both env vars are unregistered in vllm/envs.py (harmless 'Unknown vLLM environment variable' warning; the module reads os.environ directly). Also: raising VLLM_ROCM_SPLITKV_PA_MAX_SCRATCH_MIB so PART_MIN stays at 64/256 measured WORSE (463.0 tok/s) than the default 32MiB budget that forces PART_MIN up to 512 for a 6272-token bound - do not 'tune' the scratch budget upward on this workload."
+    },
+    {
+      "accuracy_risk": "none",
+      "domain_tags": [
+        "roofline",
+        "hardware"
+      ],
+      "expected_impact": "corrects the roofline denominator for future rounds",
+      "source": "/sys/class/drm/card*/device/pp_dpm_sclk polled under load + scratch/bw.py, scratch/mb.py",
+      "what": "rocm-smi's 'GPU Clock 800MHz' in the baseline summary is an idle-sample artifact: /sys/class/drm/cardN/device/pp_dpm_sclk shows the device boosts to the 1700MHz DPM level under real serving load and measured ceilings are 1264 GB/s copy BW and 125.7 TFLOPS bf16 GEMM (4096x16384x5120). sysfs is mounted ro in the container so clock locking is not available (and not needed)."
+    },
+    {
+      "accuracy_risk": "moderate (fp32->bf16 state storage on a W8A8 ckpt)",
+      "domain_tags": [
+        "gdn",
+        "kv_cache",
+        "memory_bandwidth"
+      ],
+      "expected_impact": "unknown - candidate for next round, gated on accuracy (checkpoint declares mamba_ssm_dtype=float32)",
+      "source": "logs/srv_mamba.log + logs/srv_sk_mamba.log (interface.py:911, kv_cache_utils.py:1869)",
+      "what": "--mamba-ssm-cache-dtype bfloat16 works on this stack (overridden with a config warning), halves the GDN state page and drops the forced attention block size 784 -> 400 tokens (KV tokens 294,473 -> 328,145). Its throughput/accuracy effect was NOT measured (wall-clock cut); it interacts with both attention proposals (splitKV takeover re-validated at physical_block=400 in the server log)."
+    },
+    {
+      "accuracy_risk": "none",
+      "domain_tags": [
+        "gemm",
+        "aiter",
+        "anti-pattern"
+      ],
+      "expected_impact": "negative knowledge - closes an investigation branch",
+      "source": "/opt/envs/wu1w/lib/python3.12/site-packages/aiter/configs/a8w8_tuned_gemm.csv gfx-column census + baseline server.log",
+      "what": "aiter tuned-GEMM table is a dead end here, confirming platform law 1/5 by inspection: shipped a8w8_tuned_gemm.csv contains only gfx942/gfx950 rows (0 gfx90a), so the 5747 'not found tuned config' warnings across ~1150 shapes can never match; default heuristic is the shipped behavior."
+    }
+  ],
+  "patch_grounding": {},
+  "patches_written": [],
+  "proposal_set": [
+    {
+      "args_mode": "append",
+      "atomic": false,
+      "extra_args": "--attention-backend TRITON_ATTN",
+      "extra_envs": {},
+      "kb_evidence": [
+        "framework.batching",
+        "framework.cuda_graph"
+      ],
+      "name": "triton_attn_decoder_backend",
+      "pr_evidence": [],
+      "reason": "Decoder attention was selected by elimination onto ROCM_ATTN, whose non-pow2-block fallback kernel_paged_attention_2d is 34% of the decode step and ~260x off KV-bandwidth roofline (grid=(64seqs,4kvheads)=256 programs, serial ctx loop). TRITON_ATTN swaps in upstream unified_attention (with its 3D split-KV decode path). Measured +18-22% output tok/s vs a same-conditions baseline replica (536.6 vs 440.2 seq.; 523.3 in parallel round) on the exact workload. head_dim=256 supported; no accuracy-risk flags expected (same bf16 math, different kernel). Caveat: first-run Triton JIT of kernel_unified_attention adds one transient latency spike (jit_monitor) - negligible over a 640s run.",
+      "scope": "domain",
+      "source_evidence": [
+        "/opt/envs/vllm/lib/python3.12/site-packages/vllm/v1/attention/ops/chunked_prefill_paged_decode.py:461-466,525+",
+        "/opt/envs/vllm/lib/python3.12/site-packages/vllm/v1/attention/backends/triton_attn.py:141-174,245-246",
+        "runs/specialist/040d47bac9824e37a2183bd6880bda1c/logs/{seq_8905,seq_8901,bench_8905_r1,bench_8901_r1,bench_8901_r2}.log"
+      ]
+    },
+    {
+      "args_mode": "append",
+      "atomic": true,
+      "extra_args": "",
+      "extra_envs": {
+        "VLLM_ROCM_SPLITKV_PA": "1",
+        "VLLM_ROCM_SPLITKV_PA_MAX_SEQS": "1024"
+      },
+      "kb_evidence": [
+        "framework.batching"
+      ],
+      "name": "splitkv_pa_takeover",
+      "pr_evidence": [],
+      "reason": "In-tree, float32-golden-validated (576/576) gfx90a split-KV paged-decode kernel already exists in this install (vllm/v1/attention/ops/rocm_splitkv_pa.py) and is wired into the ROCM_ATTN decode path, but its default gate (num_seqs*num_kv_heads<=64) rejects this workload (64x4=256), so both envs are co-required: SPLITKV_PA=1 alone is a silent no-op. With the gate opened: measured +15.3%/+15.4% over two matched rounds (512.4/510.4 vs 444.6/442.2), greedy text output identical to baseline in spot-check. Keep the DEFAULT scratch budget (32MiB) - it forces PART_MIN=512 which measured best; raising it regressed to 463. Mutually exclusive with proposal 1 (hooks only the ROCM_ATTN path) - use as fallback if TRITON_ATTN fails the Critic/accuracy gate.",
+      "scope": "domain",
+      "source_evidence": [
+        "/opt/envs/vllm/lib/python3.12/site-packages/vllm/v1/attention/ops/rocm_splitkv_pa.py:106-107,146-165,578-762",
+        "/opt/envs/vllm/lib/python3.12/site-packages/vllm/v1/attention/ops/chunked_prefill_paged_decode.py:19-24,440-460",
+        "runs/specialist/040d47bac9824e37a2183bd6880bda1c/logs/{bench_8903_r1,bench_8903_r2,bench_8907_r1,srv_splitkv}.log"
+      ]
+    }
+  ],
+  "residual_questions": [
+    "Next round should A/B --mamba-ssm-cache-dtype bfloat16 (block 784->400 confirmed working) stacked on the winning attention variant, with a tightened gsm8k floor - it is the only remaining lever on the 14ms/step GDN state traffic, and the Coordinator's accuracy gate is authoritative for the fp32->bf16 state-storage question.",
+    "max-num-batched-tokens 4096 + prefill/decode overlap was not measured (server startup dominates the minute-scale budget): 29% of baseline wall clock buys ~0 output tokens (5 waves x ~38.5s near-zero-gen prefill). If further rounds are allotted, this is the largest remaining structural headroom (+42% ceiling per scout accounting).",
+    "TRITON_ATTN full greedy-output diff vs ROCM_ATTN was started but cut by the wall clock - recommend the Critic/accuracy-gate treat proposal 1's correctness as 'spot-checked, not exhaustively diffed'."
+  ],
+  "summary": "Profiled the live decode step (torch.profiler, self-launched servers): 44% aiter a8w8 GEMM, 34% Triton kernel_paged_attention_2d (~260x off KV-bandwidth roofline because its grid is (seqs,kv_heads)=256 programs with a serial context loop), 14% GDN recurrent state. Delivered two ranked env/CLI variants that replace exactly that kernel: --attention-backend TRITON_ATTN (measured +18-22%) and the in-tree but gate-closed split-KV takeover (measured +15.3%, atomic 2-env set incl. the gate-raising var; default scratch budget is best). No source patch needed - both paths already exist. All numbers from matched A/B on leased cards, base args identical to sealed; mamba-bf16 and larger-batch-token levers left for next round (budget).",
+  "ts": "2026-09-15T13:27:04.516362+00:00"
+}

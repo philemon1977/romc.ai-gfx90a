@@ -1,0 +1,42 @@
+{
+  "action_ladder": {
+    "last_emitted": {
+      "ray_head_dead": 1
+    }
+  },
+  "aiter_jit": {
+    "last_build_count": 6,
+    "last_so_count": 118,
+    "stale_build_streak": 0
+  },
+  "gpu_leak": {
+    "consecutive_hits": 0
+  },
+  "preflight_model_gpu_fit": {
+    "fired_fingerprint": [
+      "Ornith-1.5-397B-FP8",
+      "",
+      "",
+      8,
+      "fp8",
+      6144,
+      64
+    ]
+  },
+  "progress": {
+    "gain_history": [
+      0.0
+    ],
+    "last_tick": 1,
+    "macro_cycle": 0
+  },
+  "ray_pending": {
+    "consecutive_hits": 0,
+    "last_pending": 0
+  },
+  "rca_throttle": {
+    "last_called_unix": {
+      "ray_head_dead": 1789489051.1908076
+    }
+  }
+}

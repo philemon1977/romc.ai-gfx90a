@@ -1,0 +1,85 @@
+{
+  "action_ladder": {
+    "last_emitted": {
+      "agent_stall\u001fagent=orchestration": 146,
+      "aiter_jit_build_stuck": 150,
+      "budget_burn_no_gain": 146,
+      "conversation_no_progress": 152,
+      "deadline_imminent": 149,
+      "deadline_warning": 149,
+      "log_error_pattern\u001fpattern=RuntimeError": 152,
+      "log_error_pattern\u001fpattern=RuntimeError: Engine core initialization failed": 152,
+      "phase_budget_nearly_exhausted": 153,
+      "repeated_policy_denied\u001fagent=coordinator": 150
+    }
+  },
+  "aiter_jit": {
+    "last_build_count": 6,
+    "last_so_count": 119,
+    "stale_build_streak": 153
+  },
+  "gpu_leak": {
+    "consecutive_hits": 0
+  },
+  "preflight_model_gpu_fit": {
+    "fired_fingerprint": [
+      "Ornith-1.5-35B-A3B",
+      "",
+      "",
+      2,
+      "bf16",
+      6144,
+      64
+    ]
+  },
+  "progress": {
+    "gain_history": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "last_tick": 153,
+    "macro_cycle": 0
+  },
+  "ray_pending": {
+    "consecutive_hits": 0,
+    "last_pending": 0
+  },
+  "rca_throttle": {
+    "last_called_unix": {
+      "agent_stall\u001fagent=orchestration": 1789386523.0637825,
+      "conversation_no_progress": 1789389881.4582264,
+      "deadline_imminent": 1789389827.9286528,
+      "log_error_pattern\u001fpattern=RuntimeError: Engine core initialization failed": 1789383192.253959
+    }
+  }
+}

@@ -1,0 +1,2942 @@
+{
+  "baseline": {
+    "accuracy": 0.9673995451099318,
+    "attempts_history": [
+      {
+        "decision": "promoted",
+        "error_class": null,
+        "error_excerpt": null,
+        "extras": {
+          "accuracy": 0.9673995451099318,
+          "baseline_tput": 444.8566029611903,
+          "enablement_accuracy_floor": 0.0,
+          "enablement_succeeded": false,
+          "fingerprint": {
+            "benchmark_script": null,
+            "config_path": null,
+            "disable_run_eval": null,
+            "extra_envs": [],
+            "extra_server_args": null,
+            "gpu_type": null,
+            "model_path": null,
+            "result_dir": null
+          },
+          "is_revalidation": false,
+          "materialized_config": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T173139Z-3ae15c89/runs/baseline/e420b1b3a97f4b7eb334a1df38a32578/baseline_config.with_envs.yaml"
+        },
+        "key_metric": 444.8566029611903,
+        "status": "succeeded",
+        "stderr_log_path": null,
+        "stderr_tail": null,
+        "task_id": "e420b1b3a97f4b7eb334a1df38a32578",
+        "ts": "2026-09-14T18:41:22.650574+00:00",
+        "workspace": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T173139Z-3ae15c89/runs/baseline/e420b1b3a97f4b7eb334a1df38a32578/benchmark_vllm_20260914_173834"
+      }
+    ],
+    "benchmark_report_path": "runs/baseline/e420b1b3a97f4b7eb334a1df38a32578/benchmark_vllm_20260914_173834/benchmark_report.json",
+    "config_path": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T173139Z-3ae15c89/runs/baseline/e420b1b3a97f4b7eb334a1df38a32578/baseline_config.with_envs.yaml",
+    "e2el_mean_ms": 147098.0696068188,
+    "failure_streak": 0,
+    "invocation": {
+      "config_path": "runs/baseline/e420b1b3a97f4b7eb334a1df38a32578/baseline_config.with_envs.yaml",
+      "extra_envs": {
+        "CONC": "64",
+        "HF_HUB_TRUST_REMOTE_CODE": "1",
+        "ISL": "1024",
+        "MAX_MODEL_LEN": "6144",
+        "OSL": "1024",
+        "TP": "1",
+        "VLLM_BIN": "/usr/local/bin/vllm-wu1w",
+        "VLLM_CACHE_ROOT": "/tmp/vllm-cache-hl",
+        "VLLM_EXECUTE_MODEL_TIMEOUT_SECONDS": "1200",
+        "VLLM_ROCM_USE_AITER": "1",
+        "VLLM_ROCM_USE_AITER_LINEAR": "1"
+      },
+      "framework_args": "framework=vllm model=/mnt/stripe-3mix-3t2/models/davetha/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8 precision=bf16 envs=[TP=1 CONC=64 ISL=1024 OSL=1024 RANDOM_RANGE_RATIO=1 MAX_MODEL_LEN=6144 VLLM_EXECUTE_MODEL_TIMEOUT_SECONDS=1200 PATH=/opt/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ROCR_VISIBLE_DEVICES=0 NUM_PROMPTS=320 NUM_WARMUPS=8 EXTRA_VLLM_ARGS=--trust-remote-code --language-model-only --quantization compressed-tensors --safetensors-load-strategy eager --compilation-config {\"cudagraph_mode\":\"FULL_DECODE_ONLY\"} VLLM_ROCM_USE_AITER=1 VLLM_ROCM_USE_AITER_LINEAR=1 VLLM_BIN=/usr/local/bin/vllm-wu1w VLLM_CACHE_ROOT=/tmp/vllm-cache-hl AITER_LOG_TUNED_CONFIG=1 MAGPIE_TRUST_REMOTE_CODE=1 BENCH_TRUST_REMOTE_CODE=1 HF_HUB_TRUST_REMOTE_CODE=1 RUN_EVAL=true]",
+      "framework_args_source": "yaml_benchmark",
+      "server_log_path": "runs/baseline/e420b1b3a97f4b7eb334a1df38a32578/benchmark_vllm_20260914_173834/server.log"
+    },
+    "roofline_ceiling": {},
+    "throughput_tok_s_per_gpu": 444.8566029611903,
+    "throughput_unit": "tok/s",
+    "total_failures": 0,
+    "ttft_e2el_source": "state_workspace",
+    "ttft_mean_ms": 6121.427910947114
+  },
+  "capability_summary": {
+    "explore": {
+      "attempts": 0,
+      "keeps": 0,
+      "last_validated_gain_pct": 0.0,
+      "status": "not_attempted",
+      "tested": 0,
+      "winners_history": 0
+    },
+    "forge": {
+      "attempts": 0,
+      "keeps": 0,
+      "status": "not_attempted"
+    },
+    "geak": {
+      "attempts": 0,
+      "keeps": 0,
+      "status": "not_attempted"
+    },
+    "specialist": {
+      "attempts": 4,
+      "by_specialist": {
+        "candidate_discovery_specialist": {
+          "attempts": 0,
+          "keeps": 0,
+          "status": "not_attempted",
+          "tested": 0
+        },
+        "comm_specialist": {
+          "attempts": 0,
+          "keeps": 0,
+          "status": "not_attempted",
+          "tested": 0
+        },
+        "compiler_specialist": {
+          "attempts": 0,
+          "keeps": 0,
+          "status": "not_attempted",
+          "tested": 0
+        },
+        "enablement_specialist": {
+          "attempts": 0,
+          "keeps": 0,
+          "status": "not_attempted",
+          "tested": 0
+        },
+        "framework": {
+          "attempts": 1,
+          "keeps": 0,
+          "status": "attempted",
+          "tested": 0
+        },
+        "framework_rewrite_specialist": {
+          "attempts": 0,
+          "keeps": 0,
+          "status": "not_attempted",
+          "tested": 0
+        },
+        "kernel_switch_specialist": {
+          "attempts": 0,
+          "keeps": 0,
+          "status": "not_attempted",
+          "tested": 0
+        },
+        "pr_intelligence": {
+          "attempts": 1,
+          "keeps": 0,
+          "status": "attempted",
+          "tested": 0
+        },
+        "research_scout": {
+          "attempts": 1,
+          "keeps": 0,
+          "status": "attempted",
+          "tested": 0
+        },
+        "research_scout_specialist": {
+          "attempts": 0,
+          "keeps": 0,
+          "status": "not_attempted",
+          "tested": 0
+        },
+        "serving_specialist": {
+          "attempts": 0,
+          "keeps": 0,
+          "status": "not_attempted",
+          "tested": 0
+        },
+        "static_recon": {
+          "attempts": 1,
+          "keeps": 0,
+          "status": "tried",
+          "tested": 3
+        },
+        "static_recon_specialist": {
+          "attempts": 0,
+          "keeps": 0,
+          "status": "not_attempted",
+          "tested": 0
+        },
+        "system_specialist": {
+          "attempts": 0,
+          "keeps": 0,
+          "status": "not_attempted",
+          "tested": 0
+        }
+      },
+      "keeps": 0,
+      "status": "tried",
+      "tested": 3
+    }
+  },
+  "close": {
+    "artifacts": {
+      "artifact_package_path": null,
+      "final_json_path": "reports/final.json",
+      "final_md_path": "reports/final.md",
+      "session_breakdown_path": "session_breakdown.json"
+    },
+    "close_sequence_done": false,
+    "end_time": "",
+    "robustness": {
+      "escalated": false,
+      "signals": [
+        {
+          "action": "",
+          "signal": "",
+          "ts": "",
+          "workdir": "robustness-workdir/000000"
+        },
+        {
+          "action": "",
+          "signal": "",
+          "ts": "",
+          "workdir": "robustness-workdir/000001"
+        },
+        {
+          "action": "",
+          "signal": "",
+          "ts": "",
+          "workdir": "robustness-workdir/000002"
+        }
+      ]
+    },
+    "start_time": "2026-09-14T19:31:45+00:00",
+    "status": "failed",
+    "steps": []
+  },
+  "collective": {},
+  "conc_sweep_summary": {},
+  "critic_robustness": {
+    "critic_iterations": [
+      {
+        "emit_path": "critic-workdir/000000/emit.json",
+        "iter": 0,
+        "iteration_id": "critic-iteration:context-:-framework-:-vllm-macro_cycle-:0-model-:-Qwen3.8-27B-ABLITERATED-W8A8-gdnint8-model_pat:64bc3f125ff9",
+        "judge_bundle_path": "critic-workdir/000000/judge_bundle.json",
+        "kb_priors": {
+          "client_mode": "inmemory",
+          "configured": true,
+          "limit": 5,
+          "mode": "per_proposal",
+          "prior_count": 0,
+          "referenced_in_verdict": false,
+          "requests": [
+            {
+              "cache": "miss",
+              "count": 0,
+              "msg_id": "4e650115d5414f1a95b936136ea643e8",
+              "topic": "target_analysis"
+            },
+            {
+              "cache": "miss",
+              "count": 0,
+              "msg_id": "d170b7b0db8c49709aa339432eed6789",
+              "topic": "baseline"
+            }
+          ],
+          "scope_filter": {
+            "framework": "vllm",
+            "model": "qwen3.8-27b-abliterated-w8a8-gdnint8",
+            "model_family": "qwen",
+            "org": "hyperloom",
+            "precision": "bf16",
+            "workload": "{'conc': 64, 'isl': 1024, 'max_model_len': 6144, 'osl': 1024, 'precision': 'bf16'}"
+          },
+          "skipped_reason": null
+        },
+        "kb_writes": [],
+        "macro_cycle": 0,
+        "phase": "PRELUDE",
+        "request_path": "critic-workdir/000000/request.json",
+        "review_path": "critic-workdir/000000/review.json",
+        "summary": "",
+        "topic": "",
+        "ts": "",
+        "verdict": ""
+      },
+      {
+        "emit_path": "critic-workdir/000001/emit.json",
+        "iter": 1,
+        "iteration_id": "critic-iteration:1-context-:-framework-:-vllm-macro_cycle-:0-model-:-Qwen3.8-27B-ABLITERATED-W8A8-gdnint8-model_p:92602ee841fe",
+        "judge_bundle_path": "critic-workdir/000001/judge_bundle.json",
+        "kb_priors": {
+          "client_mode": "inmemory",
+          "configured": true,
+          "limit": 5,
+          "mode": "per_decision",
+          "prior_count": 0,
+          "referenced_in_verdict": false,
+          "requests": [
+            {
+              "cache": "miss",
+              "count": 0,
+              "msg_id": null,
+              "topic": "decision-20260914T173139Z-3ae15c89"
+            }
+          ],
+          "scope_filter": {
+            "framework": "vllm",
+            "model": "qwen3.8-27b-abliterated-w8a8-gdnint8",
+            "model_family": "qwen",
+            "org": "hyperloom",
+            "precision": "bf16",
+            "workload": "{'conc': 64, 'isl': 1024, 'max_model_len': 6144, 'osl': 1024, 'precision': 'bf16'}"
+          },
+          "skipped_reason": null
+        },
+        "kb_writes": [],
+        "macro_cycle": 0,
+        "phase": "FRAMEWORK_AGENT",
+        "request_path": "critic-workdir/000001/request.json",
+        "review_path": "critic-workdir/000001/review.json",
+        "summary": "",
+        "topic": "",
+        "ts": "",
+        "verdict": ""
+      },
+      {
+        "emit_path": "critic-workdir/000002/emit.json",
+        "iter": 2,
+        "iteration_id": "critic-iteration:2-context-:-framework-:-vllm-macro_cycle-:0-model-:-Qwen3.8-27B-ABLITERATED-W8A8-gdnint8-model_p:2617c60491bb",
+        "judge_bundle_path": "critic-workdir/000002/judge_bundle.json",
+        "kb_priors": {
+          "client_mode": "inmemory",
+          "configured": true,
+          "limit": 5,
+          "mode": "per_decision",
+          "prior_count": 0,
+          "referenced_in_verdict": false,
+          "requests": [
+            {
+              "cache": "hit",
+              "count": 0,
+              "msg_id": null,
+              "topic": "decision-20260914T173139Z-3ae15c89"
+            }
+          ],
+          "scope_filter": {
+            "framework": "vllm",
+            "model": "qwen3.8-27b-abliterated-w8a8-gdnint8",
+            "model_family": "qwen",
+            "org": "hyperloom",
+            "precision": "bf16",
+            "workload": "{'conc': 64, 'isl': 1024, 'max_model_len': 6144, 'osl': 1024, 'precision': 'bf16'}"
+          },
+          "skipped_reason": null
+        },
+        "kb_writes": [],
+        "macro_cycle": 0,
+        "phase": "FRAMEWORK_AGENT",
+        "request_path": "critic-workdir/000002/request.json",
+        "review_path": "critic-workdir/000002/review.json",
+        "summary": "",
+        "topic": "",
+        "ts": "",
+        "verdict": ""
+      }
+    ],
+    "kb_writes_summary": {
+      "by_verdict": {},
+      "total": 0
+    },
+    "robustness_signals": [
+      {
+        "action": "",
+        "signal": "",
+        "ts": "",
+        "workdir": "robustness-workdir/000000"
+      },
+      {
+        "action": "",
+        "signal": "",
+        "ts": "",
+        "workdir": "robustness-workdir/000001"
+      },
+      {
+        "action": "",
+        "signal": "",
+        "ts": "",
+        "workdir": "robustness-workdir/000002"
+      }
+    ]
+  },
+  "decision_trace": {
+    "decision_trace": [
+      {
+        "decision": {
+          "change": "target_analysis",
+          "component": "orchestration",
+          "gain_pct": null,
+          "kind": "other",
+          "operation_kind": "other",
+          "outcome": "KEEP",
+          "task_id": "744cfece502844f4a3910d9b3e355c3a"
+        },
+        "phase": "PRELUDE",
+        "tick": 1,
+        "tokens": {
+          "by_component": {},
+          "calls": 0,
+          "total_cache": 0,
+          "total_in": 0,
+          "total_out": 0,
+          "total_reasoning_out": 0
+        },
+        "ts": "2026-09-14T17:38:03Z"
+      },
+      {
+        "decision": {
+          "change": "baseline",
+          "component": "orchestration",
+          "gain_pct": null,
+          "kind": "baseline",
+          "operation_kind": "baseline",
+          "outcome": "KEEP",
+          "task_id": "e420b1b3a97f4b7eb334a1df38a32578"
+        },
+        "phase": "PRELUDE",
+        "tick": 1,
+        "tokens": {
+          "by_component": {},
+          "calls": 0,
+          "total_cache": 0,
+          "total_in": 0,
+          "total_out": 0,
+          "total_reasoning_out": 0
+        },
+        "ts": "2026-09-14T18:41:22Z"
+      },
+      {
+        "decision": {
+          "change": "specialist",
+          "component": "orchestration",
+          "gain_pct": null,
+          "kind": "other",
+          "operation_kind": "other",
+          "outcome": "KEEP",
+          "task_id": "64c68e8f31c74152add8db07fc879bfc"
+        },
+        "phase": "PRELUDE",
+        "tick": 1,
+        "tokens": {
+          "by_component": {
+            "specialist": {
+              "calls": 19,
+              "total_cache_creation": 0,
+              "total_cache_read": 0,
+              "total_in": 0,
+              "total_out": 0,
+              "total_reasoning_out": 0
+            }
+          },
+          "calls": 19,
+          "total_cache": 0,
+          "total_in": 0,
+          "total_out": 0,
+          "total_reasoning_out": 0
+        },
+        "ts": "2026-09-14T18:51:37Z"
+      },
+      {
+        "decision": {
+          "change": "specialist",
+          "component": "orchestration",
+          "gain_pct": null,
+          "kind": "other",
+          "operation_kind": "other",
+          "outcome": "KEEP",
+          "task_id": "26d8322fb812499fb429efc87b5cc792"
+        },
+        "phase": "PRELUDE",
+        "tick": 1,
+        "tokens": {
+          "by_component": {
+            "specialist": {
+              "calls": 55,
+              "total_cache_creation": 0,
+              "total_cache_read": 0,
+              "total_in": 0,
+              "total_out": 56915,
+              "total_reasoning_out": 0
+            }
+          },
+          "calls": 55,
+          "total_cache": 0,
+          "total_in": 0,
+          "total_out": 56915,
+          "total_reasoning_out": 0
+        },
+        "ts": "2026-09-14T18:51:49Z"
+      },
+      {
+        "decision": {
+          "change": "specialist",
+          "component": "orchestration",
+          "gain_pct": null,
+          "kind": "other",
+          "operation_kind": "other",
+          "outcome": "KEEP",
+          "task_id": "6d4c3306273749ef83672b8beba67023"
+        },
+        "phase": "FRAMEWORK_AGENT",
+        "tick": 2,
+        "tokens": {
+          "by_component": {
+            "specialist": {
+              "calls": 1,
+              "total_cache_creation": 0,
+              "total_cache_read": 0,
+              "total_in": 0,
+              "total_out": 0,
+              "total_reasoning_out": 0
+            }
+          },
+          "calls": 1,
+          "total_cache": 0,
+          "total_in": 0,
+          "total_out": 0,
+          "total_reasoning_out": 0
+        },
+        "ts": "2026-09-14T19:15:01Z"
+      },
+      {
+        "decision": {
+          "change": "specialist",
+          "component": "orchestration",
+          "gain_pct": null,
+          "kind": "other",
+          "operation_kind": "other",
+          "outcome": "KEEP",
+          "task_id": "0a310d67108e488da97b67154869c87e"
+        },
+        "phase": "FRAMEWORK_AGENT",
+        "tick": 2,
+        "tokens": {
+          "by_component": {
+            "specialist": {
+              "calls": 1,
+              "total_cache_creation": 0,
+              "total_cache_read": 0,
+              "total_in": 0,
+              "total_out": 0,
+              "total_reasoning_out": 0
+            }
+          },
+          "calls": 1,
+          "total_cache": 0,
+          "total_in": 0,
+          "total_out": 0,
+          "total_reasoning_out": 0
+        },
+        "ts": "2026-09-14T19:15:01Z"
+      },
+      {
+        "decision": {
+          "change": "report",
+          "component": "orchestration",
+          "gain_pct": null,
+          "kind": "other",
+          "operation_kind": "other",
+          "outcome": "KEEP",
+          "task_id": "5e02dd5cd0ba477caa20c3ebe9b520dc"
+        },
+        "phase": "CLOSE",
+        "tick": 5,
+        "tokens": {
+          "by_component": {},
+          "calls": 0,
+          "total_cache": 0,
+          "total_in": 0,
+          "total_out": 0,
+          "total_reasoning_out": 0
+        },
+        "ts": "2026-09-14T19:33:50Z"
+      }
+    ],
+    "overhead_tokens": {
+      "calls": 3,
+      "total_cache_creation": 0,
+      "total_cache_read": 145600,
+      "total_in": 133283,
+      "total_out": 6756,
+      "total_reasoning_out": 0
+    },
+    "token_rollup": {
+      "by_component": {
+        "critic": {
+          "calls": 1,
+          "total_cache_creation": 0,
+          "total_cache_read": 0,
+          "total_in": 7840,
+          "total_out": 1167,
+          "total_reasoning_out": 0
+        },
+        "orchestration": {
+          "calls": 2,
+          "total_cache_creation": 0,
+          "total_cache_read": 145600,
+          "total_in": 125443,
+          "total_out": 5589,
+          "total_reasoning_out": 0
+        },
+        "specialist": {
+          "calls": 91,
+          "total_cache_creation": 0,
+          "total_cache_read": 0,
+          "total_in": 0,
+          "total_out": 67445,
+          "total_reasoning_out": 0
+        }
+      },
+      "by_phase": {
+        "FRAMEWORK_AGENT": {
+          "calls": 18,
+          "total_cache_creation": 0,
+          "total_cache_read": 145600,
+          "total_in": 32147,
+          "total_out": 15728,
+          "total_reasoning_out": 0
+        },
+        "PRELUDE": {
+          "calls": 76,
+          "total_cache_creation": 0,
+          "total_cache_read": 0,
+          "total_in": 101136,
+          "total_out": 58473,
+          "total_reasoning_out": 0
+        }
+      },
+      "session_total": {
+        "calls": 94,
+        "total_cache_creation": 0,
+        "total_cache_read": 145600,
+        "total_in": 133283,
+        "total_out": 74201,
+        "total_reasoning_out": 0
+      }
+    },
+    "unattributed_tokens": {
+      "calls": 15,
+      "total_cache_creation": 0,
+      "total_cache_read": 0,
+      "total_in": 0,
+      "total_out": 10530,
+      "total_reasoning_out": 0
+    }
+  },
+  "enablement": {},
+  "exported_at_utc": "2026-09-14T19:33:50+00:00",
+  "exporter_version": "session-breakdown-1.0.0",
+  "final": {
+    "action_path": [],
+    "closing_phase_entered": true,
+    "closing_report_task_id": "5e02dd5cd0ba477caa20c3ebe9b520dc",
+    "closing_started_unix": 1789414305.2201517,
+    "cumulative_gain_pct_validated": 0.0,
+    "e2el_mean_ms": 147098.0696068188,
+    "extra_envs": {},
+    "extra_server_args": "",
+    "geak_pending": {},
+    "invocation": {
+      "config_path": null,
+      "extra_envs": {},
+      "framework_args": "",
+      "framework_args_source": "unknown",
+      "server_log_path": null
+    },
+    "primary_metric": "throughput_tok_s_per_gpu",
+    "revalidation_pending": false,
+    "stack_changed_after_validation": false,
+    "throughput_tok_s_per_gpu": 444.8566029611903,
+    "throughput_unit": "tok/s",
+    "ttft_e2el_source": "current_best",
+    "ttft_mean_ms": 6121.427910947114,
+    "validated_at_stack_len": 0,
+    "validated_ts": ""
+  },
+  "geak": {
+    "accepted_heads": [],
+    "accepted_kernels": [],
+    "engaged": true,
+    "error": "kernel_optimizer=geak but no geak_result recorded",
+    "error_class": "no_result",
+    "status": "missing"
+  },
+  "kernel_journey": {},
+  "kernel_lifecycle": {
+    "adopted": [],
+    "detected": [],
+    "optimized": [],
+    "recommended": [],
+    "rejected": []
+  },
+  "kernel_optimization_summary": {
+    "by_kernel": [],
+    "cumulative_gain_validated_pct": 0.0,
+    "failure_reason_breakdown": {
+      "agent_error": 0,
+      "compile_failed": 0,
+      "correctness_failed": 0,
+      "ladder_all_failed": 0,
+      "ladder_partial_no_artifact": 0,
+      "ladder_unavailable": 0,
+      "other": 0,
+      "preprocess_failed": 0,
+      "speedup_below_threshold": 0,
+      "timeout": 0
+    },
+    "field_glossary": {
+      "backend_ladder": "Per-backend outcome of the kernel-agent dispatch. ``produced_artifact=false`` across all rows is the dominant signal that the entire ladder failed for this kernel.",
+      "bandwidth": "Per-case ``bytes`` / ``algbw_gbps`` / ``busbw_gbps`` from the final bench. Latency alone cannot separate a faster transfer from a cheaper barrier; bus bandwidth against the fabric peak says which one a kept kernel bought, and which regime still has headroom.",
+      "bound_type": "Whether the kernel is limited by memory bandwidth (memory-bound) or compute (compute-bound).",
+      "collective_attempt_id": "Stable identity for one collective campaign, used to deduplicate resumed or salvaged attempts across a session.",
+      "collective_op": "The collective primitive that was optimized: ``all_reduce``, ``reduce_scatter`` or ``all_gather``.",
+      "compile_passed": "True only if at least one backend in the ladder produced a usable patch. False means the whole backend ladder failed to produce any compiled artifact.",
+      "e2e_gain_pct": "End-to-end throughput delta measured by the integrate gate. This, not micro_speedup, decides whether a collective KEEP is adopted.",
+      "efficiency_pct": "Achieved throughput as a percentage of the kernel's roofline peak for its bound_type. Lower = more headroom to gain.",
+      "gpu_pct": "Share of total GPU time spent in this kernel (kernel_duration / total_gpu_duration). Higher = more impactful to optimize.",
+      "lane": "Which optimization lane produced the row. ``collective`` rows come from the multi-GPU comm lane and carry no roofline geometry, so efficiency_pct / bound_type / arithmetic_intensity stay null.",
+      "salvaged": "True when the validated best was recovered from the campaign sidecar after the wrapper timed out, rather than returned by a clean exit.",
+      "speedup_basis": "Whether the row's headline number was validated end to end (``e2e``) or is a microbenchmark ratio only. A collective's microbenchmark routinely overstates its end-to-end worth, so treat ``microbenchmark`` rows as unproven.",
+      "world_size": "Rank count the collective was measured across; the lane requires it to match the run's TP width."
+    },
+    "kernel_opt_outcome": "skip",
+    "model_name": "Qwen3.8-27B-ABLITERATED-W8A8-gdnint8",
+    "rejection_breakdown": {
+      "max_failures_without_keep": 0,
+      "max_partial_attempts_without_keep": 0,
+      "other": 0,
+      "revert_decision": 0,
+      "unresolved_source": 0
+    },
+    "schema_version": 1,
+    "session_id": "Qwen3.8-27B-ABLITERATED-W8A8-gdnint8_20260914T173139Z_e9102f01",
+    "top_takeaways": [
+      "No kernels were attempted through the lanes recorded here."
+    ],
+    "totals": {
+      "attempted": 0,
+      "in_flight": 0,
+      "integrated": 0,
+      "keep_pending": 0,
+      "rejected": 0,
+      "top_candidates": 0
+    }
+  },
+  "kernel_roofline": {},
+  "langfuse": {
+    "config": {
+      "enable_flag": false,
+      "host": null,
+      "public_key_set": false,
+      "sdk_available": false,
+      "secret_key_set": false
+    },
+    "correlated_on": "internal_session_id",
+    "counts": {
+      "breakdown_recorded": 0,
+      "errors": 0,
+      "ext_shards_read": 0,
+      "forge_steps_read": 0,
+      "gemm_tuning_read": 0,
+      "generations_failed": 0,
+      "generations_paired": 0,
+      "generations_sent": 0,
+      "generations_text_only": 0,
+      "generations_token_only": 0,
+      "kb_spans_sent": 0,
+      "recipe_audit_read": 0,
+      "recipe_write_audit_read": 0,
+      "scores_sent": 0,
+      "session_start_recorded": 0,
+      "spans_opened": 0,
+      "specialist_intel_read": 0,
+      "status_updates_sent": 0
+    },
+    "counts_final": false,
+    "disabled_reason": "disabled",
+    "enabled": false,
+    "ext_rows_sent": {},
+    "flush_steps_done": [],
+    "payload_sha256": "5c3bf2a969d77f2424d05f7960abf07ac9d8a9de7539f65701e4c6cc7aedb8e8",
+    "receipt_source": "receipt_file",
+    "session_id": "Qwen3.8-27B-ABLITERATED-W8A8-gdnint8_20260914T173139Z_e9102f01",
+    "trace_id": "5537a9254925cd1fff8132f462b1bf46"
+  },
+  "metadata": {
+    "exported_at_utc": "2026-09-14T19:33:50+00:00",
+    "langfuse": {
+      "enabled": false,
+      "trace_url": null
+    },
+    "session": {
+      "claw_session_id": "",
+      "code_revision": "",
+      "created_at_utc": "2026-09-14T17:31:39+00:00",
+      "elapsed_minutes": 120.08,
+      "ended_at_utc": "2026-09-14T19:31:45Z",
+      "host": "amd-server",
+      "max_minutes": 120,
+      "pid": 1967,
+      "recovery": {
+        "crash_count": 0,
+        "degraded_mode": true,
+        "recovered": false
+      },
+      "sandbox_user_id": "",
+      "session_dir": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T173139Z-3ae15c89",
+      "session_id": "Qwen3.8-27B-ABLITERATED-W8A8-gdnint8_20260914T173139Z_e9102f01",
+      "start_ts": "2026-09-14T17:31:39.960123+00:00",
+      "tick_count": 5,
+      "user_data_path": "/home/qiba/ROCm.AI/hyperloom/session"
+    },
+    "task_config": {
+      "architecture": {
+        "attention_type": "GQA",
+        "model_class": "dense",
+        "model_type": "qwen3_5_text",
+        "num_experts": null,
+        "num_hidden_layers": 64
+      },
+      "conc": 64,
+      "framework_name": "vllm",
+      "framework_version": "",
+      "gpu_type": "",
+      "isl": 1024,
+      "launch_env": {
+        "VLLM_BIN": "/usr/local/bin/vllm-wu1w",
+        "VLLM_CACHE_ROOT": "/tmp/vllm-cache-hl",
+        "VLLM_ROCM_USE_AITER": "1",
+        "VLLM_ROCM_USE_AITER_LINEAR": "1"
+      },
+      "launch_server_args": "--trust-remote-code --language-model-only --quantization compressed-tensors --safetensors-load-strategy eager --compilation-config {\"cudagraph_mode\":\"FULL_DECODE_ONLY\"}",
+      "max_model_len": 6144,
+      "model_name": "Qwen3.8-27B-ABLITERATED-W8A8-gdnint8",
+      "model_path": "/mnt/stripe-3mix-3t2/models/davetha/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8",
+      "objective": {
+        "kind": "gain_pct",
+        "value": 30.0
+      },
+      "osl": 1024,
+      "precision": "bf16",
+      "tp": 1
+    },
+    "versions": {
+      "framework": "vllm",
+      "framework_version": null,
+      "hyperloom": "",
+      "schema_version": "hyperloom.session_breakdown.v6.0",
+      "tools": {}
+    },
+    "warnings": [
+      "framework_args extraction failed for no server.log; tried server.log + yaml"
+    ]
+  },
+  "model_info": {
+    "architectures": [
+      "Qwen3_5ForConditionalGeneration"
+    ],
+    "attention_type": "GQA",
+    "head_dim": 256,
+    "hidden_size": 5120,
+    "intermediate_size": 17408,
+    "is_moe": false,
+    "max_position_embeddings": 262144,
+    "model_family": "qwen3",
+    "model_type": "qwen3_5_text",
+    "num_attention_heads": 24,
+    "num_hidden_layers": 64,
+    "num_key_value_heads": 4,
+    "quantization": "compressed-tensors",
+    "vocab_size": 248320
+  },
+  "optimizations": {
+    "attempts": [],
+    "available": true,
+    "backend_attempts": [],
+    "entries": [],
+    "gemm_tuning_runs": [],
+    "schema_version": 5,
+    "source_of_truth": "recorder",
+    "summary_by_agent": {},
+    "summary_by_kind": {},
+    "summary_by_source": {
+      "explore": {
+        "keeps": 0,
+        "total_gain_pct": 0.0
+      },
+      "framework_agent": {
+        "keeps": 0,
+        "total_gain_pct": 0.0
+      },
+      "kernel_agent": {
+        "by_backend": {
+          "forge": {
+            "keeps": 0,
+            "non_attributable_keeps": 0,
+            "total_gain_pct": 0.0
+          },
+          "geak": {
+            "keeps": 0,
+            "non_attributable_keeps": 0,
+            "total_gain_pct": 0.0
+          },
+          "unattributed": {
+            "keeps": 0,
+            "non_attributable_keeps": 0,
+            "total_gain_pct": 0.0
+          }
+        },
+        "keeps": 0,
+        "total_gain_pct": 0.0
+      },
+      "unattributed": {
+        "keeps": 0,
+        "total_gain_pct": 0.0
+      },
+      "warm_replay": {
+        "keeps": 0,
+        "total_gain_pct": 0.0
+      }
+    },
+    "validation": {
+      "attempt_count": 0,
+      "attributed_total_gain_pct": 0.0,
+      "attribution_gap_pct": 0.0,
+      "keep_count": 0,
+      "ledger_total_gain_pct": 0.0,
+      "method": "ledger_sum",
+      "non_attributable_keep_count": 0,
+      "notes": [
+        "Projected from author-time recorder streams (operations/adoptions/measurements/artifacts)."
+      ],
+      "projected_keep_count": 0,
+      "reconciliation_gap_pct": null,
+      "stale_evidence_count": 0,
+      "unattributed_gain_pct": 0.0,
+      "unclaimed_integration_count": 0,
+      "unmeasured_keep_count": 0,
+      "unscored_keep_count": 0,
+      "validated_at_stack_len": 0,
+      "validated_total_gain_pct": 0.0,
+      "validation_basis": "ledger_sum",
+      "validation_source": ""
+    }
+  },
+  "outcome": {
+    "baseline": {
+      "accuracy": 0.9673995451099318,
+      "e2el_mean_ms": 147098.0696068188,
+      "throughput_tok_s_per_gpu": 444.8566029611903,
+      "ttft_mean_ms": 6121.427910947114
+    },
+    "final": {
+      "action_path": [],
+      "extra_envs": {},
+      "extra_server_args": "",
+      "gain_pct": 0.0,
+      "throughput_tok_s_per_gpu": 444.8566029611903
+    },
+    "stage_reached": "close",
+    "status": "completed",
+    "stop_reason": "time_exhausted",
+    "validation": {
+      "attributed_gain_pct": 0.0,
+      "attribution": {
+        "available": true,
+        "by_source": {
+          "framework_agent": {
+            "keep_count": 0,
+            "total_gain_pct": 0.0
+          },
+          "kernel": {
+            "by_backend": {
+              "forge": {
+                "keep_count": 0,
+                "non_attributable_keep_count": 0,
+                "total_gain_pct": 0.0
+              },
+              "geak": {
+                "keep_count": 0,
+                "non_attributable_keep_count": 0,
+                "total_gain_pct": 0.0
+              }
+            },
+            "keep_count": 0,
+            "total_gain_pct": 0.0
+          },
+          "warm_replay": {
+            "keep_count": 0,
+            "total_gain_pct": 0.0
+          }
+        }
+      },
+      "notes": [
+        "Projected from author-time recorder streams (operations/adoptions/measurements/artifacts)."
+      ],
+      "reconciliation_gap_pct": null,
+      "unattributed_gain_pct": 0.0
+    }
+  },
+  "param_search": {
+    "accepted": [],
+    "cursor": 0,
+    "discovered_flags": {},
+    "domains_round_summary": [],
+    "last_round": {},
+    "name_index": {},
+    "no_promote_streak": 0,
+    "rejected": [],
+    "schema_version": 1,
+    "synergy_attempted": [],
+    "tested": {},
+    "winners_history": []
+  },
+  "phase_segments": [
+    {
+      "actions": [
+        {
+          "action": "target_analysis",
+          "change": "target_analysis",
+          "decision": "KEEP",
+          "error_class": null,
+          "extras": {
+            "operation_kind": "target_analysis"
+          },
+          "kernel_id": null,
+          "key_metric": null,
+          "key_metric_kind": null,
+          "phase": "PRELUDE",
+          "status": "",
+          "task_id": "744cfece502844f4a3910d9b3e355c3a",
+          "ts": "2026-09-14T17:38:03Z",
+          "workspace": null
+        },
+        {
+          "action": "baseline",
+          "change": "baseline",
+          "decision": "KEEP",
+          "error_class": null,
+          "extras": {
+            "operation_kind": "baseline"
+          },
+          "kernel_id": null,
+          "key_metric": 444.8566029611903,
+          "key_metric_kind": "output_throughput",
+          "phase": "PRELUDE",
+          "status": "",
+          "task_id": "e420b1b3a97f4b7eb334a1df38a32578",
+          "ts": "2026-09-14T18:41:22Z",
+          "workspace": null
+        },
+        {
+          "action": "specialist",
+          "change": "specialist",
+          "decision": "KEEP",
+          "error_class": null,
+          "extras": {
+            "operation_kind": "specialist"
+          },
+          "kernel_id": null,
+          "key_metric": null,
+          "key_metric_kind": null,
+          "phase": "PRELUDE",
+          "status": "",
+          "task_id": "64c68e8f31c74152add8db07fc879bfc",
+          "ts": "2026-09-14T18:51:37Z",
+          "workspace": null
+        },
+        {
+          "action": "specialist",
+          "change": "specialist",
+          "decision": "KEEP",
+          "error_class": null,
+          "extras": {
+            "operation_kind": "specialist"
+          },
+          "kernel_id": null,
+          "key_metric": null,
+          "key_metric_kind": null,
+          "phase": "PRELUDE",
+          "status": "",
+          "task_id": "26d8322fb812499fb429efc87b5cc792",
+          "ts": "2026-09-14T18:51:49Z",
+          "workspace": null
+        }
+      ],
+      "elapsed_seconds": 4807.76513004303,
+      "entered_ts": "2026-09-14T17:31:41Z",
+      "entered_unix": 1789407101.5078485,
+      "events": [],
+      "evidence": {
+        "budget_dropped_arms": [
+          {
+            "affordable_sec": -702.6,
+            "arm": "initial_analysis",
+            "bound": "optimization_reserve",
+            "expected_cost_sec": 3798.9,
+            "optimization_reserve_sec": 3600.0,
+            "session_usable_sec": 2897.4
+          }
+        ],
+        "trigger": "fresh_session"
+      },
+      "exit_reason": "prelude_done",
+      "exit_ts": "2026-09-14T18:51:49Z",
+      "exit_unix": 1789411909.2729785,
+      "from_phase": "",
+      "phase": "PRELUDE"
+    },
+    {
+      "actions": [
+        {
+          "action": "specialist",
+          "change": "specialist",
+          "decision": "KEEP",
+          "error_class": null,
+          "extras": {
+            "operation_kind": "specialist"
+          },
+          "kernel_id": null,
+          "key_metric": null,
+          "key_metric_kind": null,
+          "phase": "FRAMEWORK_AGENT",
+          "status": "",
+          "task_id": "6d4c3306273749ef83672b8beba67023",
+          "ts": "2026-09-14T19:15:01Z",
+          "workspace": null
+        },
+        {
+          "action": "specialist",
+          "change": "specialist",
+          "decision": "KEEP",
+          "error_class": null,
+          "extras": {
+            "operation_kind": "specialist"
+          },
+          "kernel_id": null,
+          "key_metric": null,
+          "key_metric_kind": null,
+          "phase": "FRAMEWORK_AGENT",
+          "status": "",
+          "task_id": "0a310d67108e488da97b67154869c87e",
+          "ts": "2026-09-14T19:15:01Z",
+          "workspace": null
+        }
+      ],
+      "elapsed_seconds": 2395.9698173999786,
+      "entered_ts": "2026-09-14T18:51:49Z",
+      "entered_unix": 1789411909.2729785,
+      "events": [],
+      "evidence": {
+        "affordable_rounds": 0.6,
+        "baseline_tput": 444.8566029611903,
+        "fits_one_optimization_round": false,
+        "measured_round_sec": 3798.9,
+        "priced_by": "boot_plus_benchmark",
+        "session_usable_sec": 2270.7
+      },
+      "exit_reason": "time_exhausted",
+      "exit_ts": "2026-09-14T19:31:45Z",
+      "exit_unix": 1789414305.242796,
+      "from_phase": "PRELUDE",
+      "phase": "FRAMEWORK_AGENT"
+    },
+    {
+      "actions": [
+        {
+          "action": "report",
+          "change": "report",
+          "decision": "KEEP",
+          "error_class": null,
+          "extras": {
+            "operation_kind": "report"
+          },
+          "kernel_id": null,
+          "key_metric": null,
+          "key_metric_kind": null,
+          "phase": "CLOSE",
+          "status": "",
+          "task_id": "5e02dd5cd0ba477caa20c3ebe9b520dc",
+          "ts": "2026-09-14T19:33:50Z",
+          "workspace": null
+        }
+      ],
+      "elapsed_seconds": null,
+      "entered_ts": "2026-09-14T19:31:45Z",
+      "entered_unix": 1789414305.242796,
+      "events": [],
+      "evidence": {
+        "reason_origin": "closing_phase",
+        "terminal": true
+      },
+      "exit_reason": "",
+      "exit_ts": "",
+      "exit_unix": null,
+      "from_phase": "FRAMEWORK_AGENT",
+      "phase": "CLOSE"
+    }
+  ],
+  "phase_timeline": [
+    {
+      "action": "target_analysis",
+      "change": "target_analysis",
+      "decision": "KEEP",
+      "error_class": null,
+      "extras": {
+        "operation_kind": "target_analysis"
+      },
+      "kernel_id": null,
+      "key_metric": null,
+      "key_metric_kind": null,
+      "phase": "PRELUDE",
+      "status": "",
+      "task_id": "744cfece502844f4a3910d9b3e355c3a",
+      "ts": "2026-09-14T17:38:03Z",
+      "workspace": null
+    },
+    {
+      "action": "baseline",
+      "change": "baseline",
+      "decision": "KEEP",
+      "error_class": null,
+      "extras": {
+        "operation_kind": "baseline"
+      },
+      "kernel_id": null,
+      "key_metric": 444.8566029611903,
+      "key_metric_kind": "output_throughput",
+      "phase": "PRELUDE",
+      "status": "",
+      "task_id": "e420b1b3a97f4b7eb334a1df38a32578",
+      "ts": "2026-09-14T18:41:22Z",
+      "workspace": null
+    },
+    {
+      "action": "specialist",
+      "change": "specialist",
+      "decision": "KEEP",
+      "error_class": null,
+      "extras": {
+        "operation_kind": "specialist"
+      },
+      "kernel_id": null,
+      "key_metric": null,
+      "key_metric_kind": null,
+      "phase": "PRELUDE",
+      "status": "",
+      "task_id": "64c68e8f31c74152add8db07fc879bfc",
+      "ts": "2026-09-14T18:51:37Z",
+      "workspace": null
+    },
+    {
+      "action": "specialist",
+      "change": "specialist",
+      "decision": "KEEP",
+      "error_class": null,
+      "extras": {
+        "operation_kind": "specialist"
+      },
+      "kernel_id": null,
+      "key_metric": null,
+      "key_metric_kind": null,
+      "phase": "PRELUDE",
+      "status": "",
+      "task_id": "26d8322fb812499fb429efc87b5cc792",
+      "ts": "2026-09-14T18:51:49Z",
+      "workspace": null
+    },
+    {
+      "action": "specialist",
+      "change": "specialist",
+      "decision": "KEEP",
+      "error_class": null,
+      "extras": {
+        "operation_kind": "specialist"
+      },
+      "kernel_id": null,
+      "key_metric": null,
+      "key_metric_kind": null,
+      "phase": "FRAMEWORK_AGENT",
+      "status": "",
+      "task_id": "6d4c3306273749ef83672b8beba67023",
+      "ts": "2026-09-14T19:15:01Z",
+      "workspace": null
+    },
+    {
+      "action": "specialist",
+      "change": "specialist",
+      "decision": "KEEP",
+      "error_class": null,
+      "extras": {
+        "operation_kind": "specialist"
+      },
+      "kernel_id": null,
+      "key_metric": null,
+      "key_metric_kind": null,
+      "phase": "FRAMEWORK_AGENT",
+      "status": "",
+      "task_id": "0a310d67108e488da97b67154869c87e",
+      "ts": "2026-09-14T19:15:01Z",
+      "workspace": null
+    },
+    {
+      "action": "report",
+      "change": "report",
+      "decision": "KEEP",
+      "error_class": null,
+      "extras": {
+        "operation_kind": "report"
+      },
+      "kernel_id": null,
+      "key_metric": null,
+      "key_metric_kind": null,
+      "phase": "CLOSE",
+      "status": "",
+      "task_id": "5e02dd5cd0ba477caa20c3ebe9b520dc",
+      "ts": "2026-09-14T19:33:50Z",
+      "workspace": null
+    }
+  ],
+  "roofline": [],
+  "roofline_progress": {
+    "achieved_latency_ms": null,
+    "baseline_tput": 444.8566029611903,
+    "ceiling_available": false,
+    "ceiling_kind": "none",
+    "ceiling_ratio_target": 0.7,
+    "ceiling_tok_per_sec": null,
+    "cumulative_gain_pct": 0.0,
+    "current_best_pct_of_ceiling": null,
+    "current_best_pct_of_latency_ceiling": null,
+    "current_best_pct_of_target": null,
+    "current_best_tput": 444.8566029611903,
+    "latency_ceiling_available": false,
+    "latency_ceiling_ms": null,
+    "roofline_failure_streak": 0,
+    "snapshots": [],
+    "target_tok_per_sec": null,
+    "trajectory": [
+      {
+        "action": "baseline",
+        "extra_envs": {},
+        "flags": "",
+        "gain_pct": 0.0,
+        "label": "baseline",
+        "tput": 444.8566029611903,
+        "ts": "2026-09-14T17:31:39+00:00"
+      }
+    ]
+  },
+  "schema_version": "hyperloom.session_breakdown.v6.0",
+  "session": {
+    "claw_session_id": "",
+    "code_revision": "",
+    "created_at_utc": "2026-09-14T17:31:39+00:00",
+    "elapsed_minutes": 120.08,
+    "ended_at_utc": "2026-09-14T19:31:45Z",
+    "host": "amd-server",
+    "image": "rocm-ai/vllm:0.28.0-rocm7.2.4",
+    "max_minutes": 120,
+    "phase": "CLOSE",
+    "pid": 1967,
+    "recovery": {
+      "crash_count": 0,
+      "crash_timestamps": [],
+      "degraded_mode": true,
+      "last_tick_exception": null,
+      "recovered": false,
+      "resume_pending_revalidation": false
+    },
+    "sandbox_user_id": "",
+    "session_dir": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T173139Z-3ae15c89",
+    "session_id": "Qwen3.8-27B-ABLITERATED-W8A8-gdnint8_20260914T173139Z_e9102f01",
+    "start_ts": "2026-09-14T17:31:39.960123+00:00",
+    "stop_reason": "time_exhausted",
+    "tick_count": 5,
+    "user_data_path": "/home/qiba/ROCm.AI/hyperloom/session"
+  },
+  "session_meta": {
+    "code_revision": "",
+    "image": "rocm-ai/vllm:0.28.0-rocm7.2.4",
+    "image_id": "vllm:0.28.0-rocm7.2.4",
+    "session_duration_seconds": 7205
+  },
+  "source_files": {
+    "baseline_report": "runs/baseline/e420b1b3a97f4b7eb334a1df38a32578/benchmark_vllm_20260914_173834/benchmark_report.json",
+    "critic_workdir": "critic-workdir",
+    "manifest": "manifest.json",
+    "robustness_workdir": "robustness-workdir",
+    "state": "state.json"
+  },
+  "specialist_runs": [
+    {
+      "completed_at": "2026-09-14T18:51:23.647071+00:00",
+      "confidence": 0.6,
+      "cycle": 0,
+      "domain": "research_scout_specialist",
+      "empty": true,
+      "gap_canonical_id": "gap.research_scout.round0",
+      "new_findings": [
+        {
+          "accuracy_risk": "none (analysis)",
+          "domain_tags": [
+            "roofline",
+            "decode"
+          ],
+          "expected_impact": "Reframes the search: target per-step decode work, not KV/util tuning.",
+          "source": "runs/baseline/e420b1b3a97f4b7eb334a1df38a32578/benchmark_vllm_20260914_173834/summary.txt + gpu_worker.py:741 memory line",
+          "what": "Baseline decode step costs 137.8ms at batch 64. Weight-streaming floor for 26.46GiB INT8 on one MI250X GCD (~1.23-1.6TB/s) is ~18-23ms/step, so we are ~6x off the memory roofline => the step is compute/LSU-issue bound, not weight-BW bound. Any lever that cuts per-step bytes-per-token or instruction count is worth more than another weight-BW lever."
+        },
+        {
+          "accuracy_risk": "Real: bf16 recurrent state accumulates rounding over long (2048-6144) contexts. Model author shipped fp32 deliberately.",
+          "domain_tags": [
+            "mamba",
+            "gdn",
+            "kv-cache",
+            "dtype"
+          ],
+          "expected_impact": "Highest-value single byte-reduction available; 5-15% throughput if BW-relevant, more if LSU-bound at locked clocks.",
+          "source": "/mnt/stripe-3mix-3t2/models/davetha/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/config.json + /opt/envs/vllm/lib/python3.12/site-packages/vllm/model_executor/models/config.py:781-805",
+          "what": "GDN recurrent (SSM) state cache is float32. text_config.mamba_ssm_dtype='float32' and vllm/model_executor/models/config.py:786-805 (Qwen3_5ForConditionalGenerationConfig) copies it into cache_config.mamba_ssm_cache_dtype when that is 'auto'. Size: 48 value heads x 128 x 128 x 4B = 3.1MB/layer x 48 GDN layers = 151MB per in-flight request, read+written every decode step => ~19.3GB/step at conc 64 (~12-16ms/step at BW floor, and fp32 doubles the LSU/vector-register pressure at fixed sclk). --mamba-ssm-cache-dtype is a first-class CLI flag (engine/arg_utils.py:1237, MambaDType=['auto','float32','float16','bfloat16']) and an explicit user override is honoured with only a warning."
+        },
+        {
+          "accuracy_risk": "none",
+          "domain_tags": [
+            "environment",
+            "clocks",
+            "roofline"
+          ],
+          "expected_impact": "Potentially larger than all config levers combined; needs Coordinator confirmation because it is a rig property, not a serving flag.",
+          "source": "summary.txt 'GPU Clock: 800 - 800 MHz (avg: 800)' + rocm-smi --showclocks (read-only)",
+          "what": "GPU clocks were reported at sclk 800 MHz / fclk 400 MHz for ALL 1748 monitoring samples across the 3766s baseline run (range '800 - 800'), at a flat 96-98W package power, and a read-only `rocm-smi --showclocks` at idle now still shows sclk level 1 (800MHz) on every GCD. MI250X boost is ~1.7GHz/300W+. If the DPM level is genuinely pinned to min, every compute/issue-bound kernel in this workload pays ~2.1x and no vLLM flag can recover it."
+        },
+        {
+          "accuracy_risk": "none",
+          "domain_tags": [
+            "scheduler",
+            "prefill"
+          ],
+          "expected_impact": "Saves ~2 benchmark slots by ruling out the prefill-mixing family.",
+          "source": "runs/baseline/.../server.log loggers.py:310 lines (Avg prompt ~1000-1400 tok/s vs Avg generation ~140-290 tok/s at Running: 64)",
+          "what": "Prefill interference is NOT the bottleneck. At steady state ~70 decode steps + ~2 prefill chunks (max_num_batched_tokens=2048 default, config/scheduler.py:42) fit in a 10s window; solving 70*T_dec + 2*T_pre = 10000ms with T_dec=137ms leaves only ~410ms total for prefill => mixed/prefill steps are ~4% of wall clock. Mean ITL (137.81ms) == mean TPOT (137.81ms) confirms this. Levers aimed at prefill/decode mixing (chunked-prefill budgets, cudagraph_mode for prefill) are low-yield here."
+        },
+        {
+          "accuracy_risk": "none",
+          "domain_tags": [
+            "kv-cache"
+          ],
+          "expected_impact": "Rules out the memory-utilization family.",
+          "source": "runs/baseline/.../server.log lines 70-72,244 + grep -c preempt=0",
+          "what": "KV cache is NOT the limiter either: 31.96 GiB KV / 292,717 tokens, usage peaked at 58.7%, zero 'preempt'/'retract' occurrences in 2500+ scheduler lines, Running: 64 sustained. '--kv-cache-memory=37216046080 to fully utilize gpu memory' and gpu-memory-utilization tuning will produce 0% because nothing is being evicted."
+        },
+        {
+          "accuracy_risk": "none (finding)",
+          "domain_tags": [
+            "speculative-decoding",
+            "mtp"
+          ],
+          "expected_impact": "Unlocks a spec-decode lane for future rounds on a prose corpus. NOT proposed this round: the sealed benchmark uses dataset_name='random' and KB law (8) says random corpora collapse acceptance, so it would benchmark as a false negative.",
+          "source": "/mnt/.../model.safetensors.index.json + vllm/model_executor/models/qwen3_5_mtp.py",
+          "what": "KB law 'MTP is not built into 0.28.0+rocm723 here' is WRONG for this checkpoint. The target checkpoint SHIPS MTP weights (mtp.fc.weight, mtp.layers.0.{q,k,v,o_proj,q_norm,k_norm,mlp.*}) in model.safetensors.index.json, text_config has mtp_num_hidden_layers=1, and vllm/model_executor/models/qwen3_5_mtp.py + a registry entry exist. So --speculative-config {\"method\":\"mtp\",\"num_speculative_tokens\":N} should load with NO external draft path."
+        },
+        {
+          "accuracy_risk": "none",
+          "domain_tags": [
+            "benchmark",
+            "dataset"
+          ],
+          "expected_impact": "Explains why random-corpus A/B is valid for config levers and constrains the prefix-caching proposal.",
+          "source": "runs/baseline/.../benchmark_stdout.log line 329 (argparse Namespace dump)",
+          "what": "The sealed harness benchmark is vllm bench serve with dataset_name='random', random_input_len=1024, random_output_len=1024, random_range_ratio=1.0, max_concurrency=64, ignore_eos=True, num_prompts=320, num_warmups=128 (GEMM/graph-config-valid corpus per KB law (9); invalid for judging spec decode). Prefix cache hit rate reaches 32.8% purely from warmup/main prompt reuse, so --no-enable-prefix-caching has a real prefill cost."
+        }
+      ],
+      "notes": [
+        "patch_safety_numeric:5x,137.8ms,45ms",
+        "recovered_from_partial"
+      ],
+      "proposal_set": [],
+      "proposals_total": 0,
+      "reason": "",
+      "residual_questions": [],
+      "round_id": "64c68e8f31c74152add8db07fc879bfc",
+      "source": "specialist:64c68e8f31c74152add8db07fc879bfc",
+      "source_phase": "PRELUDE",
+      "summary": "WIP: baseline decode is 5x off the HBM roofline (TPOT 137.8ms vs ~23-45ms floor); GDN SSM state is fp32 (19.3GB/step traffic) and sclk logged at 800MHz all run. Curating 3-4 variants.",
+      "tags": [
+        "research_scout"
+      ],
+      "task_id": "64c68e8f31c74152add8db07fc879bfc"
+    },
+    {
+      "completed_at": "2026-09-14T18:51:49.259836+00:00",
+      "confidence": 0.7,
+      "cycle": 0,
+      "domain": "static_recon_specialist",
+      "empty": false,
+      "gap_canonical_id": "gap.static_recon.prelude",
+      "new_findings": [
+        {
+          "accuracy_risk": "none",
+          "domain_tags": [
+            "static_recon",
+            "source_layout",
+            "gfx90a"
+          ],
+          "expected_impact": "Redirects all future recon/patch work to the correct tree; avoids re-proposing an already-bridged switch.",
+          "source": "/opt/envs/wu1w/lib/python3.12/site-packages/vllm/_aiter_ops.py:210-219,1833-1837; baseline server.log:28",
+          "what": "Live vllm source is /opt/envs/wu1w/lib/python3.12/site-packages/vllm (launched via /usr/local/bin/vllm-wu1w), which differs from /opt/envs/vllm and already carries a gfx90a AITER INT8 linear bridge: is_linear_enabled() uses is_aiter_attention_supported() (on_gfx9, includes gfx90a) instead of the CDNA3-only @if_aiter_supported. Baseline server.log:28 'Selected AiterInt8ScaledMMLinearKernel' confirms it fires."
+        },
+        {
+          "accuracy_risk": "low (same attention math, different kernel)",
+          "domain_tags": [
+            "attention",
+            "aiter",
+            "gfx90a"
+          ],
+          "expected_impact": "AITER-tuned Triton attention on the 16/64 full-attn layers at conc=64 decode; explicit --attention-backend bypasses the priority gate and validate_configuration passes for this config.",
+          "source": "/opt/envs/wu1w/lib/python3.12/site-packages/vllm/platforms/rocm.py:481-495; _aiter_ops.py:145-153; v1/attention/backends/rocm_aiter_unified_attn.py:41-70,146-148; baseline server.log:32,63",
+          "what": "ROCM_AITER_UNIFIED_ATTN never enters candidate backends on gfx90a: platforms/rocm.py _get_backend_priorities only appends it under is_aiter_found_and_supported() = get_cdna_version()>2 (CDNA3+). The backend itself supports head_size>=32 (hd256 OK), block MultipleOf(16) (784 OK), bf16, and runs aiter's Triton unified_attention (arch-neutral, same kernel family as the fallback). Baseline therefore uses ROCM_ATTN whose CK custom paged kernel is rejected at hd256 ('Cannot use ROCm custom paged attention kernel, falling back to Triton implementation') = generic vLLM Triton for all 16 full-attn layers."
+        },
+        {
+          "accuracy_risk": "low-medium (fusion numerics; accuracy gate covers)",
+          "domain_tags": [
+            "fusion",
+            "aiter",
+            "compile_pass"
+          ],
+          "expected_impact": "Fuses qknorm+rope+reshape_and_cache into one AITER kernel per full-attn layer, removing 3-4 elementwise launches/layer on the decode hot path.",
+          "source": "/opt/envs/wu1w/lib/python3.12/site-packages/vllm/config/vllm.py:207-216,225-310; config/compilation.py:272-295,956-963,1356-1367; compilation/passes/pass_manager.py:207-210; v1/attention/backends/rocm_aiter_unified_attn.py:312-315",
+          "what": "AITER fused QK-norm+RoPE+KV-cache-update pass (fuse_qk_norm_rope_kvcache, ROCm-gated) is default-False at ALL optimization levels and its last gate is_custom_op_enabled('rotary_embedding') fails because baseline runs custom_ops ['none','+sparse_attn_indexer']. When enabled via -ac it appends '+rotary_embedding' itself and runs QkNormRopeKvcacheFusionPass; the fused op executes via the aiter unified-attn impl's do_qk_norm_rope_kvcache_update (fused_qk_norm_rope_kvcache_supported = rocm_aiter_ops.is_enabled(), already true here)."
+        },
+        {
+          "accuracy_risk": "medium: layout mismatch would corrupt state; kernel source must be read before patching",
+          "domain_tags": [
+            "gdn",
+            "decode",
+            "aiter",
+            "qwen3_5"
+          ],
+          "expected_impact": "Largest untapped decode lever on this model class (48 GDN layers) if the fused kernels' reshape assumptions hold for non-interleaved packing.",
+          "source": "/opt/envs/wu1w/lib/python3.12/site-packages/vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py:78-90,1216-1237,1572-1636; _aiter_ops.py:1997-2018; aiter/ops/triton/__init__.py:149; baseline server.log:29-31",
+          "what": "AITER GDN fused single-token decode fast path (_forward_core_decode_aiter: fused conv1d-update + fused_rearrange_sigmoid_gated_delta_rule, both aiter Triton) is dispatched only when self.gqa_interleaved_layout (Qwen3-Next). Qwen3.5's non-interleaved q/k/v/z packing is explicitly excluded by the gate comment ('Qwen3.5 ... must use the generic path'). 48 of 64 layers are GDN and decode is the dominant regime (conc=64, OSL=1024). Note: vllm _gdn_triton_kernels_importable() probes 'aiter.ops.triton.causal_conv1d_update_single_token' which resolves only via aiter's lazy module map (file lives at aiter/ops/triton/conv/)."
+        }
+      ],
+      "proposal_set": [
+        {
+          "args_mode": "append",
+          "atomic": false,
+          "extra_args": "--attention-backend ROCM_AITER_UNIFIED_ATTN",
+          "kb_evidence": [],
+          "name": "bridge-rocm-aiter-unified-attn-hd256",
+          "pr_evidence": [],
+          "reason": "Bridge candidate: the aiter Triton unified-attention fast path exists and validates for this model (hd256>=32, block 784%16==0, bf16, causal) but is silently excluded from auto-selection on gfx90a solely by the CDNA3-only is_aiter_found_and_supported() (get_cdna_version()>2) priority gate in platforms/rocm.py:_get_backend_priorities \u2014 the same CDNA2-ism the tree already patched around for INT8 linear (is_aiter_attention_supported). Baseline runs generic vLLM Triton attention (CK paged kernel rejected at head_dim 256). Config-only bridge: explicit --attention-backend skips the priority list and goes straight to validate_configuration, which this model passes. If it starts and the log shows 'Using ROCM_AITER_UNIFIED_ATTN backend (selected via --attention-backend)', the kernel-level A/B for the 16 full-attn layers is live.",
+          "scope": "domain",
+          "source_evidence": [
+            "/opt/envs/wu1w/lib/python3.12/site-packages/vllm/platforms/rocm.py:481-495 (_get_backend_priorities CDNA3 gate)",
+            "/opt/envs/wu1w/lib/python3.12/site-packages/vllm/_aiter_ops.py:145-153 (is_aiter_found_and_supported: get_cdna_version()>2)",
+            "/opt/envs/wu1w/lib/python3.12/site-packages/vllm/v1/attention/backends/rocm_aiter_unified_attn.py:41-70 (supports_head_size>=32, MultipleOf(16) blocks), :146-148 (aiter.ops.triton.unified_attention)",
+            "session runs/baseline server.log:32,63 (ROCM_ATTN selected; custom paged attn rejected -> Triton)"
+          ]
+        },
+        {
+          "args_mode": "append",
+          "atomic": true,
+          "extra_args": "--attention-backend ROCM_AITER_UNIFIED_ATTN --compilation-config {\"cudagraph_mode\":\"FULL_DECODE_ONLY\",\"pass_config\":{\"fuse_qk_norm_rope_kvcache\":true},\"custom_ops\":[\"none\",\"+sparse_attn_indexer\",\"+rotary_embedding\"]}",
+          "kb_evidence": [],
+          "name": "bridge-aiter-qk-norm-rope-kvcache-fusion",
+          "pr_evidence": [],
+          "reason": "Atomic coupled bridge of the AITER fused QK-norm+RoPE+KV-cache-update pass: it exists for ROCm+AITER (enable_qk_norm_rope_kvcache = rocm_aiter_ops.is_enabled() && is_custom_op_enabled('rotary_embedding')) but is default-False at every optimization level AND the fused executor (do_qk_norm_rope_kvcache_update) lives on the aiter unified-attn impl, which gfx90a auto-selection silently never picks (CDNA3-only priority gate, see sibling proposal). Both switches must flip together or the pass matches but falls back unfused: (a) --attention-backend ROCM_AITER_UNIFIED_ATTN; (b) --compilation-config replacing the base one (remove_args drops the inherited flag), keeping cudagraph_mode FULL_DECODE_ONLY and +sparse_attn_indexer, adding fuse_qk_norm_rope_kvcache and +rotary_embedding under the required 'none' base. Fuses 3-4 elementwise kernels per layer on the 16 full-attn layers' decode path.",
+          "remove_args": [
+            "--compilation-config"
+          ],
+          "scope": "domain",
+          "source_evidence": [
+            "/opt/envs/wu1w/lib/python3.12/site-packages/vllm/config/vllm.py:207-216 (enable_qk_norm_rope_kvcache), :225-310 (default-False at all opt levels)",
+            "/opt/envs/wu1w/lib/python3.12/site-packages/vllm/config/compilation.py:1356-1367 (is_custom_op_enabled), :272-295 (ROCm ok), :956-963 (+rotary_embedding append)",
+            "/opt/envs/wu1w/lib/python3.12/site-packages/vllm/compilation/passes/pass_manager.py:207-210 (QkNormRopeKvcacheFusionPass registration)",
+            "/opt/envs/wu1w/lib/python3.12/site-packages/vllm/v1/attention/backends/rocm_aiter_unified_attn.py:312-315,333 (fused_qk_norm_rope_kvcache_supported=rocm_aiter_ops.is_enabled(); impl)"
+          ]
+        },
+        {
+          "args_mode": "append",
+          "atomic": false,
+          "extra_envs": {},
+          "kb_evidence": [],
+          "name": "bridge-gdn-decode-aiter-noninterleaved-layout",
+          "pr_evidence": [],
+          "reason": "Bridge candidate for the freeform patcher (no config knob exists): _forward_core_rocm dispatches to the AITER fused GDN decode fast path (fused conv1d-update + fused_rearrange_sigmoid_gated_delta_rule, both aiter Triton, loaded on this box because GDN_AITER_TRITON_AVAILABLE) ONLY when self.gqa_interleaved_layout \u2014 i.e. Qwen3-Next. This checkpoint is Qwen3.5 with the non-interleaved q/k/v/z layout ('must use the generic path' comment), so all 48 GDN layers \u2014 the majority of the model and the entire decode-critical loop at conc=64/OSL=1024 \u2014 take the split/rearrange Triton fallback. The fused_rearrange kernel itself takes generic key_dim/value_dim/head dims (not layout-specific); the layout coupling lives in the fused conv reshape. Patch sketch: extend the dispatch gate for non-interleaved packing (feed it prepare_gdn_attention_core_inputs-style q/k/v slices, or add the qwen3_5 unpack branch inside the aiter reshape), keep gfx90a validation (symmetric bf16 in/out, state fp32/bf16), and A/B under the normal KEEP gate.",
+          "scope": "domain",
+          "source_evidence": [
+            "/opt/envs/wu1w/lib/python3.12/site-packages/vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py:78-90 (kernel imports), :1216-1237 (gqa_interleaved_layout gate + comment), :1572-1636 (_forward_core_decode_aiter)",
+            "/opt/envs/wu1w/lib/python3.12/site-packages/aiter/ops/triton/gated_delta_net/fused_rearrange_sigmoid_gdr.py:18-43 (dim-generic signature)",
+            "session runs/baseline server.log:29-31 (GDN decode kernel: triton)"
+          ]
+        }
+      ],
+      "proposals_total": 3,
+      "reason": "",
+      "residual_questions": [
+        "Record in KB: live tree for this session is /opt/envs/wu1w/.../vllm (vllm-wu1w), already carrying gfx90a AITER-INT8-linear and (per model_arch notes) prior bridges \u2014 future recon rounds must grep THAT tree, not /opt/envs/vllm.",
+        "Does aiter.ops.triton.conv.causal_conv1d_update_single_token.fused_reshape_causal_conv1d_update_single_token hardcode interleaved qkvz unpacking, or is it parameterized by (num_k_heads,num_v_heads,head_k,head_v) such that Qwen3.5's [k,k,v,v]-shard packing works with adjusted strides? Freeform should read the kernel source before patching candidate 3.",
+        "Config-only probe not proposed this round (budget): --mamba-cache-dtype bfloat16 (GDN conv+ssm states go BF16; FUSED_GDN_STATE_DTYPES allows bf16; bandwidth-bound 48-layer state I/O at conc=64) \u2014 worth a slot next round if accuracy gate tolerates; check RecipeKB for prior GDN-state-dtype pitfalls first.",
+        "If the unified-attn variant benches positive, should the CDNA3-only gate in _get_backend_priorities be replaced with the gfx9-inclusive is_aiter_attention_supported() (or an arch check inside the backend) as the durable upstream-style bridge instead of the per-launch flag?"
+      ],
+      "round_id": "26d8322fb812499fb429efc87b5cc792",
+      "scope": "domain",
+      "source": "specialist:26d8322fb812499fb429efc87b5cc792",
+      "source_phase": "PRELUDE",
+      "summary": "Recon of the LIVE serving tree (/opt/envs/wu1w/.../vllm via vllm-wu1w launcher; NOT /opt/envs/vllm) for gfx90a + INT8-W8A8 + bf16 Qwen3.5 hybrid-GDN. Baseline log confirms AiterInt8ScaledMMLinearKernel is already bridged+selected (no win there). Found 3 un-bridged switches: (1) ROCM_AITER_UNIFIED_ATTN backend is silently disqualified on gfx90a by the CDNA3-only is_aiter_found_and_supported() priority gate although it supports hd>=32/blk%16/bf16 \u2014 baseline runs plain vLLM Trit",
+      "tags": [
+        "static_recon"
+      ],
+      "task_id": "26d8322fb812499fb429efc87b5cc792"
+    },
+    {
+      "completed_at": "2026-09-14T19:15:01.794403+00:00",
+      "confidence": 0.0,
+      "cycle": 0,
+      "domain": "serving_specialist",
+      "empty": true,
+      "gap_canonical_id": "inference:qwen3.8-27b-abliterated-w8a8-gdnint8:unknown_gpu:vllm:qwen3_5:qwen3_5forconditionalgeneration:0.28.0:bf16#throughput_below_target",
+      "new_findings": [],
+      "proposal_set": [],
+      "proposals_total": 0,
+      "reason": "subprocess_exit_code:1",
+      "residual_questions": [],
+      "round_id": "6d4c3306273749ef83672b8beba67023",
+      "scope": "domain",
+      "source": "specialist:6d4c3306273749ef83672b8beba67023",
+      "source_phase": "EXPLORE",
+      "summary": "subprocess_exit_code:1",
+      "tags": [
+        "framework"
+      ],
+      "task_id": "6d4c3306273749ef83672b8beba67023"
+    },
+    {
+      "candidate_discovery": true,
+      "completed_at": "2026-09-14T19:15:01.817684+00:00",
+      "confidence": 0.0,
+      "cycle": 0,
+      "domain": "candidate_discovery_specialist",
+      "empty": true,
+      "gap_canonical_id": "gap.framework.candidate_discovery.vllm",
+      "new_findings": [],
+      "proposal_set": [],
+      "proposals_total": 0,
+      "reason": "subprocess_exit_code:1",
+      "residual_questions": [],
+      "round_id": "0a310d67108e488da97b67154869c87e",
+      "source": "specialist:0a310d67108e488da97b67154869c87e",
+      "source_phase": "FRAMEWORK_AGENT",
+      "summary": "subprocess_exit_code:1",
+      "tags": [
+        "pr_intelligence"
+      ],
+      "task_id": "0a310d67108e488da97b67154869c87e",
+      "task_kind": "candidate_discovery"
+    }
+  ],
+  "telemetry": {
+    "baseline_report_path": "runs/baseline/e420b1b3a97f4b7eb334a1df38a32578/benchmark_vllm_20260914_173834/benchmark_report.json",
+    "gpu_monitor_aggregate": {
+      "avg_clock_mhz": 0.0,
+      "avg_power_w": 0.0,
+      "avg_temp_c": 0.0,
+      "max_power_w": 0.0,
+      "max_temp_c": 0.0,
+      "samples": 1
+    },
+    "lane_timeline": [
+      {
+        "capacity": 1,
+        "lane": "benchmark_lane",
+        "lease_expired_count": 0,
+        "live_holders": 0
+      },
+      {
+        "capacity": 1,
+        "lane": "build_lane",
+        "lease_expired_count": 0,
+        "live_holders": 0
+      },
+      {
+        "capacity": 1,
+        "lane": "gpu_research_lane",
+        "lease_expired_count": 0,
+        "live_holders": 0
+      },
+      {
+        "capacity": 1,
+        "lane": "profile_lane",
+        "lease_expired_count": 0,
+        "live_holders": 0
+      },
+      {
+        "capacity": 16,
+        "lane": "research_lane",
+        "lease_expired_count": 0,
+        "live_holders": 0
+      },
+      {
+        "capacity": 1,
+        "lane": "server_lifecycle",
+        "lease_expired_count": 0,
+        "live_holders": 0
+      },
+      {
+        "capacity": 1,
+        "lane": "workspace_mutation",
+        "lease_expired_count": 0,
+        "live_holders": 0
+      },
+      {
+        "capacity": 22,
+        "lane": "__total__",
+        "lease_expired_count": 0,
+        "live_holders": 0
+      }
+    ],
+    "orchestration_context": {
+      "compactions": 0,
+      "compactions_per_tick": 0.0,
+      "context_tokens_at_compaction": {},
+      "degenerate_compactions": 1,
+      "delta_prompts": 2,
+      "delta_ratio": 0.5,
+      "seed_prompts": 2,
+      "tick_count": 5
+    },
+    "profile_report_paths": [],
+    "server_log_paths": [
+      "runs/baseline/e420b1b3a97f4b7eb334a1df38a32578/benchmark_vllm_20260914_173834/server.log"
+    ],
+    "system_profile_paths": [
+      "runs/baseline/e420b1b3a97f4b7eb334a1df38a32578/benchmark_vllm_20260914_173834/system_profile"
+    ],
+    "torch_trace_paths": [
+      "runs/baseline/e420b1b3a97f4b7eb334a1df38a32578/benchmark_vllm_20260914_173834/torch_trace"
+    ]
+  },
+  "timeline": [
+    {
+      "end_time": "2026-09-14T17:31:34+00:00",
+      "ext": {
+        "hard_fail_step_id": null,
+        "run_kind": "fresh",
+        "runtime_snapshot": {
+          "benchmark_backend": "magpie",
+          "benchmark_interpreter": "/opt/envs/vllm/bin/python3",
+          "inferencex_path": "/home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966",
+          "magpie_path": "/opt/envs/vllm/lib/python3.12/site-packages",
+          "magpie_python": "/opt/envs/vllm/bin/python3",
+          "provider_mode": "anthropic",
+          "tracelens_required": false,
+          "tracelens_route_hint": null
+        },
+        "steps": [
+          {
+            "category": "normalize",
+            "detail": {
+              "source": "/home/qiba/ROCm.AI/hyperloom/.env",
+              "vars_loaded": 0
+            },
+            "skip_reason": null,
+            "status": "already_present",
+            "step_id": "load_dotenv"
+          },
+          {
+            "category": "normalize",
+            "detail": {
+              "corrected_keys": [],
+              "env_file": "/home/qiba/ROCm.AI/hyperloom/session/runtime/kernel-agent.env.sh",
+              "vars_loaded": 0
+            },
+            "skip_reason": null,
+            "status": "already_present",
+            "step_id": "load_kernel_agent_env"
+          },
+          {
+            "category": "normalize",
+            "detail": {
+              "keys_set": []
+            },
+            "skip_reason": "legacy_env_absent",
+            "status": "skipped",
+            "step_id": "normalize_legacy_deepseek_env"
+          },
+          {
+            "category": "check",
+            "detail": {
+              "exit_code": 0
+            },
+            "skip_reason": null,
+            "status": "applied",
+            "step_id": "validate_credentials"
+          },
+          {
+            "category": "degrade",
+            "detail": {
+              "kb_withdrawn_override": false,
+              "recipe_kb": {
+                "enabled": true,
+                "reason": null
+              }
+            },
+            "skip_reason": null,
+            "status": "applied",
+            "step_id": "prepare_kb_environment"
+          },
+          {
+            "category": "install",
+            "detail": {
+              "already_present": [
+                "claude-agent-sdk>=0.2.110",
+                "openai-codex>=0.144",
+                "openai>=1.50",
+                "httpx>=0.27"
+              ],
+              "installed": []
+            },
+            "interpreter": "/opt/envs/vllm/bin/python3",
+            "skip_reason": null,
+            "status": "already_present",
+            "step_id": "ensure_python_sdks",
+            "target": "claude-agent-sdk>=0.2.110,openai-codex>=0.144,openai>=1.50,httpx>=0.27"
+          },
+          {
+            "category": "check",
+            "detail": {
+              "tp_requested": 1,
+              "visible": 8,
+              "warn": null
+            },
+            "skip_reason": null,
+            "status": "applied",
+            "step_id": "check_gpu_visibility"
+          },
+          {
+            "category": "check",
+            "detail": {
+              "min_gib": 16,
+              "shm_free_gib": 32.0
+            },
+            "skip_reason": null,
+            "status": "applied",
+            "step_id": "check_shm_disk"
+          },
+          {
+            "category": "check",
+            "detail": {
+              "cpb": true,
+              "governor": "schedutil",
+              "smt": "off"
+            },
+            "skip_reason": null,
+            "status": "warned",
+            "step_id": "check_platform_tuning"
+          },
+          {
+            "category": "install",
+            "interpreter": "/opt/envs/vllm/bin/python3",
+            "skip_reason": null,
+            "spec": "ray[default]==2.44.1",
+            "status": "already_present",
+            "step_id": "ensure_ray",
+            "target": "ray",
+            "version_after": "2.44.1"
+          },
+          {
+            "category": "install",
+            "detail": {
+              "already_present": [
+                "aiohttp",
+                "tqdm",
+                "numpy",
+                "requests",
+                "transformers",
+                "huggingface_hub",
+                "datasets",
+                "pandas"
+              ],
+              "installed": []
+            },
+            "interpreter": "/opt/envs/vllm/bin/python3",
+            "skip_reason": null,
+            "status": "already_present",
+            "step_id": "ensure_bench_serving_deps",
+            "target": "benchmark_serving client deps"
+          },
+          {
+            "category": "install",
+            "interpreter": "/opt/envs/vllm/bin/python3",
+            "message": "single-node InferenceX installs lm_eval on first use",
+            "skip_reason": "single_node_runtime_install",
+            "status": "skipped",
+            "step_id": "ensure_lm_eval",
+            "target": "lm_eval[api]"
+          },
+          {
+            "category": "install",
+            "detail": {
+              "already_present": [],
+              "failed": [],
+              "installed": [],
+              "invalid": [],
+              "manifest": "/home/qiba/ROCm.AI/hyperloom/hyperloom/inference_optimizer/assets/framework_deps/vllm.txt",
+              "refused": []
+            },
+            "interpreter": "/opt/envs/vllm/bin/python3",
+            "skip_reason": "no manifest at /home/qiba/ROCm.AI/hyperloom/hyperloom/inference_optimizer/assets/framework_deps/vllm.txt",
+            "status": "skipped",
+            "step_id": "framework_deps",
+            "target": "vllm"
+          },
+          {
+            "category": "check",
+            "detail": {
+              "probe_interpreter": "/opt/envs/vllm/bin/python3",
+              "rocm_verified": true
+            },
+            "skip_reason": null,
+            "status": "applied",
+            "step_id": "check_serving_framework",
+            "target": "vllm"
+          },
+          {
+            "category": "install",
+            "interpreter": "/opt/envs/vllm/bin/python3",
+            "skip_reason": null,
+            "status": "already_present",
+            "step_id": "ensure_magpie",
+            "target": "magpie-eval"
+          },
+          {
+            "category": "install",
+            "detail": {
+              "dest": "/home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966",
+              "exit_code": 0,
+              "ref": "3d5581562f643f9bdeb8410cd924e2c70906c966",
+              "writable": true
+            },
+            "skip_reason": null,
+            "status": "already_present",
+            "step_id": "clone_inferencex",
+            "target": "InferenceX",
+            "version_after": "3d5581562f643f9bdeb8410cd924e2c70906c966"
+          },
+          {
+            "category": "patch",
+            "detail": {
+              "client_trust_compatible": true,
+              "eval_concurrency_compatible": true,
+              "inferencex_patch_anchors_ok": true
+            },
+            "skip_reason": null,
+            "status": "applied",
+            "step_id": "patch_magpie_eval_concurrency"
+          },
+          {
+            "category": "check",
+            "skip_reason": "no_kernel_and_roofline_disabled",
+            "status": "skipped",
+            "step_id": "check_tracelens_cli",
+            "target": "TraceLens"
+          },
+          {
+            "category": "check",
+            "skip_reason": "tracelens_not_required",
+            "status": "skipped",
+            "step_id": "check_tracelens_root",
+            "target": "TRACELENS_ROOT"
+          },
+          {
+            "category": "degrade",
+            "detail": {
+              "marker": "/home/qiba/ROCm.AI/hyperloom/session/runtime/recipe_kb/.kb_preflight.json",
+              "pr_monitor": {
+                "enabled": false,
+                "reason": "ir3_unreachable"
+              }
+            },
+            "skip_reason": "ir3_unreachable",
+            "status": "warned",
+            "step_id": "ir3_pr_monitor_probe"
+          },
+          {
+            "category": "diagnostic",
+            "detail": {
+              "aiter_jit_cache": {
+                "is_cold": false,
+                "kernel_count": 125,
+                "path": "/opt/envs/vllm/lib/python3.12/site-packages/aiter/jit",
+                "probe_status": "found",
+                "size_mb": 2198
+              },
+              "anthropic_base_url": "http://127.0.0.1:9100",
+              "asset_root": "/home/qiba/ROCm.AI/hyperloom/hyperloom/inference_optimizer",
+              "cold_start_timeout_sec": 9000,
+              "inferencex_path": "/home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966",
+              "magpie_python": "/opt/envs/vllm/bin/python3",
+              "recipe_kb_queue": {
+                "dead_letter": 0,
+                "flushed": 0,
+                "pending": 0,
+                "root": "/home/qiba/ROCm.AI/hyperloom/session/runtime/recipe_kb"
+              },
+              "session_dir": "/home/qiba/ROCm.AI/hyperloom/session",
+              "warm_timeout_sec": 7800
+            },
+            "skip_reason": null,
+            "status": "applied",
+            "step_id": "diagnostics_snapshot"
+          }
+        ]
+      },
+      "kind": "install",
+      "start_time": "2026-09-14T17:31:21+00:00",
+      "status": "degraded",
+      "type": "install"
+    },
+    {
+      "end_time": "2026-09-14T17:31:40+00:00",
+      "ext": {
+        "checks": [
+          {
+            "detail": {
+              "action": "proceed",
+              "allow_mm_text_fallback": true,
+              "architecture": "Qwen3_5ForConditionalGeneration",
+              "model_type": "qwen3_5",
+              "signal": "multimodal config key 'vision_config'"
+            },
+            "gate_id": "unsupported_model_arch",
+            "order": 1,
+            "skip_reason": null,
+            "status": "warned",
+            "verdict": "text_coercible"
+          },
+          {
+            "detail": {
+              "config_path": "/mnt/stripe-3mix-3t2/models/davetha/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/config.json",
+              "detector": null,
+              "incompatible": false,
+              "reason": null
+            },
+            "gate_id": "model_config_compat",
+            "order": 2,
+            "skip_reason": null,
+            "status": "passed"
+          },
+          {
+            "detail": {
+              "fits": true,
+              "headroom": 512,
+              "isl": 1024,
+              "max_position_embeddings": 262144,
+              "osl": 1024,
+              "policy": "no_context_length_override",
+              "required": 2560
+            },
+            "gate_id": "context_window",
+            "order": 3,
+            "skip_reason": null,
+            "status": "passed"
+          }
+        ],
+        "degraded": {
+          "active": true,
+          "warnings": [
+            {
+              "architecture": "Qwen3_5ForConditionalGeneration",
+              "kind": "multimodal_text_fallback",
+              "model_type": "qwen3_5",
+              "signal": "multimodal config key 'vision_config'"
+            }
+          ]
+        },
+        "failed_gate_id": null,
+        "run_kind": "fresh",
+        "skip_reason": null,
+        "workload": {
+          "allow_mm_text_fallback": true,
+          "framework": "vllm",
+          "gpu_type": "",
+          "headroom_env": "HYPERLOOM_CONTEXT_HEADROOM_TOKENS",
+          "headroom_tokens": 512,
+          "isl": 1024,
+          "model_name": "Qwen3.8-27B-ABLITERATED-W8A8-gdnint8",
+          "model_path": "/mnt/stripe-3mix-3t2/models/davetha/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8",
+          "osl": 1024
+        }
+      },
+      "kind": "model_gate",
+      "start_time": "2026-09-14T17:31:39+00:00",
+      "status": "degraded",
+      "type": "model_gate"
+    },
+    {
+      "end_time": "2026-09-14T17:31:40+00:00",
+      "ext": {
+        "match_status": "seed_only",
+        "reads": {
+          "best_config_by_source": {},
+          "by_remote": {
+            "none": 9
+          },
+          "by_resolution": {
+            "local": 8,
+            "local_write": 1
+          },
+          "by_source": {},
+          "count": 9,
+          "hits": 9,
+          "tail": [
+            {
+              "backend": "local-json",
+              "candidates": 0,
+              "hit": true,
+              "method": "get_authoritative_recipe",
+              "mode": "local",
+              "op": "read",
+              "provenance": {
+                "backend": "local-json",
+                "component": "recipe_kb"
+              },
+              "remote": "none",
+              "request": {
+                "canonical_id": "inference:qwen3.8-27b-abliterated-w8a8-gdnint8:unknown_gpu:vllm:qwen3_5:qwen3_5forconditionalgeneration:0.28.0:bf16",
+                "label_match": null,
+                "prefer_keys": []
+              },
+              "resolution": "local",
+              "result": {
+                "best_config_nonempty": false,
+                "best_throughput": 0.0,
+                "canonical_id": "inference:qwen3.8-27b-abliterated-w8a8-gdnint8:unknown_gpu:vllm:qwen3_5:qwen3_5forconditionalgeneration:0.28.0:bf16",
+                "exact": true
+              },
+              "ts": "2026-09-14T17:31:40+00:00"
+            },
+            {
+              "backend": "local-json",
+              "counts": {
+                "lessons": 0,
+                "pitfalls": 0,
+                "remaining_gaps": 0,
+                "sessions": 0,
+                "what_failed": 0,
+                "what_worked": 0
+              },
+              "delta": {
+                "lessons": 0,
+                "pitfalls": 0,
+                "remaining_gaps": 0,
+                "sessions": 0,
+                "what_failed": 0,
+                "what_worked": 0
+              },
+              "generator": "t0_anchor",
+              "hit": true,
+              "identity": {
+                "framework_name": "vllm",
+                "framework_version": "0.28.0",
+                "hardware": "unknown_gpu",
+                "model": "Qwen3.8-27B-ABLITERATED-W8A8-gdnint8",
+                "precision": "bf16"
+              },
+              "method": "put_recipe",
+              "mode": "local",
+              "op": "write",
+              "phase": "",
+              "provenance": {
+                "component": "recipe_kb",
+                "generator": "t0_anchor"
+              },
+              "remote": "none",
+              "request": {
+                "canonical_id": "inference:qwen3.8-27b-abliterated-w8a8-gdnint8:unknown_gpu:vllm:qwen3_5:qwen3_5forconditionalgeneration:0.28.0:bf16"
+              },
+              "resolution": "local_write",
+              "result": {
+                "best_config_nonempty": false,
+                "best_throughput": 0.0,
+                "canonical_id": "inference:qwen3.8-27b-abliterated-w8a8-gdnint8:unknown_gpu:vllm:qwen3_5:qwen3_5forconditionalgeneration:0.28.0:bf16",
+                "created": false,
+                "version": 6,
+                "write_safety": {}
+              },
+              "success": true,
+              "ts": "2026-09-14T17:31:40+00:00"
+            },
+            {
+              "backend": "local-json",
+              "candidates": 0,
+              "hit": true,
+              "method": "get_recipe",
+              "mode": "local",
+              "op": "read",
+              "provenance": {
+                "backend": "local-json",
+                "component": "recipe_kb"
+              },
+              "remote": "none",
+              "request": {
+                "canonical_id": "inference:qwen3.8-27b-abliterated-w8a8-gdnint8:unknown_gpu:vllm:qwen3_5:qwen3_5forconditionalgeneration:0.28.0:bf16",
+                "label_match": null,
+                "prefer_keys": [
+                  "conc",
+                  "ep",
+                  "framework_version",
+                  "isl",
+                  "max_model_len",
+                  "osl",
+                  "tp"
+                ]
+              },
+              "resolution": "local",
+              "result": {
+                "best_config_nonempty": false,
+                "best_throughput": 0.0,
+                "canonical_id": "inference:qwen3.8-27b-abliterated-w8a8-gdnint8:unknown_gpu:vllm:qwen3_5:qwen3_5forconditionalgeneration:0.28.0:bf16",
+                "exact": true
+              },
+              "ts": "2026-09-14T17:31:40+00:00"
+            },
+            {
+              "backend": "local-json",
+              "candidates": 2,
+              "hit": true,
+              "method": "search",
+              "mode": "local",
+              "op": "read",
+              "provenance": {
+                "backend": "local-json",
+                "component": "recipe_kb"
+              },
+              "remote": "none",
+              "request": {
+                "canonical_id": null,
+                "label_match": {
+                  "architectures": "qwen3_5forconditionalgeneration",
+                  "framework_name": "vllm",
+                  "framework_version": "0.28.0",
+                  "hardware": "unknown_gpu",
+                  "model_type": "qwen3_5",
+                  "precision": "bf16"
+                },
+                "prefer_keys": []
+              },
+              "resolution": "local",
+              "result": {
+                "best_config_nonempty": false,
+                "best_throughput": 0.0,
+                "canonical_id": "inference:qwen3.8-27b-abliterated-w8a8-gdnint8:unknown_gpu:vllm:qwen3_5:qwen3_5forconditionalgeneration:0.28.0:bf16",
+                "exact": false
+              },
+              "ts": "2026-09-14T17:31:40+00:00"
+            },
+            {
+              "backend": "local-json",
+              "candidates": 2,
+              "hit": true,
+              "method": "search",
+              "mode": "local",
+              "op": "read",
+              "provenance": {
+                "backend": "local-json",
+                "component": "recipe_kb"
+              },
+              "remote": "none",
+              "request": {
+                "canonical_id": null,
+                "label_match": {
+                  "architectures": "qwen3_5forconditionalgeneration",
+                  "framework_name": "vllm",
+                  "framework_version": "0.28.0",
+                  "model_type": "qwen3_5",
+                  "precision": "bf16"
+                },
+                "prefer_keys": []
+              },
+              "resolution": "local",
+              "result": {
+                "best_config_nonempty": false,
+                "best_throughput": 0.0,
+                "canonical_id": "inference:qwen3.8-27b-abliterated-w8a8-gdnint8:unknown_gpu:vllm:qwen3_5:qwen3_5forconditionalgeneration:0.28.0:bf16",
+                "exact": false
+              },
+              "ts": "2026-09-14T17:31:40+00:00"
+            },
+            {
+              "backend": "local-json",
+              "candidates": 2,
+              "hit": true,
+              "method": "search",
+              "mode": "local",
+              "op": "read",
+              "provenance": {
+                "backend": "local-json",
+                "component": "recipe_kb"
+              },
+              "remote": "none",
+              "request": {
+                "canonical_id": null,
+                "label_match": {
+                  "architectures": "qwen3_5forconditionalgeneration",
+                  "framework_name": "vllm",
+                  "model_type": "qwen3_5",
+                  "precision": "bf16"
+                },
+                "prefer_keys": []
+              },
+              "resolution": "local",
+              "result": {
+                "best_config_nonempty": false,
+                "best_throughput": 0.0,
+                "canonical_id": "inference:qwen3.8-27b-abliterated-w8a8-gdnint8:unknown_gpu:vllm:qwen3_5:qwen3_5forconditionalgeneration:0.28.0:bf16",
+                "exact": false
+              },
+              "ts": "2026-09-14T17:31:40+00:00"
+            },
+            {
+              "backend": "local-json",
+              "candidates": 2,
+              "hit": true,
+              "method": "search",
+              "mode": "local",
+              "op": "read",
+              "provenance": {
+                "backend": "local-json",
+                "component": "recipe_kb"
+              },
+              "remote": "none",
+              "request": {
+                "canonical_id": null,
+                "label_match": {
+                  "architectures": "qwen3_5forconditionalgeneration",
+                  "framework_name": "vllm",
+                  "framework_version": "0.28.0",
+                  "hardware": "unknown_gpu",
+                  "model_type": "qwen3_5",
+                  "precision": "bf16"
+                },
+                "prefer_keys": []
+              },
+              "resolution": "local",
+              "result": {
+                "best_config_nonempty": false,
+                "best_throughput": 0.0,
+                "canonical_id": "inference:qwen3.8-27b-abliterated-w8a8-gdnint8:unknown_gpu:vllm:qwen3_5:qwen3_5forconditionalgeneration:0.28.0:bf16",
+                "exact": false
+              },
+              "ts": "2026-09-14T17:31:40+00:00"
+            },
+            {
+              "backend": "local-json",
+              "candidates": 2,
+              "hit": true,
+              "method": "search",
+              "mode": "local",
+              "op": "read",
+              "provenance": {
+                "backend": "local-json",
+                "component": "recipe_kb"
+              },
+              "remote": "none",
+              "request": {
+                "canonical_id": null,
+                "label_match": {
+                  "architectures": "qwen3_5forconditionalgeneration",
+                  "framework_name": "vllm",
+                  "framework_version": "0.28.0",
+                  "model_type": "qwen3_5",
+                  "precision": "bf16"
+                },
+                "prefer_keys": []
+              },
+              "resolution": "local",
+              "result": {
+                "best_config_nonempty": false,
+                "best_throughput": 0.0,
+                "canonical_id": "inference:qwen3.8-27b-abliterated-w8a8-gdnint8:unknown_gpu:vllm:qwen3_5:qwen3_5forconditionalgeneration:0.28.0:bf16",
+                "exact": false
+              },
+              "ts": "2026-09-14T17:31:40+00:00"
+            },
+            {
+              "backend": "local-json",
+              "candidates": 2,
+              "hit": true,
+              "method": "search",
+              "mode": "local",
+              "op": "read",
+              "provenance": {
+                "backend": "local-json",
+                "component": "recipe_kb"
+              },
+              "remote": "none",
+              "request": {
+                "canonical_id": null,
+                "label_match": {
+                  "architectures": "qwen3_5forconditionalgeneration",
+                  "framework_name": "vllm",
+                  "model_type": "qwen3_5",
+                  "precision": "bf16"
+                },
+                "prefer_keys": []
+              },
+              "resolution": "local",
+              "result": {
+                "best_config_nonempty": false,
+                "best_throughput": 0.0,
+                "canonical_id": "inference:qwen3.8-27b-abliterated-w8a8-gdnint8:unknown_gpu:vllm:qwen3_5:qwen3_5forconditionalgeneration:0.28.0:bf16",
+                "exact": false
+              },
+              "ts": "2026-09-14T17:31:40+00:00"
+            }
+          ]
+        },
+        "requested": {
+          "canonical_id": "",
+          "scope": {
+            "conc": 64,
+            "isl": 1024,
+            "kernel_optimizer": "geak",
+            "osl": 1024,
+            "tp": 1
+          }
+        }
+      },
+      "kind": "warm_start",
+      "start_time": "2026-09-14T17:31:40+00:00",
+      "status": "not_matched",
+      "type": "warm_start"
+    },
+    {
+      "end_time": "2026-09-14T17:31:40+00:00",
+      "ext": {
+        "accuracy": {
+          "baseline": null,
+          "eval_ran": null,
+          "passed": null,
+          "replay": null
+        },
+        "after_tput": null,
+        "before_tput": 444.8566029611903,
+        "below_historical_reproduce": null,
+        "confidence": 0.0,
+        "config_donor_tier": "self",
+        "config_source": "inference:qwen3.8-27b-abliterated-w8a8-gdnint8:unknown_gpu:vllm:qwen3_5:qwen3_5forconditionalgeneration:0.28.0:bf16",
+        "expected_gain_pct": null,
+        "gain_pct": null,
+        "historical_reproduce_bar_pct": null,
+        "keep_threshold_pct": null,
+        "raw_reason": "confidence_below_threshold (0.00 < 0.70)",
+        "raw_status": "skipped",
+        "result_type": "confidence_below_threshold",
+        "tier": "seed_only"
+      },
+      "kind": "warm_replay",
+      "start_time": "2026-09-14T17:31:40+00:00",
+      "status": "skipped",
+      "type": "warm_replay"
+    },
+    {
+      "end_time": "2026-09-14T18:41:22+00:00",
+      "ext": {
+        "actions": [
+          {
+            "accuracy_stage": null,
+            "cold_anchor": null,
+            "convergence": null,
+            "duration_sec": 3799.094,
+            "end_time": "2026-09-14T18:41:22+00:00",
+            "failure": null,
+            "in_flight_run_index": null,
+            "materialized_config": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T173139Z-3ae15c89/runs/baseline/e420b1b3a97f4b7eb334a1df38a32578/baseline_config.with_envs.yaml",
+            "measurement": {
+              "accuracy": 0.9673995451099318,
+              "accuracy_metric": "exact_match,strict-match",
+              "accuracy_source": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T173139Z-3ae15c89/runs/baseline/e420b1b3a97f4b7eb334a1df38a32578/benchmark_vllm_20260914_173834/results_2026-09-14T18-41-19.113777.json",
+              "accuracy_task": "gsm8k",
+              "benchmark_report_path": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T173139Z-3ae15c89/runs/baseline/e420b1b3a97f4b7eb334a1df38a32578/benchmark_vllm_20260914_173834/benchmark_report.json",
+              "e2el_mean_ms": 147098.0696068188,
+              "throughput_tok_s_per_gpu": 444.8566029611903,
+              "tpot_mean_ms": 137.80707888159503,
+              "ttft_mean_ms": 6121.427910947114,
+              "workspace": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T173139Z-3ae15c89/runs/baseline/e420b1b3a97f4b7eb334a1df38a32578/benchmark_vllm_20260914_173834"
+            },
+            "request": {
+              "config_path": "",
+              "establishes_quality_ref": true,
+              "framework": "vllm",
+              "output_dir": "",
+              "reason": "",
+              "requested_timeout_sec": null,
+              "task_id": "e420b1b3a97f4b7eb334a1df38a32578",
+              "task_kind": "baseline"
+            },
+            "run_eval_disabled": false,
+            "runs": [
+              {
+                "attempt_reason": "initial",
+                "end_time": "2026-09-14T18:41:22+00:00",
+                "error_class": "",
+                "rounds": [
+                  {
+                    "duration_sec": 3798.891,
+                    "end_time": "2026-09-14T18:41:22+00:00",
+                    "failure": null,
+                    "label": "single",
+                    "measurement": {
+                      "accuracy": 0.9673995451099318,
+                      "accuracy_metric": "exact_match,strict-match",
+                      "accuracy_source": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T173139Z-3ae15c89/runs/baseline/e420b1b3a97f4b7eb334a1df38a32578/benchmark_vllm_20260914_173834/results_2026-09-14T18-41-19.113777.json",
+                      "accuracy_task": "gsm8k",
+                      "benchmark_report_path": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T173139Z-3ae15c89/runs/baseline/e420b1b3a97f4b7eb334a1df38a32578/benchmark_vllm_20260914_173834/benchmark_report.json",
+                      "e2el_mean_ms": 147098.0696068188,
+                      "throughput_tok_s_per_gpu": 444.8566029611903,
+                      "tpot_mean_ms": 137.80707888159503,
+                      "ttft_mean_ms": 6121.427910947114,
+                      "workspace": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T173139Z-3ae15c89/runs/baseline/e420b1b3a97f4b7eb334a1df38a32578/benchmark_vllm_20260914_173834"
+                    },
+                    "run_eval_disabled": false,
+                    "start_time": "2026-09-14T17:38:03+00:00",
+                    "status": "succeeded",
+                    "timeout_sec": 7800,
+                    "timing": {
+                      "post_ready_runtime_sec": 3618.06841232872,
+                      "subprocess_runtime_sec": 3798.87
+                    },
+                    "warnings": {
+                      "count": 1,
+                      "messages": [
+                        "raw_inferencex_result_used"
+                      ]
+                    }
+                  }
+                ],
+                "run_index": 1,
+                "start_time": "2026-09-14T17:38:03+00:00",
+                "status": "succeeded",
+                "warnings": {
+                  "count": 1,
+                  "messages": [
+                    "raw_inferencex_result_used"
+                  ]
+                }
+              }
+            ],
+            "start_time": "2026-09-14T17:38:03+00:00",
+            "status": "succeeded",
+            "task_id": "e420b1b3a97f4b7eb334a1df38a32578",
+            "timing": {
+              "post_ready_runtime_sec": 3618.06841232872,
+              "subprocess_runtime_sec": 3798.87
+            },
+            "warmup_round_tput": null,
+            "warnings": {
+              "count": 1,
+              "messages": [
+                "raw_inferencex_result_used"
+              ]
+            }
+          }
+        ]
+      },
+      "id": "prelude:0:baseline",
+      "kind": "baseline",
+      "start_time": "2026-09-14T17:38:03+00:00",
+      "status": "succeeded",
+      "type": "baseline"
+    },
+    {
+      "end_time": "2026-09-14T19:31:45+00:00",
+      "ext": {
+        "config_arm": {
+          "plateau": {
+            "empty_streak": 1,
+            "recent_keep_gain_pct": null,
+            "tested_this_cycle": 0,
+            "triggered": null
+          },
+          "rounds": [],
+          "specialist_runs": [
+            {
+              "domain": "serving_specialist",
+              "gap_canonical_id": "inference:qwen3.8-27b-abliterated-w8a8-gdnint8:unknown_gpu:vllm:qwen3_5:qwen3_5forconditionalgeneration:0.28.0:bf16#throughput_below_target",
+              "proposal_msg_id": null,
+              "proposal_names": [],
+              "reason": "subprocess_exit_code:1",
+              "round_id": "6d4c3306273749ef83672b8beba67023",
+              "scope": "domain",
+              "status": "empty",
+              "tags": [
+                "framework"
+              ],
+              "task_id": "6d4c3306273749ef83672b8beba67023"
+            }
+          ]
+        },
+        "critic_reviews": [],
+        "exit": {
+          "hint": null,
+          "reason": "time_exhausted",
+          "switch_bottleneck": null,
+          "trigger": null
+        },
+        "failure": {
+          "error": null,
+          "error_class": null,
+          "failed_task_id": null
+        },
+        "macro_cycle": 0,
+        "policy": {
+          "config_arm": {
+            "empty_streak_threshold": null,
+            "keep_gain_threshold_pct": null,
+            "lookback": null
+          },
+          "force_exit_budget_pct": null,
+          "keep_threshold_pct": null,
+          "overtime_kill_ratio": 2.0,
+          "source_arm": {
+            "authoring_enabled": true,
+            "discovery_retry_limit": null,
+            "no_keep_streak_threshold": null
+          },
+          "variant_timeout_sec": 0
+        },
+        "source_arm": {
+          "attempts": [],
+          "authoring_runs": [],
+          "candidate_discovery_runs": [
+            {
+              "batch_id": null,
+              "candidates": [],
+              "gap_canonical_id": "gap.framework.candidate_discovery.vllm",
+              "reason": "subprocess_exit_code:1",
+              "status": "empty",
+              "task_id": "0a310d67108e488da97b67154869c87e"
+            }
+          ],
+          "plateau": {
+            "candidates_exhausted": false,
+            "consecutive_no_keep": 0,
+            "triggered": null
+          }
+        }
+      },
+      "kind": "agent",
+      "start_time": "2026-09-14T18:51:49+00:00",
+      "status": "succeeded",
+      "type": "framework_agent"
+    },
+    {
+      "end_time": "2026-09-14T19:33:50.547821+00:00",
+      "ext": {
+        "attempts": 1,
+        "backend": "local",
+        "canonical_id": null,
+        "optimized_throughput": 444.8566029611903,
+        "queue": {
+          "dead_letter_lines": 0,
+          "flushed_bookmarks": 0,
+          "pending_lines": 0
+        },
+        "raw_reason": "missing_model_or_hardware",
+        "result_type": "invalid_scope",
+        "scope": {
+          "conc": 64,
+          "isl": 1024,
+          "kernel_optimizer": "geak",
+          "osl": 1024,
+          "tp": 1
+        },
+        "session_id": null,
+        "source": "t4_fallback",
+        "validated_gain_pct": 0.0
+      },
+      "kind": "kb_write_back",
+      "start_time": "2026-09-14T19:33:50.547821+00:00",
+      "status": "skipped",
+      "type": "kb_write_back"
+    }
+  ],
+  "token_usage": {
+    "attribution": {
+      "attributed_calls_pct": 80.85,
+      "attributed_to_decisions": {
+        "cache_hit_rate": 0.0,
+        "calls": 76,
+        "grand_total": 56915,
+        "total_cache_creation": 0,
+        "total_cache_read": 0,
+        "total_in": 0,
+        "total_in_out": 56915,
+        "total_out": 56915,
+        "total_reasoning_out": 0
+      },
+      "overhead": {
+        "cache_hit_rate": 1.0,
+        "calls": 3,
+        "grand_total": 285639,
+        "total_cache_creation": 0,
+        "total_cache_read": 145600,
+        "total_in": 133283,
+        "total_in_out": 140039,
+        "total_out": 6756,
+        "total_reasoning_out": 0
+      },
+      "overhead_calls_pct": 3.19,
+      "unattributed": {
+        "cache_hit_rate": 0.0,
+        "calls": 15,
+        "grand_total": 10530,
+        "total_cache_creation": 0,
+        "total_cache_read": 0,
+        "total_in": 0,
+        "total_in_out": 10530,
+        "total_out": 10530,
+        "total_reasoning_out": 0
+      }
+    },
+    "by_component": {
+      "critic": {
+        "cache_hit_rate": 0.0,
+        "calls": 1,
+        "grand_total": 9007,
+        "total_cache_creation": 0,
+        "total_cache_read": 0,
+        "total_in": 7840,
+        "total_in_out": 9007,
+        "total_out": 1167,
+        "total_reasoning_out": 0
+      },
+      "orchestration": {
+        "cache_hit_rate": 1.0,
+        "calls": 2,
+        "grand_total": 276632,
+        "total_cache_creation": 0,
+        "total_cache_read": 145600,
+        "total_in": 125443,
+        "total_in_out": 131032,
+        "total_out": 5589,
+        "total_reasoning_out": 0
+      },
+      "specialist": {
+        "cache_hit_rate": 0.0,
+        "calls": 91,
+        "grand_total": 67445,
+        "total_cache_creation": 0,
+        "total_cache_read": 0,
+        "total_in": 0,
+        "total_in_out": 67445,
+        "total_out": 67445,
+        "total_reasoning_out": 0
+      }
+    },
+    "by_phase": {
+      "FRAMEWORK_AGENT": {
+        "cache_hit_rate": 1.0,
+        "calls": 18,
+        "grand_total": 193475,
+        "total_cache_creation": 0,
+        "total_cache_read": 145600,
+        "total_in": 32147,
+        "total_in_out": 47875,
+        "total_out": 15728,
+        "total_reasoning_out": 0
+      },
+      "PRELUDE": {
+        "cache_hit_rate": 0.0,
+        "calls": 76,
+        "grand_total": 159609,
+        "total_cache_creation": 0,
+        "total_cache_read": 0,
+        "total_in": 101136,
+        "total_in_out": 159609,
+        "total_out": 58473,
+        "total_reasoning_out": 0
+      }
+    },
+    "correlation": "timeline[].task_id joins action_timeline[].task_id; components without a per-decision task_id (orchestration / kernel / critic / proposal_scorer) are counted in session_total/by_component/by_phase but appear as tokens=null in timeline (orchestration / critic / robustness land in attribution.overhead, the rest in attribution.unattributed).",
+    "session_total": {
+      "cache_hit_rate": 1.0,
+      "calls": 94,
+      "grand_total": 353084,
+      "total_cache_creation": 0,
+      "total_cache_read": 145600,
+      "total_in": 133283,
+      "total_in_out": 207484,
+      "total_out": 74201,
+      "total_reasoning_out": 0
+    },
+    "source": "reports/trace/llm_calls.jsonl",
+    "timeline": [
+      {
+        "action": "target_analysis",
+        "decision": "KEEP",
+        "phase": "PRELUDE",
+        "task_id": "744cfece502844f4a3910d9b3e355c3a",
+        "tokens": null,
+        "ts": "2026-09-14T17:38:03Z"
+      },
+      {
+        "action": "baseline",
+        "decision": "KEEP",
+        "phase": "PRELUDE",
+        "task_id": "e420b1b3a97f4b7eb334a1df38a32578",
+        "tokens": null,
+        "ts": "2026-09-14T18:41:22Z"
+      },
+      {
+        "action": "specialist",
+        "decision": "KEEP",
+        "phase": "PRELUDE",
+        "task_id": "64c68e8f31c74152add8db07fc879bfc",
+        "tokens": {
+          "by_component": {
+            "specialist": {
+              "calls": 19,
+              "total_cache_creation": 0,
+              "total_cache_read": 0,
+              "total_in": 0,
+              "total_out": 0,
+              "total_reasoning_out": 0
+            }
+          },
+          "cache_hit_rate": 0.0,
+          "calls": 19,
+          "grand_total": 0,
+          "total_cache": 0,
+          "total_in": 0,
+          "total_in_out": 0,
+          "total_out": 0,
+          "total_reasoning_out": 0
+        },
+        "ts": "2026-09-14T18:51:37Z"
+      },
+      {
+        "action": "specialist",
+        "decision": "KEEP",
+        "phase": "PRELUDE",
+        "task_id": "26d8322fb812499fb429efc87b5cc792",
+        "tokens": {
+          "by_component": {
+            "specialist": {
+              "calls": 55,
+              "total_cache_creation": 0,
+              "total_cache_read": 0,
+              "total_in": 0,
+              "total_out": 56915,
+              "total_reasoning_out": 0
+            }
+          },
+          "cache_hit_rate": 0.0,
+          "calls": 55,
+          "grand_total": 56915,
+          "total_cache": 0,
+          "total_in": 0,
+          "total_in_out": 56915,
+          "total_out": 56915,
+          "total_reasoning_out": 0
+        },
+        "ts": "2026-09-14T18:51:49Z"
+      },
+      {
+        "action": "specialist",
+        "decision": "KEEP",
+        "phase": "FRAMEWORK_AGENT",
+        "task_id": "6d4c3306273749ef83672b8beba67023",
+        "tokens": {
+          "by_component": {
+            "specialist": {
+              "calls": 1,
+              "total_cache_creation": 0,
+              "total_cache_read": 0,
+              "total_in": 0,
+              "total_out": 0,
+              "total_reasoning_out": 0
+            }
+          },
+          "cache_hit_rate": 0.0,
+          "calls": 1,
+          "grand_total": 0,
+          "total_cache": 0,
+          "total_in": 0,
+          "total_in_out": 0,
+          "total_out": 0,
+          "total_reasoning_out": 0
+        },
+        "ts": "2026-09-14T19:15:01Z"
+      },
+      {
+        "action": "specialist",
+        "decision": "KEEP",
+        "phase": "FRAMEWORK_AGENT",
+        "task_id": "0a310d67108e488da97b67154869c87e",
+        "tokens": {
+          "by_component": {
+            "specialist": {
+              "calls": 1,
+              "total_cache_creation": 0,
+              "total_cache_read": 0,
+              "total_in": 0,
+              "total_out": 0,
+              "total_reasoning_out": 0
+            }
+          },
+          "cache_hit_rate": 0.0,
+          "calls": 1,
+          "grand_total": 0,
+          "total_cache": 0,
+          "total_in": 0,
+          "total_in_out": 0,
+          "total_out": 0,
+          "total_reasoning_out": 0
+        },
+        "ts": "2026-09-14T19:15:01Z"
+      },
+      {
+        "action": "report",
+        "decision": "KEEP",
+        "phase": "CLOSE",
+        "task_id": "5e02dd5cd0ba477caa20c3ebe9b520dc",
+        "tokens": null,
+        "ts": "2026-09-14T19:33:50Z"
+      }
+    ]
+  },
+  "versions": {},
+  "warnings": [
+    "framework_args extraction failed for no server.log; tried server.log + yaml"
+  ],
+  "workload": {
+    "conc": 64,
+    "framework_name": "vllm",
+    "framework_version": "",
+    "gpu_type": "",
+    "isl": 1024,
+    "max_model_len": 6144,
+    "model_class": "dense",
+    "model_name": "Qwen3.8-27B-ABLITERATED-W8A8-gdnint8",
+    "model_path": "/mnt/stripe-3mix-3t2/models/davetha/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8",
+    "objective": {
+      "kind": "gain_pct",
+      "value": 30.0
+    },
+    "osl": 1024,
+    "precision": "bf16",
+    "tp": 1
+  }
+}

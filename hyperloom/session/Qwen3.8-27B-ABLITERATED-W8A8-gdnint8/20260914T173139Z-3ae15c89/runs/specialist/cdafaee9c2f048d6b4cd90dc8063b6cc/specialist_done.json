@@ -1,0 +1,12 @@
+{
+  "confidence": 0.0,
+  "domain": "serving_specialist",
+  "empty": true,
+  "gap_canonical_id": "inference:qwen3.8-27b-abliterated-w8a8-gdnint8:unknown_gpu:vllm:qwen3_5:qwen3_5forconditionalgeneration:0.28.0:bf16#throughput_below_target",
+  "new_findings": [],
+  "proposal_set": [],
+  "reason": "subprocess_exit_code:1",
+  "residual_questions": [],
+  "summary": "subprocess_exit_code:1",
+  "ts": "2026-09-14T19:00:50.956333+00:00"
+}

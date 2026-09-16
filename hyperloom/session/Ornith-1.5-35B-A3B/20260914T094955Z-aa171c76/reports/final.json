@@ -1,0 +1,1490 @@
+{
+  "baseline_accuracy": 0.0,
+  "baseline_perf": {},
+  "baseline_tput": 0.0,
+  "benchmark_mode": "synthetic",
+  "compute_partition": {},
+  "crash_count": 0,
+  "cumulative_gain_validated": 0.0,
+  "cumulative_gain_validated_stack_len": 0,
+  "cumulative_gain_validated_ts": "",
+  "current_best": {},
+  "degraded_mode": true,
+  "event_counts_by_topic": {
+    "advice": 3,
+    "alert": 178,
+    "decision": 7,
+    "delegated_result": 8,
+    "event": 3,
+    "heartbeat": 342,
+    "lease_expired": 5,
+    "observation": 51,
+    "proposal": 7,
+    "review_verdict": 7,
+    "strategy_change": 1
+  },
+  "external_baseline": {
+    "all_concurrencies": [],
+    "best": null,
+    "fetched_at": "2026-09-14T10:37:19Z",
+    "query": {
+      "framework": "",
+      "gpu": "",
+      "isl": 0,
+      "model": "",
+      "osl": 0,
+      "precision": ""
+    },
+    "reason": "model_mapping_miss",
+    "row_count": 0,
+    "source": "https://inferencex.semianalysis.com/api/v1",
+    "status": "skipped",
+    "warning": "model name mapping miss for '/mnt/stripe-3mix-3t2/models/ornith-ai/Ornith-1.5-35B-A3B'; no InferenceX name found"
+  },
+  "framework": "vllm",
+  "has_unvalidated_keeps": false,
+  "highlights": [
+    {
+      "from_agent": "robustness",
+      "payload": {
+        "detail": {
+          "evidence": {
+            "cap_sec": 216,
+            "elapsed_sec": 8587,
+            "phase": "PRELUDE",
+            "used_pct": 3976.0
+          },
+          "severity": "medium",
+          "source": "shared_state",
+          "subject": {},
+          "suggestion": "wind down this phase or escalate a phase change",
+          "symptom": "phase_budget_nearly_exhausted"
+        },
+        "severity": "medium",
+        "summary": "PRELUDE phase budget 3976% consumed (8587s of 216s cap)"
+      },
+      "summary": "sev=medium PRELUDE phase budget 3976% consumed (8587s of 216s cap)",
+      "topic": "alert"
+    },
+    {
+      "from_agent": "robustness",
+      "payload": {
+        "detail": {
+          "evidence": {
+            "count": 3,
+            "pattern": "RuntimeError",
+            "samples": [
+              "[server.log] (Worker pid=43915) ERROR 09-14 11:29:01 [multiproc_executor.py:941] RuntimeError: No CUDA GPUs are available",
+              "[server.log] (Worker pid=43914) ERROR 09-14 11:29:01 [multiproc_executor.py:941] RuntimeError: No CUDA GPUs are available",
+              "[server.log] (APIServer pid=43533)     raise RuntimeError("
+            ]
+          },
+          "severity": "medium",
+          "source": "local",
+          "subject": {
+            "pattern": "RuntimeError"
+          },
+          "suggestion": "review log evidence with RCA before further action",
+          "symptom": "log_error_pattern"
+        },
+        "severity": "medium",
+        "summary": "log error pattern 'RuntimeError' matched 3 times"
+      },
+      "summary": "sev=medium log error pattern 'RuntimeError' matched 3 times",
+      "topic": "alert"
+    },
+    {
+      "from_agent": "robustness",
+      "payload": {
+        "detail": {
+          "evidence": {
+            "count": 1,
+            "pattern": "RuntimeError: Engine core initialization failed",
+            "samples": [
+              "[server.log] (APIServer pid=43533) RuntimeError: Engine core initialization failed. See root cause above. Failed core proc(s): {}"
+            ]
+          },
+          "severity": "high",
+          "source": "local",
+          "subject": {
+            "pattern": "RuntimeError: Engine core initialization failed"
+          },
+          "suggestion": "delegate(recover, force_gpu_cleanup=True) or escalate strategy",
+          "symptom": "log_error_pattern"
+        },
+        "severity": "high",
+        "summary": "log error pattern 'RuntimeError: Engine core initialization failed' matched 1 times"
+      },
+      "summary": "sev=high log error pattern 'RuntimeError: Engine core initialization failed' matched 1 times",
+      "topic": "alert"
+    },
+    {
+      "from_agent": "robustness",
+      "payload": {
+        "detail": {
+          "evidence": {
+            "last_progress_tick": 2,
+            "threshold": 15,
+            "ticks_without_progress": 150
+          },
+          "severity": "high",
+          "source": "shared_state",
+          "subject": {},
+          "suggestion": "operator intervention; wind down via report if the budget is tight",
+          "symptom": "conversation_no_progress"
+        },
+        "severity": "high",
+        "summary": "orchestration stalled for 150 ticks (threshold=15); last progress at tick 2"
+      },
+      "summary": "sev=high orchestration stalled for 150 ticks (threshold=15); last progress at tick 2",
+      "topic": "alert"
+    },
+    {
+      "from_agent": "robustness",
+      "payload": {
+        "detail": {
+          "evidence": {
+            "count": 10,
+            "from": "coordinator",
+            "rule_distribution": {
+              "enablement_round_in_flight": 9,
+              "execution_order": 1
+            },
+            "top_rule": "enablement_round_in_flight"
+          },
+          "severity": "medium",
+          "source": "coordinator_events",
+          "subject": {
+            "agent": "coordinator"
+          },
+          "suggestion": "escalate_strategy_change to review the action catalogue / role config",
+          "symptom": "repeated_policy_denied"
+        },
+        "severity": "medium",
+        "summary": "agent coordinator hit policy_denied 10 times (>= 3); top rule=enablement_round_in_flight"
+      },
+      "summary": "sev=medium agent coordinator hit policy_denied 10 times (>= 3); top rule=enablement_round_in_flight",
+      "topic": "alert"
+    },
+    {
+      "from_agent": "robustness",
+      "payload": {
+        "detail": {
+          "evidence": {
+            "build_count": 6,
+            "jit_dir": "/opt/envs/vllm/lib/python3.12/site-packages/aiter/jit",
+            "stale_build_threshold": 1,
+            "stale_ticks": 150
+          },
+          "severity": "medium",
+          "source": "local",
+          "subject": {},
+          "suggestion": "observe; if it persists, suggest cleaning <jit_dir>/build/ manually between runs",
+          "symptom": "aiter_jit_build_stuck"
+        },
+        "severity": "medium",
+        "summary": "aiter jit build_count=6 unchanged for 150 consecutive ticks; a prior hipcc invocation likely crashed mid-build"
+      },
+      "summary": "sev=medium aiter jit build_count=6 unchanged for 150 consecutive ticks; a prior hipcc invocation likely crashed mid-build",
+      "topic": "alert"
+    },
+    {
+      "from_agent": "robustness",
+      "payload": {
+        "detail": {
+          "evidence": {
+            "budget_minutes": 120.0,
+            "cumulative_gain_validated": 0.0,
+            "deadline_warning_minutes": 30.0,
+            "elapsed_minutes": 142.0,
+            "productive_gain_pct": 0.5,
+            "remaining_minutes": 6.2
+          },
+          "severity": "high",
+          "source": "local",
+          "subject": {},
+          "suggestion": "propose report to finalize at the last validated gain",
+          "symptom": "deadline_warning"
+        },
+        "severity": "high",
+        "summary": "only 6.2min remain (<= 30min); validated_gain still 0; wind the session down now"
+      },
+      "summary": "sev=high only 6.2min remain (<= 30min); validated_gain still 0; wind the session down now",
+      "topic": "alert"
+    },
+    {
+      "from_agent": "robustness",
+      "payload": {
+        "detail": {
+          "evidence": {
+            "budget_minutes": 120.0,
+            "burn_pct": 1.183,
+            "cumulative_gain_validated": 0.0,
+            "elapsed_minutes": 142.0,
+            "imminent_pct": 0.85,
+            "productive_gain_pct": 0.5,
+            "remaining_minutes": 6.2
+          },
+          "severity": "high",
+          "source": "local",
+          "subject": {},
+          "suggestion": "propose report to finalize at the last validated gain",
+          "symptom": "deadline_imminent"
+        },
+        "severity": "high",
+        "summary": "wall-clock budget 118% consumed (elapsed=142.0min / budget=120min) and cumulative_gain_validated=0.00% \u2014 wind the session down before the deadline cuts it"
+      },
+      "summary": "sev=high wall-clock budget 118% consumed (elapsed=142.0min / budget=120min) and cumulative_gain_validated=0.00% \u2014 wind the session down before the deadline cuts it",
+      "topic": "alert"
+    },
+    {
+      "from_agent": "coordinator",
+      "payload": {
+        "action_name": "integrate_patch",
+        "from_agent": "coordinator",
+        "kind": "approved_proposal",
+        "proposal_msg_id": "e59472666477436e8b080670a823b9c0",
+        "task_id": "313e6341c3ee46b1800154be733cacfc"
+      },
+      "summary": "kind=approved_proposal action=integrate_patch task=313e6341",
+      "topic": "decision"
+    },
+    {
+      "from_agent": "critic",
+      "payload": {
+        "advice_text": "If this action is not expected in PRELUDE outside enablement, confirm R1 routing before applying; otherwise the enablement structural gate is satisfied.",
+        "notes": [
+          "PRELUDE phase normally favors target_analysis/baseline; this is routed as framework-agent enablement, so the boot fix precedes baseline."
+        ],
+        "packet_evidence": [
+          "proposals[0].payload.params.provenance",
+          "proposals[0].payload.params.enablement",
+          "proposals[0].payload.params.framework_agent_authoring",
+          "proposals[0].payload.params.enablement_before_signature.raw_excerpt",
+          "proposals[0].payload.params.enablement_base_patches",
+          "kb_priors_by_proposal"
+        ],
+        "reasoning": "Enablement-tagged integrate_patch has specialist provenance and is classified as enablement_landing. KB priors are silent; the packet's boot-failure signature motivates a runnability fix. Throughput before/after and restated rollback are not required because the enablement integrate gate handles boot/accuracy rollback.",
+        "target_proposal_msg_id": "e59472666477436e8b080670a823b9c0",
+        "verdict": "approve"
+      },
+      "summary": "verdict=approve reason=Enablement-tagged integrate_patch has specialist provenance ",
+      "topic": "review_verdict"
+    },
+    {
+      "from_agent": "coordinator",
+      "payload": {
+        "action_name": "integrate_patch",
+        "needs_review": true,
+        "params": {
+          "domain": "enablement_specialist",
+          "enablement": true,
+          "enablement_base_patches": [
+            "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-35B-A3B/20260914T094955Z-aa171c76/runs/specialist/d00cdedfc173451eaf5b312d08e00da9/patches/003_rocm_visible_devices_logical_repin.patch"
+          ],
+          "enablement_before_signature": {
+            "bridge_layer": "",
+            "confidence": 0.0,
+            "kind": "unknown",
+            "offending_file": "",
+            "offending_symbol": "",
+            "raw_excerpt": "1c76/runs/baseline/3f5caae8b8034e6094faa0c559cdf087/benchmark_vllm_20260914_114944/server.log --pid 47746 --sleep-interval 5\\n+ set +x\\nProcess died before http://0.0.0.0:8888/health became ready.\\n']",
+            "secondary_kinds": []
+          },
+          "framework_agent_authoring": true,
+          "gap_canonical_id": "gap.enablement.unknown",
+          "gap_layer": "framework",
+          "lever_kind": "enablement",
+          "patch_name": "",
+          "provenance": "specialist:enablement_specialist",
+          "source_phase": "FRAMEWORK_AGENT",
+          "specialist_task_id": "3bbb58e289654e3bb358a8db44343c2f"
+        },
+        "predicted_gain_pct": 0.0,
+        "provenance": "specialist"
+      },
+      "summary": "action_name=integrate_patch",
+      "topic": "proposal"
+    },
+    {
+      "from_agent": "coordinator",
+      "payload": {
+        "error": null,
+        "kind": "specialist",
+        "result": {
+          "allocated_gpu_ids": [
+            0,
+            1
+          ],
+          "domain": "enablement_specialist",
+          "done_path": "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-35B-A3B/20260914T094955Z-aa171c76/runs/specialist/3bbb58e289654e3bb358a8db44343c2f/specialist_done.json",
+          "error": "",
+          "gap_canonical_id": "gap.enablement.unknown",
+          "notes": [
+            "worktree_setup_failed:no_git_framework_source_root"
+          ],
+          "runner_status": "succeeded",
+          "specialist_done": {
+            "_specialist_notes": [
+              "worktree_setup_failed:no_git_framework_source_root"
+            ],
+            "allocated_gpu_ids": [
+              0,
+              1
+            ],
+            "confidence": 0.9,
+            "domain": "enablement_specialist",
+            "empty": false,
+            "gap_canonical_id": "gap.enablement.unknown",
+            "new_findings": [
+              {
+                "accuracy_risk": "none (child-env plumbing + failure-mode classification only; no numerical path change)",
+                "domain_tags": [
+                  "enablement",
+                  "magpie",
+                  "inferencex",
+                  "path",
+                  "rocm"
+                ],
+                "expected_impact": "Makes the runnable delta independent of the parent-harness environment: the patched benchmark script self-heals its child env even when Magpie-side patch 003 is absent or when the host exports a framework-less PATH.",
+                "source": "runs/baseline/3f5caae8.../benchmark_vllm_20260914_114944/{server.log,benchmark_stderr.log} (died 'setsid: failed to execute vllm' at 11:49 WITH 003 reverted) + integrate_patch op record (patches_applied then patches_reverted, verdict DISCARDED, reason 'session wall-clock budget exhausted before this round ran') + Magpie/modes/benchmark/benchmarker.py mtime 09:13 == 77457-byte backup (003 not in tree)",
+                "what": "The 11:49 baseline failure was patch-003 REVERTED, not patch-003 broken: the previous enablement session hit its wall-clock at 11:47, the coordinator applied 003 at 11:48, its verification bench never ran ('session wall-clock budget exhausted before this round ran'), so the patch was reverted and the 11:49 baseline re-ran the unpatched tree and re-hit the SAME B3 failure (client/server PATH=/opt/venv/bin:... has no vllm CLI; and note a /usr/local/bin/vllm symlink appeared at 11:56, plus a TraceLens .pth makes /opt/venv/bin/python3 see vllm/transformers now -- the host is healthier than at failure time but the injected benchmark.envs.PATH still has no guaranteed framework env)."
+              },
+              {
+                "accuracy_risk": "none for throughput; converts a wholesale run-kill into an accuracy=None record only when the eval DEPENDENCY is missing; a real eval failure (lm_eval importable but scoring fails) still exits non-zero",
+                "domain_tags": [
+                  "eval",
+                  "lm-eval",
+                  "magpie",
+                  "enablement",
+                  "gfx90a"
+                ],
+                "expected_impact": "Removes the last stage that could discard an otherwise-successful benchmark run: run_eval failure == whole-run failure under RUN_EVAL=true.",
+                "source": "Magpie/scripts/benchmark/vllm_mi300x.sh eval block ('run_eval --framework lm-eval --port $PORT || exit $?' after the throughput stage) + InferenceX benchmark_lib.sh:870-887 (_install_lm_eval_deps pip-with-default-retries against a link that dies mid-transfer: 'Connection broken: BrokenPipeError') + integrate_patch.py:2995-3005 (boot-origin gate: accuracy None -> correctness_ok None -> provisional KEEP, but only if run status succeeded; _execute_local_benchmark sets success=False on ANY non-zero script rc)",
+                "what": "Deepest remaining failure in the full chain (server + throughput verified OK by patch 003 in the prior round and re-verified by me this round) is the EVAL stage: with RUN_EVAL=true the script '|| exit $?' on run_eval, and lm_eval is not shipped in the image; InferenceX lazy-installs it with pip default retries which this host's lossy link reliably breaks (I reproduced: ~350KB/s with repeated mid-download BrokenPipe; my retry-wrapped install succeeded only on an attempt with --retries 30 --timeout 120). Patch 004 makes the eval-stage failure mode-aware (missing dependency -> warn + continue so the throughput result survives; real eval failure -> stays fatal)."
+              },
+              {
+                "accuracy_risk": "none",
+                "domain_tags": [
+                  "enablement",
+                  "e2e-validation",
+                  "vllm",
+                  "rocm",
+                  "gsm8k"
+                ],
+                "expected_impact": "Raises confidence that the coordinator's next gated bench of this combo will produce BOTH throughput and an accuracy score (floor 0.5) in one run.",
+                "source": "scratch/e2e004/{out.log,server.log} (guard lines + 'Capturing CUDA graphs' + 'Starting vLLM server on http://0.0.0.0:8899', /health 200, completions returns 'Paris') and scratch/evalsmoke/out/.../results_2026-09-14T12-34-19.json (gsm8k exact_match strict+flexible = 0.8, n=5 smoke slice)",
+                "what": "End-to-end validation of patch 004 on my leased cards under the EXACT hostile baseline env (PATH=/opt/venv/bin:/usr/local/sbin:... , HIP_VISIBLE_DEVICES=2,3 host-physical, ROCR_VISIBLE_DEVICES=0,1, TP2/EP vllm serve with the baseline's --distributed-executor-backend mp --enable-expert-parallel): guards fired ('prepending /opt/envs/vllm/bin to PATH', 're-pinning HIP 2,3 -> 0,1'), server booted with CUDA-graph capture, /health 200, correct greedy generation, and a REAL gsm8k lm-eval run against it completed and scored (limit=5 smoke slice, exact_match 0.8 on that 5-sample slice -- advisory only, the full-dataset floor check belongs to the coordinator). lm-eval 0.4.13 is now installed into /opt/envs/vllm site-packages on this host, so the eval stage will lazy-skip its pip install and run directly."
+              }
+            ],
+            "patch_grounding": {
+              "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-35B-A3B/20260914T094955Z-aa171c76/runs/specialist/3bbb58e289654e3bb358a8db44343c2f/patches/004_mi300x_child_env_selfalign_and_eval_dep_guard.patch": "applies"
+            },
+            "patches_written": [
+              "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-35B-A3B/20260914T094955Z-aa171c76/runs/specialist/3bbb58e289654e3bb358a8db44343c2f/patches/004_mi300x_child_env_selfalign_and_eval_dep_guard.patch"
+            ],
+            "proposal_set": [],
+            "residual_questions": [
+              "Patch 004 modifies Magpie/scripts/benchmark/vllm_mi300x.sh, which _prepare_benchmark_scripts() re-copies into the InferenceX cache before every run -- so the patch only needs to land in the Magpie package (it does; same funnel as patch 003). Confirm integrate_patch applies against /opt/envs/vllm/lib/python3.12/site-packages with the same -p1/-p2 auto-level it used for 003 (I verified 'git apply --check -p1' passes from the framework root, standalone AND stacked on 003).",
+              "Host note: the container now also has /usr/local/bin/vllm -> /opt/envs/vllm/bin/vllm and lm-eval 0.4.13 installed (by prior-session residue + my retry-wrapped install). If the gate runs in a FRESH container these may be absent -- setup_commands replays the lm-eval install; the PATH repair is what patch 004 covers.",
+              "The eval-stage warn-and-continue branch is only reachable when the throughput stage already succeeded; verify the orchestrator treats a status=succeeded run with accuracy=None as provisional-KEEP (boot-origin) rather than hard-fail for THIS session's contract (integrate_patch.py:2995-3005 says provisional-KEEP, but enablement_mode='all' with an accuracy floor of 0.5 should be double-checked against the eventual KEEP rule)."
+            ],
+            "setup_commands": [
+              "/opt/envs/vllm/bin/python3 -m pip install --no-cache-dir --retries 30 --timeout 120 --break-system-packages \"lm-eval[api]\""
+            ],
+            "summary": "Round goal: land the durable runnable+eval delta for Ornith-1.5-35B-A3B under vLLM. Localized why the 11:49 baseline still died at 'setsid: failed to execute vllm': patch 003 had been REVERTED by the prior session's wall-clock timeout (its bench never ran), so the baseline re-hit B3 unpatched -- 003 itself is sound and is re-applied as base. Authored patch 004 on the Magpie benchmark script (the point-of-use layer, so it works with OR without 003): (1) self-heals the child framework env (verify 'vllm' CLI AND the bare-python3 client's transformers/huggingface_hub imports, else prepend a discovered framework bin, idempotent when healthy), (2) ROCr/HIP logical re-pin before the first device consumer (same repair as 003 at a different layer, idempotent), (3) eval-stage failure-mode guard: a failed run_eval with lm_eval still unimportable (this host's lossy PyPI) is reported as a missing eval dependency instead of discarding the completed throughput run; a real eval failure stays fatal. Verified patch applies cleanly standalone, stacked on 003, and via git apply -p1 against the live framework root. Cleared (my cards, exact hostile baseline env): server boots + CUDA graphs + /health 200 + correct generation; installed lm-eval 0.4.13 (retry-hardened pip) and ran a real gsm8k lm-eval smoke (limit=5) against the live server producing exact_match scores -- so the next deeper failure, if any, is only the full eval budget. Next: coordinator benches gate-comparable throughput + full accuracy (floor 0.5; advisory smoke consistent with a capable model)."
+          },
+          "task_id": "3bbb58e289654e3bb358a8db44343c2f",
+          "transcript_path": "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-35B-A3B/20260914T094955Z-aa171c76/runs/specialist/3bbb58e289654e3bb358a8db44343c2f/transcript.jsonl",
+          "turns_used": 1,
+          "workspace": "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-35B-A3B/20260914T094955Z-aa171c76/runs/specialist/3bbb58e289654e3bb358a8db44343c2f"
+        },
+        "state": "succeeded",
+        "task_id": "3bbb58e289654e3bb358a8db44343c2f"
+      },
+      "summary": "kind=specialist state=succeeded tput=None decision=None",
+      "topic": "delegated_result"
+    },
+    {
+      "from_agent": "robustness",
+      "payload": {
+        "detail": {
+          "evidence": {
+            "cap_sec": 216,
+            "elapsed_sec": 5326,
+            "phase": "PRELUDE",
+            "used_pct": 2466.0
+          },
+          "severity": "medium",
+          "source": "shared_state",
+          "subject": {},
+          "suggestion": "wind down this phase or escalate a phase change",
+          "symptom": "phase_budget_nearly_exhausted"
+        },
+        "severity": "medium",
+        "summary": "PRELUDE phase budget 2466% consumed (5326s of 216s cap)"
+      },
+      "summary": "sev=medium PRELUDE phase budget 2466% consumed (5326s of 216s cap)",
+      "topic": "alert"
+    },
+    {
+      "from_agent": "coordinator",
+      "payload": {
+        "error": null,
+        "kind": "baseline",
+        "result": {
+          "error": "session/Ornith-1.5-35B-A3B/20260914T094955Z-aa171c76/runs/baseline/3f5caae8b8034e6094faa0c559cdf087/benchmark_vllm_20260914_114944/summary.txt\n2026-09-14 11:49:46,621 - Magpie.modes.benchmark.benchmarker - INFO - Benchmark completed in 2.51s\n2026-09-14 11:49:46,621 - Magpie.main - ERROR - Benchmark failed: ['Benchmark process failed with code 1', 'stderr: + [[ all == \\\\s\\\\e\\\\r\\\\v\\\\e\\\\r ]]\\n+ [[ all == \\\\a\\\\l\\\\l ]]\\n+ SERVER_PID=47746\\n+ [[ all == \\\\a\\\\l\\\\l ]]\\n+ trap \\'magpie_stop_benchmark_server_stack \"$SERVER_PID\"\\' EXIT INT TERM\\n+ wait_for_server_ready --port 8888 --server-log /home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-35B-A3B/20260914T094955Z-aa171c76/runs/baseline/3f5caae8b8034e6094faa0c559cdf087/benchmark_vllm_20260914_114944/server.log --server-pid 47746\\n+ local port=\\n+ local server_log=\\n+ local server_pid=\\n+ local sleep_interval=5\\n+ [[ 6 -gt 0 ]]\\n+ case $1 in\\n+ port=8888\\n+ shift 2\\n+ [[ 4 -gt 0 ]]\\n+ case $1 in\\n+ setsid vllm serve /mnt/stripe-3mix-3t2/models/ornith-ai/Ornith-1.5-35B-A3B --port 8888 --tensor-parallel-size=2 --gpu-memory-utilization 0.95 --max-model-len 6144 --trust-remote-code --distributed-executor-backend mp --enable-expert-parallel\\n+ server_log=/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-35B-A3B/20260914T094955Z-aa171c76/runs/baseline/3f5caae8b8034e6094faa0c559cdf087/benchmark_vllm_20260914_114944/server.log\\n+ shift 2\\n+', 'inferencex_result.json not found - benchmark may have failed locally', 'stderr (last 500 chars): loom/session/Ornith-1.5-35B-A3B/20260914T094955Z-aa171c76/runs/baseline/3f5caae8b8034e6094faa0c559cdf087/benchmark_vllm_20260914_114944/server.log ]]\\n+ [[ -z 47746 ]]\\n+ wait_for_ready --endpoint http://0.0.0.0:8888/health --log /home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-35B-A3B/20260914T094955Z-aa171c76/runs/baseline/3f5caae8b8034e6094faa0c559cdf087/benchmark_vllm_20260914_114944/server.log --pid 47746 --sleep-interval 5\\n+ set +x\\nProcess died before http://0.0.0.0:8888/health became ready.\\n']\n",
+          "error_class": "subprocess_nonzero",
+          "materialized_config": "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-35B-A3B/20260914T094955Z-aa171c76/runs/baseline/3f5caae8b8034e6094faa0c559cdf087/baseline_config.with_envs.yaml",
+          "nonfatal_warnings": [
+            "benchmark_report_success_false"
+          ],
+          "output_dir": "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-35B-A3B/20260914T094955Z-aa171c76/runs/baseline/3f5caae8b8034e6094faa0c559cdf087",
+          "report_path": "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-35B-A3B/20260914T094955Z-aa171c76/runs/baseline/3f5caae8b8034e6094faa0c559cdf087/benchmark_vllm_20260914_114944/benchmark_report.json",
+          "reported_success": false,
+          "result_dir": "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-35B-A3B/20260914T094955Z-aa171c76/runs/baseline/3f5caae8b8034e6094faa0c559cdf087",
+          "returncode": 1,
+          "run_eval_disabled": false,
+          "status": "failed",
+          "subprocess_runtime_sec": 3.77,
+          "workspace": "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-35B-A3B/20260914T094955Z-aa171c76/runs/baseline/3f5caae8b8034e6094faa0c559cdf087/benchmark_vllm_20260914_114944"
+        },
+        "state": "succeeded",
+        "task_id": "3f5caae8b8034e6094faa0c559cdf087"
+      },
+      "summary": "kind=baseline state=succeeded tput=None decision=None",
+      "topic": "delegated_result"
+    },
+    {
+      "from_agent": "robustness",
+      "payload": {
+        "detail": {
+          "evidence": {
+            "count": 4,
+            "pattern": "RuntimeError",
+            "samples": [
+              "[server.log] (Worker pid=43915) ERROR 09-14 11:29:01 [multiproc_executor.py:941] RuntimeError: No CUDA GPUs are available",
+              "[server.log] (Worker pid=43914) ERROR 09-14 11:29:01 [multiproc_executor.py:941] RuntimeError: No CUDA GPUs are available",
+              "[server.log] (APIServer pid=43533)     raise RuntimeError("
+            ]
+          },
+          "severity": "medium",
+          "source": "local",
+          "subject": {
+            "pattern": "RuntimeError"
+          },
+          "suggestion": "review log evidence with RCA before further action",
+          "symptom": "log_error_pattern"
+        },
+        "severity": "medium",
+        "summary": "log error pattern 'RuntimeError' matched 4 times"
+      },
+      "summary": "sev=medium log error pattern 'RuntimeError' matched 4 times",
+      "topic": "alert"
+    },
+    {
+      "from_agent": "robustness",
+      "payload": {
+        "detail": {
+          "evidence": {
+            "count": 2,
+            "pattern": "RuntimeError: Engine core initialization failed",
+            "samples": [
+              "[server.log] (APIServer pid=43533) RuntimeError: Engine core initialization failed. See root cause above. Failed core proc(s): {}",
+              "[server.log] (APIServer pid=15383) RuntimeError: Engine core initialization failed. See root cause above. Failed core proc(s): {}"
+            ]
+          },
+          "severity": "high",
+          "source": "local",
+          "subject": {
+            "pattern": "RuntimeError: Engine core initialization failed"
+          },
+          "suggestion": "delegate(recover, force_gpu_cleanup=True) or escalate strategy",
+          "symptom": "log_error_pattern"
+        },
+        "severity": "high",
+        "summary": "log error pattern 'RuntimeError: Engine core initialization failed' matched 2 times"
+      },
+      "summary": "sev=high log error pattern 'RuntimeError: Engine core initialization failed' matched 2 times",
+      "topic": "alert"
+    },
+    {
+      "from_agent": "robustness",
+      "payload": {
+        "detail": {
+          "evidence": {
+            "last_progress_tick": 2,
+            "threshold": 15,
+            "ticks_without_progress": 145
+          },
+          "severity": "high",
+          "source": "shared_state",
+          "subject": {},
+          "suggestion": "operator intervention; wind down via report if the budget is tight",
+          "symptom": "conversation_no_progress"
+        },
+        "severity": "high",
+        "summary": "orchestration stalled for 145 ticks (threshold=15); last progress at tick 2"
+      },
+      "summary": "sev=high orchestration stalled for 145 ticks (threshold=15); last progress at tick 2",
+      "topic": "alert"
+    },
+    {
+      "from_agent": "coordinator",
+      "payload": {
+        "action_name": "baseline",
+        "from_agent": "orchestration",
+        "kind": "approved_proposal",
+        "proposal_msg_id": "742c4f0dd5ca4783826b7e0a76946dc3",
+        "task_id": "3f5caae8b8034e6094faa0c559cdf087"
+      },
+      "summary": "kind=approved_proposal action=baseline task=3f5caae8",
+      "topic": "decision"
+    },
+    {
+      "from_agent": "critic",
+      "payload": {
+        "advice_text": "Treat this as the post-enablement reference run; confirm the unset CUDA/HIP device overrides do not mask a ROCm logical-device regression when comparing future optimization attempts.",
+        "notes": [
+          "No KB contradiction was recalled.",
+          "Self-reported predicted_gain_pct is ignored; the baseline itself will produce the evidence."
+        ],
+        "packet_evidence": [
+          "phase_orientation",
+          "review_constraints.proposal_action_classes",
+          "review_constraints.action_verdict_policy",
+          "proposals.payload.note"
+        ],
+        "reasoning": "Baseline in PRELUDE is the natural exploration action after the reported enablement integrate_patch; classified as framework_op/exploration and therefore not gated by before/after promotion evidence.",
+        "target_proposal_msg_id": "742c4f0dd5ca4783826b7e0a76946dc3",
+        "verdict": "approve"
+      },
+      "summary": "verdict=approve reason=Baseline in PRELUDE is the natural exploration action after ",
+      "topic": "review_verdict"
+    },
+    {
+      "from_agent": "orchestration",
+      "payload": {
+        "action_name": "baseline",
+        "env_overrides": {
+          "CUDA_VISIBLE_DEVICES": null,
+          "HIP_VISIBLE_DEVICES": null
+        },
+        "idempotency_key": "baseline-round-11",
+        "needs_review": true,
+        "note": "Enablement specialist d00cdedf finished and integrate_patch (task 7eb609d6de134d5c909251e89027ebbc, patch 003_rocm_visible_devices_logical_repin) succeeded/advanced per seq=559. Re-running baseline post-patch; keeping explicit unset of CUDA/HIP_VISIBLE_DEVICES as belt-and-braces alongside the source-level logical repin.",
+        "predicted_gain_pct": 0
+      },
+      "summary": "action_name=baseline",
+      "topic": "proposal"
+    },
+    {
+      "from_agent": "coordinator",
+      "payload": {
+        "error": null,
+        "kind": "integrate_patch",
+        "result": {
+          "accuracy_metric": "",
+          "accuracy_task": "",
+          "advanced": true,
+          "after_signature": {
+            "bridge_layer": "",
+            "confidence": 0.0,
+            "kind": "unknown",
+            "offending_file": "",
+            "offending_symbol": "",
+            "raw_excerpt": "session wall-clock budget exhausted before this round ran",
+            "secondary_kinds": []
+          },
+          "artifacts_applied": [],
+          "artifacts_reverted": [],
+          "bench_result": {
+            "effective_config": {
+              "args_mode": "append",
+              "extra_envs": {},
+              "extra_server_args": "",
+              "remove_args": [],
+              "unset_envs": []
+            },
+            "error": "session wall-clock budget exhausted before this round ran",
+            "error_class": "session_time_exhausted",
+            "itl_ms": null,
+            "launch_evidence": {},
+            "launch_evidence_path": "",
+            "materialized_config": "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-35B-A3B/20260914T094955Z-aa171c76/runs/integrate_patch/7eb609d6de134d5c909251e89027ebbc/integrate_patch.with_envs.yaml",
+            "name": "integrate-patch-d00cdedf",
+            "nonfatal_warnings": [],
+            "output_throughput": null,
+            "server_log_path": "",
+            "status": "skipped",
+            "ttft_ms": null,
+            "workspace": ""
+          },
+          "config_changes_applied": {},
+          "correctness_verified": false,
+          "enablement": true,
+          "enablement_accuracy_floor": 0.5,
+          "enablement_eval_failure_kind": "accuracy_unavailable",
+          "enablement_launch_log": "session wall-clock budget exhausted before this round ran",
+          "enablement_observed_accuracy": null,
+          "enablement_origin": "",
+          "extra_envs_applied": {},
+          "extra_server_args_applied": "",
+          "framework_root": "/opt/envs/vllm/lib/python3.12/site-packages",
+          "framework_switch_problems": [],
+          "output_throughput": null,
+          "patches_applied": [
+            "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-35B-A3B/20260914T094955Z-aa171c76/runs/specialist/d00cdedfc173451eaf5b312d08e00da9/patches/003_rocm_visible_devices_logical_repin.patch"
+          ],
+          "patches_reverted": [
+            "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-35B-A3B/20260914T094955Z-aa171c76/runs/specialist/d00cdedfc173451eaf5b312d08e00da9/patches/003_rocm_visible_devices_logical_repin.patch"
+          ],
+          "reason": "enablement progressed: launch probe exited 1 (still not runnable); boot advanced to a new gap (unknown) \u2014 patch recorded as a base for the next round",
+          "runnable": false,
+          "setup_commands_applied": [],
+          "setup_commands_skipped": [],
+          "specialist_task_id": "d00cdedfc173451eaf5b312d08e00da9",
+          "status": "advanced",
+          "workspace": "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-35B-A3B/20260914T094955Z-aa171c76/runs/integrate_patch/7eb609d6de134d5c909251e89027ebbc"
+        },
+        "state": "succeeded",
+        "task_id": "7eb609d6de134d5c909251e89027ebbc"
+      },
+      "summary": "kind=integrate_patch state=succeeded tput=None decision=None",
+      "topic": "delegated_result"
+    },
+    {
+      "from_agent": "robustness",
+      "payload": {
+        "detail": {
+          "evidence": {
+            "budget_minutes": 120.0,
+            "burn_pct": 0.725,
+            "cumulative_gain_validated": 0.0,
+            "elapsed_minutes": 87.0,
+            "remaining_minutes": 61.2,
+            "warn_pct": 0.7
+          },
+          "severity": "medium",
+          "source": "local",
+          "subject": {},
+          "suggestion": "escalate_strategy_change to wind down exploration and report",
+          "symptom": "budget_burn_no_gain"
+        },
+        "severity": "medium",
+        "summary": "wall-clock budget 72% consumed with cumulative_gain_validated=0.00% \u2014 consider escalating strategy before the wind-down"
+      },
+      "summary": "sev=medium wall-clock budget 72% consumed with cumulative_gain_validated=0.00% \u2014 consider escalating strategy before the wind-down",
+      "topic": "alert"
+    },
+    {
+      "from_agent": "robustness",
+      "payload": {
+        "detail": {
+          "evidence": {
+            "agent": "orchestration",
+            "idle_seconds": 3126,
+            "last_seen_unix": 1789383394,
+            "threshold_s": 300
+          },
+          "severity": "high",
+          "source": "local",
+          "subject": {
+            "agent": "orchestration"
+          },
+          "suggestion": "escalate strategy if agent remains silent",
+          "symptom": "agent_stall"
+        },
+        "severity": "high",
+        "summary": "agent orchestration silent for 3126s (threshold=300s)"
+      },
+      "summary": "sev=high agent orchestration silent for 3126s (threshold=300s)",
+      "topic": "alert"
+    },
+    {
+      "from_agent": "coordinator",
+      "payload": {
+        "action_name": "integrate_patch",
+        "from_agent": "coordinator",
+        "kind": "approved_proposal",
+        "proposal_msg_id": "8dabc4e8e3fe41d58e55ef7b7c911bcb",
+        "task_id": "7eb609d6de134d5c909251e89027ebbc"
+      },
+      "summary": "kind=approved_proposal action=integrate_patch task=7eb609d6",
+      "topic": "decision"
+    },
+    {
+      "from_agent": "critic",
+      "payload": {
+        "advice_text": "If the gfx90a runner error does not actually block baseline execution, prefer keeping PRELUDE focused on target_analysis and baseline before landing framework patches.",
+        "notes": [
+          "Empty KB priors are cold-start for enablement_landing and are not a blocker.",
+          "The zero-valued predicted_gain_pct was treated as scheduler bookkeeping, not a supported performance claim."
+        ],
+        "packet_evidence": [
+          "review_constraints.proposal_action_classes.8dabc4e8e3fe41d58e55ef7b7c911bcb",
+          "review_constraints.action_verdict_policy.integrate_patch",
+          "proposals[0].payload.params.provenance",
+          "proposals[0].payload.params.enablement",
+          "proposals[0].payload.params.enablement_before_signature.raw_excerpt"
+        ],
+        "reasoning": "This is an enablement landing with specialist provenance and no recalled KB contradiction. The strict promotion gate is not applicable; the downstream runnable/accuracy gate and enablement revert path provide the primary evidence filter.",
+        "risks": [
+          {
+            "severity": "minor",
+            "summary": "PRELUDE normally prioritizes target_analysis/baseline; approve depends on this patch being required to obtain a runnable baseline."
+          }
+        ],
+        "target_proposal_msg_id": "8dabc4e8e3fe41d58e55ef7b7c911bcb",
+        "verdict": "approve"
+      },
+      "summary": "verdict=approve reason=This is an enablement landing with specialist provenance and",
+      "topic": "review_verdict"
+    },
+    {
+      "from_agent": "coordinator",
+      "payload": {
+        "action_name": "integrate_patch",
+        "needs_review": true,
+        "params": {
+          "domain": "enablement_specialist",
+          "enablement": true,
+          "enablement_before_signature": {
+            "bridge_layer": "",
+            "confidence": 0.0,
+            "kind": "unknown",
+            "offending_file": "/opt/envs/vllm/lib/python3.12/site-packages/Magpie/modes/benchmark/image_selector.py",
+            "offending_symbol": "",
+            "raw_excerpt": "ython3.12/site-packages/Magpie/modes/benchmark/image_selector.py\", line 151, in get_runner_type raise ValueError(f\"No runner type found for {gpu_arch}\") ValueError: No runner type found for gfx90a",
+            "secondary_kinds": []
+          },
+          "framework_agent_authoring": true,
+          "gap_canonical_id": "gap.enablement.unknown",
+          "gap_layer": "framework",
+          "lever_kind": "enablement",
+          "patch_name": "",
+          "provenance": "specialist:enablement_specialist",
+          "source_phase": "FRAMEWORK_AGENT",
+          "specialist_task_id": "d00cdedfc173451eaf5b312d08e00da9"
+        },
+        "predicted_gain_pct": 0.0,
+        "provenance": "specialist"
+      },
+      "summary": "action_name=integrate_patch",
+      "topic": "proposal"
+    },
+    {
+      "from_agent": "coordinator",
+      "payload": {
+        "error": null,
+        "kind": "specialist",
+        "result": {
+          "allocated_gpu_ids": [
+            0,
+            1
+          ],
+          "domain": "enablement_specialist",
+          "done_path": "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-35B-A3B/20260914T094955Z-aa171c76/runs/specialist/d00cdedfc173451eaf5b312d08e00da9/specialist_done.json",
+          "error": "",
+          "gap_canonical_id": "gap.enablement.unknown",
+          "notes": [
+            "worktree_setup_failed:no_git_framework_source_root",
+            "patch_safety_numeric:1151.77 tok/s,4358.9ms,50.3ms"
+          ],
+          "runner_status": "succeeded",
+          "specialist_done": {
+            "_specialist_notes": [
+              "worktree_setup_failed:no_git_framework_source_root",
+              "patch_safety_numeric:1151.77 tok/s,4358.9ms,50.3ms"
+            ],
+            "allocated_gpu_ids": [
+              0,
+              1
+            ],
+            "artifacts_written": [],
+            "confidence": 0.93,
+            "domain": "enablement_specialist",
+            "empty": false,
+            "gap_canonical_id": "gap.enablement.unknown",
+            "new_findings": [
+              {
+                "accuracy_risk": "none",
+                "domain_tags": [
+                  "enablement",
+                  "magpie",
+                  "rocm",
+                  "gfx90a"
+                ],
+                "expected_impact": "Explains why 'unknown' symptom persisted: baseline never reached a server, so baseline_tput stayed 0.0 for 8+ coordinator rounds.",
+                "source": "runs/baseline/cd3d94f7.../baseline_stderr.log + vllm/model_executor/models/registry.py + reproducible probes in this run (see per-finding sources)",
+                "what": "The launch failure is NOT a model/vLLM gap. The model (Qwen3_5MoeForConditionalGeneration / qwen3_5_moe, hybrid 30 linear-attn + 10 full-attn, 256-expert MoE) is natively supported by vLLM 0.28.0+rocm723 and resolves at runtime. There are THREE stacked harness-layer blockers in Magpie's benchmark CHILD ENV, all now localized and the first three cleared: (B1, attempt-1, still live in tree) no gfx90a runner type in image_selector; (B2) host-physical HIP_VISIBLE_DEVICES=2,3 vs the ROCR_VISIBLE_DEVICES=0,1 GPU lease; (B3) the session-injected PATH=/opt/venv/bin:... which contains no vllm/hf/transformers."
+              },
+              {
+                "accuracy_risk": "none (env/child-process plumbing only; no numerical path change)",
+                "domain_tags": [
+                  "rocm",
+                  "visible-devices",
+                  "hip",
+                  "magpie",
+                  "enablement"
+                ],
+                "expected_impact": "Mandatory: without it no server ever initialises, so the baseline and every downstream proposal measure nothing.",
+                "source": "scratch/gpuprobe runs + scratch/neg2/server.log:54,78 + /opt/envs/vllm/lib/python3.12/site-packages/vllm/platforms/rocm.py:128-158 + Magpie/modes/benchmark/benchmarker.py:776,800 (env=os.environ.copy() then benchmark.envs applied verbatim)",
+                "what": "B2 mechanism (this attempt's primary find): ROCR_VISIBLE_DEVICES filters at the HSA layer AND renumbers the surviving agents to 0..N-1. HIP_VISIBLE_DEVICES is applied on top of that already-remapped list, so a host-physical HIP pin (2,3) with ROCR=0,1 selects NOTHING. torch.cuda.device_count() still reports 2 (from ROCR's count) while every allocation dies with 'RuntimeError: No CUDA GPUs are available', and vLLM's worker startup surfaces it as 'Engine core initialization failed'. Reproduced both ways: isolation probe (HIP=2,3+ROCR=0,1 -> FAIL; HIP=0,1 or unset -> 2x MI250X gfx90a + matmul OK) and negative control NEG-2 (ORIGINAL Magpie script + a healthy PATH + HIP=2,3/ROCR=0,1 -> rc=1, worker RuntimeError at scratch/neg2/server.log:54). vllm/platforms/rocm.py:_sync_hip_cuda_env_vars only cross-checks HIP vs CUDA and cannot see this because ROCR is a different layer."
+              },
+              {
+                "accuracy_risk": "none",
+                "domain_tags": [
+                  "path",
+                  "magpie",
+                  "inferencex",
+                  "enablement"
+                ],
+                "expected_impact": "Unblocks both the server phase and the throughput client phase.",
+                "source": "scratch/neg1/out.log:28 + probe: env -i PATH=<baseline PATH> -> 'vllm MISSING', python3=/opt/venv/bin/python3, import vllm -> ModuleNotFoundError; and InferenceX/utils/bench_serving/benchmark_serving.py --help failing under unpatched PATH vs succeeding with /opt/envs/vllm/bin prepended",
+                "what": "B3 mechanism (independent, and the failure that appears immediately behind B2): the InferenceX/Magpie vllm_mi300x.sh launches 'setsid vllm serve' and runs the serving client with a bare 'python3'. The session YAML injects PATH=/opt/venv/bin:/usr/local/sbin:...:/bin, but /opt/venv has no vllm, no hf and no transformers, so the server phase dies in ~2s with 'setsid: failed to execute vllm: No such file or directory' (NEG-1, rc=1) and the client phase dies on 'ModuleNotFoundError: No module named huggingface_hub'. Magpie itself runs from /opt/envs/vllm/bin/python3, i.e. the correct framework env was known at runtime but never propagated to the child."
+              },
+              {
+                "accuracy_risk": "none",
+                "domain_tags": [
+                  "enablement",
+                  "vllm",
+                  "rocm",
+                  "e2e-validation"
+                ],
+                "expected_impact": "Raises the combo from non-runnable (0.0 tok/s baseline, 8 denied coordinator rounds) to measurably serving; unblocks the baseline gate.",
+                "source": "scratch/ixrun/ws/server.log, scratch/completion.json, scratch/e2e2/inferencex_result.json (date 20260914-114227)",
+                "what": "DELIVERABLE VERIFIED END-TO-END: with patch 003 applied (i.e. the two new Magpie helpers repairing the child env), the real serving path ran on my leased cards \u2014 TP2 + expert-parallel vLLM 0.28.0 on 2x MI250X booted ('Resolved architecture: Qwen3_5MoeForConditionalGeneration', CUDA-graph capture complete, /health 200), generated correct text ('The capital of France is' -> ' Paris.', 16 tok in 2.3s), and completed a full Magpie/InferenceX benchmark_serving run: 64/64 successful requests, 56.9s, output 1151.77 tok/s, total 2303.54 tok/s, mean TTFT 4358.9ms, mean TPOT 50.3ms at concurrency 64 with ISL/OSL 1024/1024 and max_model_len 6144. These are MY validation numbers on my cards for the runnability gate, NOT the sealed baseline (the coordinator owns that measurement)."
+              },
+              {
+                "accuracy_risk": "none",
+                "domain_tags": [
+                  "magpie",
+                  "patch-propagation"
+                ],
+                "expected_impact": "Keeps future enablement edits from landing in a file that gets overwritten each run.",
+                "source": "Magpie/modes/benchmark/benchmarker.py:546-570 and :704-770 + ls of InferenceX benchmarks dir + grep gfx90a in live image_selector.py",
+                "what": "Patch-propagation note for the next round: Magpie._prepare_benchmark_scripts() re-copies Magpie/scripts/benchmark/*.sh over the InferenceX cache on EVERY run, so editing only the .cache/InferenceX@3d55815.../benchmarks copy would be silently reverted. The durable place is the Magpie package. Script selection is deterministic here: priority-2 native 'benchmarks/gptoss_bf16_mi300x.sh' does not exist, so priority 3 selects the (patched) Magpie generic vllm_mi300x.sh. Attempt-1's image_selector gfx90a alias is still present at Magpie/modes/benchmark/image_selector.py:139 (image_selector.py.orig backup alongside), i.e. the REVERT concerned the deeper layers, not that line."
+              },
+              {
+                "accuracy_risk": "none for throughput; blocks the gsm8k accuracy read",
+                "domain_tags": [
+                  "lm-eval",
+                  "eval",
+                  "network",
+                  "magpie"
+                ],
+                "expected_impact": "Determines whether the accuracy floor can be measured at all this session; throughput gate is unaffected.",
+                "source": "/opt/envs/vllm/bin/python3 -c 'import lm_eval' -> ModuleNotFoundError; /tmp/lmeval{,2,3,4,5}.log; Magpie/scripts/benchmark/vllm_mi300x.sh:148-158; InferenceX benchmarks/benchmark_lib.sh:870-887 and :1767-1783",
+                "what": "Residual RISK (not a code gap, and not fixed by patch 003): the baseline config sets RUN_EVAL=true, vllm_mi300x.sh does 'run_eval ... || exit $?' so an eval-phase failure fails the whole run even after throughput already succeeded, and lm_eval is NOT importable in /opt/envs/vllm. InferenceX's _install_lm_eval_deps() cannot fetch it on this host right now: pip fails against both mirrors.aliyun.com and pypi.org with 'Connection broken: IncompleteRead/BrokenPipe/ConnectionReset', and the stale mirror additionally reports ResolutionImpossible for the 'api' extra. The harness installs it itself (pip install --break-system-packages 'lm-eval[api]' then a pinned --no-deps force-reinstall of EleutherAI/lm-evaluation-harness@b315ef3b), so a reachable index is the only requirement."
+              },
+              {
+                "accuracy_risk": "low-moderate: split-KV and QuickReduce at world>=4 change summation order, so temp=0 token-exact comparability against an older baseline breaks (accuracy floor itself unaffected)",
+                "domain_tags": [
+                  "gfx90a",
+                  "aiter",
+                  "moe-config",
+                  "perf-levers"
+                ],
+                "expected_impact": "Points the explore/static_recon rounds at the levers that actually apply to this host.",
+                "source": "vllm/_aiter_ops.py:134-155 + vllm/model_executor/layers/mi250_kernels.py + vllm/v1/attention/ops/rocm_splitkv_pa.py + scratch/ixrun/ws/server.log and 78b25f.../scratch/server3.log warnings",
+                "what": "Perf-lever map for whoever follows (enablement is done, so this is hand-off, not this round's deliverable): AITER is hard-gated off on gfx90a in this build (vllm/_aiter_ops.py:134-155 returns get_cdna_version() > 2, i.e. CDNA3+ only), so VLLM_ROCM_USE_AITER=1 is a no-op on MI250X \u2014 confirmed live: 'Final IR op priority ... rms_norm=[native]'. In-tree MI250X paths DO exist and are env-gated: vllm/model_executor/layers/mi250_kernels.py (MI250_GATE_GEMV) and vllm/v1/attention/ops/rocm_splitkv_pa.py (VLLM_ROCM_SPLITKV_PA). Also observed: 'Config file not found at vllm/model_executor/layers/fused_moe/configs/E=128,N=512,device_name=AMD_Instinct_MI250X_MI250.json' -> MoE is running on default (untuned) configs, and 'Cannot use ROCm custom paged attention kernel, falling back to Triton'."
+              }
+            ],
+            "patch_grounding": {
+              "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-35B-A3B/20260914T094955Z-aa171c76/runs/specialist/d00cdedfc173451eaf5b312d08e00da9/patches/003_rocm_visible_devices_logical_repin.patch": "applies"
+            },
+            "patches_written": [
+              "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-35B-A3B/20260914T094955Z-aa171c76/runs/specialist/d00cdedfc173451eaf5b312d08e00da9/patches/003_rocm_visible_devices_logical_repin.patch"
+            ],
+            "proposal_set": [],
+            "residual_questions": [
+              "Is the gsm8k eval part of the RUNNABILITY gate for this enablement round? If yes, the host needs a reachable PyPI index (or a preinstalled lm-eval): InferenceX auto-installs it inside run_eval, but pip currently fails on both mirrors.aliyun.com and pypi.org with connection resets. Suggested one-time command if the Coordinator has a working egress/proxy: python3 -m pip install --no-cache-dir --retries 10 'lm-eval[api]'.",
+              "Should HIP_VISIBLE_DEVICES be removed from the pod/launcher env entirely? Patch 003 repairs it per-child (safe, non-invasive), but the root inconsistency is that the container entrypoint exports host-physical HIP ids while hyperloom pins logical ROCR ids for the lease.",
+              "The two Magpie helpers are framework-generic; only the ROCm/ROCR alignment branch is exercised on NVIDIA-free hosts. Confirm no CI expects the old 'only repin when HIP is unset' behaviour in vllm_mi300x.sh."
+            ],
+            "setup_commands": [],
+            "summary": "Made Ornith-1.5-35B-A3B + vLLM RUNNABLE, attacking a different (deeper) layer than the reverted attempt-1 patch. Attempt 1's gfx90a->mi300x runner alias is still live in the tree, so the real remaining blockers were two stacked Magpie CHILD-ENV bugs: (B2) the pod exports host-physical HIP_VISIBLE_DEVICES=2,3 while the lease pins ROCR_VISIBLE_DEVICES=0,1 \u2014 ROCR filters and renumbers at HSA, so HIP selects nothing -> 'RuntimeError: No CUDA GPUs are available' / 'Engine core initialization failed'; (B3) the injected PATH (/opt/venv/bin, no vllm/hf/transformers) -> 'setsid: failed to execute vllm: No such file or directory'. Each was proven independently fatal by negative control against the ORIGINAL scripts (scratch/neg1 rc=1 in ~2s, scratch/neg2 rc=1 worker RuntimeError). Patch 003 adds align_rocm_visible_devices() + ensure_framework_env_on_path() at _build_local_command, the single funnel every local server/client phase passes through, and hardens Magpie/scripts/benchmark/vllm_mi300x.sh, whose existing logic only repinned HIP when HIP was UNSET and so could never repair an already-set physical id. Verified on my cards: real TP2/EP vLLM server booted, CUDA graphs captured, /health 200, correct text generation, and a full Magpie/InferenceX benchmark_serving run completed 64/64 requests at 1151.77 tok/s output (TTFT 4358.9ms, TPOT 50.3ms) \u2014 my runnability numbers, not the sealed baseline. Cleared failure: child sees 0 usable GPUs + framework CLI missing. Next (deeper) failure: the eval stage only \u2014 lm_eval is not installed and pip cannot reach an index from this host; throughput gate is unaffected. GPU/cards left clean, no processes of mine running."
+          },
+          "task_id": "d00cdedfc173451eaf5b312d08e00da9",
+          "transcript_path": "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-35B-A3B/20260914T094955Z-aa171c76/runs/specialist/d00cdedfc173451eaf5b312d08e00da9/transcript.jsonl",
+          "turns_used": 1,
+          "workspace": "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-35B-A3B/20260914T094955Z-aa171c76/runs/specialist/d00cdedfc173451eaf5b312d08e00da9"
+        },
+        "state": "succeeded",
+        "task_id": "d00cdedfc173451eaf5b312d08e00da9"
+      },
+      "summary": "kind=specialist state=succeeded tput=None decision=None",
+      "topic": "delegated_result"
+    },
+    {
+      "from_agent": "robustness",
+      "payload": {
+        "detail": {
+          "evidence": {
+            "count": 6,
+            "from": "coordinator",
+            "rule_distribution": {
+              "enablement_round_in_flight": 6
+            },
+            "top_rule": "enablement_round_in_flight"
+          },
+          "severity": "medium",
+          "source": "coordinator_events",
+          "subject": {
+            "agent": "coordinator"
+          },
+          "suggestion": "escalate_strategy_change to review the action catalogue / role config",
+          "symptom": "repeated_policy_denied"
+        },
+        "severity": "medium",
+        "summary": "agent coordinator hit policy_denied 6 times (>= 3); top rule=enablement_round_in_flight"
+      },
+      "summary": "sev=medium agent coordinator hit policy_denied 6 times (>= 3); top rule=enablement_round_in_flight",
+      "topic": "alert"
+    },
+    {
+      "from_agent": "robustness",
+      "payload": {
+        "detail": {
+          "evidence": {
+            "build_count": 6,
+            "jit_dir": "/opt/envs/vllm/lib/python3.12/site-packages/aiter/jit",
+            "stale_build_threshold": 1,
+            "stale_ticks": 145
+          },
+          "severity": "medium",
+          "source": "local",
+          "subject": {},
+          "suggestion": "observe; if it persists, suggest cleaning <jit_dir>/build/ manually between runs",
+          "symptom": "aiter_jit_build_stuck"
+        },
+        "severity": "medium",
+        "summary": "aiter jit build_count=6 unchanged for 145 consecutive ticks; a prior hipcc invocation likely crashed mid-build"
+      },
+      "summary": "sev=medium aiter jit build_count=6 unchanged for 145 consecutive ticks; a prior hipcc invocation likely crashed mid-build",
+      "topic": "alert"
+    },
+    {
+      "from_agent": "orchestration",
+      "payload": {
+        "severity": "high",
+        "summary": "CORRECTION: gate holder d00cdedf is NOT phantom \u2014 its underlying enablement-specialist PROCESS is alive and writing under run dir 78b25f2832ff45ff949ad9c0e9634cf3 (process.log mtime 10:20:24Z, scratch/server3.log mtime 10:22Z, launcher3.out 10:17, patches/ touched 10:19, triton Worker_TP1 pid=18890 collecting artifacts). Task registry (get_running_tasks) shows EMPTY => registry desynced from live process, which is why no lease/force-reap ever fires. Live evidence window now: server3.log frozen ~33min (10:22 -> 10:55Z), consistent with the prior wedged pattern. ACTION FOR ROBUSTNESS: do not wait for TTL (lapsed); locate pid group writing /session/.../runs/specialist/78b25f2832ff45ff949ad9c0e9634cf3/scratch/server3.log (fuser/lsof on that file), kill the tree, then clear the enablement_round record so PolicyGate rearms. Baseline probe (round-9, idempotency baseline-round-9, params unchanged: unset CUDA/HIP_VISIBLE_DEVICES, pre-kill orphans 18501/18709) re-fires on gate clear; I will stop probing and emit skip-style escalation with this same evidence if the block persists past ~11:25Z."
+      },
+      "summary": "sev=high CORRECTION: gate holder d00cdedf is NOT phantom \u2014 its underlying enablement-specialist PROCESS is alive and writing under run dir 78b25f2832ff45ff949ad9c0e9634cf3 (process.log mtime 10:20:24Z, scratch/server3.log mtime 10:22Z, launcher3.out 10:17, patches/ touched 10:19, triton Worker_TP1 pid=18890 collecting artifacts). Task registry (get_running_tasks) shows EMPTY => registry desynced from live process, which is why no lease/force-reap ever fires. Live evidence window now: server3.log frozen ~33min (10:22 -> 10:55Z), consistent with the prior wedged pattern. ACTION FOR ROBUSTNESS: do not wait for TTL (lapsed); locate pid group writing /session/.../runs/specialist/78b25f2832ff45ff949ad9c0e9634cf3/scratch/server3.log (fuser/lsof on that file), kill the tree, then clear the enablement_round record so PolicyGate rearms. Baseline probe (round-9, idempotency baseline-round-9, params unchanged: unset CUDA/HIP_VISIBLE_DEVICES, pre-kill orphans 18501/18709) re-fires on gate clear; I will stop probing and emit skip-style escalation with this same evidence if the block persists past ~11:25Z.",
+      "topic": "alert"
+    },
+    {
+      "from_agent": "robustness",
+      "payload": {
+        "detail": {
+          "evidence": {
+            "cap_sec": 216,
+            "elapsed_sec": 2013,
+            "phase": "PRELUDE",
+            "used_pct": 932.0
+          },
+          "severity": "medium",
+          "source": "shared_state",
+          "subject": {},
+          "suggestion": "wind down this phase or escalate a phase change",
+          "symptom": "phase_budget_nearly_exhausted"
+        },
+        "severity": "medium",
+        "summary": "PRELUDE phase budget 932% consumed (2013s of 216s cap)"
+      },
+      "summary": "sev=medium PRELUDE phase budget 932% consumed (2013s of 216s cap)",
+      "topic": "alert"
+    },
+    {
+      "from_agent": "robustness",
+      "payload": {
+        "detail": {
+          "evidence": {
+            "count": 1,
+            "pattern": "RuntimeError",
+            "samples": [
+              "[server.log] (APIServer pid=15383)     raise RuntimeError("
+            ]
+          },
+          "severity": "medium",
+          "source": "local",
+          "subject": {
+            "pattern": "RuntimeError"
+          },
+          "suggestion": "review log evidence with RCA before further action",
+          "symptom": "log_error_pattern"
+        },
+        "severity": "medium",
+        "summary": "log error pattern 'RuntimeError' matched 1 times"
+      },
+      "summary": "sev=medium log error pattern 'RuntimeError' matched 1 times",
+      "topic": "alert"
+    },
+    {
+      "from_agent": "robustness",
+      "payload": {
+        "detail": {
+          "evidence": {
+            "count": 1,
+            "pattern": "RuntimeError: Engine core initialization failed",
+            "samples": [
+              "[server.log] (APIServer pid=15383) RuntimeError: Engine core initialization failed. See root cause above. Failed core proc(s): {}"
+            ]
+          },
+          "severity": "high",
+          "source": "local",
+          "subject": {
+            "pattern": "RuntimeError: Engine core initialization failed"
+          },
+          "suggestion": "delegate(recover, force_gpu_cleanup=True) or escalate strategy",
+          "symptom": "log_error_pattern"
+        },
+        "severity": "high",
+        "summary": "log error pattern 'RuntimeError: Engine core initialization failed' matched 1 times"
+      },
+      "summary": "sev=high log error pattern 'RuntimeError: Engine core initialization failed' matched 1 times",
+      "topic": "alert"
+    },
+    {
+      "from_agent": "robustness",
+      "payload": {
+        "detail": {
+          "evidence": {
+            "last_progress_tick": 2,
+            "threshold": 15,
+            "ticks_without_progress": 140
+          },
+          "severity": "high",
+          "source": "shared_state",
+          "subject": {},
+          "suggestion": "operator intervention; wind down via report if the budget is tight",
+          "symptom": "conversation_no_progress"
+        },
+        "severity": "high",
+        "summary": "orchestration stalled for 140 ticks (threshold=15); last progress at tick 2"
+      },
+      "summary": "sev=high orchestration stalled for 140 ticks (threshold=15); last progress at tick 2",
+      "topic": "alert"
+    },
+    {
+      "from_agent": "robustness",
+      "payload": {
+        "detail": {
+          "evidence": {
+            "count": 5,
+            "from": "coordinator",
+            "rule_distribution": {
+              "enablement_round_in_flight": 5
+            },
+            "top_rule": "enablement_round_in_flight"
+          },
+          "severity": "medium",
+          "source": "coordinator_events",
+          "subject": {
+            "agent": "coordinator"
+          },
+          "suggestion": "escalate_strategy_change to review the action catalogue / role config",
+          "symptom": "repeated_policy_denied"
+        },
+        "severity": "medium",
+        "summary": "agent coordinator hit policy_denied 5 times (>= 3); top rule=enablement_round_in_flight"
+      },
+      "summary": "sev=medium agent coordinator hit policy_denied 5 times (>= 3); top rule=enablement_round_in_flight",
+      "topic": "alert"
+    },
+    {
+      "from_agent": "robustness",
+      "payload": {
+        "detail": {
+          "evidence": {
+            "build_count": 6,
+            "jit_dir": "/opt/envs/vllm/lib/python3.12/site-packages/aiter/jit",
+            "stale_build_threshold": 1,
+            "stale_ticks": 140
+          },
+          "severity": "medium",
+          "source": "local",
+          "subject": {},
+          "suggestion": "observe; if it persists, suggest cleaning <jit_dir>/build/ manually between runs",
+          "symptom": "aiter_jit_build_stuck"
+        },
+        "severity": "medium",
+        "summary": "aiter jit build_count=6 unchanged for 140 consecutive ticks; a prior hipcc invocation likely crashed mid-build"
+      },
+      "summary": "sev=medium aiter jit build_count=6 unchanged for 140 consecutive ticks; a prior hipcc invocation likely crashed mid-build",
+      "topic": "alert"
+    },
+    {
+      "from_agent": "robustness",
+      "payload": {
+        "detail": {
+          "evidence": {
+            "cap_sec": 216,
+            "elapsed_sec": 1948,
+            "phase": "PRELUDE",
+            "used_pct": 902.0
+          },
+          "severity": "medium",
+          "source": "shared_state",
+          "subject": {},
+          "suggestion": "wind down this phase or escalate a phase change",
+          "symptom": "phase_budget_nearly_exhausted"
+        },
+        "severity": "medium",
+        "summary": "PRELUDE phase budget 902% consumed (1948s of 216s cap)"
+      },
+      "summary": "sev=medium PRELUDE phase budget 902% consumed (1948s of 216s cap)",
+      "topic": "alert"
+    },
+    {
+      "from_agent": "robustness",
+      "payload": {
+        "detail": {
+          "evidence": {
+            "count": 1,
+            "pattern": "RuntimeError",
+            "samples": [
+              "[server.log] (APIServer pid=15383)     raise RuntimeError("
+            ]
+          },
+          "severity": "medium",
+          "source": "local",
+          "subject": {
+            "pattern": "RuntimeError"
+          },
+          "suggestion": "review log evidence with RCA before further action",
+          "symptom": "log_error_pattern"
+        },
+        "severity": "medium",
+        "summary": "log error pattern 'RuntimeError' matched 1 times"
+      },
+      "summary": "sev=medium log error pattern 'RuntimeError' matched 1 times",
+      "topic": "alert"
+    },
+    {
+      "from_agent": "robustness",
+      "payload": {
+        "detail": {
+          "evidence": {
+            "count": 1,
+            "pattern": "RuntimeError: Engine core initialization failed",
+            "samples": [
+              "[server.log] (APIServer pid=15383) RuntimeError: Engine core initialization failed. See root cause above. Failed core proc(s): {}"
+            ]
+          },
+          "severity": "high",
+          "source": "local",
+          "subject": {
+            "pattern": "RuntimeError: Engine core initialization failed"
+          },
+          "suggestion": "delegate(recover, force_gpu_cleanup=True) or escalate strategy",
+          "symptom": "log_error_pattern"
+        },
+        "severity": "high",
+        "summary": "log error pattern 'RuntimeError: Engine core initialization failed' matched 1 times"
+      },
+      "summary": "sev=high log error pattern 'RuntimeError: Engine core initialization failed' matched 1 times",
+      "topic": "alert"
+    },
+    {
+      "from_agent": "robustness",
+      "payload": {
+        "detail": {
+          "evidence": {
+            "last_progress_tick": 2,
+            "threshold": 15,
+            "ticks_without_progress": 135
+          },
+          "severity": "high",
+          "source": "shared_state",
+          "subject": {},
+          "suggestion": "operator intervention; wind down via report if the budget is tight",
+          "symptom": "conversation_no_progress"
+        },
+        "severity": "high",
+        "summary": "orchestration stalled for 135 ticks (threshold=15); last progress at tick 2"
+      },
+      "summary": "sev=high orchestration stalled for 135 ticks (threshold=15); last progress at tick 2",
+      "topic": "alert"
+    },
+    {
+      "from_agent": "robustness",
+      "payload": {
+        "detail": {
+          "evidence": {
+            "count": 4,
+            "from": "coordinator",
+            "rule_distribution": {
+              "enablement_round_in_flight": 4
+            },
+            "top_rule": "enablement_round_in_flight"
+          },
+          "severity": "medium",
+          "source": "coordinator_events",
+          "subject": {
+            "agent": "coordinator"
+          },
+          "suggestion": "escalate_strategy_change to review the action catalogue / role config",
+          "symptom": "repeated_policy_denied"
+        },
+        "severity": "medium",
+        "summary": "agent coordinator hit policy_denied 4 times (>= 3); top rule=enablement_round_in_flight"
+      },
+      "summary": "sev=medium agent coordinator hit policy_denied 4 times (>= 3); top rule=enablement_round_in_flight",
+      "topic": "alert"
+    },
+    {
+      "from_agent": "robustness",
+      "payload": {
+        "detail": {
+          "evidence": {
+            "build_count": 6,
+            "jit_dir": "/opt/envs/vllm/lib/python3.12/site-packages/aiter/jit",
+            "stale_build_threshold": 1,
+            "stale_ticks": 135
+          },
+          "severity": "medium",
+          "source": "local",
+          "subject": {},
+          "suggestion": "observe; if it persists, suggest cleaning <jit_dir>/build/ manually between runs",
+          "symptom": "aiter_jit_build_stuck"
+        },
+        "severity": "medium",
+        "summary": "aiter jit build_count=6 unchanged for 135 consecutive ticks; a prior hipcc invocation likely crashed mid-build"
+      },
+      "summary": "sev=medium aiter jit build_count=6 unchanged for 135 consecutive ticks; a prior hipcc invocation likely crashed mid-build",
+      "topic": "alert"
+    },
+    {
+      "from_agent": "robustness",
+      "payload": {
+        "detail": {
+          "evidence": {
+            "cap_sec": 216,
+            "elapsed_sec": 1903,
+            "phase": "PRELUDE",
+            "used_pct": 881.0
+          },
+          "severity": "medium",
+          "source": "shared_state",
+          "subject": {},
+          "suggestion": "wind down this phase or escalate a phase change",
+          "symptom": "phase_budget_nearly_exhausted"
+        },
+        "severity": "medium",
+        "summary": "PRELUDE phase budget 881% consumed (1903s of 216s cap)"
+      },
+      "summary": "sev=medium PRELUDE phase budget 881% consumed (1903s of 216s cap)",
+      "topic": "alert"
+    },
+    {
+      "from_agent": "robustness",
+      "payload": {
+        "detail": {
+          "evidence": {
+            "count": 1,
+            "pattern": "RuntimeError",
+            "samples": [
+              "[server.log] (APIServer pid=15383)     raise RuntimeError("
+            ]
+          },
+          "severity": "medium",
+          "source": "local",
+          "subject": {
+            "pattern": "RuntimeError"
+          },
+          "suggestion": "review log evidence with RCA before further action",
+          "symptom": "log_error_pattern"
+        },
+        "severity": "medium",
+        "summary": "log error pattern 'RuntimeError' matched 1 times"
+      },
+      "summary": "sev=medium log error pattern 'RuntimeError' matched 1 times",
+      "topic": "alert"
+    },
+    {
+      "from_agent": "robustness",
+      "payload": {
+        "detail": {
+          "evidence": {
+            "count": 1,
+            "pattern": "RuntimeError: Engine core initialization failed",
+            "samples": [
+              "[server.log] (APIServer pid=15383) RuntimeError: Engine core initialization failed. See root cause above. Failed core proc(s): {}"
+            ]
+          },
+          "severity": "high",
+          "source": "local",
+          "subject": {
+            "pattern": "RuntimeError: Engine core initialization failed"
+          },
+          "suggestion": "delegate(recover, force_gpu_cleanup=True) or escalate strategy",
+          "symptom": "log_error_pattern"
+        },
+        "severity": "high",
+        "summary": "log error pattern 'RuntimeError: Engine core initialization failed' matched 1 times"
+      },
+      "summary": "sev=high log error pattern 'RuntimeError: Engine core initialization failed' matched 1 times",
+      "topic": "alert"
+    },
+    {
+      "from_agent": "robustness",
+      "payload": {
+        "detail": {
+          "evidence": {
+            "last_progress_tick": 2,
+            "threshold": 15,
+            "ticks_without_progress": 130
+          },
+          "severity": "high",
+          "source": "shared_state",
+          "subject": {},
+          "suggestion": "operator intervention; wind down via report if the budget is tight",
+          "symptom": "conversation_no_progress"
+        },
+        "severity": "high",
+        "summary": "orchestration stalled for 130 ticks (threshold=15); last progress at tick 2"
+      },
+      "summary": "sev=high orchestration stalled for 130 ticks (threshold=15); last progress at tick 2",
+      "topic": "alert"
+    },
+    {
+      "from_agent": "robustness",
+      "payload": {
+        "detail": {
+          "evidence": {
+            "count": 3,
+            "from": "coordinator",
+            "rule_distribution": {
+              "enablement_round_in_flight": 3
+            },
+            "top_rule": "enablement_round_in_flight"
+          },
+          "severity": "medium",
+          "source": "coordinator_events",
+          "subject": {
+            "agent": "coordinator"
+          },
+          "suggestion": "escalate_strategy_change to review the action catalogue / role config",
+          "symptom": "repeated_policy_denied"
+        },
+        "severity": "medium",
+        "summary": "agent coordinator hit policy_denied 3 times (>= 3); top rule=enablement_round_in_flight"
+      },
+      "summary": "sev=medium agent coordinator hit policy_denied 3 times (>= 3); top rule=enablement_round_in_flight",
+      "topic": "alert"
+    },
+    {
+      "from_agent": "robustness",
+      "payload": {
+        "detail": {
+          "evidence": {
+            "build_count": 6,
+            "jit_dir": "/opt/envs/vllm/lib/python3.12/site-packages/aiter/jit",
+            "stale_build_threshold": 1,
+            "stale_ticks": 130
+          },
+          "severity": "medium",
+          "source": "local",
+          "subject": {},
+          "suggestion": "observe; if it persists, suggest cleaning <jit_dir>/build/ manually between runs",
+          "symptom": "aiter_jit_build_stuck"
+        },
+        "severity": "medium",
+        "summary": "aiter jit build_count=6 unchanged for 130 consecutive ticks; a prior hipcc invocation likely crashed mid-build"
+      },
+      "summary": "sev=medium aiter jit build_count=6 unchanged for 130 consecutive ticks; a prior hipcc invocation likely crashed mid-build",
+      "topic": "alert"
+    },
+    {
+      "from_agent": "robustness",
+      "payload": {
+        "detail": {
+          "evidence": {
+            "cap_sec": 216,
+            "elapsed_sec": 1851,
+            "phase": "PRELUDE",
+            "used_pct": 857.0
+          },
+          "severity": "medium",
+          "source": "shared_state",
+          "subject": {},
+          "suggestion": "wind down this phase or escalate a phase change",
+          "symptom": "phase_budget_nearly_exhausted"
+        },
+        "severity": "medium",
+        "summary": "PRELUDE phase budget 857% consumed (1851s of 216s cap)"
+      },
+      "summary": "sev=medium PRELUDE phase budget 857% consumed (1851s of 216s cap)",
+      "topic": "alert"
+    },
+    {
+      "from_agent": "orchestration",
+      "payload": {
+        "severity": "high",
+        "summary": "Enablement gate is holding on a phantom task: baseline-round-4 (d00cdedf...) and baseline-round-5 (d00cdedf...) both DENIED rule=enablement_round_in_flight, but get_running_tasks returns ZERO in-flight tasks on the same ticks. Previous holder 78b25f28 is gone; d00cdedf never appeared in the registry. This is gate/registry desync in PolicyGate state, not a live round \u2014 retrying baseline cannot clear it. Robustness action ladder needed: force-reap/clear enablement_round state for task d00cdedfc173451eaf5b312d08e00da9 (and any lingering enablement authoring records). The 'orchestration stalled 125 ticks' and pid=15383 Engine-core-init alerts are downstream artifacts of this same block (attempt-1 stale log). Until cleared, every PRELUDE tick is wasted; ~117min session budget remains and baseline is fully prepared to fire."
+      },
+      "summary": "sev=high Enablement gate is holding on a phantom task: baseline-round-4 (d00cdedf...) and baseline-round-5 (d00cdedf...) both DENIED rule=enablement_round_in_flight, but get_running_tasks returns ZERO in-flight tasks on the same ticks. Previous holder 78b25f28 is gone; d00cdedf never appeared in the registry. This is gate/registry desync in PolicyGate state, not a live round \u2014 retrying baseline cannot clear it. Robustness action ladder needed: force-reap/clear enablement_round state for task d00cdedfc173451eaf5b312d08e00da9 (and any lingering enablement authoring records). The 'orchestration stalled 125 ticks' and pid=15383 Engine-core-init alerts are downstream artifacts of this same block (attempt-1 stale log). Until cleared, every PRELUDE tick is wasted; ~117min session budget remains and baseline is fully prepared to fire.",
+      "topic": "alert"
+    }
+  ],
+  "kernel_optimization_summary": {
+    "report_path": "reports/kernel_optimization_summary.json",
+    "totals": {
+      "attempted": 0,
+      "in_flight": 0,
+      "integrated": 0,
+      "keep_pending": 0,
+      "rejected": 0,
+      "top_candidates": 0
+    }
+  },
+  "max_minutes": 120,
+  "model_class": "moe_swa",
+  "model_name": "Ornith-1.5-35B-A3B",
+  "model_path": "/mnt/stripe-3mix-3t2/models/ornith-ai/Ornith-1.5-35B-A3B",
+  "model_warnings": [
+    {
+      "architecture": "Qwen3_5MoeForConditionalGeneration",
+      "detail": "DEGRADED MODE: model 'Ornith-1.5-35B-A3B' carries a multimodal signal (multimodal config key 'vision_config'; architecture 'Qwen3_5MoeForConditionalGeneration', model_type 'qwen3_5_moe') but exposes a text-generation path. Hyperloom is running it on the TEXT path only \u2014 any image/audio inputs are ignored, so benchmark numbers reflect the text decoder alone. Pass --no-allow-mm-text-fallback to fail-fast instead.",
+      "kind": "multimodal_text_fallback",
+      "model_name": "Ornith-1.5-35B-A3B",
+      "model_type": "qwen3_5_moe",
+      "signal": "multimodal config key 'vision_config'"
+    }
+  ],
+  "optimization_stack_len": 0,
+  "pending_keep_kernels": [],
+  "platform": {
+    "boost": "on",
+    "cpu": "AMD EPYC 7413 24-Core Processor",
+    "governor": "schedutil",
+    "gpu": {
+      "amdgpu_driver": "6.16.13",
+      "gfx_arch": "unknown",
+      "host_count": 8
+    },
+    "host": "amd-server",
+    "kernel": "6.8.0-139-generic",
+    "multi_node_session": false,
+    "nps": "NPS1",
+    "numa_nodes": 2,
+    "smt": "off",
+    "sockets": 2,
+    "stack": {
+      "aiter": "unknown",
+      "rocm": "7.2.4",
+      "sglang": "unknown",
+      "vllm": "0.28.0+rocm723"
+    },
+    "status": "ok"
+  },
+  "pruned_families": [],
+  "report_generated_at": "2026-09-14T12:45:04.441589+00:00",
+  "server_boot_failures": 0,
+  "session_id": "Ornith-1.5-35B-A3B_20260914T094955Z_a8127778",
+  "stop_reason": "enablement_stalled",
+  "stop_reason_explanation": "The enablement loop made no forward progress for several consecutive rounds and stopped instead of re-deriving the same fix.",
+  "untried_hot_reusable_kernels": []
+}

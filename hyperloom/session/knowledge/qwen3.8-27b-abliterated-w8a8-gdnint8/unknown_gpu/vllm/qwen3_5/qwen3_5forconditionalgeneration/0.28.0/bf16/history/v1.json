@@ -1,0 +1,63 @@
+{
+  "archived_at": "2026-09-14T13:57:19.507043+00:00",
+  "canonical_id": "inference:qwen3.8-27b-abliterated-w8a8-gdnint8:unknown_gpu:vllm:qwen3_5:qwen3_5forconditionalgeneration:0.28.0:bf16",
+  "replaced_by": {
+    "details": {
+      "sid": "20260914T134902Z-244d9455"
+    },
+    "generated_at": "2026-09-14T13:57:19.506921+00:00",
+    "generator": "t0_anchor",
+    "source": "hyperloom-inference-optimizer"
+  },
+  "snapshot": {
+    "architectures": [
+      "Qwen3_5ForConditionalGeneration"
+    ],
+    "authority": "EXPERIENTIAL",
+    "best_config": {},
+    "best_throughput": 0.0,
+    "canonical_id": "inference:qwen3.8-27b-abliterated-w8a8-gdnint8:unknown_gpu:vllm:qwen3_5:qwen3_5forconditionalgeneration:0.28.0:bf16",
+    "conc": 64,
+    "confidence": 0.85,
+    "created_at": "2026-09-14T13:49:03.270640+00:00",
+    "ep": 1,
+    "evidence_refs": [],
+    "framework_name": "vllm",
+    "framework_version": "0.28.0",
+    "hardware": "unknown_gpu",
+    "image_digest": "rocm-ai/vllm:0.28.0-rocm7.2.4",
+    "isl": 1024,
+    "kernel_optimizations": [],
+    "last_profiled": "",
+    "lessons": [],
+    "max_model_len": 6144,
+    "model": "Qwen3.8-27B-ABLITERATED-W8A8-gdnint8",
+    "model_class": "dense",
+    "model_type": "qwen3_5",
+    "osl": 1024,
+    "pitfalls": [],
+    "precision": "bf16",
+    "provenance": {
+      "details": {
+        "sid": "20260914T134902Z-244d9455"
+      },
+      "generated_at": "2026-09-14T13:49:03.270243+00:00",
+      "generator": "t0_anchor",
+      "source": "hyperloom-inference-optimizer"
+    },
+    "remaining_gaps": [],
+    "rocm_version": "7.2.4",
+    "sessions": [],
+    "stack_fingerprint": {
+      "aiter_commit": "",
+      "rocm_version": "7.2.4",
+      "vllm_version": "0.28.0+rocm723"
+    },
+    "tp": 1,
+    "updated_at": "2026-09-14T13:49:03.270640+00:00",
+    "version": 1,
+    "what_failed": [],
+    "what_worked": []
+  },
+  "version": 1
+}

@@ -1,0 +1,12 @@
+{
+  "confidence": 0.0,
+  "domain": "framework_rewrite_specialist",
+  "empty": true,
+  "gap_canonical_id": "inference:ornith-1.5-397b-fp8:mi250x:vllm:qwen3_5_moe:qwen3_5moeforconditionalgeneration:0.28.0:fp8#fail:baseline:subprocess_nonzero",
+  "new_findings": [],
+  "proposal_set": [],
+  "reason": "subprocess_timeout: specialist subprocess exceeded 600s wall-clock cap",
+  "residual_questions": [],
+  "summary": "subprocess_timeout: specialist subprocess exceeded 600s wall-clock cap",
+  "ts": "2026-09-15T17:41:51.080219+00:00"
+}

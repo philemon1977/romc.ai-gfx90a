@@ -1,0 +1,50 @@
+# Research Hints
+
+## 1. Baseline decode step costs 137.8ms at batch 64. Weight-streaming floor for 26.46GiB INT8 on one MI250X GCD (~1.23-1.6TB/s) is ~18-23ms/step, so we are ~6x off the memory roofline => the step is compute/LSU-issue bound, not weight-BW bound. Any lever that cuts per-step bytes-per-token or instruction count is worth more than another weight-BW lever.
+- expected_impact: Reframes the search: target per-step decode work, not KV/util tuning.
+- accuracy_risk: none (analysis)
+- domain_tags: roofline, decode
+- status: proposed
+- source: runs/baseline/e420b1b3a97f4b7eb334a1df38a32578/benchmark_vllm_20260914_173834/summary.txt + gpu_worker.py:741 memory line
+
+## 2. GDN recurrent (SSM) state cache is float32. text_config.mamba_ssm_dtype='float32' and vllm/model_executor/models/config.py:786-805 (Qwen3_5ForConditionalGenerationConfig) copies it into cache_config.mamba_ssm_cache_dtype when that is 'auto'. Size: 48 value heads x 128 x 128 x 4B = 3.1MB/layer x 48 GDN layers = 151MB per in-flight request, read+written every decode step => ~19.3GB/step at conc 64 (~12-16ms/step at BW floor, and fp32 doubles the LSU/vector-register pressure at fixed sclk). --mamba-ssm-cache-dtype is a first-class CLI flag (engine/arg_utils.py:1237, MambaDType=['auto','float32','float16','bfloat16']) and an explicit user override is honoured with only a warning.
+- expected_impact: Highest-value single byte-reduction available; 5-15% throughput if BW-relevant, more if LSU-bound at locked clocks.
+- accuracy_risk: Real: bf16 recurrent state accumulates rounding over long (2048-6144) contexts. Model author shipped fp32 deliberately.
+- domain_tags: mamba, gdn, kv-cache, dtype
+- status: proposed
+- source: /mnt/stripe-3mix-3t2/models/davetha/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/config.json + /opt/envs/vllm/lib/python3.12/site-packages/vllm/model_executor/models/config.py:781-805
+
+## 3. GPU clocks were reported at sclk 800 MHz / fclk 400 MHz for ALL 1748 monitoring samples across the 3766s baseline run (range '800 - 800'), at a flat 96-98W package power, and a read-only `rocm-smi --showclocks` at idle now still shows sclk level 1 (800MHz) on every GCD. MI250X boost is ~1.7GHz/300W+. If the DPM level is genuinely pinned to min, every compute/issue-bound kernel in this workload pays ~2.1x and no vLLM flag can recover it.
+- expected_impact: Potentially larger than all config levers combined; needs Coordinator confirmation because it is a rig property, not a serving flag.
+- accuracy_risk: none
+- domain_tags: environment, clocks, roofline
+- status: proposed
+- source: summary.txt 'GPU Clock: 800 - 800 MHz (avg: 800)' + rocm-smi --showclocks (read-only)
+
+## 4. Prefill interference is NOT the bottleneck. At steady state ~70 decode steps + ~2 prefill chunks (max_num_batched_tokens=2048 default, config/scheduler.py:42) fit in a 10s window; solving 70*T_dec + 2*T_pre = 10000ms with T_dec=137ms leaves only ~410ms total for prefill => mixed/prefill steps are ~4% of wall clock. Mean ITL (137.81ms) == mean TPOT (137.81ms) confirms this. Levers aimed at prefill/decode mixing (chunked-prefill budgets, cudagraph_mode for prefill) are low-yield here.
+- expected_impact: Saves ~2 benchmark slots by ruling out the prefill-mixing family.
+- accuracy_risk: none
+- domain_tags: scheduler, prefill
+- status: proposed
+- source: runs/baseline/.../server.log loggers.py:310 lines (Avg prompt ~1000-1400 tok/s vs Avg generation ~140-290 tok/s at Running: 64)
+
+## 5. KV cache is NOT the limiter either: 31.96 GiB KV / 292,717 tokens, usage peaked at 58.7%, zero 'preempt'/'retract' occurrences in 2500+ scheduler lines, Running: 64 sustained. '--kv-cache-memory=37216046080 to fully utilize gpu memory' and gpu-memory-utilization tuning will produce 0% because nothing is being evicted.
+- expected_impact: Rules out the memory-utilization family.
+- accuracy_risk: none
+- domain_tags: kv-cache
+- status: proposed
+- source: runs/baseline/.../server.log lines 70-72,244 + grep -c preempt=0
+
+## 6. KB law 'MTP is not built into 0.28.0+rocm723 here' is WRONG for this checkpoint. The target checkpoint SHIPS MTP weights (mtp.fc.weight, mtp.layers.0.{q,k,v,o_proj,q_norm,k_norm,mlp.*}) in model.safetensors.index.json, text_config has mtp_num_hidden_layers=1, and vllm/model_executor/models/qwen3_5_mtp.py + a registry entry exist. So --speculative-config {"method":"mtp","num_speculative_tokens":N} should load with NO external draft path.
+- expected_impact: Unlocks a spec-decode lane for future rounds on a prose corpus. NOT proposed this round: the sealed benchmark uses dataset_name='random' and KB law (8) says random corpora collapse acceptance, so it would benchmark as a false negative.
+- accuracy_risk: none (finding)
+- domain_tags: speculative-decoding, mtp
+- status: proposed
+- source: /mnt/.../model.safetensors.index.json + vllm/model_executor/models/qwen3_5_mtp.py
+
+## 7. The sealed harness benchmark is vllm bench serve with dataset_name='random', random_input_len=1024, random_output_len=1024, random_range_ratio=1.0, max_concurrency=64, ignore_eos=True, num_prompts=320, num_warmups=128 (GEMM/graph-config-valid corpus per KB law (9); invalid for judging spec decode). Prefix cache hit rate reaches 32.8% purely from warmup/main prompt reuse, so --no-enable-prefix-caching has a real prefill cost.
+- expected_impact: Explains why random-corpus A/B is valid for config levers and constrains the prefix-caching proposal.
+- accuracy_risk: none
+- domain_tags: benchmark, dataset
+- status: proposed
+- source: runs/baseline/.../benchmark_stdout.log line 329 (argparse Namespace dump)

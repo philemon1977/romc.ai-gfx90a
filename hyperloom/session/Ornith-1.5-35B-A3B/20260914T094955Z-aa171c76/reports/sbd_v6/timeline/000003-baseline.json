@@ -1,0 +1,224 @@
+{
+  "end_time": "2026-09-14T11:49:46+00:00",
+  "ext": {
+    "actions": [
+      {
+        "accuracy_stage": null,
+        "cold_anchor": null,
+        "convergence": null,
+        "duration_sec": 30.516,
+        "end_time": "2026-09-14T09:50:55+00:00",
+        "failure": {
+          "error_class": "subprocess_nonzero",
+          "message": "09-14 09:50:55,441 - Magpie.modes.benchmark.benchmarker - INFO - Copied Magpie script atom_mi300x.sh to /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966/benchmarks\n2026-09-14 09:50:55,442 - Magpie.modes.benchmark.benchmarker - INFO - Copied Magpie script vllm_mi300x.sh to /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966/benchmarks\n2026-09-14 09:50:55,442 - Magpie.modes.benchmark.benchmarker - INFO - Copied Magpie script vllm_mi355x.sh to /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966/benchmarks\n2026-09-14 09:50:55,442 - Magpie.modes.benchmark.benchmarker - INFO - Copied Magpie script vllm_mi300x_mm.sh to /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966/benchmarks\n2026-09-14 09:50:55,621 - Magpie.utils.gpu - INFO - Detected AMD GPU: gfx90a\n2026-09-14 09:50:55,621 - Magpie.modes.benchmark.image_selector - WARNING - No runner type found for gfx90a\n2026-09-14 09:50:55,621 - Magpie.main - ERROR - Benchmark failed with error: No runner type found for gfx90a\nTraceback (most recent call last):\n  File \"/opt/envs/vllm/lib/python3.12/site-packages/Magpie/main.py\", line 1103, in run_benchmark\n    result = benchmarker.run()\n             ^^^^^^^^^^^^^^^^^\n  File \"/opt/envs/vllm/lib/python3.12/site-packages/Magpie/modes/benchmark/benchmarker.py\", line 154, in run\n    runner_type = self._get_runner_type()\n                  ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/envs/vllm/lib/python3.12/site-packages/Magpie/modes/benchmark/benchmarker.py\", line 544, in _get_runner_type\n    return self.image_selector.get_runner_type(self.config.gpu_arch)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/envs/vllm/lib/python3.12/site-packages/Magpie/modes/benchmark/image_selector.py\", line 151, in get_runner_type\n    raise ValueError(f\"No runner type found for {gpu_arch}\")\nValueError: No runner type found for gfx90a\n",
+          "phase": "baseline",
+          "returncode": 1,
+          "stderr_log_path": "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-35B-A3B/20260914T094955Z-aa171c76/runs/baseline/cd3d94f7ca294c10aaccfa48beae0663/baseline_stderr.log"
+        },
+        "in_flight_run_index": null,
+        "materialized_config": "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-35B-A3B/20260914T094955Z-aa171c76/runs/baseline/cd3d94f7ca294c10aaccfa48beae0663/baseline_config.with_envs.yaml",
+        "measurement": {
+          "accuracy": null,
+          "accuracy_metric": "",
+          "accuracy_source": "",
+          "accuracy_task": "",
+          "benchmark_report_path": "",
+          "e2el_mean_ms": null,
+          "throughput_tok_s_per_gpu": null,
+          "tpot_mean_ms": null,
+          "ttft_mean_ms": null,
+          "workspace": ""
+        },
+        "request": {
+          "config_path": "",
+          "establishes_quality_ref": true,
+          "framework": "vllm",
+          "output_dir": "",
+          "reason": "",
+          "requested_timeout_sec": null,
+          "task_id": "cd3d94f7ca294c10aaccfa48beae0663",
+          "task_kind": "baseline"
+        },
+        "run_eval_disabled": false,
+        "runs": [
+          {
+            "attempt_reason": "initial",
+            "end_time": "2026-09-14T09:50:55+00:00",
+            "error_class": "subprocess_nonzero",
+            "rounds": [
+              {
+                "duration_sec": 30.31,
+                "end_time": "2026-09-14T09:50:55+00:00",
+                "failure": {
+                  "error_class": "subprocess_nonzero",
+                  "message": "09-14 09:50:55,441 - Magpie.modes.benchmark.benchmarker - INFO - Copied Magpie script atom_mi300x.sh to /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966/benchmarks\n2026-09-14 09:50:55,442 - Magpie.modes.benchmark.benchmarker - INFO - Copied Magpie script vllm_mi300x.sh to /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966/benchmarks\n2026-09-14 09:50:55,442 - Magpie.modes.benchmark.benchmarker - INFO - Copied Magpie script vllm_mi355x.sh to /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966/benchmarks\n2026-09-14 09:50:55,442 - Magpie.modes.benchmark.benchmarker - INFO - Copied Magpie script vllm_mi300x_mm.sh to /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966/benchmarks\n2026-09-14 09:50:55,621 - Magpie.utils.gpu - INFO - Detected AMD GPU: gfx90a\n2026-09-14 09:50:55,621 - Magpie.modes.benchmark.image_selector - WARNING - No runner type found for gfx90a\n2026-09-14 09:50:55,621 - Magpie.main - ERROR - Benchmark failed with error: No runner type found for gfx90a\nTraceback (most recent call last):\n  File \"/opt/envs/vllm/lib/python3.12/site-packages/Magpie/main.py\", line 1103, in run_benchmark\n    result = benchmarker.run()\n             ^^^^^^^^^^^^^^^^^\n  File \"/opt/envs/vllm/lib/python3.12/site-packages/Magpie/modes/benchmark/benchmarker.py\", line 154, in run\n    runner_type = self._get_runner_type()\n                  ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/envs/vllm/lib/python3.12/site-packages/Magpie/modes/benchmark/benchmarker.py\", line 544, in _get_runner_type\n    return self.image_selector.get_runner_type(self.config.gpu_arch)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/envs/vllm/lib/python3.12/site-packages/Magpie/modes/benchmark/image_selector.py\", line 151, in get_runner_type\n    raise ValueError(f\"No runner type found for {gpu_arch}\")\nValueError: No runner type found for gfx90a\n",
+                  "phase": "round_single",
+                  "returncode": 1,
+                  "stderr_log_path": "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-35B-A3B/20260914T094955Z-aa171c76/runs/baseline/cd3d94f7ca294c10aaccfa48beae0663/baseline_stderr.log"
+                },
+                "label": "single",
+                "measurement": {
+                  "accuracy": null,
+                  "accuracy_metric": "",
+                  "accuracy_source": "",
+                  "accuracy_task": "",
+                  "benchmark_report_path": "",
+                  "e2el_mean_ms": null,
+                  "throughput_tok_s_per_gpu": null,
+                  "tpot_mean_ms": null,
+                  "ttft_mean_ms": null,
+                  "workspace": ""
+                },
+                "run_eval_disabled": false,
+                "start_time": "2026-09-14T09:50:25+00:00",
+                "status": "failed",
+                "timeout_sec": 7800,
+                "timing": {
+                  "post_ready_runtime_sec": null,
+                  "subprocess_runtime_sec": 30.3
+                },
+                "warnings": {
+                  "count": 0,
+                  "messages": []
+                }
+              }
+            ],
+            "run_index": 1,
+            "start_time": "2026-09-14T09:50:25+00:00",
+            "status": "failed",
+            "warnings": {
+              "count": 0,
+              "messages": []
+            }
+          }
+        ],
+        "start_time": "2026-09-14T09:50:25+00:00",
+        "status": "failed",
+        "task_id": "cd3d94f7ca294c10aaccfa48beae0663",
+        "timing": {
+          "post_ready_runtime_sec": null,
+          "subprocess_runtime_sec": 30.3
+        },
+        "warmup_round_tput": null,
+        "warnings": {
+          "count": 0,
+          "messages": []
+        }
+      },
+      {
+        "accuracy_stage": null,
+        "cold_anchor": null,
+        "convergence": null,
+        "duration_sec": 4.048,
+        "end_time": "2026-09-14T11:49:46+00:00",
+        "failure": {
+          "error_class": "subprocess_nonzero",
+          "message": "session/Ornith-1.5-35B-A3B/20260914T094955Z-aa171c76/runs/baseline/3f5caae8b8034e6094faa0c559cdf087/benchmark_vllm_20260914_114944/summary.txt\n2026-09-14 11:49:46,621 - Magpie.modes.benchmark.benchmarker - INFO - Benchmark completed in 2.51s\n2026-09-14 11:49:46,621 - Magpie.main - ERROR - Benchmark failed: ['Benchmark process failed with code 1', 'stderr: + [[ all == \\\\s\\\\e\\\\r\\\\v\\\\e\\\\r ]]\\n+ [[ all == \\\\a\\\\l\\\\l ]]\\n+ SERVER_PID=47746\\n+ [[ all == \\\\a\\\\l\\\\l ]]\\n+ trap \\'magpie_stop_benchmark_server_stack \"$SERVER_PID\"\\' EXIT INT TERM\\n+ wait_for_server_ready --port 8888 --server-log /home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-35B-A3B/20260914T094955Z-aa171c76/runs/baseline/3f5caae8b8034e6094faa0c559cdf087/benchmark_vllm_20260914_114944/server.log --server-pid 47746\\n+ local port=\\n+ local server_log=\\n+ local server_pid=\\n+ local sleep_interval=5\\n+ [[ 6 -gt 0 ]]\\n+ case $1 in\\n+ port=8888\\n+ shift 2\\n+ [[ 4 -gt 0 ]]\\n+ case $1 in\\n+ setsid vllm serve /mnt/stripe-3mix-3t2/models/ornith-ai/Ornith-1.5-35B-A3B --port 8888 --tensor-parallel-size=2 --gpu-memory-utilization 0.95 --max-model-len 6144 --trust-remote-code --distributed-executor-backend mp --enable-expert-parallel\\n+ server_log=/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-35B-A3B/20260914T094955Z-aa171c76/runs/baseline/3f5caae8b8034e6094faa0c559cdf087/benchmark_vllm_20260914_114944/server.log\\n+ shift 2\\n+', 'inferencex_result.json not found - benchmark may have failed locally', 'stderr (last 500 chars): loom/session/Ornith-1.5-35B-A3B/20260914T094955Z-aa171c76/runs/baseline/3f5caae8b8034e6094faa0c559cdf087/benchmark_vllm_20260914_114944/server.log ]]\\n+ [[ -z 47746 ]]\\n+ wait_for_ready --endpoint http://0.0.0.0:8888/health --log /home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-35B-A3B/20260914T094955Z-aa171c76/runs/baseline/3f5caae8b8034e6094faa0c559cdf087/benchmark_vllm_20260914_114944/server.log --pid 47746 --sleep-interval 5\\n+ set +x\\nProcess died before http://0.0.0.0:8888/health became ready.\\n']\n",
+          "phase": "baseline",
+          "returncode": 1,
+          "stderr_log_path": ""
+        },
+        "in_flight_run_index": null,
+        "materialized_config": "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-35B-A3B/20260914T094955Z-aa171c76/runs/baseline/3f5caae8b8034e6094faa0c559cdf087/baseline_config.with_envs.yaml",
+        "measurement": {
+          "accuracy": null,
+          "accuracy_metric": "",
+          "accuracy_source": "",
+          "accuracy_task": "",
+          "benchmark_report_path": "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-35B-A3B/20260914T094955Z-aa171c76/runs/baseline/3f5caae8b8034e6094faa0c559cdf087/benchmark_vllm_20260914_114944/benchmark_report.json",
+          "e2el_mean_ms": null,
+          "throughput_tok_s_per_gpu": null,
+          "tpot_mean_ms": null,
+          "ttft_mean_ms": null,
+          "workspace": "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-35B-A3B/20260914T094955Z-aa171c76/runs/baseline/3f5caae8b8034e6094faa0c559cdf087/benchmark_vllm_20260914_114944"
+        },
+        "request": {
+          "config_path": "",
+          "establishes_quality_ref": true,
+          "framework": "vllm",
+          "output_dir": "",
+          "reason": "",
+          "requested_timeout_sec": null,
+          "task_id": "3f5caae8b8034e6094faa0c559cdf087",
+          "task_kind": "baseline"
+        },
+        "run_eval_disabled": false,
+        "runs": [
+          {
+            "attempt_reason": "initial",
+            "end_time": "2026-09-14T11:49:46+00:00",
+            "error_class": "subprocess_nonzero",
+            "rounds": [
+              {
+                "duration_sec": 3.774,
+                "end_time": "2026-09-14T11:49:46+00:00",
+                "failure": {
+                  "error_class": "subprocess_nonzero",
+                  "message": "session/Ornith-1.5-35B-A3B/20260914T094955Z-aa171c76/runs/baseline/3f5caae8b8034e6094faa0c559cdf087/benchmark_vllm_20260914_114944/summary.txt\n2026-09-14 11:49:46,621 - Magpie.modes.benchmark.benchmarker - INFO - Benchmark completed in 2.51s\n2026-09-14 11:49:46,621 - Magpie.main - ERROR - Benchmark failed: ['Benchmark process failed with code 1', 'stderr: + [[ all == \\\\s\\\\e\\\\r\\\\v\\\\e\\\\r ]]\\n+ [[ all == \\\\a\\\\l\\\\l ]]\\n+ SERVER_PID=47746\\n+ [[ all == \\\\a\\\\l\\\\l ]]\\n+ trap \\'magpie_stop_benchmark_server_stack \"$SERVER_PID\"\\' EXIT INT TERM\\n+ wait_for_server_ready --port 8888 --server-log /home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-35B-A3B/20260914T094955Z-aa171c76/runs/baseline/3f5caae8b8034e6094faa0c559cdf087/benchmark_vllm_20260914_114944/server.log --server-pid 47746\\n+ local port=\\n+ local server_log=\\n+ local server_pid=\\n+ local sleep_interval=5\\n+ [[ 6 -gt 0 ]]\\n+ case $1 in\\n+ port=8888\\n+ shift 2\\n+ [[ 4 -gt 0 ]]\\n+ case $1 in\\n+ setsid vllm serve /mnt/stripe-3mix-3t2/models/ornith-ai/Ornith-1.5-35B-A3B --port 8888 --tensor-parallel-size=2 --gpu-memory-utilization 0.95 --max-model-len 6144 --trust-remote-code --distributed-executor-backend mp --enable-expert-parallel\\n+ server_log=/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-35B-A3B/20260914T094955Z-aa171c76/runs/baseline/3f5caae8b8034e6094faa0c559cdf087/benchmark_vllm_20260914_114944/server.log\\n+ shift 2\\n+', 'inferencex_result.json not found - benchmark may have failed locally', 'stderr (last 500 chars): loom/session/Ornith-1.5-35B-A3B/20260914T094955Z-aa171c76/runs/baseline/3f5caae8b8034e6094faa0c559cdf087/benchmark_vllm_20260914_114944/server.log ]]\\n+ [[ -z 47746 ]]\\n+ wait_for_ready --endpoint http://0.0.0.0:8888/health --log /home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-35B-A3B/20260914T094955Z-aa171c76/runs/baseline/3f5caae8b8034e6094faa0c559cdf087/benchmark_vllm_20260914_114944/server.log --pid 47746 --sleep-interval 5\\n+ set +x\\nProcess died before http://0.0.0.0:8888/health became ready.\\n']\n",
+                  "phase": "round_single",
+                  "returncode": 1,
+                  "stderr_log_path": ""
+                },
+                "label": "single",
+                "measurement": {
+                  "accuracy": null,
+                  "accuracy_metric": "",
+                  "accuracy_source": "",
+                  "accuracy_task": "",
+                  "benchmark_report_path": "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-35B-A3B/20260914T094955Z-aa171c76/runs/baseline/3f5caae8b8034e6094faa0c559cdf087/benchmark_vllm_20260914_114944/benchmark_report.json",
+                  "e2el_mean_ms": null,
+                  "throughput_tok_s_per_gpu": null,
+                  "tpot_mean_ms": null,
+                  "ttft_mean_ms": null,
+                  "workspace": "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-35B-A3B/20260914T094955Z-aa171c76/runs/baseline/3f5caae8b8034e6094faa0c559cdf087/benchmark_vllm_20260914_114944"
+                },
+                "run_eval_disabled": false,
+                "start_time": "2026-09-14T11:49:42+00:00",
+                "status": "failed",
+                "timeout_sec": 7800,
+                "timing": {
+                  "post_ready_runtime_sec": null,
+                  "subprocess_runtime_sec": 3.77
+                },
+                "warnings": {
+                  "count": 1,
+                  "messages": [
+                    "benchmark_report_success_false"
+                  ]
+                }
+              }
+            ],
+            "run_index": 1,
+            "start_time": "2026-09-14T11:49:42+00:00",
+            "status": "failed",
+            "warnings": {
+              "count": 1,
+              "messages": [
+                "benchmark_report_success_false"
+              ]
+            }
+          }
+        ],
+        "start_time": "2026-09-14T11:49:42+00:00",
+        "status": "failed",
+        "task_id": "3f5caae8b8034e6094faa0c559cdf087",
+        "timing": {
+          "post_ready_runtime_sec": null,
+          "subprocess_runtime_sec": 3.77
+        },
+        "warmup_round_tput": null,
+        "warnings": {
+          "count": 1,
+          "messages": [
+            "benchmark_report_success_false"
+          ]
+        }
+      }
+    ]
+  },
+  "id": "prelude:0:baseline",
+  "kind": "baseline",
+  "start_time": "2026-09-14T11:49:42+00:00",
+  "status": "failed",
+  "type": "baseline"
+}

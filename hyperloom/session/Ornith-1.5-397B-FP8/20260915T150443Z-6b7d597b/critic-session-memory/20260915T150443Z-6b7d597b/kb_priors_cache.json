@@ -1,0 +1,14 @@
+{
+  "framework=vllm|model=ornith-1.5-397b-fp8|org=hyperloom|precision=fp8|workload={'conc': 64, 'isl': 1024, 'max_model_len': 6144, 'osl': 1024, 'precision': 'fp8'}|topic=target_analysis|limit=5": {
+    "ts": 1789484696.2486954,
+    "priors": []
+  },
+  "framework=vllm|model=ornith-1.5-397b-fp8|org=hyperloom|precision=fp8|workload={'conc': 64, 'isl': 1024, 'max_model_len': 6144, 'osl': 1024, 'precision': 'fp8'}|topic=baseline|limit=5": {
+    "ts": 1789484696.249002,
+    "priors": []
+  },
+  "framework=vllm|model=ornith-1.5-397b-fp8|org=hyperloom|precision=fp8|workload={'conc': 64, 'isl': 1024, 'max_model_len': 6144, 'osl': 1024, 'precision': 'fp8'}|topic=decision-20260915t150443z-6b7d597b|limit=5": {
+    "ts": 1789485490.2211306,
+    "priors": []
+  }
+}

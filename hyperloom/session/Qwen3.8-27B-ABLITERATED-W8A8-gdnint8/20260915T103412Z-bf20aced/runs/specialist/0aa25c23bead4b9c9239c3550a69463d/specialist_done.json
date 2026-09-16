@@ -1,0 +1,12 @@
+{
+  "confidence": 0.0,
+  "domain": "candidate_discovery_specialist",
+  "empty": true,
+  "gap_canonical_id": "gap.framework.candidate_discovery.vllm",
+  "new_findings": [],
+  "proposal_set": [],
+  "reason": "subprocess_timeout: specialist subprocess exceeded 600s wall-clock cap",
+  "residual_questions": [],
+  "summary": "subprocess_timeout: specialist subprocess exceeded 600s wall-clock cap",
+  "ts": "2026-09-15T11:51:13.316555+00:00"
+}

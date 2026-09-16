@@ -1,0 +1,108 @@
+{
+  "session_id": "20260914T134902Z-244d9455",
+  "model": "Qwen3.8-27B-ABLITERATED-W8A8-gdnint8",
+  "hardware": "",
+  "framework": "vllm",
+  "baseline_throughput": 0.0,
+  "final_throughput": null,
+  "total_gain_pct": 0.0,
+  "entries": [
+    {
+      "phase": "PRELUDE",
+      "iter": 1,
+      "kind": "other",
+      "change": "target_analysis",
+      "outcome": "KEEP",
+      "task_id": "c640a9ee30214d9b865dc9314daddf6b",
+      "ts": "2026-09-14T13:49:44Z",
+      "tick": 1
+    },
+    {
+      "phase": "PRELUDE",
+      "iter": 1,
+      "kind": "baseline",
+      "change": "baseline",
+      "outcome": "REVERT",
+      "error_class": "subprocess_nonzero",
+      "task_id": "2fc18296cb5e4f75846d0f0dbf143c2b",
+      "ts": "2026-09-14T13:50:28Z",
+      "tick": 1
+    },
+    {
+      "phase": "PRELUDE",
+      "iter": 4,
+      "kind": "other",
+      "change": "specialist",
+      "outcome": "KEEP",
+      "task_id": "b8dc969b654d45e2a1e07acf784a2a4e",
+      "ts": "2026-09-14T15:08:24Z",
+      "tick": 4
+    },
+    {
+      "phase": "PRELUDE",
+      "iter": 5,
+      "kind": "other",
+      "change": "integrate_patch",
+      "outcome": "no_promote",
+      "reason": "enablement progressed: launch probe exited 1 (still not runnable); boot advanced to a new gap (unknown) \u2014 patch recorded as a base for the next round",
+      "task_id": "90f715c0f2ee4a75af0baf5090deda13",
+      "ts": "2026-09-14T15:13:22Z",
+      "lever_kind": "enablement",
+      "tick": 5
+    },
+    {
+      "phase": "PRELUDE",
+      "iter": 6,
+      "kind": "baseline",
+      "change": "baseline",
+      "outcome": "REVERT",
+      "error_class": "subprocess_nonzero",
+      "task_id": "48e0ae2b0af74c03b4b40c847fc99d3b",
+      "ts": "2026-09-14T15:14:24Z",
+      "tick": 6
+    },
+    {
+      "phase": "PRELUDE",
+      "iter": 7,
+      "kind": "other",
+      "change": "specialist",
+      "outcome": "KEEP",
+      "task_id": "30ccc757c22d476390bae0873bfa153b",
+      "ts": "2026-09-14T15:45:43Z",
+      "tick": 7
+    },
+    {
+      "phase": "PRELUDE",
+      "iter": 8,
+      "kind": "other",
+      "change": "integrate_patch",
+      "outcome": "no_promote",
+      "reason": "enablement progressed: launch probe exited 1 (still not runnable); boot advanced to a new gap (unknown) \u2014 patch recorded as a base for the next round",
+      "task_id": "34d103b9030d45bca38b9c671b5a2add",
+      "ts": "2026-09-14T15:50:39Z",
+      "lever_kind": "enablement",
+      "tick": 8
+    },
+    {
+      "phase": "PRELUDE",
+      "iter": 9,
+      "kind": "baseline",
+      "change": "baseline",
+      "outcome": "REVERT",
+      "error_class": "server_init_dead",
+      "task_id": "0668d71b42d54c559c36634e823a55a5",
+      "ts": "2026-09-14T15:52:29Z",
+      "tick": 9
+    },
+    {
+      "phase": "PRELUDE",
+      "iter": 11,
+      "kind": "other",
+      "change": "specialist",
+      "outcome": "KEEP",
+      "task_id": "4633d7725f7b45148bdc2e3905cd54db",
+      "ts": "2026-09-14T16:42:26Z",
+      "tick": 11
+    }
+  ]
+}

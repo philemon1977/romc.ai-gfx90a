@@ -1,0 +1,1746 @@
+{
+  "active_inferencex_path": "",
+  "agentx_epoch": 0,
+  "apply_fail_reauthor_attempts": {},
+  "apply_fail_retry_pending": [],
+  "authored_framework_levers": [],
+  "auto_roofline_pending_task_id": "",
+  "baseline_accuracy": 0.0,
+  "baseline_arg_error_streak": 0,
+  "baseline_attempts": [
+    {
+      "decision": "no_promote",
+      "error_class": "subprocess_nonzero",
+      "error_excerpt": "09-14 09:50:55,441 - Magpie.modes.benchmark.benchmarker - INFO - Copied Magpie script atom_mi300x.sh to /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966/benchmarks\n2026-09-14 09:50:55,442 - Magpie.modes.benchmark.benchmarker - INFO - Copied Magpie script vllm_mi300x.sh to /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966/benchmarks\n2026-09-14 09:50:55,442 - Magpie.modes.benchmark.benchmarker - INFO - Copied Magpie script vllm_mi355x.sh to /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966/benchmarks\n2026-09-14 09:50:55,442 - Magpie.modes.benchmark.benchmarker - INFO - Copied Magpie script vllm_mi300x_mm.sh to /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966/benchmarks\n2026-09-14 09:50:55,621 - Magpie.utils.gpu - INFO - Detected AMD GPU: gfx90a\n2026-09-14 09:50:55,621 - Magpie.modes.benchmark.image_selector - WARNING - No runner type found for gfx90a\n2026-09-14 09:50:55,621 - Magpie.main - ERROR - Benchmark failed with error: No runner type found for gfx90a\nTraceback (most recent call last):\n  File \"/opt/envs/vllm/lib/python3.12/sit",
+      "extras": {
+        "fingerprint": {
+          "benchmark_script": null,
+          "config_path": null,
+          "disable_run_eval": null,
+          "extra_envs": [],
+          "extra_server_args": null,
+          "gpu_type": null,
+          "model_path": null,
+          "result_dir": null
+        }
+      },
+      "failure_id": null,
+      "key_metric": null,
+      "key_metric_kind": "output_throughput",
+      "raw_result_path": null,
+      "reported_success": null,
+      "status": "failed",
+      "stderr_log_path": "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-35B-A3B/20260914T094955Z-aa171c76/runs/baseline/cd3d94f7ca294c10aaccfa48beae0663/baseline_stderr.log",
+      "stderr_tail": "und for gfx90a\n2026-09-14 09:50:55,621 - Magpie.main - ERROR - Benchmark failed with error: No runner type found for gfx90a\nTraceback (most recent call last):\n  File \"/opt/envs/vllm/lib/python3.12/site-packages/Magpie/main.py\", line 1103, in run_benchmark\n    result = benchmarker.run()\n             ^^^^^^^^^^^^^^^^^\n  File \"/opt/envs/vllm/lib/python3.12/site-packages/Magpie/modes/benchmark/benchmarker.py\", line 154, in run\n    runner_type = self._get_runner_type()\n                  ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/envs/vllm/lib/python3.12/site-packages/Magpie/modes/benchmark/benchmarker.py\", line 544, in _get_runner_type\n    return self.image_selector.get_runner_type(self.config.gpu_arch)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/envs/vllm/lib/python3.12/site-packages/Magpie/modes/benchmark/image_selector.py\", line 151, in get_runner_type\n    raise ValueError(f\"No runner type found for {gpu_arch}\")\nValueError: No runner type found for gfx90a\n",
+      "task_id": "cd3d94f7ca294c10aaccfa48beae0663",
+      "ts": "2026-09-14T09:50:55.692495+00:00",
+      "variant_name": null,
+      "workspace": null
+    },
+    {
+      "decision": "no_promote",
+      "error_class": "subprocess_nonzero",
+      "error_excerpt": "session/Ornith-1.5-35B-A3B/20260914T094955Z-aa171c76/runs/baseline/3f5caae8b8034e6094faa0c559cdf087/benchmark_vllm_20260914_114944/summary.txt\n2026-09-14 11:49:46,621 - Magpie.modes.benchmark.benchmarker - INFO - Benchmark completed in 2.51s\n2026-09-14 11:49:46,621 - Magpie.main - ERROR - Benchmark failed: ['Benchmark process failed with code 1', 'stderr: + [[ all == \\\\s\\\\e\\\\r\\\\v\\\\e\\\\r ]]\\n+ [[ all == \\\\a\\\\l\\\\l ]]\\n+ SERVER_PID=47746\\n+ [[ all == \\\\a\\\\l\\\\l ]]\\n+ trap \\'magpie_stop_benchmark_server_stack \"$SERVER_PID\"\\' EXIT INT TERM\\n+ wait_for_server_ready --port 8888 --server-log /home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-35B-A3B/20260914T094955Z-aa171c76/runs/baseline/3f5caae8b8034e6094faa0c559cdf087/benchmark_vllm_20260914_114944/server.log --server-pid 47746\\n+ local port=\\n+ local server_log=\\n+ local server_pid=\\n+ local sleep_interval=5\\n+ [[ 6 -gt 0 ]]\\n+ case $1 in\\n+ port=8888\\n+ shift 2\\n+ [[ 4 -gt 0 ]]\\n+ case $1 in\\n+ setsid vllm serve /mnt/stripe-3mix-3t2/models/ornith-ai/Ornith-1.5-35B-A3B --port 8888 --tensor-parallel-size=2 --gpu-memory-utilization 0.95 --max-model-len 6144 --trust-remote-code --distributed-executor-backend mp --enable-expert-parallel\\n+ serv",
+      "extras": {
+        "fingerprint": {
+          "benchmark_script": null,
+          "config_path": null,
+          "disable_run_eval": null,
+          "extra_envs": [],
+          "extra_server_args": null,
+          "gpu_type": null,
+          "model_path": null,
+          "result_dir": null
+        }
+      },
+      "failure_id": null,
+      "key_metric": null,
+      "key_metric_kind": "output_throughput",
+      "raw_result_path": null,
+      "reported_success": false,
+      "status": "failed",
+      "stderr_log_path": null,
+      "stderr_tail": "ith-ai/Ornith-1.5-35B-A3B --port 8888 --tensor-parallel-size=2 --gpu-memory-utilization 0.95 --max-model-len 6144 --trust-remote-code --distributed-executor-backend mp --enable-expert-parallel\\n+ server_log=/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-35B-A3B/20260914T094955Z-aa171c76/runs/baseline/3f5caae8b8034e6094faa0c559cdf087/benchmark_vllm_20260914_114944/server.log\\n+ shift 2\\n+', 'inferencex_result.json not found - benchmark may have failed locally', 'stderr (last 500 chars): loom/session/Ornith-1.5-35B-A3B/20260914T094955Z-aa171c76/runs/baseline/3f5caae8b8034e6094faa0c559cdf087/benchmark_vllm_20260914_114944/server.log ]]\\n+ [[ -z 47746 ]]\\n+ wait_for_ready --endpoint http://0.0.0.0:8888/health --log /home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-35B-A3B/20260914T094955Z-aa171c76/runs/baseline/3f5caae8b8034e6094faa0c559cdf087/benchmark_vllm_20260914_114944/server.log --pid 47746 --sleep-interval 5\\n+ set +x\\nProcess died before http://0.0.0.0:8888/health became ready.\\n']\n",
+      "task_id": "3f5caae8b8034e6094faa0c559cdf087",
+      "ts": "2026-09-14T11:49:46.775911+00:00",
+      "variant_name": null,
+      "workspace": "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-35B-A3B/20260914T094955Z-aa171c76/runs/baseline/3f5caae8b8034e6094faa0c559cdf087/benchmark_vllm_20260914_114944"
+    }
+  ],
+  "baseline_config_path": "",
+  "baseline_double_run": true,
+  "baseline_eager_fallback": false,
+  "baseline_failure_streak": 1,
+  "baseline_measure_round_dropped": false,
+  "baseline_perf": {},
+  "baseline_post_ready_runtime_sec": 0.0,
+  "baseline_roofline_ceiling": {},
+  "baseline_runtime_sec": 0.0,
+  "baseline_total_failures": 1,
+  "baseline_tput": 0.0,
+  "baseline_warm_runtime_sec": 0.0,
+  "baseline_workload_extra": {},
+  "benchmark_backend": "",
+  "benchmark_mode": "synthetic",
+  "bottleneck_shift": {},
+  "bypass_scripts_dir": "",
+  "claw_session_id": "",
+  "close_sequence_done": true,
+  "closing_grace_sec": null,
+  "closing_phase": false,
+  "closing_report_task_id": "6b3df2e1dd894a33b268ac6c8789a685",
+  "closing_started_unix": 0.0,
+  "collective_attempts": [],
+  "collective_only_mode": false,
+  "compute_partition": {},
+  "conc": 64,
+  "conc_sweep_concs": [
+    256,
+    128,
+    64,
+    32,
+    16,
+    8,
+    4,
+    2
+  ],
+  "conc_sweep_enabled": false,
+  "conc_sweep_total_budget_sec": 9000,
+  "conc_sweep_variant_timeout_sec": 1800,
+  "consecutive_config_only_rounds": 0,
+  "crash_count": 0,
+  "crash_timestamps": [],
+  "cumulative_gain_validated": 0.0,
+  "cumulative_gain_validated_stack_len": 0,
+  "cumulative_gain_validated_ts": "",
+  "current_action": "",
+  "current_best": {},
+  "current_best_measurement": {},
+  "cycle_directive_history": [],
+  "cycle_minutes": 1440.0,
+  "cycle_strategy_log": [],
+  "deadline_unix": 1789390195.896192,
+  "degraded_mode": true,
+  "discovered_flags": {},
+  "discovered_flags_error": "",
+  "enable_roofline": false,
+  "enablement": {
+    "accepted_config": {},
+    "accepted_config_path": "",
+    "accuracy_floor": 0.0,
+    "active_runtime": {},
+    "attempt_runtimes": [],
+    "attempts": 7,
+    "baseline_eval_evidence": "",
+    "baseline_eval_kind": "",
+    "build_manifest": [],
+    "build_novelty": [],
+    "candidate_refs": [],
+    "eval_contract_fingerprint": "",
+    "framework_root": "/opt/envs/vllm/lib/python3.12/site-packages",
+    "human_review_logged": [],
+    "inflight_task_id": "",
+    "kept_artifacts": [],
+    "kept_patches": [
+      "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-35B-A3B/20260914T094955Z-aa171c76/runs/specialist/d00cdedfc173451eaf5b312d08e00da9/patches/003_rocm_visible_devices_logical_repin.patch"
+    ],
+    "kept_rounds": [
+      {
+        "artifacts": [],
+        "patches": [
+          "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-35B-A3B/20260914T094955Z-aa171c76/runs/specialist/d00cdedfc173451eaf5b312d08e00da9/patches/003_rocm_visible_devices_logical_repin.patch"
+        ]
+      }
+    ],
+    "kept_stack_action": {},
+    "last_build_failure": {},
+    "last_grounding_drop_reason": [],
+    "last_specialist_task_id": "",
+    "launch_log": "session/Ornith-1.5-35B-A3B/20260914T094955Z-aa171c76/runs/baseline/3f5caae8b8034e6094faa0c559cdf087/benchmark_vllm_20260914_114944/summary.txt\n2026-09-14 11:49:46,621 - Magpie.modes.benchmark.benchmarker - INFO - Benchmark completed in 2.51s\n2026-09-14 11:49:46,621 - Magpie.main - ERROR - Benchmark failed: ['Benchmark process failed with code 1', 'stderr: + [[ all == \\\\s\\\\e\\\\r\\\\v\\\\e\\\\r ]]\\n+ [[ all == \\\\a\\\\l\\\\l ]]\\n+ SERVER_PID=47746\\n+ [[ all == \\\\a\\\\l\\\\l ]]\\n+ trap \\'magpie_stop_benchmark_server_stack \"$SERVER_PID\"\\' EXIT INT TERM\\n+ wait_for_server_ready --port 8888 --server-log /home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-35B-A3B/20260914T094955Z-aa171c76/runs/baseline/3f5caae8b8034e6094faa0c559cdf087/benchmark_vllm_20260914_114944/server.log --server-pid 47746\\n+ local port=\\n+ local server_log=\\n+ local server_pid=\\n+ local sleep_interval=5\\n+ [[ 6 -gt 0 ]]\\n+ case $1 in\\n+ port=8888\\n+ shift 2\\n+ [[ 4 -gt 0 ]]\\n+ case $1 in\\n+ setsid vllm serve /mnt/stripe-3mix-3t2/models/ornith-ai/Ornith-1.5-35B-A3B --port 8888 --tensor-parallel-size=2 --gpu-memory-utilization 0.95 --max-model-len 6144 --trust-remote-code --distributed-executor-backend mp --enable-expert-parallel\\n+ server_log=/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-35B-A3B/20260914T094955Z-aa171c76/runs/baseline/3f5caae8b8034e6094faa0c559cdf087/benchmark_vllm_20260914_114944/server.log\\n+ shift 2\\n+', 'inferencex_result.json not found - benchmark may have failed locally', 'stderr (last 500 chars): loom/session/Ornith-1.5-35B-A3B/20260914T094955Z-aa171c76/runs/baseline/3f5caae8b8034e6094faa0c559cdf087/benchmark_vllm_20260914_114944/server.log ]]\\n+ [[ -z 47746 ]]\\n+ wait_for_ready --endpoint http://0.0.0.0:8888/health --log /home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-35B-A3B/20260914T094955Z-aa171c76/runs/baseline/3f5caae8b8034e6094faa0c559cdf087/benchmark_vllm_20260914_114944/server.log --pid 47746 --sleep-interval 5\\n+ set +x\\nProcess died before http://0.0.0.0:8888/health became ready.\\n']",
+    "localization_manifest": [],
+    "observed_accuracy": 0.0,
+    "observed_metric": "",
+    "observed_task": "",
+    "origin": "",
+    "patches_span_multiple_roots": false,
+    "pending": false,
+    "probe_config_path": "",
+    "revalidation_generation": 0,
+    "revalidation_task_id": "",
+    "setup_commands": [],
+    "stall_streak": 5,
+    "succeeded": false,
+    "validation_pending": false
+  },
+  "enablement_mode": "all",
+  "ep": 2,
+  "eval_disabled": false,
+  "explore_attempts": [],
+  "explore_elapsed_accum_s": 0.0,
+  "explore_overtime_kill_ratio": 2.0,
+  "explore_search": {
+    "accepted": [],
+    "cursor": 0,
+    "discovered_flags": [],
+    "domains_round_summary": [],
+    "last_round": {},
+    "name_index": {},
+    "rejected": [],
+    "schema_version": 1,
+    "synergy_attempted": [],
+    "tested": {},
+    "winners_history": []
+  },
+  "explore_variant_timeout_safety_margin": 0.5,
+  "explore_variant_timeout_sec_override": 0,
+  "failures": [],
+  "framework": "vllm",
+  "framework_agent_authoring_enabled": true,
+  "framework_agent_batches": [],
+  "framework_agent_discover_failures": 0,
+  "framework_agent_empty_discoveries": 0,
+  "framework_agent_phase_done": false,
+  "framework_agent_phase_enabled": true,
+  "framework_agent_phase_progress": [
+    {
+      "accuracy_pass": null,
+      "batch_id": "",
+      "candidate_id": "d00cdedfc173451eaf5b312d08e00da9",
+      "cycle": 0,
+      "gain_pct": 0.0,
+      "integrate_task_id": "7eb609d6de134d5c909251e89027ebbc",
+      "kept": false,
+      "post_tput": 0.0,
+      "pre_tput": 0.0,
+      "provenance": "authored",
+      "rationale": "enablement progressed: launch probe exited 1 (still not runnable); boot advanced to a new gap (unknown) \u2014 patch recorded as a base for the next round",
+      "reauthor_attempt": null,
+      "specialist_task_id": "d00cdedfc173451eaf5b312d08e00da9",
+      "status": "advanced",
+      "ts": "2026-09-14T11:48:59.279315+00:00"
+    }
+  ],
+  "framework_agent_review_counts": {},
+  "framework_agent_specialist_candidate_map": {},
+  "framework_consecutive_empty_discoveries": 0,
+  "framework_local_explore_enabled": true,
+  "framework_repo_path": "",
+  "framework_version": "0.28.0",
+  "fusion_infra_aborts": 0,
+  "fusion_withheld_retries": 0,
+  "gain_at_cycle_start": 0.0,
+  "gain_per_stack_entry": [],
+  "gaps": [
+    {
+      "attempts": [
+        {
+          "action": "baseline",
+          "error_class": "subprocess_nonzero",
+          "outcome": "REVERT",
+          "ts": "2026-09-14T09:50:55.695748+00:00",
+          "variant_name": ""
+        },
+        {
+          "action": "baseline",
+          "error_class": "subprocess_nonzero",
+          "outcome": "REVERT",
+          "ts": "2026-09-14T09:50:55.695748+00:00",
+          "variant_name": ""
+        },
+        {
+          "action": "baseline",
+          "error_class": "subprocess_nonzero",
+          "outcome": "REVERT",
+          "ts": "2026-09-14T11:49:46.779499+00:00",
+          "variant_name": ""
+        }
+      ],
+      "canonical_id": "inference:ornith-1.5-35b-a3b:unknown_gpu:vllm:qwen3_5_moe:qwen3_5moeforconditionalgeneration:0.28.0:bf16#fail:baseline:subprocess_nonzero",
+      "domain_hint": "system_specialist",
+      "first_seen_ts": "2026-09-14T11:47:08.129745+00:00",
+      "last_updated_ts": "2026-09-14T12:42:35.817633+00:00",
+      "layer": "system",
+      "provenance": "",
+      "severity": "medium",
+      "source": "attempts",
+      "symptom": "baseline repeatedly fails with 09-14 09:50:55,441 - Magpie.modes.benchmark.benchmarker - INFO - Copied Magpie script atom_mi300x.sh to /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966/benchmar"
+    }
+  ],
+  "geak_pending": {},
+  "geak_result": {},
+  "gemm_tuning_attempts": [],
+  "gpu_specialist_capacity": 2,
+  "gpu_type": "",
+  "intervention_mix": [
+    {
+      "action": "integrate_patch",
+      "change_type": "code_patch_attempt",
+      "delta_pct": null,
+      "task_id": "7eb609d6de134d5c909251e89027ebbc",
+      "ts": "2026-09-14T11:48:59.279269+00:00"
+    }
+  ],
+  "isl": 1024,
+  "kb_stage_dead_letter": [],
+  "kb_stage_outbox": [],
+  "kernel_enabled": false,
+  "kernel_idle_since_unix": 0.0,
+  "kernel_idle_ticks": 0,
+  "kernel_inline_step_seen_unix": 0.0,
+  "kernel_integrate_attempts": {},
+  "kernel_opt_task_attempts": {},
+  "kernel_optimizer": "geak",
+  "kernel_progress_fingerprint": "",
+  "kernel_rewrite_controller_result": {},
+  "last_action_failures": [
+    {
+      "action": "baseline",
+      "error_class": "subprocess_nonzero",
+      "error_excerpt": "09-14 09:50:55,441 - Magpie.modes.benchmark.benchmarker - INFO - Copied Magpie script atom_mi300x.sh to /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966/benchmarks\n2026-09-14 09:50:55,442 - Magpie.modes.benchmark.benchmarker - INFO - Copied Magpie script vllm_mi300x.sh to /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966/benchmarks\n2026-09-14 09:50:55,442 - Magpie.modes.benchmark.benchmarker - INFO - Copied Magpie script vllm_mi355x.sh to /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966/benchmarks\n2026-09-14 09:50:55,442 - Magpie.modes.benchmark.benchmarker - INFO - Copied Magpie script vllm_mi300x_mm.sh to /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966/benchmarks\n2026-09-14 09:50:55,621 - Magpie.utils.gpu - INFO - Detected AMD GPU: gfx90a\n2026-09-14 09:50:55,621 - Magpie.modes.benchmark.image_selector - WARNING - No runner type found for gfx90a\n2026-09-14 09:50:55,621 - Magpie.main - ERROR - Benchmark failed with error: No runner type found for gfx90a\nTraceback (most recent call last):\n  File \"/opt/envs/vllm/lib/python3.12/sit",
+      "failure_id": null,
+      "raw_result_path": null,
+      "reported_success": null,
+      "stderr_log_path": "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-35B-A3B/20260914T094955Z-aa171c76/runs/baseline/cd3d94f7ca294c10aaccfa48beae0663/baseline_stderr.log",
+      "stderr_tail": "und for gfx90a\n2026-09-14 09:50:55,621 - Magpie.main - ERROR - Benchmark failed with error: No runner type found for gfx90a\nTraceback (most recent call last):\n  File \"/opt/envs/vllm/lib/python3.12/site-packages/Magpie/main.py\", line 1103, in run_benchmark\n    result = benchmarker.run()\n             ^^^^^^^^^^^^^^^^^\n  File \"/opt/envs/vllm/lib/python3.12/site-packages/Magpie/modes/benchmark/benchmarker.py\", line 154, in run\n    runner_type = self._get_runner_type()\n                  ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/envs/vllm/lib/python3.12/site-packages/Magpie/modes/benchmark/benchmarker.py\", line 544, in _get_runner_type\n    return self.image_selector.get_runner_type(self.config.gpu_arch)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/envs/vllm/lib/python3.12/site-packages/Magpie/modes/benchmark/image_selector.py\", line 151, in get_runner_type\n    raise ValueError(f\"No runner type found for {gpu_arch}\")\nValueError: No runner type found for gfx90a\n",
+      "task_id": "cd3d94f7ca294c10aaccfa48beae0663",
+      "ts": "2026-09-14T09:50:55.695748+00:00",
+      "variant_name": null,
+      "workspace": null
+    },
+    {
+      "action": "baseline",
+      "error_class": "subprocess_nonzero",
+      "error_excerpt": "session/Ornith-1.5-35B-A3B/20260914T094955Z-aa171c76/runs/baseline/3f5caae8b8034e6094faa0c559cdf087/benchmark_vllm_20260914_114944/summary.txt\n2026-09-14 11:49:46,621 - Magpie.modes.benchmark.benchmarker - INFO - Benchmark completed in 2.51s\n2026-09-14 11:49:46,621 - Magpie.main - ERROR - Benchmark failed: ['Benchmark process failed with code 1', 'stderr: + [[ all == \\\\s\\\\e\\\\r\\\\v\\\\e\\\\r ]]\\n+ [[ all == \\\\a\\\\l\\\\l ]]\\n+ SERVER_PID=47746\\n+ [[ all == \\\\a\\\\l\\\\l ]]\\n+ trap \\'magpie_stop_benchmark_server_stack \"$SERVER_PID\"\\' EXIT INT TERM\\n+ wait_for_server_ready --port 8888 --server-log /home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-35B-A3B/20260914T094955Z-aa171c76/runs/baseline/3f5caae8b8034e6094faa0c559cdf087/benchmark_vllm_20260914_114944/server.log --server-pid 47746\\n+ local port=\\n+ local server_log=\\n+ local server_pid=\\n+ local sleep_interval=5\\n+ [[ 6 -gt 0 ]]\\n+ case $1 in\\n+ port=8888\\n+ shift 2\\n+ [[ 4 -gt 0 ]]\\n+ case $1 in\\n+ setsid vllm serve /mnt/stripe-3mix-3t2/models/ornith-ai/Ornith-1.5-35B-A3B --port 8888 --tensor-parallel-size=2 --gpu-memory-utilization 0.95 --max-model-len 6144 --trust-remote-code --distributed-executor-backend mp --enable-expert-parallel\\n+ serv",
+      "failure_id": null,
+      "raw_result_path": null,
+      "reported_success": false,
+      "stderr_log_path": null,
+      "stderr_tail": "ith-ai/Ornith-1.5-35B-A3B --port 8888 --tensor-parallel-size=2 --gpu-memory-utilization 0.95 --max-model-len 6144 --trust-remote-code --distributed-executor-backend mp --enable-expert-parallel\\n+ server_log=/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-35B-A3B/20260914T094955Z-aa171c76/runs/baseline/3f5caae8b8034e6094faa0c559cdf087/benchmark_vllm_20260914_114944/server.log\\n+ shift 2\\n+', 'inferencex_result.json not found - benchmark may have failed locally', 'stderr (last 500 chars): loom/session/Ornith-1.5-35B-A3B/20260914T094955Z-aa171c76/runs/baseline/3f5caae8b8034e6094faa0c559cdf087/benchmark_vllm_20260914_114944/server.log ]]\\n+ [[ -z 47746 ]]\\n+ wait_for_ready --endpoint http://0.0.0.0:8888/health --log /home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-35B-A3B/20260914T094955Z-aa171c76/runs/baseline/3f5caae8b8034e6094faa0c559cdf087/benchmark_vllm_20260914_114944/server.log --pid 47746 --sleep-interval 5\\n+ set +x\\nProcess died before http://0.0.0.0:8888/health became ready.\\n']\n",
+      "task_id": "3f5caae8b8034e6094faa0c559cdf087",
+      "ts": "2026-09-14T11:49:46.779499+00:00",
+      "variant_name": null,
+      "workspace": "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-35B-A3B/20260914T094955Z-aa171c76/runs/baseline/3f5caae8b8034e6094faa0c559cdf087/benchmark_vllm_20260914_114944"
+    }
+  ],
+  "last_baseline": {
+    "decision": "no_promote",
+    "error_class": "subprocess_nonzero",
+    "error_excerpt": "session/Ornith-1.5-35B-A3B/20260914T094955Z-aa171c76/runs/baseline/3f5caae8b8034e6094faa0c559cdf087/benchmark_vllm_20260914_114944/summary.txt\n2026-09-14 11:49:46,621 - Magpie.modes.benchmark.benchmarker - INFO - Benchmark completed in 2.51s\n2026-09-14 11:49:46,621 - Magpie.main - ERROR - Benchmark failed: ['Benchmark process failed with code 1', 'stderr: + [[ all == \\\\s\\\\e\\\\r\\\\v\\\\e\\\\r ]]\\n+ [[ all == \\\\a\\\\l\\\\l ]]\\n+ SERVER_PID=47746\\n+ [[ all == \\\\a\\\\l\\\\l ]]\\n+ trap \\'magpie_stop_benchmark_server_stack \"$SERVER_PID\"\\' EXIT INT TERM\\n+ wait_for_server_ready --port 8888 --server-log /home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-35B-A3B/20260914T094955Z-aa171c76/runs/baseline/3f5caae8b8034e6094faa0c559cdf087/benchmark_vllm_20260914_114944/server.log --server-pid 47746\\n+ local port=\\n+ local server_log=\\n+ local server_pid=\\n+ local sleep_interval=5\\n+ [[ 6 -gt 0 ]]\\n+ case $1 in\\n+ port=8888\\n+ shift 2\\n+ [[ 4 -gt 0 ]]\\n+ case $1 in\\n+ setsid vllm serve /mnt/stripe-3mix-3t2/models/ornith-ai/Ornith-1.5-35B-A3B --port 8888 --tensor-parallel-size=2 --gpu-memory-utilization 0.95 --max-model-len 6144 --trust-remote-code --distributed-executor-backend mp --enable-expert-parallel\\n+ serv",
+    "extras": {
+      "fingerprint": {
+        "benchmark_script": null,
+        "config_path": null,
+        "disable_run_eval": null,
+        "extra_envs": [],
+        "extra_server_args": null,
+        "gpu_type": null,
+        "model_path": null,
+        "result_dir": null
+      }
+    },
+    "failure_id": null,
+    "key_metric": null,
+    "key_metric_kind": "output_throughput",
+    "raw_result_path": null,
+    "reported_success": false,
+    "status": "failed",
+    "stderr_log_path": null,
+    "stderr_tail": "ith-ai/Ornith-1.5-35B-A3B --port 8888 --tensor-parallel-size=2 --gpu-memory-utilization 0.95 --max-model-len 6144 --trust-remote-code --distributed-executor-backend mp --enable-expert-parallel\\n+ server_log=/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-35B-A3B/20260914T094955Z-aa171c76/runs/baseline/3f5caae8b8034e6094faa0c559cdf087/benchmark_vllm_20260914_114944/server.log\\n+ shift 2\\n+', 'inferencex_result.json not found - benchmark may have failed locally', 'stderr (last 500 chars): loom/session/Ornith-1.5-35B-A3B/20260914T094955Z-aa171c76/runs/baseline/3f5caae8b8034e6094faa0c559cdf087/benchmark_vllm_20260914_114944/server.log ]]\\n+ [[ -z 47746 ]]\\n+ wait_for_ready --endpoint http://0.0.0.0:8888/health --log /home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-35B-A3B/20260914T094955Z-aa171c76/runs/baseline/3f5caae8b8034e6094faa0c559cdf087/benchmark_vllm_20260914_114944/server.log --pid 47746 --sleep-interval 5\\n+ set +x\\nProcess died before http://0.0.0.0:8888/health became ready.\\n']\n",
+    "task_id": "3f5caae8b8034e6094faa0c559cdf087",
+    "ts": "2026-09-14T11:49:46.775911+00:00",
+    "variant_name": null,
+    "workspace": "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-35B-A3B/20260914T094955Z-aa171c76/runs/baseline/3f5caae8b8034e6094faa0c559cdf087/benchmark_vllm_20260914_114944"
+  },
+  "last_collective": {},
+  "last_conc_sweep": {},
+  "last_conc_sweep_watermark": {},
+  "last_consumed_escalate_hint": "",
+  "last_consumed_escalate_hint_ts": "",
+  "last_cycle_bottleneck": "",
+  "last_discarded_escalate_hint": "",
+  "last_discarded_escalate_hint_ts": "",
+  "last_explore": {},
+  "last_framework_rewrite_evidence": "",
+  "last_framework_rewrite_evidence_status": "",
+  "last_fusion": {},
+  "last_fusion_integrate": {},
+  "last_gemm_tuning": {},
+  "last_kernel_opt": {},
+  "last_profile": {},
+  "last_profile_args": "",
+  "last_profile_kernel_breakdown": "",
+  "last_profile_status": "",
+  "last_profile_trace": "",
+  "last_profile_workload": {},
+  "last_profile_workload_action": "",
+  "last_roofline": {},
+  "last_roofline_tput": 0.0,
+  "last_specialist": {
+    "confidence": 0.9,
+    "domain": "enablement_specialist",
+    "empty": true,
+    "gap_canonical_id": "gap.enablement.unknown",
+    "proposals_total": 0,
+    "reason": "",
+    "summary": "Round goal: land the durable runnable+eval delta for Ornith-1.5-35B-A3B under vLLM. Localized why the 11:49 baseline still died at 'setsid: failed to execute vllm': patch 003 had been REVERTED by the prior session's wall-clock timeout (its bench never ran), so the baseline re-hit B3 unpatched -- 003 itself is sound and is re-applied as base. Authored patch 004 on the Magpie benchmark script (the point-of-use layer, so it works with OR without 003): (1) self-heals the child fr",
+    "task_id": "3bbb58e289654e3bb358a8db44343c2f",
+    "ts": "2026-09-14T12:42:35.813473+00:00"
+  },
+  "last_tick_exception": {},
+  "last_trace_analyze": {},
+  "lifecycle": [
+    {
+      "artifacts": {},
+      "detail": "reason=enablement_stalled",
+      "label": "Close (report)",
+      "phase": "CLOSE",
+      "seq": 0,
+      "status": "ENTER",
+      "step": "CLOSE",
+      "ts": "2026-09-14T12:44:52.705873+00:00"
+    },
+    {
+      "artifacts": {},
+      "detail": "close_phase_entry",
+      "label": "Report",
+      "phase": "CLOSE",
+      "seq": 1,
+      "status": "START",
+      "step": "report",
+      "ts": "2026-09-14T12:45:04.406280+00:00"
+    },
+    {
+      "artifacts": {
+        "json_path": "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-35B-A3B/20260914T094955Z-aa171c76/reports/final.json",
+        "md_path": "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-35B-A3B/20260914T094955Z-aa171c76/reports/final.md"
+      },
+      "detail": "close_phase_entry",
+      "label": "Report",
+      "phase": "CLOSE",
+      "seq": 2,
+      "status": "END",
+      "step": "report",
+      "ts": "2026-09-14T12:45:04.451160+00:00"
+    }
+  ],
+  "macro_cycle": 0,
+  "max_minutes": 120,
+  "max_model_len": 6144,
+  "model_arch": {},
+  "model_architectures": [
+    "Qwen3_5MoeForConditionalGeneration"
+  ],
+  "model_class": "moe_swa",
+  "model_info": {
+    "architectures": [
+      "Qwen3_5MoeForConditionalGeneration"
+    ],
+    "attention_type": "GQA",
+    "has_shared_expert": true,
+    "head_dim": 256,
+    "hidden_size": 2048,
+    "is_moe": true,
+    "max_position_embeddings": 262144,
+    "model_family": "qwen3",
+    "model_type": "qwen3_5_moe_text",
+    "num_attention_heads": 16,
+    "num_experts": 256,
+    "num_experts_per_tok": 8,
+    "num_hidden_layers": 40,
+    "num_key_value_heads": 2,
+    "vocab_size": 248320
+  },
+  "model_name": "Ornith-1.5-35B-A3B",
+  "model_path": "/mnt/stripe-3mix-3t2/models/ornith-ai/Ornith-1.5-35B-A3B",
+  "model_type": "qwen3_5_moe",
+  "model_warnings": [
+    {
+      "architecture": "Qwen3_5MoeForConditionalGeneration",
+      "detail": "DEGRADED MODE: model 'Ornith-1.5-35B-A3B' carries a multimodal signal (multimodal config key 'vision_config'; architecture 'Qwen3_5MoeForConditionalGeneration', model_type 'qwen3_5_moe') but exposes a text-generation path. Hyperloom is running it on the TEXT path only \u2014 any image/audio inputs are ignored, so benchmark numbers reflect the text decoder alone. Pass --no-allow-mm-text-fallback to fail-fast instead.",
+      "kind": "multimodal_text_fallback",
+      "model_name": "Ornith-1.5-35B-A3B",
+      "model_type": "qwen3_5_moe",
+      "signal": "multimodal config key 'vision_config'"
+    }
+  ],
+  "no_gain_cycle_streak": 0,
+  "nodes": 1,
+  "operator_extra_env": {},
+  "operator_server_args": "--distributed-executor-backend mp",
+  "optimization_stack": [],
+  "orchestration_memory": {
+    "checkpoint_count": 10,
+    "current_plan": "Session is at deadline (~5min remaining, budget 120min): baseline never established (baseline_tput=0). skip_to_close was suppressed by the Coordinator's enablement guard (seq=596) and report/integrate/specialist are all time-budget or execution_order gated. Holding heartbeats while awaiting the Coordinator's deadline auto-flush of the final report with the honest infra-block narrative.",
+    "hypotheses": [
+      "Root cause of round-13 failure ('Process died before health ready' + engine-core init error, pid 43533) is likely the reverted patch-003 PATH re-pin plus a deeper engine-core issue on 2x MI250X TP2 \u2014 untested because no budget remains to pull get_failure.",
+      "Patch 004 (child-env self-align, authored by specialist 3bbb58e2) would durably fix the setsid-PATH-reset blocker but its integrate was denied by time budget."
+    ],
+    "last_checkpoint_seq": 611,
+    "last_checkpoint_tick": 153,
+    "last_checkpoint_ts": "2026-09-14T12:45:04+00:00",
+    "learnings": [
+      "Watch heartbeat_age_sec deltas across ticks: monotonic aging = hang signal; intermittent refresh = worker alive.",
+      "Monotonic heartbeat aging can be a long-poll artifact: before declaring a hang, check runs/specialist/<task>/process.log mtime+size and scratch/ artifacts \u2014 I flip-flopped once (kill\u2192retract\u2192kill) on exactly this.",
+      "AITER is hard-gated OFF on gfx90a (is_aiter_found_and_supported = CDNA3+); robustness's aiter_jit_build_stuck alerts are moot this session. Real perf levers on this MI250X host: MI250_GATE_GEMV, VLLM_ROCM_SPLITKV_PA, QuickReduce (in-tree env gates), not AITER/GEMM tuning.",
+      "Robustness re-fires alerts on identical stale samples (pid=15383 log line >40min old) \u2014 diff before treating as new failure.",
+      "PRELUDE budget cap does not advance the phase; only exit gate is baseline_tput>0; skip_to_close would mislabel a fixable infra block \u2014 keep heartbeating instead.",
+      "Model Ornith-1.5-35B-A3B = Qwen3_5MoeForConditionalGeneration (hybrid 30 linear-attn + 10 full-attn, 256 experts/8 active, TP2 on 2x MI250X 64GB), natively registered in vLLM 0.28 \u2014 no model-side enablement work needed.",
+      "Robustness re-fires identical alerts on stale samples (pid=15383 log from dead attempt-1, AITER-JIT build dir moot on gfx90a) \u2014 diff before treating as new failure; acknowledge once, don't re-litigate.",
+      "PRELUDE budget-cap overrun (now 455%) does NOT advance the phase; exit gate is baseline_tput>0 only; skip_to_close/wind-down would mislabel a fixable external block \u2014 heartbeat with stated reason instead.",
+      "Monotonic heartbeat aging \u2260 always hang: check process.log mtime/size + scratch artifacts before lease actions; but heartbeat>1000s + frozen log = genuine wedge.",
+      "While gated, spend dead ticks on zero-cost lane-light actions (target_analysis) to gather data and probe pipeline health.",
+      "Model Ornith-1.5-35B-A3B = Qwen3_5Moe hybrid (30 linear + 10 full attn, 256 experts/8 active), TP2 on 2x MI250X 64GB, natively registered in vLLM 0.28. Real MI250X perf levers: MI250_GATE_GEMV, VLLM_ROCM_SPLITKV_PA, QuickReduce env gates, chunked-prefill/max-num-seqs tuning \u2014 NOT AITER/GEMM tuning.",
+      "Robustness re-fires alerts on identical pid/count=1 log patterns \u2014 diff the sample before treating it as a new failure (pid=15383 stale samples and AITER-JIT alerts re-fire every ~5 ticks; AITER is moot on gfx90a: is_aiter_found_and_supported = CDNA3+).",
+      "PRELUDE budget cap lapse (now 586%) does NOT advance the phase; only exit gate is baseline_tput>0; skip_to_close would mislabel a fixable block \u2014 heartbeat with stated reason instead.",
+      "Monotonic heartbeat aging \u2260 always hang: check runs/specialist/<task>/process.log mtime+size + scratch artifacts before lease actions; but heartbeat>1200s + frozen log + NOT_READY last line = genuine wedge.",
+      "While gated, spend dead ticks on zero-cost lane-light actions (target_analysis) to gather data and probe pipeline health; keep heartbeats one-line so alert dedup stays clean.",
+      "Robustness re-fires identical alerts on stale samples (pid=15383 attempt-1 log; AITER-JIT every ~5 ticks) \u2014 AITER is hard-gated OFF on gfx90a (is_aiter_found_and_supported=CDNA3+), so those alerts are moot. Acknowledge once in one-line heartbeat, don't re-litigate.",
+      "PRELUDE budget-cap overrun (now >670%) does NOT advance the phase; exit gate is baseline_tput>0 only. skip_to_close would mislabel a fixable external block \u2014 keep heartbeating; 120+min session budget remains.",
+      "Monotonic heartbeat aging: check runs/specialist/<task>/process.log mtime+size before lease actions; frozen log + heartbeat>1200s = genuine wedge.",
+      "Model Ornith-1.5-35B-A3B = Qwen3_5Moe hybrid (30 linear + 10 full attn, 256 experts/8 active), TP2 on 2x MI250X 64GB, natively registered in vLLM 0.28. Real MI250X perf levers: MI250_GATE_GEMV, VLLM_ROCM_SPLITKV_PA, QuickReduce env gates, chunked-prefill/max-num-seqs \u2014 NOT AITER/GEMM tuning.",
+      "Robustness re-fires alerts on identical stale samples (pid=15383 attempt-1 log every ~5 ticks; AITER-JIT build_count=6 every ~5 ticks \u2014 AITER is hard-gated OFF on gfx90a: is_aiter_found_and_supported=CDNA3+). Diff before treating as new failure; acknowledge once in a one-line heartbeat, don't re-litigate.",
+      "PRELUDE budget-cap overrun (770%+) does NOT advance the phase; only exit gate is baseline_tput>0; skip_to_close would mislabel a fixable external block \u2014 heartbeat with stated reason instead.",
+      "Monotonic heartbeat aging \u2260 always hang: check runs/specialist/<task>/process.log mtime+size first; but heartbeat>1700s + frozen log = genuine wedge.",
+      "While gated, spend dead ticks on zero-cost lane-light actions (target_analysis) and periodic get_running_tasks verification pulls.",
+      "Model Ornith-1.5-35B-A3B = Qwen3_5Moe hybrid (30 linear + 10 full attn, 256 experts/8 active), TP2 on 2x MI250X 64GB, natively registered in vLLM 0.28. Real MI250X perf levers for explore rounds: MI250_GATE_GEMV, VLLM_ROCM_SPLITKV_PA, QuickReduce env gates, chunked-prefill/max-num-seqs tuning \u2014 NOT AITER/GEMM tuning.",
+      "explore grids: target 4 variants, provenance='llm_direct' or 'specialist:<domain>'; a KEEP self-validates on the stack.",
+      "Model Ornith-1.5-35B-A3B = Qwen3_5Moe hybrid (30 linear + 10 full attn, 256 experts/8 active), TP2 on 2x MI250X 64GB, natively registered in vLLM 0.28. Real perf levers for explore grids: MI250_GATE_GEMV, VLLM_ROCM_SPLITKV_PA, QuickReduce env gates, chunked-prefill/max-num-seqs tuning \u2014 NOT AITER/GEMM tuning (AITER hard-gated OFF on gfx90a: is_aiter_found_and_supported=CDNA3+).",
+      "Robustness re-fires identical alerts on stale samples (pid=15383 attempt-1 Engine-core-init log; AITER-JIT build_count=6 every ~5 ticks) \u2014 diff before treating as new failure; acknowledge once in a one-line heartbeat, don't re-litigate.",
+      "PRELUDE budget-cap overrun (now >900%) does NOT advance the phase; exit gate is baseline_tput>0 only; keep heartbeating with stated reason instead of skip_to_close.",
+      "Gate/registry desync is diagnosable from orchestration side: cite denial task_id vs get_running_tasks-empty repeatedly in alerts; Robustness's own repeated_policy_denied counter converging on same rule number corroborates there is no hidden holder.",
+      "While gated, spend dead ticks on zero-cost lane-light probes (target_analysis succeeded twice under gate) to prove pipeline health.",
+      "explore grids: target 4 variants (hard max 6), provenance='llm_direct' or 'specialist:<domain>'; a KEEP self-validates on the stack; content-based variant dedup.",
+      "Direct shell checks (ps, log mtimes) are permission-blocked this session; recovery is exclusively Robustness's ladder or natural lease lapse.",
+      "get_running_tasks can show EMPTY while a specialist process is alive \u2014 cross-check runs/specialist/<dir>/process.log mtime + scratch artifacts before declaring phantom; task may finish with only ~30-40min lag in progress events.",
+      "PRELUDE budget overrun does not advance phase; only exit gate is baseline_tput>0; skip_to_close mislabels fixable blocks \u2014 hold and probe.",
+      "Robustness re-fires stale-sample alerts (pid=15383, AITER-JIT) \u2014 AITER is hard-gated OFF on gfx90a (CDNA3+); acknowledge once, don't re-litigate.",
+      "Direct shell is mostly permission-blocked; Read of session-dir artifacts (logs, state.json greps) works and was the decisive diagnostic.",
+      "Model Ornith-1.5-35B-A3B = Qwen3_5Moe hybrid (30 linear + 10 full attn, 256 experts/8 active), TP2 on 2x MI250X 64GB, native in vLLM 0.28. Real levers: MI250_GATE_GEMV, VLLM_ROCM_SPLITKV_PA, QuickReduce, chunked-prefill/max-num-seqs \u2014 NOT AITER/GEMM tuning.",
+      "Session wall-clock timeout REVERTES integrate_patch keeps whose bench never ran \u2014 a 'succeeded/advanced' integrate is not durable; re-verify on-disk before trusting a prior fix.",
+      "Baseline failure chain this session: image_selector gfx90a (patch 001) \u2192 device visibility (unset env worse than explicit HIP_VISIBLE_DEVICES=0,1) \u2192 vllm not on PATH (specialist-flagged blocker 3, session YAML PATH lacks /opt/envs/vllm/bin).",
+      "propose_action schema: predicted_gain_pct goes INSIDE payload alongside action_name; an extra top-level key is a validation error. For env_overrides/idempotency_key/note the accepted shape was payload={action_name, predicted_gain_pct, params:{...}} in the last successful emit \u2014 actually round-11/12 succeeded with these fields at payload top level; round-13's error was only the misplaced predicted_gain_pct.",
+      "PRELUDE budget overrun (up to 2466%) never advances the phase; exit gate is baseline_tput>0 only; skip_to_close would mislabel a fixable block \u2014 heartbeat instead.",
+      "Robustness re-fires alerts on stale log samples (old pids) \u2014 diff before treating as new failures.",
+      "AITER is hard-gated OFF on gfx90a (CDNA3+ requirement); real MI250X levers: MI250_GATE_GEMV, VLLM_ROCM_SPLITKV_PA, QuickReduce env gates, chunked-prefill/max-num-seqs.",
+      "While gated, spend dead ticks on zero-cost lane-light probes (target_analysis) and direct Read of run-dir server.log \u2014 the decisive RCA tool; Bash grep on session files works, multi-command chains sometimes trip permission prompts.",
+      "PRELUDE budget overrun and skip_to_close suppression mean the ONLY exits are baseline_tput>0 or the hard deadline; once nothing is fundable, one-line heartbeats and let the auto-flush close the run.",
+      "Session wall-clock timeout silently REVERTES integrate_patch keeps whose bench never ran \u2014 always re-verify on-disk (patch 003 lesson).",
+      "Robustness re-fires alerts on stale log samples (old pids, dead-attempt logs, AITER-JIT which is moot on gfx90a: AITER is CDNA3+ gated) \u2014 diff before treating as new failure.",
+      "Baseline failure chain here was strictly sequential env enablement: image_selector gfx90a (patch 001 fixed) \u2192 device visibility (explicit env, never unset) \u2192 PATH (vllm binary + setsid child-env) \u2192 engine-core init. Fix bottom-up and verify each layer before re-baselining.",
+      "Model Ornith-1.5-35B-A3B = Qwen3_5Moe hybrid (30 linear + 10 full attn, 256 experts/8 active), TP2 on 2x MI250X 64GB, native in vLLM 0.28. Real perf levers: MI250_GATE_GEMV, VLLM_ROCM_SPLITKV_PA, QuickReduce env gates, chunked-prefill/max-num-seqs \u2014 NOT AITER/GEMM tuning.",
+      "explore grids: target 4 variants (max 6), idempotency_key='explore-round-<N>', KEEP self-validates on stack; never queue explore while baseline_tput=0 or when a round can't finish in budget."
+    ],
+    "next_cycle_directive": "If a fresh session starts: FIRST re-apply patch 004 (child-env self-align) via integrate_patch and re-verify patches 001/003 on-disk BEFORE any baseline attempt; then run baseline with explicit HIP_VISIBLE_DEVICES=0,1 and full PATH (/opt/envs/vllm/bin:/usr/local/bin). If server launches but engine-core init fails, pull get_failure on that attempt immediately (check VRAM/TP2 placement) instead of blind re-keying. Only after baseline_tput>0, open explore round-1 with MI250X env-gate levers (MI250_GATE_GEMV, VLLM_ROCM_SPLITKV_PA, QuickReduce, chunked-prefill/max-num-seqs); deprioritise AITER/GEMM tuning entirely on gfx90a.",
+    "parse_error": "",
+    "pending": [
+      "Deadline auto-flush of final report (only remaining thread; no orchestration action left).",
+      "Patch 004 integrate remains approved-but-unfunded (task 313e6341...) \u2014 carries to next session."
+    ],
+    "tried_and_why": [
+      "Baseline rounds 2-9: denied by enablement_round_in_flight (live specialist d00cdedf); waiting it out was correct.",
+      "Round-10 unset CUDA/HIP_VISIBLE_DEVICES: workers died 'No CUDA GPUs available' \u2014 explicit HIP_VISIBLE_DEVICES=0,1 is required, never unset.",
+      "Round-11/12/13: round-11 failed 'vllm not on PATH' (patch-003 had been REVERTED by prior session wall-clock timeout); round-13 with widened PATH + explicit GPU env still died at engine-core init \u2014 infra enablement on this gfx90a host needs more than one session's remaining budget.",
+      "Proposed report \u2192 denied execution_order ('baseline must run first'); emitted skip_to_close \u2192 suppressed by enablement guard. Stopped re-emitting and held."
+    ]
+  },
+  "orchestration_memory_history": [
+    {
+      "checkpoint_count": 1,
+      "current_plan": "Blocked on baseline_tput>0: enablement specialist 78b25f28 is validating a Magpie gfx90a\u2192mi300x runner patch but its heartbeat aged monotonically to 304s, so I emitted the high-severity hang alert requesting robustness force_gpu_cleanup + clearing the orphaned aiter/jit build dir. On lane release (specialist_done or task kill), dispatch baseline with JIT cleanup as a precondition.",
+      "hypotheses": [
+        "The specialist's validation launch hung on an orphaned hipcc JIT build (build_count frozen at 6 for 20+ ticks), not productive work.",
+        "The gfx90a\u2192mi300x alias in Magpie image_selector is necessary and sufficient for any server launch this session; baseline will inherit the same hang unless the stale build dir is cleared."
+      ],
+      "last_checkpoint_seq": 84,
+      "last_checkpoint_tick": 20,
+      "last_checkpoint_ts": "2026-09-14T10:25:58+00:00",
+      "learnings": [
+        "Robustness re-fires alerts on identical pid/count=1 log patterns \u2014 diff the sample before treating it as a new failure.",
+        "PRELUDE budget cap lapse does not advance the phase; the only exit gate is baseline_tput>0, so ignore per-phase seconds when the gate is externally blocked.",
+        "Watch heartbeat_age_sec deltas across ticks: monotonic aging = hang signal; intermittent refresh = worker alive."
+      ],
+      "next_cycle_directive": "Once baseline lands: cast a wide first explore round of config levers for 2-GPU TP=2 serving of a 35B MoE/SWA model on MI210-class hardware (gpu-memory-utilization, chunked prefill / max-num-batched-tokens, kv-cache dtype/fp8, quantization switches). Deprioritise anything requiring the crashed Magpie runner path until baseline proves it works. Priority specialist domain: serving_specialist for framework source patches if config plateau appears.",
+      "parse_error": "",
+      "pending": [
+        "Robustness response to the hang alert (GPU + aiter/jit build-dir cleanup), or specialist lease lapse (~32min from the alert tick).",
+        "baseline dispatch once lanes free, with stale-JIT cleanup precondition.",
+        "specialist_done report from 78b25f28 \u2014 read its patch/validation outcome before promoting anything."
+      ],
+      "tried_and_why": [
+        "baseline attempt 1 failed subprocess_nonzero: Magpie image_selector has no runner type for gfx90a \u2014 harness gap, not model/vLLM (model is Qwen3_5MoeForConditionalGeneration, natively supported).",
+        "request{target_agent=robustness} was denied (orchestration may only request kernel_agent); reach robustness via broadcast send_message/alert intents instead.",
+        "target_analysis succeeded (no target GPU configured; advisory only)."
+      ]
+    },
+    {
+      "checkpoint_count": 2,
+      "current_plan": "Exit PRELUDE by getting baseline_tput>0. Baseline rearm is hard-gated by PolicyGate rule 'enablement_round_in_flight' on wedged specialist task 78b25f2832ff45ff949ad9c0e9634cf3 (holds benchmark_lane/server_lifecycle/all lanes; lease lapses ~11:17Z). At task reap OR lease lapse, immediately dispatch propose_action{baseline, idempotency_key='baseline-round-3'} with the CUDA/HIP env-visibility diagnosis attached as params note.",
+      "hypotheses": [
+        "Baseline attempt-3's next failure layer (after reap) will be vllm/platforms/rocm.py:143 'Inconsistent GPU visibility env vars' \u2014 dispatcher sets CUDA_VISIBLE_DEVICES=2,3 & HIP=2,3 vs ROCR=0,1; fix = unset CUDA_VISIBLE_DEVICES, HIP logical 0..N-1.",
+        "The specialist's orphaned probe server (APIServer pid 18501, workers 18889/18890, booted OK at 10:22 on both MI250X) may squat GPU memory at baseline launch unless robustness reaps it; server3.log proves the model itself boots fine.",
+        "If baseline-round-3 fails with Engine-core-init again after GPU reap, root cause is the dead lease's leftover state \u2014 then alert robustness with explicit pids rather than retrying blindly (failure-streak already 1)."
+      ],
+      "last_checkpoint_seq": 162,
+      "last_checkpoint_tick": 40,
+      "last_checkpoint_ts": "2026-09-14T10:33:42+00:00",
+      "learnings": [
+        "Robustness re-fires alerts on identical pid/count=1 log patterns \u2014 diff the sample before treating it as a new failure.",
+        "PRELUDE budget cap lapse does not advance the phase; the only exit gate is baseline_tput>0, so ignore per-phase seconds when the gate is externally blocked.",
+        "Watch heartbeat_age_sec deltas across ticks: monotonic aging = hang signal; intermittent refresh = worker alive.",
+        "Monotonic heartbeat aging can be a long-poll artifact: before declaring a hang, check runs/specialist/<task>/process.log mtime+size and scratch/ artifacts \u2014 I flip-flopped once (kill\u2192retract\u2192kill) on exactly this.",
+        "AITER is hard-gated OFF on gfx90a (is_aiter_found_and_supported = CDNA3+); robustness's aiter_jit_build_stuck alerts are moot this session. Real perf levers on this MI250X host: MI250_GATE_GEMV, VLLM_ROCM_SPLITKV_PA, QuickReduce (in-tree env gates), not AITER/GEMM tuning.",
+        "Robustness re-fires alerts on identical stale samples (pid=15383 log line >40min old) \u2014 diff before treating as new failure.",
+        "PRELUDE budget cap does not advance the phase; only exit gate is baseline_tput>0; skip_to_close would mislabel a fixable infra block \u2014 keep heartbeating instead.",
+        "Model Ornith-1.5-35B-A3B = Qwen3_5MoeForConditionalGeneration (hybrid 30 linear-attn + 10 full-attn, 256 experts/8 active, TP2 on 2x MI250X 64GB), natively registered in vLLM 0.28 \u2014 no model-side enablement work needed."
+      ],
+      "next_cycle_directive": "Once baseline lands: first explore grid should be 4 MI250-native config levers from the enablement findings \u2014 VLLM_ROCM_SPLITKV_PA=1, MI250_GATE_GEMV=1, gpu-memory-utilization/max-model-len variants, chunked-prefill toggles \u2014 provenance 'specialist:enablement_specialist'. Deprioritise anything AITER/GEMM-tuning (gated off on CDNA2). Also fix env: unset CUDA_VISIBLE_DEVICES in variant extra_envs if the dispatcher conflict recurs. After one config round, consider serving_specialist for source-level MoE/expert-parallel leverage given 256-expert model on 2 GPUs.",
+      "parse_error": "",
+      "pending": [
+        "Robustness has received terminate+force_gpu_cleanup requests 4x (seq 86/96/113/131) and only heartbeats back \u2014 fallback committed: dispatch baseline unconditionally at ~11:17Z lease lapse.",
+        "specialist_done final report from 78b25f28 may never arrive (wedged after success); partial report on disk is complete enough to act on.",
+        "Patch 002 (fused_moe oracle AITER-demote) is authored but NOT applied and NOT needed for baseline (vllm_mi300x.sh:72 auto-sets _aiter_default=0 on gfx90a); keep as integrate_patch candidate only if forcing VLLM_ROCM_USE_AITER=1 later."
+      ],
+      "tried_and_why": [
+        "baseline attempt-1 failed subprocess_nonzero: Magpie image_selector had no gfx90a runner \u2014 FIXED: patch 001 (gfx90a\u2192mi300x alias) is already applied in live tree; enablement objective complete.",
+        "baseline attempt-2 proposal DENIED rule enablement_round_in_flight: machinery forbids baseline while the enablement specialist task record is alive \u2014 must wait for reap/lease lapse.",
+        "delegate{recover} DENIED (robustness-only role); request{target_agent=robustness} also denied \u2014 reach robustness only via alert/send_message intents.",
+        "Extended lease +20min on 78b25f28 (seq=101) before confirming the transcript wedge \u2014 own goal: pushed lease lapse to ~11:17Z; lesson: verify process.log mtime before lease actions.",
+        "Confirmed wedge: process.log frozen at 10:20:24 for >10min with identical byte count right after ingesting a tool result; heartbeat.json never refreshed since 09:52."
+      ]
+    },
+    {
+      "checkpoint_count": 3,
+      "current_plan": "Exit PRELUDE by getting baseline_tput>0. Sole blocker: PolicyGate rule 'enablement_round_in_flight' on wedged specialist task 78b25f2832ff45ff949ad9c0e9634cf3 (holds all lanes incl benchmark_lane/server_lifecycle; heartbeat dead since ~10:20Z, lease counting down with no renewal, ETA expiry ~11:28Z). The tick AFTER get_running_tasks shows it gone (or the denial clears), immediately dispatch propose_action{baseline, idempotency_key='baseline-round-4'} with the CUDA/HIP env-visibility fix and orphan-cleanup precondition in params.",
+      "hypotheses": [
+        "Baseline attempt-4's next failure layer (after gate clears) will be vllm/platforms/rocm.py 'Inconsistent GPU visibility env vars' \u2014 dispatcher sets CUDA/HIP_VISIBLE_DEVICES=2,3 vs ROCR=0,1; fix = unset CUDA_VISIBLE_DEVICES, HIP logical 0..N-1.",
+        "Orphan probe server (vllm serve pid 18501 + EngineCore 18709, port 8124, TP2, 0.95 VRAM util, alive since ~10:17Z) will VRAM-collide with baseline launch unless robustness force-cleans it; alert with pids sent (seq=164) \u2014 no confirmation of cleanup yet.",
+        "Robustness will NOT reap the wedged task or kill the orphan before TTL expiry (5+ requests all answered with bare heartbeats); TTL countdown is the only reliable unlock signal."
+      ],
+      "last_checkpoint_seq": 240,
+      "last_checkpoint_tick": 60,
+      "last_checkpoint_ts": "2026-09-14T10:38:40+00:00",
+      "learnings": [
+        "Robustness re-fires alerts on identical pid/count=1 log patterns \u2014 diff the sample before treating it as a new failure.",
+        "PRELUDE budget cap lapse does not advance the phase; the only exit gate is baseline_tput>0, so ignore per-phase seconds when the gate is externally blocked.",
+        "Watch heartbeat_age_sec deltas across ticks: monotonic aging = hang signal; intermittent refresh = worker alive.",
+        "Monotonic heartbeat aging can be a long-poll artifact: before declaring a hang, check runs/specialist/<task>/process.log mtime+size and scratch/ artifacts \u2014 I flip-flopped once (kill\u2192retract\u2192kill) on exactly this.",
+        "AITER is hard-gated OFF on gfx90a (is_aiter_found_and_supported = CDNA3+); robustness's aiter_jit_build_stuck alerts are moot this session. Real perf levers on this MI250X host: MI250_GATE_GEMV, VLLM_ROCM_SPLITKV_PA, QuickReduce (in-tree env gates), not AITER/GEMM tuning.",
+        "Robustness re-fires alerts on identical stale samples (pid=15383 log line >40min old) \u2014 diff before treating as new failure.",
+        "PRELUDE budget cap does not advance the phase; only exit gate is baseline_tput>0; skip_to_close would mislabel a fixable infra block \u2014 keep heartbeating instead.",
+        "Model Ornith-1.5-35B-A3B = Qwen3_5MoeForConditionalGeneration (hybrid 30 linear-attn + 10 full-attn, 256 experts/8 active, TP2 on 2x MI250X 64GB), natively registered in vLLM 0.28 \u2014 no model-side enablement work needed.",
+        "Robustness re-fires identical alerts on stale samples (pid=15383 log from dead attempt-1, AITER-JIT build dir moot on gfx90a) \u2014 diff before treating as new failure; acknowledge once, don't re-litigate.",
+        "PRELUDE budget-cap overrun (now 455%) does NOT advance the phase; exit gate is baseline_tput>0 only; skip_to_close/wind-down would mislabel a fixable external block \u2014 heartbeat with stated reason instead.",
+        "Monotonic heartbeat aging \u2260 always hang: check process.log mtime/size + scratch artifacts before lease actions; but heartbeat>1000s + frozen log = genuine wedge.",
+        "While gated, spend dead ticks on zero-cost lane-light actions (target_analysis) to gather data and probe pipeline health.",
+        "Model Ornith-1.5-35B-A3B = Qwen3_5Moe hybrid (30 linear + 10 full attn, 256 experts/8 active), TP2 on 2x MI250X 64GB, natively registered in vLLM 0.28. Real MI250X perf levers: MI250_GATE_GEMV, VLLM_ROCM_SPLITKV_PA, QuickReduce env gates, chunked-prefill/max-num-seqs tuning \u2014 NOT AITER/GEMM tuning."
+      ],
+      "next_cycle_directive": "Once baseline lands: immediately delegate serving_specialist + system_specialist (wide, cycle 0 posture) for MI250X TP2 MoE explore-grid seeds, then run explore with 4 variants of env-gate/server-flag levers (split-KV PA, QuickReduce, chunked-prefill sizing, expert-parallel ablation). Deprioritise anything AITER/GEMM-tuning-related (gated off on gfx90a).",
+      "parse_error": "",
+      "pending": [
+        "Watch for 78b25f28 leaving get_running_tasks (~11:28Z, was 2400s remaining at tick ~55) \u2192 fire baseline-round-4 with env fixes + new idempotency key.",
+        "If baseline-round-4 fails on Engine-core-init/VRAM: alert robustness with explicit pids (18501/18709) rather than blind retry; failure-streak is already 1.",
+        "Patch 002 (fused_moe oracle AITER-demote) authored but NOT applied \u2014 only needed as integrate_patch candidate if forcing VLLM_ROCM_USE_AITER=1 later (irrelevant on gfx90a where AITER is gated off)."
+      ],
+      "tried_and_why": [
+        "baseline attempt-1 failed subprocess_nonzero: Magpie image_selector had no gfx90a runner \u2014 FIXED via patch 001 (gfx90a\u2192mi300x alias), applied in live tree; enablement objective complete.",
+        "baseline attempts 2-3 proposals DENIED enablement_round_in_flight: hard gate while specialist task record alive; rearm requires reap/lease lapse.",
+        "delegate{recover} and request{target_agent=robustness} DENIED (role-restricted); reach robustness only via alert/send_message.",
+        "Extended the wedged task's lease +20min prematurely (lesson: check process.log mtime before lease actions); will NOT extend again.",
+        "target_analysis re-run while gated succeeded (seq=213) \u2014 proves Coordinator action pipeline healthy under wedged lanes; gate is specific to baseline rearm."
+      ]
+    },
+    {
+      "checkpoint_count": 4,
+      "current_plan": "Exit PRELUDE by getting baseline_tput>0. Sole blocker: PolicyGate rule 'enablement_round_in_flight' on wedged specialist 78b25f2832ff45ff949ad9c0e9634cf3 (holds all lanes incl benchmark_lane/server_lifecycle; heartbeat frozen since ~10:20Z, lease counting down with no renewal, expiry tracking ~11:28Z). The tick AFTER get_running_tasks shows it gone (or the denial clears), immediately dispatch propose_action{baseline, idempotency_key='baseline-round-4'} with the CUDA/HIP env-visibility fix and orphan-cleanup precondition in params.",
+      "hypotheses": [
+        "Baseline attempt-4's next failure layer (after gate clears) will be vllm/platforms/rocm.py 'Inconsistent GPU visibility env vars' \u2014 dispatcher sets CUDA/HIP_VISIBLE_DEVICES=2,3 vs ROCR=0,1; fix = unset CUDA_VISIBLE_DEVICES, HIP logical 0..N-1.",
+        "Orphan probe server (vllm serve pid 18501 + EngineCore 18709, port 8124, TP2, 0.95 VRAM util, alive since ~10:17Z) will VRAM-collide with baseline launch unless robustness force-cleans it; alert with pids sent (seq=242) \u2014 no confirmation of cleanup yet.",
+        "Robustness will NOT reap the wedged task or kill the orphan before TTL expiry (6+ requests all answered with bare heartbeats); TTL countdown is the only reliable unlock signal."
+      ],
+      "last_checkpoint_seq": 312,
+      "last_checkpoint_tick": 80,
+      "last_checkpoint_ts": "2026-09-14T10:43:30+00:00",
+      "learnings": [
+        "Robustness re-fires alerts on identical pid/count=1 log patterns \u2014 diff the sample before treating it as a new failure.",
+        "PRELUDE budget cap lapse does not advance the phase; the only exit gate is baseline_tput>0, so ignore per-phase seconds when the gate is externally blocked.",
+        "Watch heartbeat_age_sec deltas across ticks: monotonic aging = hang signal; intermittent refresh = worker alive.",
+        "Monotonic heartbeat aging can be a long-poll artifact: before declaring a hang, check runs/specialist/<task>/process.log mtime+size and scratch/ artifacts \u2014 I flip-flopped once (kill\u2192retract\u2192kill) on exactly this.",
+        "AITER is hard-gated OFF on gfx90a (is_aiter_found_and_supported = CDNA3+); robustness's aiter_jit_build_stuck alerts are moot this session. Real perf levers on this MI250X host: MI250_GATE_GEMV, VLLM_ROCM_SPLITKV_PA, QuickReduce (in-tree env gates), not AITER/GEMM tuning.",
+        "Robustness re-fires alerts on identical stale samples (pid=15383 log line >40min old) \u2014 diff before treating as new failure.",
+        "PRELUDE budget cap does not advance the phase; only exit gate is baseline_tput>0; skip_to_close would mislabel a fixable infra block \u2014 keep heartbeating instead.",
+        "Model Ornith-1.5-35B-A3B = Qwen3_5MoeForConditionalGeneration (hybrid 30 linear-attn + 10 full-attn, 256 experts/8 active, TP2 on 2x MI250X 64GB), natively registered in vLLM 0.28 \u2014 no model-side enablement work needed.",
+        "Robustness re-fires identical alerts on stale samples (pid=15383 log from dead attempt-1, AITER-JIT build dir moot on gfx90a) \u2014 diff before treating as new failure; acknowledge once, don't re-litigate.",
+        "PRELUDE budget-cap overrun (now 455%) does NOT advance the phase; exit gate is baseline_tput>0 only; skip_to_close/wind-down would mislabel a fixable external block \u2014 heartbeat with stated reason instead.",
+        "Monotonic heartbeat aging \u2260 always hang: check process.log mtime/size + scratch artifacts before lease actions; but heartbeat>1000s + frozen log = genuine wedge.",
+        "While gated, spend dead ticks on zero-cost lane-light actions (target_analysis) to gather data and probe pipeline health.",
+        "Model Ornith-1.5-35B-A3B = Qwen3_5Moe hybrid (30 linear + 10 full attn, 256 experts/8 active), TP2 on 2x MI250X 64GB, natively registered in vLLM 0.28. Real MI250X perf levers: MI250_GATE_GEMV, VLLM_ROCM_SPLITKV_PA, QuickReduce env gates, chunked-prefill/max-num-seqs tuning \u2014 NOT AITER/GEMM tuning.",
+        "Robustness re-fires alerts on identical pid/count=1 log patterns \u2014 diff the sample before treating it as a new failure (pid=15383 stale samples and AITER-JIT alerts re-fire every ~5 ticks; AITER is moot on gfx90a: is_aiter_found_and_supported = CDNA3+).",
+        "PRELUDE budget cap lapse (now 586%) does NOT advance the phase; only exit gate is baseline_tput>0; skip_to_close would mislabel a fixable block \u2014 heartbeat with stated reason instead.",
+        "Monotonic heartbeat aging \u2260 always hang: check runs/specialist/<task>/process.log mtime+size + scratch artifacts before lease actions; but heartbeat>1200s + frozen log + NOT_READY last line = genuine wedge.",
+        "While gated, spend dead ticks on zero-cost lane-light actions (target_analysis) to gather data and probe pipeline health; keep heartbeats one-line so alert dedup stays clean."
+      ],
+      "next_cycle_directive": "Once baseline lands: first explore round should be WIDE config-only (4 variants) mixing the MI250X in-tree env gates (MI250_GATE_GEMV=1, VLLM_ROCM_SPLITKV_PA=1, QuickReduce), chunked-prefill/max-num-batched-tokens sizing for a 35B-A3B MoE at TP2, and one serving-param ablation; deprioritise any AITER-flavored lever (gated off on gfx90a). If config plateaus, prefer a serving_specialist source patch on MoE expert-dispatch/GEMV path over deeper config sweeps.",
+      "parse_error": "",
+      "pending": [
+        "Watch for 78b25f28 leaving get_running_tasks (~11:28Z) \u2192 fire baseline-round-4 with env fixes + new idempotency key.",
+        "If baseline-round-4 fails on Engine-core-init/VRAM: alert robustness with explicit pids (18501/18709) rather than blind retry; failure-streak is already 1.",
+        "Patch 002 (fused_moe oracle AITER-demote) authored but NOT applied \u2014 only needed as integrate_patch candidate if forcing VLLM_ROCM_USE_AITER=1 later (irrelevant on gfx90a where AITER is gated off)."
+      ],
+      "tried_and_why": [
+        "baseline attempt-1 failed subprocess_nonzero: Magpie image_selector had no gfx90a runner \u2014 FIXED via patch 001 (gfx90a\u2192mi300x alias), applied in live tree; enablement objective complete.",
+        "baseline attempts 2-3 proposals DENIED enablement_round_in_flight: hard gate while specialist task record alive; rearm requires reap/lease lapse.",
+        "delegate{recover} and request{target_agent=robustness} DENIED (role-restricted); reach robustness only via alert/send_message.",
+        "Extended the wedged task's lease +20min prematurely (lesson: check process.log mtime before lease actions); will NOT extend again.",
+        "target_analysis re-run while gated succeeded (seq=213) \u2014 proves Coordinator action pipeline healthy under wedged lanes; gate is specific to baseline rearm.",
+        "High-severity alert seq=242 with force-reap justification (specialist_done.partial.json is a COMPLETE deliverable: conf=0.9, patch 001 written+applied, full findings; task stuck in NOT_READY poll loop) \u2014 robustness still has not acted."
+      ]
+    },
+    {
+      "checkpoint_count": 5,
+      "current_plan": "Exit PRELUDE by getting baseline_tput>0. Sole blocker: PolicyGate rule 'enablement_round_in_flight' on wedged specialist 78b25f2832ff45ff949ad9c0e9634cf3 (holds ALL lanes incl benchmark_lane/server_lifecycle; process.log frozen at 10:20:24Z, heartbeat monotonic-frozen >1500s, lease expires ~11:18Z). The tick get_running_tasks shows it gone (or denial clears), immediately propose_action baseline with idempotency_key='baseline-round-4' and the CUDA/HIP env-visibility fix + orphan-cleanup precondition in params.",
+      "hypotheses": [
+        "Baseline attempt-4's next failure layer (after gate clears) = vllm rocm.py 'Inconsistent GPU visibility env vars' (dispatcher sets CUDA/HIP_VISIBLE_DEVICES=2,3 vs ROCR_VISIBLE_DEVICES=0,1); fix = unset CUDA_VISIBLE_DEVICES, HIP logical 0..N-1.",
+        "Orphan probe server (vllm serve pid 18501 + EngineCore 18709, port 8124, TP2, 0.95 VRAM util) will VRAM-collide with baseline launch unless killed first; alert with pids sent (seq=242), no cleanup confirmation yet."
+      ],
+      "last_checkpoint_seq": 381,
+      "last_checkpoint_tick": 100,
+      "last_checkpoint_ts": "2026-09-14T10:46:35+00:00",
+      "learnings": [
+        "Robustness re-fires alerts on identical pid/count=1 log patterns \u2014 diff the sample before treating it as a new failure.",
+        "PRELUDE budget cap lapse does not advance the phase; the only exit gate is baseline_tput>0, so ignore per-phase seconds when the gate is externally blocked.",
+        "Watch heartbeat_age_sec deltas across ticks: monotonic aging = hang signal; intermittent refresh = worker alive.",
+        "Monotonic heartbeat aging can be a long-poll artifact: before declaring a hang, check runs/specialist/<task>/process.log mtime+size and scratch/ artifacts \u2014 I flip-flopped once (kill\u2192retract\u2192kill) on exactly this.",
+        "AITER is hard-gated OFF on gfx90a (is_aiter_found_and_supported = CDNA3+); robustness's aiter_jit_build_stuck alerts are moot this session. Real perf levers on this MI250X host: MI250_GATE_GEMV, VLLM_ROCM_SPLITKV_PA, QuickReduce (in-tree env gates), not AITER/GEMM tuning.",
+        "Robustness re-fires alerts on identical stale samples (pid=15383 log line >40min old) \u2014 diff before treating as new failure.",
+        "PRELUDE budget cap does not advance the phase; only exit gate is baseline_tput>0; skip_to_close would mislabel a fixable infra block \u2014 keep heartbeating instead.",
+        "Model Ornith-1.5-35B-A3B = Qwen3_5MoeForConditionalGeneration (hybrid 30 linear-attn + 10 full-attn, 256 experts/8 active, TP2 on 2x MI250X 64GB), natively registered in vLLM 0.28 \u2014 no model-side enablement work needed.",
+        "Robustness re-fires identical alerts on stale samples (pid=15383 log from dead attempt-1, AITER-JIT build dir moot on gfx90a) \u2014 diff before treating as new failure; acknowledge once, don't re-litigate.",
+        "PRELUDE budget-cap overrun (now 455%) does NOT advance the phase; exit gate is baseline_tput>0 only; skip_to_close/wind-down would mislabel a fixable external block \u2014 heartbeat with stated reason instead.",
+        "Monotonic heartbeat aging \u2260 always hang: check process.log mtime/size + scratch artifacts before lease actions; but heartbeat>1000s + frozen log = genuine wedge.",
+        "While gated, spend dead ticks on zero-cost lane-light actions (target_analysis) to gather data and probe pipeline health.",
+        "Model Ornith-1.5-35B-A3B = Qwen3_5Moe hybrid (30 linear + 10 full attn, 256 experts/8 active), TP2 on 2x MI250X 64GB, natively registered in vLLM 0.28. Real MI250X perf levers: MI250_GATE_GEMV, VLLM_ROCM_SPLITKV_PA, QuickReduce env gates, chunked-prefill/max-num-seqs tuning \u2014 NOT AITER/GEMM tuning.",
+        "Robustness re-fires alerts on identical pid/count=1 log patterns \u2014 diff the sample before treating it as a new failure (pid=15383 stale samples and AITER-JIT alerts re-fire every ~5 ticks; AITER is moot on gfx90a: is_aiter_found_and_supported = CDNA3+).",
+        "PRELUDE budget cap lapse (now 586%) does NOT advance the phase; only exit gate is baseline_tput>0; skip_to_close would mislabel a fixable block \u2014 heartbeat with stated reason instead.",
+        "Monotonic heartbeat aging \u2260 always hang: check runs/specialist/<task>/process.log mtime+size + scratch artifacts before lease actions; but heartbeat>1200s + frozen log + NOT_READY last line = genuine wedge.",
+        "While gated, spend dead ticks on zero-cost lane-light actions (target_analysis) to gather data and probe pipeline health; keep heartbeats one-line so alert dedup stays clean.",
+        "Robustness re-fires identical alerts on stale samples (pid=15383 attempt-1 log; AITER-JIT every ~5 ticks) \u2014 AITER is hard-gated OFF on gfx90a (is_aiter_found_and_supported=CDNA3+), so those alerts are moot. Acknowledge once in one-line heartbeat, don't re-litigate.",
+        "PRELUDE budget-cap overrun (now >670%) does NOT advance the phase; exit gate is baseline_tput>0 only. skip_to_close would mislabel a fixable external block \u2014 keep heartbeating; 120+min session budget remains.",
+        "Monotonic heartbeat aging: check runs/specialist/<task>/process.log mtime+size before lease actions; frozen log + heartbeat>1200s = genuine wedge.",
+        "Model Ornith-1.5-35B-A3B = Qwen3_5Moe hybrid (30 linear + 10 full attn, 256 experts/8 active), TP2 on 2x MI250X 64GB, natively registered in vLLM 0.28. Real MI250X perf levers: MI250_GATE_GEMV, VLLM_ROCM_SPLITKV_PA, QuickReduce env gates, chunked-prefill/max-num-seqs \u2014 NOT AITER/GEMM tuning."
+      ],
+      "next_cycle_directive": "Once baseline lands: first explore round should be a 4-variant MI250X config grid (SPLITKV_PA, GEMV gate, chunked-prefill, max-num-seqs), provenance='llm_direct'. Deprioritise any AITER/GEMM-tuning angle (hardware-gated off). Prefer one serving_specialist for depth (hybrid attn MoE scheduling) only after the config plateau shows.",
+      "parse_error": "",
+      "pending": [
+        "Watch get_running_tasks each tick; when 78b25f28 disappears (~11:18Z TTL), fire baseline-round-4 immediately.",
+        "If baseline-round-4 fails on Engine-core-init/VRAM: alert robustness with explicit pids (18501/18709), do not blind-retry (failure_streak already 1).",
+        "Patch 002 (fused_moe AITER-demote) authored but NOT applied; irrelevant on gfx90a unless forcing VLLM_ROCM_USE_AITER=1."
+      ],
+      "tried_and_why": [
+        "baseline attempt-1 failed subprocess_nonzero: Magpie image_selector had no gfx90a runner \u2014 FIXED via patch 001 (gfx90a\u2192mi300x alias), applied in live tree; enablement objective complete.",
+        "baseline attempts 2-3 DENIED enablement_round_in_flight \u2014 hard gate while specialist task record alive; only reap/lease-lapse rearms.",
+        "delegate{recover} and request{robustness} DENIED (role-restricted); reach robustness only via alert/send_message. Robustness has ignored ~7 force-reap requests \u2014 never renews the wedged task's lease and never kills the orphan.",
+        "Extended wedged task lease +20min once, prematurely (before checking process.log mtime) \u2014 lesson learned, will not repeat.",
+        "target_analysis re-run while gated succeeded \u2014 proves Coordinator pipeline healthy; gate is baseline-rearm-specific."
+      ]
+    },
+    {
+      "checkpoint_count": 6,
+      "current_plan": "Exit PRELUDE by getting baseline_tput>0. Sole blocker: PolicyGate rule 'enablement_round_in_flight' held by wedged specialist 78b25f2832ff45ff949ad9c0e9634cf3 (all 5 lanes, heartbeat frozen >1700s, lease TTL lapses ~11:17Z, no force-reap from Robustness yet). The tick get_running_tasks shows it gone or the denial clears, immediately propose_action baseline with idempotency_key='baseline-round-4' including the CUDA/HIP-visible-devices consistency fix and orphan-server-cleanup precondition (pids 18501/18709 on port 8124, TP2 0.95 VRAM) in params.",
+      "hypotheses": [
+        "Baseline attempt-4's next failure layer after gate clears = vllm rocm.py 'Inconsistent GPU visibility env vars' (dispatcher sets CUDA/HIP_VISIBLE_DEVICES=2,3 vs ROCR_VISIBLE_DEVICES=0,1); fix = unset CUDA/HIP_VISIBLE_DEVICES so logical indices are 0..N-1.",
+        "Orphan probe server will VRAM-collide with baseline launch unless killed first.",
+        "Natural lease TTL lapse (~11:17Z) will rearm baseline even if Robustness never force-reaps; ~25min of gate loss is survivable given ~120min session budget."
+      ],
+      "last_checkpoint_seq": 451,
+      "last_checkpoint_tick": 120,
+      "last_checkpoint_ts": "2026-09-14T10:50:00+00:00",
+      "learnings": [
+        "Robustness re-fires alerts on identical pid/count=1 log patterns \u2014 diff the sample before treating it as a new failure.",
+        "PRELUDE budget cap lapse does not advance the phase; the only exit gate is baseline_tput>0, so ignore per-phase seconds when the gate is externally blocked.",
+        "Watch heartbeat_age_sec deltas across ticks: monotonic aging = hang signal; intermittent refresh = worker alive.",
+        "Monotonic heartbeat aging can be a long-poll artifact: before declaring a hang, check runs/specialist/<task>/process.log mtime+size and scratch/ artifacts \u2014 I flip-flopped once (kill\u2192retract\u2192kill) on exactly this.",
+        "AITER is hard-gated OFF on gfx90a (is_aiter_found_and_supported = CDNA3+); robustness's aiter_jit_build_stuck alerts are moot this session. Real perf levers on this MI250X host: MI250_GATE_GEMV, VLLM_ROCM_SPLITKV_PA, QuickReduce (in-tree env gates), not AITER/GEMM tuning.",
+        "Robustness re-fires alerts on identical stale samples (pid=15383 log line >40min old) \u2014 diff before treating as new failure.",
+        "PRELUDE budget cap does not advance the phase; only exit gate is baseline_tput>0; skip_to_close would mislabel a fixable infra block \u2014 keep heartbeating instead.",
+        "Model Ornith-1.5-35B-A3B = Qwen3_5MoeForConditionalGeneration (hybrid 30 linear-attn + 10 full-attn, 256 experts/8 active, TP2 on 2x MI250X 64GB), natively registered in vLLM 0.28 \u2014 no model-side enablement work needed.",
+        "Robustness re-fires identical alerts on stale samples (pid=15383 log from dead attempt-1, AITER-JIT build dir moot on gfx90a) \u2014 diff before treating as new failure; acknowledge once, don't re-litigate.",
+        "PRELUDE budget-cap overrun (now 455%) does NOT advance the phase; exit gate is baseline_tput>0 only; skip_to_close/wind-down would mislabel a fixable external block \u2014 heartbeat with stated reason instead.",
+        "Monotonic heartbeat aging \u2260 always hang: check process.log mtime/size + scratch artifacts before lease actions; but heartbeat>1000s + frozen log = genuine wedge.",
+        "While gated, spend dead ticks on zero-cost lane-light actions (target_analysis) to gather data and probe pipeline health.",
+        "Model Ornith-1.5-35B-A3B = Qwen3_5Moe hybrid (30 linear + 10 full attn, 256 experts/8 active), TP2 on 2x MI250X 64GB, natively registered in vLLM 0.28. Real MI250X perf levers: MI250_GATE_GEMV, VLLM_ROCM_SPLITKV_PA, QuickReduce env gates, chunked-prefill/max-num-seqs tuning \u2014 NOT AITER/GEMM tuning.",
+        "Robustness re-fires alerts on identical pid/count=1 log patterns \u2014 diff the sample before treating it as a new failure (pid=15383 stale samples and AITER-JIT alerts re-fire every ~5 ticks; AITER is moot on gfx90a: is_aiter_found_and_supported = CDNA3+).",
+        "PRELUDE budget cap lapse (now 586%) does NOT advance the phase; only exit gate is baseline_tput>0; skip_to_close would mislabel a fixable block \u2014 heartbeat with stated reason instead.",
+        "Monotonic heartbeat aging \u2260 always hang: check runs/specialist/<task>/process.log mtime+size + scratch artifacts before lease actions; but heartbeat>1200s + frozen log + NOT_READY last line = genuine wedge.",
+        "While gated, spend dead ticks on zero-cost lane-light actions (target_analysis) to gather data and probe pipeline health; keep heartbeats one-line so alert dedup stays clean.",
+        "Robustness re-fires identical alerts on stale samples (pid=15383 attempt-1 log; AITER-JIT every ~5 ticks) \u2014 AITER is hard-gated OFF on gfx90a (is_aiter_found_and_supported=CDNA3+), so those alerts are moot. Acknowledge once in one-line heartbeat, don't re-litigate.",
+        "PRELUDE budget-cap overrun (now >670%) does NOT advance the phase; exit gate is baseline_tput>0 only. skip_to_close would mislabel a fixable external block \u2014 keep heartbeating; 120+min session budget remains.",
+        "Monotonic heartbeat aging: check runs/specialist/<task>/process.log mtime+size before lease actions; frozen log + heartbeat>1200s = genuine wedge.",
+        "Model Ornith-1.5-35B-A3B = Qwen3_5Moe hybrid (30 linear + 10 full attn, 256 experts/8 active), TP2 on 2x MI250X 64GB, natively registered in vLLM 0.28. Real MI250X perf levers: MI250_GATE_GEMV, VLLM_ROCM_SPLITKV_PA, QuickReduce env gates, chunked-prefill/max-num-seqs \u2014 NOT AITER/GEMM tuning.",
+        "Robustness re-fires alerts on identical stale samples (pid=15383 attempt-1 log every ~5 ticks; AITER-JIT build_count=6 every ~5 ticks \u2014 AITER is hard-gated OFF on gfx90a: is_aiter_found_and_supported=CDNA3+). Diff before treating as new failure; acknowledge once in a one-line heartbeat, don't re-litigate.",
+        "PRELUDE budget-cap overrun (770%+) does NOT advance the phase; only exit gate is baseline_tput>0; skip_to_close would mislabel a fixable external block \u2014 heartbeat with stated reason instead.",
+        "Monotonic heartbeat aging \u2260 always hang: check runs/specialist/<task>/process.log mtime+size first; but heartbeat>1700s + frozen log = genuine wedge.",
+        "While gated, spend dead ticks on zero-cost lane-light actions (target_analysis) and periodic get_running_tasks verification pulls.",
+        "Model Ornith-1.5-35B-A3B = Qwen3_5Moe hybrid (30 linear + 10 full attn, 256 experts/8 active), TP2 on 2x MI250X 64GB, natively registered in vLLM 0.28. Real MI250X perf levers for explore rounds: MI250_GATE_GEMV, VLLM_ROCM_SPLITKV_PA, QuickReduce env gates, chunked-prefill/max-num-seqs tuning \u2014 NOT AITER/GEMM tuning.",
+        "explore grids: target 4 variants, provenance='llm_direct' or 'specialist:<domain>'; a KEEP self-validates on the stack."
+      ],
+      "next_cycle_directive": "Once baseline lands: cycle 0 cast WIDE \u2014 one explore round of 4 MI250X config levers (MI250_GATE_GEMV, VLLM_ROCM_SPLITKV_PA, chunked-prefill+max-num-seqs pair, QuickReduce/env-gate variant), plus optionally a serving_specialist targeting the MoE hybrid attention path. Deprioritise AITER-based ideas (gated off on gfx90a). Watch session clock: gate burned ~60min of 180min; prefer fast explore rounds over long specialist work early.",
+      "parse_error": "",
+      "pending": [
+        "Watch get_running_tasks each tick (~every 4-5 ticks); when 78b25f28 disappears, fire baseline-round-4 immediately.",
+        "If baseline-round-4 fails on Engine-core-init/VRAM-collision: alert robustness with explicit pids (18501/18709), do not blind-retry (failure_streak already 1; RULE F3 caps baseline retries).",
+        "Patch 002 (fused_moe AITER-demote) authored but NOT applied; irrelevant on gfx90a unless someone forces VLLM_ROCM_USE_AITER=1."
+      ],
+      "tried_and_why": [
+        "baseline attempt-1 failed subprocess_nonzero: Magpie image_selector had no gfx90a runner \u2014 FIXED via patch 001 (gfx90a\u2192mi300x alias), applied in live tree; enablement objective complete.",
+        "baseline attempts 2-3 DENIED enablement_round_in_flight \u2014 hard gate while specialist task record alive; only reap/lease-lapse rearms.",
+        "delegate{recover} and request{robustness} DENIED (role-restricted); reach robustness only via alert/send_message. Robustness has ignored ~8 force-reap alert requests including a fresh-fingerprint high alert (seq=383).",
+        "Extended wedged task lease +20min once, prematurely \u2014 lesson learned, will not repeat.",
+        "target_analysis re-runs while gated succeeded \u2014 proves Coordinator pipeline healthy; gate is baseline-rearm-specific.",
+        "Direct shell check of process.log mtime / ps for orphan pids was permission-blocked this session \u2014 recovery is exclusively Robustness's ladder or natural TTL."
+      ]
+    },
+    {
+      "checkpoint_count": 7,
+      "current_plan": "Exit PRELUDE by getting baseline_tput>0. Sole blocker: PolicyGate rule 'enablement_round_in_flight' held by PHANTOM task d00cdedfc173451eaf5b312d08e00da9 \u2014 get_running_tasks shows ZERO in-flight tasks on the same ticks (5 identical denials, rounds 4-8; Robustness's own denial-streak counter matches exactly, proving no hidden holder). Escalated via high alert (seq=476) requesting force-reap/clear of the enablement_round record. Baseline-round-9 (same params) stays staged; probe cadence ~10 ticks; heartbeats one-line otherwise.",
+      "hypotheses": [
+        "Baseline attempt-9's next failure layer after gate clears = vllm rocm.py 'Inconsistent GPU visibility env vars' (dispatcher sets CUDA/HIP_VISIBLE_DEVICES=2,3 vs ROCR 0,1); fix = unset CUDA/HIP_VISIBLE_DEVICES in variant env_overrides (null).",
+        "Orphan probe server (pids 18501/18709, port 8124, TP2 0.95 VRAM) will VRAM-collide with baseline launch unless pre-killed \u2014 cleanup noted in params.preconditions.",
+        "Phantom gate may self-clear only via internal rearm hook, never TTL (78b25f28's TTL lapsed but d00cdedf inherited the block); if block persists past ~80min elapsed, expect run ends with zero validated rounds \u2014 report must state infra-block honestly."
+      ],
+      "last_checkpoint_seq": 524,
+      "last_checkpoint_tick": 140,
+      "last_checkpoint_ts": "2026-09-14T10:54:46+00:00",
+      "learnings": [
+        "Robustness re-fires alerts on identical pid/count=1 log patterns \u2014 diff the sample before treating it as a new failure.",
+        "PRELUDE budget cap lapse does not advance the phase; the only exit gate is baseline_tput>0, so ignore per-phase seconds when the gate is externally blocked.",
+        "Watch heartbeat_age_sec deltas across ticks: monotonic aging = hang signal; intermittent refresh = worker alive.",
+        "Monotonic heartbeat aging can be a long-poll artifact: before declaring a hang, check runs/specialist/<task>/process.log mtime+size and scratch/ artifacts \u2014 I flip-flopped once (kill\u2192retract\u2192kill) on exactly this.",
+        "AITER is hard-gated OFF on gfx90a (is_aiter_found_and_supported = CDNA3+); robustness's aiter_jit_build_stuck alerts are moot this session. Real perf levers on this MI250X host: MI250_GATE_GEMV, VLLM_ROCM_SPLITKV_PA, QuickReduce (in-tree env gates), not AITER/GEMM tuning.",
+        "Robustness re-fires alerts on identical stale samples (pid=15383 log line >40min old) \u2014 diff before treating as new failure.",
+        "PRELUDE budget cap does not advance the phase; only exit gate is baseline_tput>0; skip_to_close would mislabel a fixable infra block \u2014 keep heartbeating instead.",
+        "Model Ornith-1.5-35B-A3B = Qwen3_5MoeForConditionalGeneration (hybrid 30 linear-attn + 10 full-attn, 256 experts/8 active, TP2 on 2x MI250X 64GB), natively registered in vLLM 0.28 \u2014 no model-side enablement work needed.",
+        "Robustness re-fires identical alerts on stale samples (pid=15383 log from dead attempt-1, AITER-JIT build dir moot on gfx90a) \u2014 diff before treating as new failure; acknowledge once, don't re-litigate.",
+        "PRELUDE budget-cap overrun (now 455%) does NOT advance the phase; exit gate is baseline_tput>0 only; skip_to_close/wind-down would mislabel a fixable external block \u2014 heartbeat with stated reason instead.",
+        "Monotonic heartbeat aging \u2260 always hang: check process.log mtime/size + scratch artifacts before lease actions; but heartbeat>1000s + frozen log = genuine wedge.",
+        "While gated, spend dead ticks on zero-cost lane-light actions (target_analysis) to gather data and probe pipeline health.",
+        "Model Ornith-1.5-35B-A3B = Qwen3_5Moe hybrid (30 linear + 10 full attn, 256 experts/8 active), TP2 on 2x MI250X 64GB, natively registered in vLLM 0.28. Real MI250X perf levers: MI250_GATE_GEMV, VLLM_ROCM_SPLITKV_PA, QuickReduce env gates, chunked-prefill/max-num-seqs tuning \u2014 NOT AITER/GEMM tuning.",
+        "Robustness re-fires alerts on identical pid/count=1 log patterns \u2014 diff the sample before treating it as a new failure (pid=15383 stale samples and AITER-JIT alerts re-fire every ~5 ticks; AITER is moot on gfx90a: is_aiter_found_and_supported = CDNA3+).",
+        "PRELUDE budget cap lapse (now 586%) does NOT advance the phase; only exit gate is baseline_tput>0; skip_to_close would mislabel a fixable block \u2014 heartbeat with stated reason instead.",
+        "Monotonic heartbeat aging \u2260 always hang: check runs/specialist/<task>/process.log mtime+size + scratch artifacts before lease actions; but heartbeat>1200s + frozen log + NOT_READY last line = genuine wedge.",
+        "While gated, spend dead ticks on zero-cost lane-light actions (target_analysis) to gather data and probe pipeline health; keep heartbeats one-line so alert dedup stays clean.",
+        "Robustness re-fires identical alerts on stale samples (pid=15383 attempt-1 log; AITER-JIT every ~5 ticks) \u2014 AITER is hard-gated OFF on gfx90a (is_aiter_found_and_supported=CDNA3+), so those alerts are moot. Acknowledge once in one-line heartbeat, don't re-litigate.",
+        "PRELUDE budget-cap overrun (now >670%) does NOT advance the phase; exit gate is baseline_tput>0 only. skip_to_close would mislabel a fixable external block \u2014 keep heartbeating; 120+min session budget remains.",
+        "Monotonic heartbeat aging: check runs/specialist/<task>/process.log mtime+size before lease actions; frozen log + heartbeat>1200s = genuine wedge.",
+        "Model Ornith-1.5-35B-A3B = Qwen3_5Moe hybrid (30 linear + 10 full attn, 256 experts/8 active), TP2 on 2x MI250X 64GB, natively registered in vLLM 0.28. Real MI250X perf levers: MI250_GATE_GEMV, VLLM_ROCM_SPLITKV_PA, QuickReduce env gates, chunked-prefill/max-num-seqs \u2014 NOT AITER/GEMM tuning.",
+        "Robustness re-fires alerts on identical stale samples (pid=15383 attempt-1 log every ~5 ticks; AITER-JIT build_count=6 every ~5 ticks \u2014 AITER is hard-gated OFF on gfx90a: is_aiter_found_and_supported=CDNA3+). Diff before treating as new failure; acknowledge once in a one-line heartbeat, don't re-litigate.",
+        "PRELUDE budget-cap overrun (770%+) does NOT advance the phase; only exit gate is baseline_tput>0; skip_to_close would mislabel a fixable external block \u2014 heartbeat with stated reason instead.",
+        "Monotonic heartbeat aging \u2260 always hang: check runs/specialist/<task>/process.log mtime+size first; but heartbeat>1700s + frozen log = genuine wedge.",
+        "While gated, spend dead ticks on zero-cost lane-light actions (target_analysis) and periodic get_running_tasks verification pulls.",
+        "Model Ornith-1.5-35B-A3B = Qwen3_5Moe hybrid (30 linear + 10 full attn, 256 experts/8 active), TP2 on 2x MI250X 64GB, natively registered in vLLM 0.28. Real MI250X perf levers for explore rounds: MI250_GATE_GEMV, VLLM_ROCM_SPLITKV_PA, QuickReduce env gates, chunked-prefill/max-num-seqs tuning \u2014 NOT AITER/GEMM tuning.",
+        "explore grids: target 4 variants, provenance='llm_direct' or 'specialist:<domain>'; a KEEP self-validates on the stack.",
+        "Model Ornith-1.5-35B-A3B = Qwen3_5Moe hybrid (30 linear + 10 full attn, 256 experts/8 active), TP2 on 2x MI250X 64GB, natively registered in vLLM 0.28. Real perf levers for explore grids: MI250_GATE_GEMV, VLLM_ROCM_SPLITKV_PA, QuickReduce env gates, chunked-prefill/max-num-seqs tuning \u2014 NOT AITER/GEMM tuning (AITER hard-gated OFF on gfx90a: is_aiter_found_and_supported=CDNA3+).",
+        "Robustness re-fires identical alerts on stale samples (pid=15383 attempt-1 Engine-core-init log; AITER-JIT build_count=6 every ~5 ticks) \u2014 diff before treating as new failure; acknowledge once in a one-line heartbeat, don't re-litigate.",
+        "PRELUDE budget-cap overrun (now >900%) does NOT advance the phase; exit gate is baseline_tput>0 only; keep heartbeating with stated reason instead of skip_to_close.",
+        "Gate/registry desync is diagnosable from orchestration side: cite denial task_id vs get_running_tasks-empty repeatedly in alerts; Robustness's own repeated_policy_denied counter converging on same rule number corroborates there is no hidden holder.",
+        "While gated, spend dead ticks on zero-cost lane-light probes (target_analysis succeeded twice under gate) to prove pipeline health.",
+        "explore grids: target 4 variants (hard max 6), provenance='llm_direct' or 'specialist:<domain>'; a KEEP self-validates on the stack; content-based variant dedup.",
+        "Direct shell checks (ps, log mtimes) are permission-blocked this session; recovery is exclusively Robustness's ladder or natural lease lapse."
+      ],
+      "next_cycle_directive": "Once baseline lands: cast WIDE in cycle 0 \u2014 one explore round of 4 MI250X config levers (MI250_GATE_GEMV on, VLLM_ROCM_SPLITKV_PA, QuickReduce env gate, chunked-prefill/max-num-seqs bump) plus 1-2 specialists (serving_specialist for framework-source patch ideas like scheduler/KV-cache, static_recon on the analysis.md gap) in parallel; deprioritise anything AITER/GEMM-tuning-flavoured (moot on gfx90a).",
+      "parse_error": "",
+      "pending": [
+        "Fire baseline-round-9 (params: env_overrides unset CUDA/HIP_VISIBLE_DEVICES, preconditions kill pids 18501/18709, notes patch 001 applied) the tick the gate clears or the registry shows d00cdedf actually running; then continue ~every 10 ticks while blocked.",
+        "If baseline finally FAILS on Engine-core-init/VRAM: alert robustness with explicit pids, do NOT blind-retry (RULE F3; failure_streak currently 1).",
+        "Patch 002 (fused_moe AITER-demote) authored but NOT applied; irrelevant on gfx90a unless VLLM_ROCM_USE_AITER=1 is forced.",
+        "After baseline succeeds: first explore round targets 4 variants from MI250X levers list (see learnings), provenance='llm_direct', idempotency_key='explore-round-1'."
+      ],
+      "tried_and_why": [
+        "baseline attempt-1 failed subprocess_nonzero: Magpie image_selector had no gfx90a runner \u2014 FIXED via patch 001 (gfx90a\u2192mi300x alias), applied in live tree; enablement objective complete.",
+        "baseline rounds 2-8 DENIED enablement_round_in_flight \u2014 holders 78b25f28 (genuinely wedged: heartbeat 1900s, frozen log, all 5 lanes) then d00cdedf (phantom: never in task registry). Waiting for 78b25f28 lease self-expiry ~11:17Z worked (reaped), but d00cdedf has no lease to lapse \u2014 retrying cannot clear it.",
+        "delegate{recover} and request{robustness} DENIED (role-restricted); reach robustness only via alert/send_message. Robustness has ignored ~10 force-reap requests including fresh-fingerprint high alerts; it only re-fires its own stale-sample alerts.",
+        "Extended wedged task lease +20min once, prematurely \u2014 lesson learned, will not repeat.",
+        "target_analysis re-runs while gated succeeded \u2014 proves Coordinator pipeline healthy; gate is baseline-rearm-specific.",
+        "escalate_strategy_change skip_to_* ruled useless: every phase advance gates on baseline_tput>0; skip_to_close would mislabel a fixable block as abandonment."
+      ]
+    },
+    {
+      "checkpoint_count": 8,
+      "current_plan": "Block cleared: enablement specialist d00cdedf completed (seq=549) and its 5 lane leases expired (seq=541-545). Baseline round-10 just fired (idempotency_key=baseline-round-10) with env_overrides unsetting CUDA/HIP_VISIBLE_DEVICES and precondition to kill orphan pids 18501/18709. Drive baseline_tput>0 to exit PRELUDE, then first explore round (4 MI250X-lever variants, idempotency_key='explore-round-1').",
+      "hypotheses": [
+        "Baseline round-10 may still fail on device visibility if unset-in-overrides is insufficient; fallback = integrate_patch on specialist task d00cdedf using patch 003_rocm_visible_devices_logical_repin.patch (autosubmitted seq=551, needs review).",
+        "Specialist noted blocker 3: session YAML PATH lacks /opt/envs/vllm/bin \u2014 if baseline fails on missing binaries/env, this is the next suspect; eval (gsm8k/lm-eval) may also be uninstallable (mirror flakiness) \u2014 accuracy gate may need skipping."
+      ],
+      "last_checkpoint_seq": 557,
+      "last_checkpoint_tick": 145,
+      "last_checkpoint_ts": "2026-09-14T11:48:56+00:00",
+      "learnings": [
+        "Robustness re-fires alerts on identical pid/count=1 log patterns \u2014 diff the sample before treating it as a new failure.",
+        "PRELUDE budget cap lapse does not advance the phase; the only exit gate is baseline_tput>0, so ignore per-phase seconds when the gate is externally blocked.",
+        "Watch heartbeat_age_sec deltas across ticks: monotonic aging = hang signal; intermittent refresh = worker alive.",
+        "Monotonic heartbeat aging can be a long-poll artifact: before declaring a hang, check runs/specialist/<task>/process.log mtime+size and scratch/ artifacts \u2014 I flip-flopped once (kill\u2192retract\u2192kill) on exactly this.",
+        "AITER is hard-gated OFF on gfx90a (is_aiter_found_and_supported = CDNA3+); robustness's aiter_jit_build_stuck alerts are moot this session. Real perf levers on this MI250X host: MI250_GATE_GEMV, VLLM_ROCM_SPLITKV_PA, QuickReduce (in-tree env gates), not AITER/GEMM tuning.",
+        "Robustness re-fires alerts on identical stale samples (pid=15383 log line >40min old) \u2014 diff before treating as new failure.",
+        "PRELUDE budget cap does not advance the phase; only exit gate is baseline_tput>0; skip_to_close would mislabel a fixable infra block \u2014 keep heartbeating instead.",
+        "Model Ornith-1.5-35B-A3B = Qwen3_5MoeForConditionalGeneration (hybrid 30 linear-attn + 10 full-attn, 256 experts/8 active, TP2 on 2x MI250X 64GB), natively registered in vLLM 0.28 \u2014 no model-side enablement work needed.",
+        "Robustness re-fires identical alerts on stale samples (pid=15383 log from dead attempt-1, AITER-JIT build dir moot on gfx90a) \u2014 diff before treating as new failure; acknowledge once, don't re-litigate.",
+        "PRELUDE budget-cap overrun (now 455%) does NOT advance the phase; exit gate is baseline_tput>0 only; skip_to_close/wind-down would mislabel a fixable external block \u2014 heartbeat with stated reason instead.",
+        "Monotonic heartbeat aging \u2260 always hang: check process.log mtime/size + scratch artifacts before lease actions; but heartbeat>1000s + frozen log = genuine wedge.",
+        "While gated, spend dead ticks on zero-cost lane-light actions (target_analysis) to gather data and probe pipeline health.",
+        "Model Ornith-1.5-35B-A3B = Qwen3_5Moe hybrid (30 linear + 10 full attn, 256 experts/8 active), TP2 on 2x MI250X 64GB, natively registered in vLLM 0.28. Real MI250X perf levers: MI250_GATE_GEMV, VLLM_ROCM_SPLITKV_PA, QuickReduce env gates, chunked-prefill/max-num-seqs tuning \u2014 NOT AITER/GEMM tuning.",
+        "Robustness re-fires alerts on identical pid/count=1 log patterns \u2014 diff the sample before treating it as a new failure (pid=15383 stale samples and AITER-JIT alerts re-fire every ~5 ticks; AITER is moot on gfx90a: is_aiter_found_and_supported = CDNA3+).",
+        "PRELUDE budget cap lapse (now 586%) does NOT advance the phase; only exit gate is baseline_tput>0; skip_to_close would mislabel a fixable block \u2014 heartbeat with stated reason instead.",
+        "Monotonic heartbeat aging \u2260 always hang: check runs/specialist/<task>/process.log mtime+size + scratch artifacts before lease actions; but heartbeat>1200s + frozen log + NOT_READY last line = genuine wedge.",
+        "While gated, spend dead ticks on zero-cost lane-light actions (target_analysis) to gather data and probe pipeline health; keep heartbeats one-line so alert dedup stays clean.",
+        "Robustness re-fires identical alerts on stale samples (pid=15383 attempt-1 log; AITER-JIT every ~5 ticks) \u2014 AITER is hard-gated OFF on gfx90a (is_aiter_found_and_supported=CDNA3+), so those alerts are moot. Acknowledge once in one-line heartbeat, don't re-litigate.",
+        "PRELUDE budget-cap overrun (now >670%) does NOT advance the phase; exit gate is baseline_tput>0 only. skip_to_close would mislabel a fixable external block \u2014 keep heartbeating; 120+min session budget remains.",
+        "Monotonic heartbeat aging: check runs/specialist/<task>/process.log mtime+size before lease actions; frozen log + heartbeat>1200s = genuine wedge.",
+        "Model Ornith-1.5-35B-A3B = Qwen3_5Moe hybrid (30 linear + 10 full attn, 256 experts/8 active), TP2 on 2x MI250X 64GB, natively registered in vLLM 0.28. Real MI250X perf levers: MI250_GATE_GEMV, VLLM_ROCM_SPLITKV_PA, QuickReduce env gates, chunked-prefill/max-num-seqs \u2014 NOT AITER/GEMM tuning.",
+        "Robustness re-fires alerts on identical stale samples (pid=15383 attempt-1 log every ~5 ticks; AITER-JIT build_count=6 every ~5 ticks \u2014 AITER is hard-gated OFF on gfx90a: is_aiter_found_and_supported=CDNA3+). Diff before treating as new failure; acknowledge once in a one-line heartbeat, don't re-litigate.",
+        "PRELUDE budget-cap overrun (770%+) does NOT advance the phase; only exit gate is baseline_tput>0; skip_to_close would mislabel a fixable external block \u2014 heartbeat with stated reason instead.",
+        "Monotonic heartbeat aging \u2260 always hang: check runs/specialist/<task>/process.log mtime+size first; but heartbeat>1700s + frozen log = genuine wedge.",
+        "While gated, spend dead ticks on zero-cost lane-light actions (target_analysis) and periodic get_running_tasks verification pulls.",
+        "Model Ornith-1.5-35B-A3B = Qwen3_5Moe hybrid (30 linear + 10 full attn, 256 experts/8 active), TP2 on 2x MI250X 64GB, natively registered in vLLM 0.28. Real MI250X perf levers for explore rounds: MI250_GATE_GEMV, VLLM_ROCM_SPLITKV_PA, QuickReduce env gates, chunked-prefill/max-num-seqs tuning \u2014 NOT AITER/GEMM tuning.",
+        "explore grids: target 4 variants, provenance='llm_direct' or 'specialist:<domain>'; a KEEP self-validates on the stack.",
+        "Model Ornith-1.5-35B-A3B = Qwen3_5Moe hybrid (30 linear + 10 full attn, 256 experts/8 active), TP2 on 2x MI250X 64GB, natively registered in vLLM 0.28. Real perf levers for explore grids: MI250_GATE_GEMV, VLLM_ROCM_SPLITKV_PA, QuickReduce env gates, chunked-prefill/max-num-seqs tuning \u2014 NOT AITER/GEMM tuning (AITER hard-gated OFF on gfx90a: is_aiter_found_and_supported=CDNA3+).",
+        "Robustness re-fires identical alerts on stale samples (pid=15383 attempt-1 Engine-core-init log; AITER-JIT build_count=6 every ~5 ticks) \u2014 diff before treating as new failure; acknowledge once in a one-line heartbeat, don't re-litigate.",
+        "PRELUDE budget-cap overrun (now >900%) does NOT advance the phase; exit gate is baseline_tput>0 only; keep heartbeating with stated reason instead of skip_to_close.",
+        "Gate/registry desync is diagnosable from orchestration side: cite denial task_id vs get_running_tasks-empty repeatedly in alerts; Robustness's own repeated_policy_denied counter converging on same rule number corroborates there is no hidden holder.",
+        "While gated, spend dead ticks on zero-cost lane-light probes (target_analysis succeeded twice under gate) to prove pipeline health.",
+        "explore grids: target 4 variants (hard max 6), provenance='llm_direct' or 'specialist:<domain>'; a KEEP self-validates on the stack; content-based variant dedup.",
+        "Direct shell checks (ps, log mtimes) are permission-blocked this session; recovery is exclusively Robustness's ladder or natural lease lapse.",
+        "get_running_tasks can show EMPTY while a specialist process is alive \u2014 cross-check runs/specialist/<dir>/process.log mtime + scratch artifacts before declaring phantom; task may finish with only ~30-40min lag in progress events.",
+        "PRELUDE budget overrun does not advance phase; only exit gate is baseline_tput>0; skip_to_close mislabels fixable blocks \u2014 hold and probe.",
+        "Robustness re-fires stale-sample alerts (pid=15383, AITER-JIT) \u2014 AITER is hard-gated OFF on gfx90a (CDNA3+); acknowledge once, don't re-litigate.",
+        "Direct shell is mostly permission-blocked; Read of session-dir artifacts (logs, state.json greps) works and was the decisive diagnostic.",
+        "Model Ornith-1.5-35B-A3B = Qwen3_5Moe hybrid (30 linear + 10 full attn, 256 experts/8 active), TP2 on 2x MI250X 64GB, native in vLLM 0.28. Real levers: MI250_GATE_GEMV, VLLM_ROCM_SPLITKV_PA, QuickReduce, chunked-prefill/max-num-seqs \u2014 NOT AITER/GEMM tuning."
+      ],
+      "next_cycle_directive": "If baseline succeeds with meaningful budget left: run one focused explore round (4 config variants, the MI250X env-gate list above) and stop for report before deadline. If baseline never lands: report must state the run was infra-blocked in PRELUDE with enablement achieved but no validated optimization rounds.",
+      "parse_error": "",
+      "pending": [
+        "Await baseline round-10 delegated_result. If failed on Engine-core-init/VRAM: alert robustness with pids, no blind retry (RULE F3, failure_streak=1).",
+        "If round-10 fails device-visibility again: delegate integrate_patch{specialist_task_id='d00cdedfc173451eaf5b312d08e00da9', patches=[.../003_rocm_visible_devices_logical_repin.patch]}.",
+        "After baseline: explore-round-1 variants from MI250X levers: MI250_GATE_GEMV, VLLM_ROCM_SPLITKV_PA, QuickReduce env gate, chunked-prefill/max-num-seqs. Session elapsed ~117min/120 at last tick \u2014 if baseline lands late, prefer report with honest infra-block narrative over a doomed explore round."
+      ],
+      "tried_and_why": [
+        "Rounds 2-9 baseline DENIED enablement_round_in_flight held by 'phantom' d00cdedf; on-disk evidence (run dir 78b25f28 alive, then specialist_progress seq=546/547) proved it was a live enablement specialist invisible to get_running_tasks \u2014 registry lag, not phantom. Waiting it out was correct; kill-request alert was not acted on and wasn't needed.",
+        "Patch 001 (Magpie gfx90a\u2192mi300x alias) applied in live tree \u2014 fixed attempt-1 failure; specialist confirmed still live.",
+        "Baseline attempt-1 failed subprocess_nonzero (image_selector no gfx90a runner) \u2014 enablement objective achieved via specialist."
+      ]
+    },
+    {
+      "checkpoint_count": 9,
+      "current_plan": "Deadline window (~7min left at last tick): baseline-round-13 was dispatched after enablement specialist 3bbb58e2 completed and cleared the enablement_round_in_flight gate. Round-13 adds PATH override covering /opt/envs/vllm/bin AND /usr/local/bin (specialist left a vllm symlink there) plus explicit HIP_VISIBLE_DEVICES=0,1. If it lands baseline_tput>0, great; otherwise let the Coordinator auto-flush report with the honest infra-block narrative. No explore round is queueable \u2014 a KEEP cannot finish in budget.",
+      "hypotheses": [
+        "Round-13 may still fail if the Magpie script's setsid resets PATH before invoking vllm; patch 004 (child-env self-alignment, autosubmitted for integrate at seq=578) is the durable fix but its integrate likely won't complete before deadline.",
+        "If round-13 launches the server but engine-core init fails, next suspects are VRAM/TP2 placement under HIP_VISIBLE_DEVICES=0,1 on 2x MI250X, or the patch-003 logical-repin reverting again on timeout."
+      ],
+      "last_checkpoint_seq": 586,
+      "last_checkpoint_tick": 148,
+      "last_checkpoint_ts": "2026-09-14T12:44:04+00:00",
+      "learnings": [
+        "Robustness re-fires alerts on identical pid/count=1 log patterns \u2014 diff the sample before treating it as a new failure.",
+        "PRELUDE budget cap lapse does not advance the phase; the only exit gate is baseline_tput>0, so ignore per-phase seconds when the gate is externally blocked.",
+        "Watch heartbeat_age_sec deltas across ticks: monotonic aging = hang signal; intermittent refresh = worker alive.",
+        "Monotonic heartbeat aging can be a long-poll artifact: before declaring a hang, check runs/specialist/<task>/process.log mtime+size and scratch/ artifacts \u2014 I flip-flopped once (kill\u2192retract\u2192kill) on exactly this.",
+        "AITER is hard-gated OFF on gfx90a (is_aiter_found_and_supported = CDNA3+); robustness's aiter_jit_build_stuck alerts are moot this session. Real perf levers on this MI250X host: MI250_GATE_GEMV, VLLM_ROCM_SPLITKV_PA, QuickReduce (in-tree env gates), not AITER/GEMM tuning.",
+        "Robustness re-fires alerts on identical stale samples (pid=15383 log line >40min old) \u2014 diff before treating as new failure.",
+        "PRELUDE budget cap does not advance the phase; only exit gate is baseline_tput>0; skip_to_close would mislabel a fixable infra block \u2014 keep heartbeating instead.",
+        "Model Ornith-1.5-35B-A3B = Qwen3_5MoeForConditionalGeneration (hybrid 30 linear-attn + 10 full-attn, 256 experts/8 active, TP2 on 2x MI250X 64GB), natively registered in vLLM 0.28 \u2014 no model-side enablement work needed.",
+        "Robustness re-fires identical alerts on stale samples (pid=15383 log from dead attempt-1, AITER-JIT build dir moot on gfx90a) \u2014 diff before treating as new failure; acknowledge once, don't re-litigate.",
+        "PRELUDE budget-cap overrun (now 455%) does NOT advance the phase; exit gate is baseline_tput>0 only; skip_to_close/wind-down would mislabel a fixable external block \u2014 heartbeat with stated reason instead.",
+        "Monotonic heartbeat aging \u2260 always hang: check process.log mtime/size + scratch artifacts before lease actions; but heartbeat>1000s + frozen log = genuine wedge.",
+        "While gated, spend dead ticks on zero-cost lane-light actions (target_analysis) to gather data and probe pipeline health.",
+        "Model Ornith-1.5-35B-A3B = Qwen3_5Moe hybrid (30 linear + 10 full attn, 256 experts/8 active), TP2 on 2x MI250X 64GB, natively registered in vLLM 0.28. Real MI250X perf levers: MI250_GATE_GEMV, VLLM_ROCM_SPLITKV_PA, QuickReduce env gates, chunked-prefill/max-num-seqs tuning \u2014 NOT AITER/GEMM tuning.",
+        "Robustness re-fires alerts on identical pid/count=1 log patterns \u2014 diff the sample before treating it as a new failure (pid=15383 stale samples and AITER-JIT alerts re-fire every ~5 ticks; AITER is moot on gfx90a: is_aiter_found_and_supported = CDNA3+).",
+        "PRELUDE budget cap lapse (now 586%) does NOT advance the phase; only exit gate is baseline_tput>0; skip_to_close would mislabel a fixable block \u2014 heartbeat with stated reason instead.",
+        "Monotonic heartbeat aging \u2260 always hang: check runs/specialist/<task>/process.log mtime+size + scratch artifacts before lease actions; but heartbeat>1200s + frozen log + NOT_READY last line = genuine wedge.",
+        "While gated, spend dead ticks on zero-cost lane-light actions (target_analysis) to gather data and probe pipeline health; keep heartbeats one-line so alert dedup stays clean.",
+        "Robustness re-fires identical alerts on stale samples (pid=15383 attempt-1 log; AITER-JIT every ~5 ticks) \u2014 AITER is hard-gated OFF on gfx90a (is_aiter_found_and_supported=CDNA3+), so those alerts are moot. Acknowledge once in one-line heartbeat, don't re-litigate.",
+        "PRELUDE budget-cap overrun (now >670%) does NOT advance the phase; exit gate is baseline_tput>0 only. skip_to_close would mislabel a fixable external block \u2014 keep heartbeating; 120+min session budget remains.",
+        "Monotonic heartbeat aging: check runs/specialist/<task>/process.log mtime+size before lease actions; frozen log + heartbeat>1200s = genuine wedge.",
+        "Model Ornith-1.5-35B-A3B = Qwen3_5Moe hybrid (30 linear + 10 full attn, 256 experts/8 active), TP2 on 2x MI250X 64GB, natively registered in vLLM 0.28. Real MI250X perf levers: MI250_GATE_GEMV, VLLM_ROCM_SPLITKV_PA, QuickReduce env gates, chunked-prefill/max-num-seqs \u2014 NOT AITER/GEMM tuning.",
+        "Robustness re-fires alerts on identical stale samples (pid=15383 attempt-1 log every ~5 ticks; AITER-JIT build_count=6 every ~5 ticks \u2014 AITER is hard-gated OFF on gfx90a: is_aiter_found_and_supported=CDNA3+). Diff before treating as new failure; acknowledge once in a one-line heartbeat, don't re-litigate.",
+        "PRELUDE budget-cap overrun (770%+) does NOT advance the phase; only exit gate is baseline_tput>0; skip_to_close would mislabel a fixable external block \u2014 heartbeat with stated reason instead.",
+        "Monotonic heartbeat aging \u2260 always hang: check runs/specialist/<task>/process.log mtime+size first; but heartbeat>1700s + frozen log = genuine wedge.",
+        "While gated, spend dead ticks on zero-cost lane-light actions (target_analysis) and periodic get_running_tasks verification pulls.",
+        "Model Ornith-1.5-35B-A3B = Qwen3_5Moe hybrid (30 linear + 10 full attn, 256 experts/8 active), TP2 on 2x MI250X 64GB, natively registered in vLLM 0.28. Real MI250X perf levers for explore rounds: MI250_GATE_GEMV, VLLM_ROCM_SPLITKV_PA, QuickReduce env gates, chunked-prefill/max-num-seqs tuning \u2014 NOT AITER/GEMM tuning.",
+        "explore grids: target 4 variants, provenance='llm_direct' or 'specialist:<domain>'; a KEEP self-validates on the stack.",
+        "Model Ornith-1.5-35B-A3B = Qwen3_5Moe hybrid (30 linear + 10 full attn, 256 experts/8 active), TP2 on 2x MI250X 64GB, natively registered in vLLM 0.28. Real perf levers for explore grids: MI250_GATE_GEMV, VLLM_ROCM_SPLITKV_PA, QuickReduce env gates, chunked-prefill/max-num-seqs tuning \u2014 NOT AITER/GEMM tuning (AITER hard-gated OFF on gfx90a: is_aiter_found_and_supported=CDNA3+).",
+        "Robustness re-fires identical alerts on stale samples (pid=15383 attempt-1 Engine-core-init log; AITER-JIT build_count=6 every ~5 ticks) \u2014 diff before treating as new failure; acknowledge once in a one-line heartbeat, don't re-litigate.",
+        "PRELUDE budget-cap overrun (now >900%) does NOT advance the phase; exit gate is baseline_tput>0 only; keep heartbeating with stated reason instead of skip_to_close.",
+        "Gate/registry desync is diagnosable from orchestration side: cite denial task_id vs get_running_tasks-empty repeatedly in alerts; Robustness's own repeated_policy_denied counter converging on same rule number corroborates there is no hidden holder.",
+        "While gated, spend dead ticks on zero-cost lane-light probes (target_analysis succeeded twice under gate) to prove pipeline health.",
+        "explore grids: target 4 variants (hard max 6), provenance='llm_direct' or 'specialist:<domain>'; a KEEP self-validates on the stack; content-based variant dedup.",
+        "Direct shell checks (ps, log mtimes) are permission-blocked this session; recovery is exclusively Robustness's ladder or natural lease lapse.",
+        "get_running_tasks can show EMPTY while a specialist process is alive \u2014 cross-check runs/specialist/<dir>/process.log mtime + scratch artifacts before declaring phantom; task may finish with only ~30-40min lag in progress events.",
+        "PRELUDE budget overrun does not advance phase; only exit gate is baseline_tput>0; skip_to_close mislabels fixable blocks \u2014 hold and probe.",
+        "Robustness re-fires stale-sample alerts (pid=15383, AITER-JIT) \u2014 AITER is hard-gated OFF on gfx90a (CDNA3+); acknowledge once, don't re-litigate.",
+        "Direct shell is mostly permission-blocked; Read of session-dir artifacts (logs, state.json greps) works and was the decisive diagnostic.",
+        "Model Ornith-1.5-35B-A3B = Qwen3_5Moe hybrid (30 linear + 10 full attn, 256 experts/8 active), TP2 on 2x MI250X 64GB, native in vLLM 0.28. Real levers: MI250_GATE_GEMV, VLLM_ROCM_SPLITKV_PA, QuickReduce, chunked-prefill/max-num-seqs \u2014 NOT AITER/GEMM tuning.",
+        "Session wall-clock timeout REVERTES integrate_patch keeps whose bench never ran \u2014 a 'succeeded/advanced' integrate is not durable; re-verify on-disk before trusting a prior fix.",
+        "Baseline failure chain this session: image_selector gfx90a (patch 001) \u2192 device visibility (unset env worse than explicit HIP_VISIBLE_DEVICES=0,1) \u2192 vllm not on PATH (specialist-flagged blocker 3, session YAML PATH lacks /opt/envs/vllm/bin).",
+        "propose_action schema: predicted_gain_pct goes INSIDE payload alongside action_name; an extra top-level key is a validation error. For env_overrides/idempotency_key/note the accepted shape was payload={action_name, predicted_gain_pct, params:{...}} in the last successful emit \u2014 actually round-11/12 succeeded with these fields at payload top level; round-13's error was only the misplaced predicted_gain_pct.",
+        "PRELUDE budget overrun (up to 2466%) never advances the phase; exit gate is baseline_tput>0 only; skip_to_close would mislabel a fixable block \u2014 heartbeat instead.",
+        "Robustness re-fires alerts on stale log samples (old pids) \u2014 diff before treating as new failures.",
+        "AITER is hard-gated OFF on gfx90a (CDNA3+ requirement); real MI250X levers: MI250_GATE_GEMV, VLLM_ROCM_SPLITKV_PA, QuickReduce env gates, chunked-prefill/max-num-seqs.",
+        "While gated, spend dead ticks on zero-cost lane-light probes (target_analysis) and direct Read of run-dir server.log \u2014 the decisive RCA tool; Bash grep on session files works, multi-command chains sometimes trip permission prompts."
+      ],
+      "next_cycle_directive": "If a new macro-cycle opens: FIRST confirm baseline_tput>0 persisted (check patch 003/004 still applied in tree \u2014 timeouts revert them). Then one tight explore round (3 variants max): MI250_GATE_GEMV, VLLM_ROCM_SPLITKV_PA, chunked-prefill+max-num-seqs tuning; provenance='llm_direct'. Deprioritise AITER/GEMM tuning (hard-gated on gfx90a) and source patches (no time). If baseline still 0, delegate a serving_specialist/enablement follow-up on the surviving failure fingerprint before any bench.",
+      "parse_error": "",
+      "pending": [
+        "Await baseline-round-13 delegated_result; on failure, do NOT blind-retry (RULE F3, failure_streak now 2) \u2014 pull get_failure{failure_id} and the run's server.log first.",
+        "Coordinator-autosubmitted integrate of patch 004 (proposal msg e5947266\u2026, specialist 3bbb58e2) \u2014 accept as durable enablement even if it lands past the deadline.",
+        "If session somehow continues past deadline with baseline>0: explore round-1 of 3-4 MI250X levers, idempotency_key='explore-round-1'."
+      ],
+      "tried_and_why": [
+        "Baseline rounds 2-9: DENIED enablement_round_in_flight held by live specialist d00cdedf (registry lag, not phantom). Correct call: waited it out; d00cdedf completed, integrate_patch (patch 003) advanced.",
+        "Round-10 (post-003, unset CUDA/HIP_VISIBLE_DEVICES): workers died 'No CUDA GPUs are available' \u2014 unsetting env was harmful, not helpful.",
+        "Round-11 (round-10 rekeyed): server.log line 1 'setsid: failed to execute vllm: No such file or directory'. Specialist RCA: patch 003 had been REVERTED by prior session wall-clock timeout, so PATH blocker B3 returned unpatched. Round-12 re-proposal was denied enablement_round_in_flight again (new specialist 3bbb58e2 spawned for patch 004); that specialist completed and I dispatched round-13 with the widened PATH.",
+        "Patch 001 (Magpie gfx90a\u2192mi300x alias) fixed the attempt-1 image_selector failure and stayed live in the tree."
+      ]
+    },
+    {
+      "checkpoint_count": 10,
+      "current_plan": "Session is at deadline (~5min remaining, budget 120min): baseline never established (baseline_tput=0). skip_to_close was suppressed by the Coordinator's enablement guard (seq=596) and report/integrate/specialist are all time-budget or execution_order gated. Holding heartbeats while awaiting the Coordinator's deadline auto-flush of the final report with the honest infra-block narrative.",
+      "hypotheses": [
+        "Root cause of round-13 failure ('Process died before health ready' + engine-core init error, pid 43533) is likely the reverted patch-003 PATH re-pin plus a deeper engine-core issue on 2x MI250X TP2 \u2014 untested because no budget remains to pull get_failure.",
+        "Patch 004 (child-env self-align, authored by specialist 3bbb58e2) would durably fix the setsid-PATH-reset blocker but its integrate was denied by time budget."
+      ],
+      "last_checkpoint_seq": 611,
+      "last_checkpoint_tick": 153,
+      "last_checkpoint_ts": "2026-09-14T12:45:04+00:00",
+      "learnings": [
+        "Watch heartbeat_age_sec deltas across ticks: monotonic aging = hang signal; intermittent refresh = worker alive.",
+        "Monotonic heartbeat aging can be a long-poll artifact: before declaring a hang, check runs/specialist/<task>/process.log mtime+size and scratch/ artifacts \u2014 I flip-flopped once (kill\u2192retract\u2192kill) on exactly this.",
+        "AITER is hard-gated OFF on gfx90a (is_aiter_found_and_supported = CDNA3+); robustness's aiter_jit_build_stuck alerts are moot this session. Real perf levers on this MI250X host: MI250_GATE_GEMV, VLLM_ROCM_SPLITKV_PA, QuickReduce (in-tree env gates), not AITER/GEMM tuning.",
+        "Robustness re-fires alerts on identical stale samples (pid=15383 log line >40min old) \u2014 diff before treating as new failure.",
+        "PRELUDE budget cap does not advance the phase; only exit gate is baseline_tput>0; skip_to_close would mislabel a fixable infra block \u2014 keep heartbeating instead.",
+        "Model Ornith-1.5-35B-A3B = Qwen3_5MoeForConditionalGeneration (hybrid 30 linear-attn + 10 full-attn, 256 experts/8 active, TP2 on 2x MI250X 64GB), natively registered in vLLM 0.28 \u2014 no model-side enablement work needed.",
+        "Robustness re-fires identical alerts on stale samples (pid=15383 log from dead attempt-1, AITER-JIT build dir moot on gfx90a) \u2014 diff before treating as new failure; acknowledge once, don't re-litigate.",
+        "PRELUDE budget-cap overrun (now 455%) does NOT advance the phase; exit gate is baseline_tput>0 only; skip_to_close/wind-down would mislabel a fixable external block \u2014 heartbeat with stated reason instead.",
+        "Monotonic heartbeat aging \u2260 always hang: check process.log mtime/size + scratch artifacts before lease actions; but heartbeat>1000s + frozen log = genuine wedge.",
+        "While gated, spend dead ticks on zero-cost lane-light actions (target_analysis) to gather data and probe pipeline health.",
+        "Model Ornith-1.5-35B-A3B = Qwen3_5Moe hybrid (30 linear + 10 full attn, 256 experts/8 active), TP2 on 2x MI250X 64GB, natively registered in vLLM 0.28. Real MI250X perf levers: MI250_GATE_GEMV, VLLM_ROCM_SPLITKV_PA, QuickReduce env gates, chunked-prefill/max-num-seqs tuning \u2014 NOT AITER/GEMM tuning.",
+        "Robustness re-fires alerts on identical pid/count=1 log patterns \u2014 diff the sample before treating it as a new failure (pid=15383 stale samples and AITER-JIT alerts re-fire every ~5 ticks; AITER is moot on gfx90a: is_aiter_found_and_supported = CDNA3+).",
+        "PRELUDE budget cap lapse (now 586%) does NOT advance the phase; only exit gate is baseline_tput>0; skip_to_close would mislabel a fixable block \u2014 heartbeat with stated reason instead.",
+        "Monotonic heartbeat aging \u2260 always hang: check runs/specialist/<task>/process.log mtime+size + scratch artifacts before lease actions; but heartbeat>1200s + frozen log + NOT_READY last line = genuine wedge.",
+        "While gated, spend dead ticks on zero-cost lane-light actions (target_analysis) to gather data and probe pipeline health; keep heartbeats one-line so alert dedup stays clean.",
+        "Robustness re-fires identical alerts on stale samples (pid=15383 attempt-1 log; AITER-JIT every ~5 ticks) \u2014 AITER is hard-gated OFF on gfx90a (is_aiter_found_and_supported=CDNA3+), so those alerts are moot. Acknowledge once in one-line heartbeat, don't re-litigate.",
+        "PRELUDE budget-cap overrun (now >670%) does NOT advance the phase; exit gate is baseline_tput>0 only. skip_to_close would mislabel a fixable external block \u2014 keep heartbeating; 120+min session budget remains.",
+        "Monotonic heartbeat aging: check runs/specialist/<task>/process.log mtime+size before lease actions; frozen log + heartbeat>1200s = genuine wedge.",
+        "Model Ornith-1.5-35B-A3B = Qwen3_5Moe hybrid (30 linear + 10 full attn, 256 experts/8 active), TP2 on 2x MI250X 64GB, natively registered in vLLM 0.28. Real MI250X perf levers: MI250_GATE_GEMV, VLLM_ROCM_SPLITKV_PA, QuickReduce env gates, chunked-prefill/max-num-seqs \u2014 NOT AITER/GEMM tuning.",
+        "Robustness re-fires alerts on identical stale samples (pid=15383 attempt-1 log every ~5 ticks; AITER-JIT build_count=6 every ~5 ticks \u2014 AITER is hard-gated OFF on gfx90a: is_aiter_found_and_supported=CDNA3+). Diff before treating as new failure; acknowledge once in a one-line heartbeat, don't re-litigate.",
+        "PRELUDE budget-cap overrun (770%+) does NOT advance the phase; only exit gate is baseline_tput>0; skip_to_close would mislabel a fixable external block \u2014 heartbeat with stated reason instead.",
+        "Monotonic heartbeat aging \u2260 always hang: check runs/specialist/<task>/process.log mtime+size first; but heartbeat>1700s + frozen log = genuine wedge.",
+        "While gated, spend dead ticks on zero-cost lane-light actions (target_analysis) and periodic get_running_tasks verification pulls.",
+        "Model Ornith-1.5-35B-A3B = Qwen3_5Moe hybrid (30 linear + 10 full attn, 256 experts/8 active), TP2 on 2x MI250X 64GB, natively registered in vLLM 0.28. Real MI250X perf levers for explore rounds: MI250_GATE_GEMV, VLLM_ROCM_SPLITKV_PA, QuickReduce env gates, chunked-prefill/max-num-seqs tuning \u2014 NOT AITER/GEMM tuning.",
+        "explore grids: target 4 variants, provenance='llm_direct' or 'specialist:<domain>'; a KEEP self-validates on the stack.",
+        "Model Ornith-1.5-35B-A3B = Qwen3_5Moe hybrid (30 linear + 10 full attn, 256 experts/8 active), TP2 on 2x MI250X 64GB, natively registered in vLLM 0.28. Real perf levers for explore grids: MI250_GATE_GEMV, VLLM_ROCM_SPLITKV_PA, QuickReduce env gates, chunked-prefill/max-num-seqs tuning \u2014 NOT AITER/GEMM tuning (AITER hard-gated OFF on gfx90a: is_aiter_found_and_supported=CDNA3+).",
+        "Robustness re-fires identical alerts on stale samples (pid=15383 attempt-1 Engine-core-init log; AITER-JIT build_count=6 every ~5 ticks) \u2014 diff before treating as new failure; acknowledge once in a one-line heartbeat, don't re-litigate.",
+        "PRELUDE budget-cap overrun (now >900%) does NOT advance the phase; exit gate is baseline_tput>0 only; keep heartbeating with stated reason instead of skip_to_close.",
+        "Gate/registry desync is diagnosable from orchestration side: cite denial task_id vs get_running_tasks-empty repeatedly in alerts; Robustness's own repeated_policy_denied counter converging on same rule number corroborates there is no hidden holder.",
+        "While gated, spend dead ticks on zero-cost lane-light probes (target_analysis succeeded twice under gate) to prove pipeline health.",
+        "explore grids: target 4 variants (hard max 6), provenance='llm_direct' or 'specialist:<domain>'; a KEEP self-validates on the stack; content-based variant dedup.",
+        "Direct shell checks (ps, log mtimes) are permission-blocked this session; recovery is exclusively Robustness's ladder or natural lease lapse.",
+        "get_running_tasks can show EMPTY while a specialist process is alive \u2014 cross-check runs/specialist/<dir>/process.log mtime + scratch artifacts before declaring phantom; task may finish with only ~30-40min lag in progress events.",
+        "PRELUDE budget overrun does not advance phase; only exit gate is baseline_tput>0; skip_to_close mislabels fixable blocks \u2014 hold and probe.",
+        "Robustness re-fires stale-sample alerts (pid=15383, AITER-JIT) \u2014 AITER is hard-gated OFF on gfx90a (CDNA3+); acknowledge once, don't re-litigate.",
+        "Direct shell is mostly permission-blocked; Read of session-dir artifacts (logs, state.json greps) works and was the decisive diagnostic.",
+        "Model Ornith-1.5-35B-A3B = Qwen3_5Moe hybrid (30 linear + 10 full attn, 256 experts/8 active), TP2 on 2x MI250X 64GB, native in vLLM 0.28. Real levers: MI250_GATE_GEMV, VLLM_ROCM_SPLITKV_PA, QuickReduce, chunked-prefill/max-num-seqs \u2014 NOT AITER/GEMM tuning.",
+        "Session wall-clock timeout REVERTES integrate_patch keeps whose bench never ran \u2014 a 'succeeded/advanced' integrate is not durable; re-verify on-disk before trusting a prior fix.",
+        "Baseline failure chain this session: image_selector gfx90a (patch 001) \u2192 device visibility (unset env worse than explicit HIP_VISIBLE_DEVICES=0,1) \u2192 vllm not on PATH (specialist-flagged blocker 3, session YAML PATH lacks /opt/envs/vllm/bin).",
+        "propose_action schema: predicted_gain_pct goes INSIDE payload alongside action_name; an extra top-level key is a validation error. For env_overrides/idempotency_key/note the accepted shape was payload={action_name, predicted_gain_pct, params:{...}} in the last successful emit \u2014 actually round-11/12 succeeded with these fields at payload top level; round-13's error was only the misplaced predicted_gain_pct.",
+        "PRELUDE budget overrun (up to 2466%) never advances the phase; exit gate is baseline_tput>0 only; skip_to_close would mislabel a fixable block \u2014 heartbeat instead.",
+        "Robustness re-fires alerts on stale log samples (old pids) \u2014 diff before treating as new failures.",
+        "AITER is hard-gated OFF on gfx90a (CDNA3+ requirement); real MI250X levers: MI250_GATE_GEMV, VLLM_ROCM_SPLITKV_PA, QuickReduce env gates, chunked-prefill/max-num-seqs.",
+        "While gated, spend dead ticks on zero-cost lane-light probes (target_analysis) and direct Read of run-dir server.log \u2014 the decisive RCA tool; Bash grep on session files works, multi-command chains sometimes trip permission prompts.",
+        "PRELUDE budget overrun and skip_to_close suppression mean the ONLY exits are baseline_tput>0 or the hard deadline; once nothing is fundable, one-line heartbeats and let the auto-flush close the run.",
+        "Session wall-clock timeout silently REVERTES integrate_patch keeps whose bench never ran \u2014 always re-verify on-disk (patch 003 lesson).",
+        "Robustness re-fires alerts on stale log samples (old pids, dead-attempt logs, AITER-JIT which is moot on gfx90a: AITER is CDNA3+ gated) \u2014 diff before treating as new failure.",
+        "Baseline failure chain here was strictly sequential env enablement: image_selector gfx90a (patch 001 fixed) \u2192 device visibility (explicit env, never unset) \u2192 PATH (vllm binary + setsid child-env) \u2192 engine-core init. Fix bottom-up and verify each layer before re-baselining.",
+        "Model Ornith-1.5-35B-A3B = Qwen3_5Moe hybrid (30 linear + 10 full attn, 256 experts/8 active), TP2 on 2x MI250X 64GB, native in vLLM 0.28. Real perf levers: MI250_GATE_GEMV, VLLM_ROCM_SPLITKV_PA, QuickReduce env gates, chunked-prefill/max-num-seqs \u2014 NOT AITER/GEMM tuning.",
+        "explore grids: target 4 variants (max 6), idempotency_key='explore-round-<N>', KEEP self-validates on stack; never queue explore while baseline_tput=0 or when a round can't finish in budget."
+      ],
+      "next_cycle_directive": "If a fresh session starts: FIRST re-apply patch 004 (child-env self-align) via integrate_patch and re-verify patches 001/003 on-disk BEFORE any baseline attempt; then run baseline with explicit HIP_VISIBLE_DEVICES=0,1 and full PATH (/opt/envs/vllm/bin:/usr/local/bin). If server launches but engine-core init fails, pull get_failure on that attempt immediately (check VRAM/TP2 placement) instead of blind re-keying. Only after baseline_tput>0, open explore round-1 with MI250X env-gate levers (MI250_GATE_GEMV, VLLM_ROCM_SPLITKV_PA, QuickReduce, chunked-prefill/max-num-seqs); deprioritise AITER/GEMM tuning entirely on gfx90a.",
+      "parse_error": "",
+      "pending": [
+        "Deadline auto-flush of final report (only remaining thread; no orchestration action left).",
+        "Patch 004 integrate remains approved-but-unfunded (task 313e6341...) \u2014 carries to next session."
+      ],
+      "tried_and_why": [
+        "Baseline rounds 2-9: denied by enablement_round_in_flight (live specialist d00cdedf); waiting it out was correct.",
+        "Round-10 unset CUDA/HIP_VISIBLE_DEVICES: workers died 'No CUDA GPUs available' \u2014 explicit HIP_VISIBLE_DEVICES=0,1 is required, never unset.",
+        "Round-11/12/13: round-11 failed 'vllm not on PATH' (patch-003 had been REVERTED by prior session wall-clock timeout); round-13 with widened PATH + explicit GPU env still died at engine-core init \u2014 infra enablement on this gfx90a host needs more than one session's remaining budget.",
+        "Proposed report \u2192 denied execution_order ('baseline must run first'); emitted skip_to_close \u2192 suppressed by enablement guard. Stopped re-emitting and held."
+      ]
+    }
+  ],
+  "orchestration_prompt_modes": {
+    "delta": 142,
+    "seed": 11
+  },
+  "osl": 1024,
+  "params_no_promote_streak": 0,
+  "pending_bottleneck_switch": false,
+  "pending_escalate_hint": "",
+  "pending_integrate": {},
+  "pending_kernel_integrations": {},
+  "pending_stack_validation_apply_results": [],
+  "pending_stack_validation_result": {},
+  "pending_targeted_build": {},
+  "phase": "CLOSE",
+  "phase_budget_pct": {
+    "CLOSE": 0.02,
+    "FRAMEWORK_AGENT": 0.8444444444444446,
+    "KERNEL_AGENT": 0.0,
+    "PRELUDE": 0.03,
+    "SWEEP": 0.10555555555555557
+  },
+  "phase_elapsed_totals": {
+    "PRELUDE": 8589.952059268951
+  },
+  "phase_history": [
+    {
+      "cycle": 0,
+      "evidence": {
+        "trigger": "fresh_session"
+      },
+      "from_phase": "",
+      "reason": "phase_entered",
+      "to_phase": "PRELUDE",
+      "ts": "2026-09-14T09:49:57+00:00",
+      "ts_unix": 1789379397.38696
+    },
+    {
+      "cycle": 0,
+      "evidence": {
+        "close_steps": [
+          {
+            "status": "running",
+            "step": "sequencer_started",
+            "ts": "2026-09-14T12:45:04.392962+00:00"
+          },
+          {
+            "detail": "status=skipped reason=missing_model_or_hardware backend=local",
+            "status": "skipped",
+            "step": "fact_finalize",
+            "ts": "2026-09-14T12:45:04.403311+00:00"
+          },
+          {
+            "status": "done",
+            "step": "report",
+            "task_id": "6b3df2e1dd894a33b268ac6c8789a685",
+            "ts": "2026-09-14T12:45:04.447868+00:00"
+          },
+          {
+            "status": "done",
+            "step": "session_breakdown",
+            "task_id": "3a58893d37fe44a8a5b90912d0cfcf8b",
+            "ts": "2026-09-14T12:45:05.262189+00:00"
+          },
+          {
+            "detail": "/workspace/hyperloom-session-packages/Ornith-1.5-35B-A3B_20260914T094955Z_a8127778.zip",
+            "status": "done",
+            "step": "artifact_package",
+            "ts": "2026-09-14T12:45:05.591841+00:00"
+          },
+          {
+            "status": "skipped",
+            "step": "ndjson_drain",
+            "ts": "2026-09-14T12:45:05.595824+00:00"
+          },
+          {
+            "status": "done",
+            "step": "done",
+            "ts": "2026-09-14T12:45:05.601897+00:00"
+          }
+        ],
+        "reason_origin": "shared_state.stop_reason",
+        "terminal": true
+      },
+      "from_phase": "PRELUDE",
+      "reason": "enablement_stalled",
+      "to_phase": "CLOSE",
+      "ts": "2026-09-14T12:44:52+00:00",
+      "ts_unix": 1789389892.7041042
+    }
+  ],
+  "phase_started_ts": "2026-09-14T12:44:52+00:00",
+  "phase_started_unix": 1789389892.7041042,
+  "plateau_overrides": {},
+  "policy_denial_history": [
+    {
+      "action_name": "",
+      "hint": "",
+      "intent_payload_keys": [
+        "body_md",
+        "kind",
+        "target_agent"
+      ],
+      "intent_type": "request",
+      "rule": "request_target",
+      "streak": 1,
+      "tick": 11,
+      "ts": "2026-09-14T10:23:38.207655+00:00"
+    },
+    {
+      "action_name": "baseline",
+      "hint": "wait for the enablement specialist to finish and rearm before re-running baseline.",
+      "intent_payload_keys": [
+        "action_name",
+        "params",
+        "predicted_gain_pct"
+      ],
+      "intent_type": "propose_action",
+      "rule": "enablement_round_in_flight",
+      "streak": 1,
+      "tick": 23,
+      "ts": "2026-09-14T10:27:51.731758+00:00"
+    },
+    {
+      "action_name": "recover",
+      "hint": "side-effecting actions like `recover` are reserved for the robustness agent; emit an ALERT and let robustness escalate via its action-ladder instead",
+      "intent_payload_keys": [
+        "action_name",
+        "params"
+      ],
+      "intent_type": "delegate",
+      "rule": "delegate_action_source",
+      "streak": 1,
+      "tick": 27,
+      "ts": "2026-09-14T10:29:38.976835+00:00"
+    },
+    {
+      "action_name": "baseline",
+      "hint": "wait for the enablement specialist to finish and rearm before re-running baseline.",
+      "intent_payload_keys": [
+        "action_name",
+        "idempotency_key",
+        "params",
+        "predicted_gain_pct"
+      ],
+      "intent_type": "propose_action",
+      "rule": "enablement_round_in_flight",
+      "streak": 2,
+      "tick": 43,
+      "ts": "2026-09-14T10:35:11.100754+00:00"
+    },
+    {
+      "action_name": "baseline",
+      "hint": "wait for the enablement specialist to finish and rearm before re-running baseline.",
+      "intent_payload_keys": [
+        "action_name",
+        "idempotency_key",
+        "params",
+        "predicted_gain_pct"
+      ],
+      "intent_type": "propose_action",
+      "rule": "enablement_round_in_flight",
+      "streak": 3,
+      "tick": 125,
+      "ts": "2026-09-14T10:51:58.187203+00:00"
+    },
+    {
+      "action_name": "baseline",
+      "hint": "wait for the enablement specialist to finish and rearm before re-running baseline.",
+      "intent_payload_keys": [
+        "action_name",
+        "idempotency_key",
+        "params",
+        "predicted_gain_pct"
+      ],
+      "intent_type": "propose_action",
+      "rule": "enablement_round_in_flight",
+      "streak": 4,
+      "tick": 127,
+      "ts": "2026-09-14T10:52:20.556931+00:00"
+    },
+    {
+      "action_name": "baseline",
+      "hint": "wait for the enablement specialist to finish and rearm before re-running baseline.",
+      "intent_payload_keys": [
+        "action_name",
+        "idempotency_key",
+        "params",
+        "predicted_gain_pct"
+      ],
+      "intent_type": "propose_action",
+      "rule": "enablement_round_in_flight",
+      "streak": 5,
+      "tick": 130,
+      "ts": "2026-09-14T10:52:52.737095+00:00"
+    },
+    {
+      "action_name": "baseline",
+      "hint": "wait for the enablement specialist to finish and rearm before re-running baseline.",
+      "intent_payload_keys": [
+        "action_name",
+        "idempotency_key",
+        "params",
+        "predicted_gain_pct"
+      ],
+      "intent_type": "propose_action",
+      "rule": "enablement_round_in_flight",
+      "streak": 6,
+      "tick": 135,
+      "ts": "2026-09-14T10:53:41.684722+00:00"
+    },
+    {
+      "action_name": "baseline",
+      "hint": "wait for the enablement specialist to finish and rearm before re-running baseline.",
+      "intent_payload_keys": [
+        "action_name",
+        "idempotency_key",
+        "params",
+        "predicted_gain_pct"
+      ],
+      "intent_type": "propose_action",
+      "rule": "enablement_round_in_flight",
+      "streak": 7,
+      "tick": 138,
+      "ts": "2026-09-14T10:54:10.851889+00:00"
+    },
+    {
+      "action_name": "baseline",
+      "hint": "wait for the enablement specialist to finish and rearm before re-running baseline.",
+      "intent_payload_keys": [
+        "action_name",
+        "idempotency_key",
+        "notes",
+        "predicted_gain_pct",
+        "reason"
+      ],
+      "intent_type": "propose_action",
+      "rule": "enablement_round_in_flight",
+      "streak": 8,
+      "tick": 143,
+      "ts": "2026-09-14T10:55:15.909530+00:00"
+    },
+    {
+      "action_name": "baseline",
+      "hint": "wait for the enablement specialist to finish and rearm before re-running baseline.",
+      "intent_payload_keys": [
+        "action_name",
+        "idempotency_key",
+        "notes",
+        "predicted_gain_pct"
+      ],
+      "intent_type": "propose_action",
+      "rule": "enablement_round_in_flight",
+      "streak": 9,
+      "tick": 146,
+      "ts": "2026-09-14T11:47:23.661491+00:00"
+    },
+    {
+      "action_name": "baseline",
+      "hint": "wait for the enablement specialist to finish and rearm before re-running baseline.",
+      "intent_payload_keys": [
+        "action_name",
+        "env_overrides",
+        "idempotency_key",
+        "note",
+        "predicted_gain_pct"
+      ],
+      "intent_type": "propose_action",
+      "rule": "enablement_round_in_flight",
+      "streak": 10,
+      "tick": 148,
+      "ts": "2026-09-14T11:50:29.071309+00:00"
+    },
+    {
+      "action_name": "baseline",
+      "hint": "wait for the enablement specialist to finish and rearm before re-running baseline.",
+      "intent_payload_keys": [
+        "action_name",
+        "params",
+        "predicted_gain_pct"
+      ],
+      "intent_type": "propose_action",
+      "rule": "enablement_round_in_flight",
+      "streak": 11,
+      "tick": 149,
+      "ts": "2026-09-14T12:42:59.629370+00:00"
+    },
+    {
+      "action_name": "report",
+      "hint": "propose/delegate `baseline` until baseline_tput > 0",
+      "intent_payload_keys": [
+        "action_name",
+        "predicted_gain_pct"
+      ],
+      "intent_type": "propose_action",
+      "rule": "execution_order",
+      "streak": 1,
+      "tick": 150,
+      "ts": "2026-09-14T12:44:15.673631+00:00"
+    }
+  ],
+  "policy_denial_streak": {
+    "*:request_target": 1,
+    "baseline:enablement_round_in_flight": 11,
+    "recover:delegate_action_source": 1,
+    "report:execution_order": 1
+  },
+  "precision": "bf16",
+  "profile_attempts": [],
+  "profile_osl": 0,
+  "pruned_families": [],
+  "recipe_finalize_attempts": 1,
+  "recipe_finalize_outcome": {
+    "attempt": 1,
+    "backend": "local",
+    "reason": "missing_model_or_hardware",
+    "source": "close",
+    "status": "skipped",
+    "updated_at": "2026-09-14T12:45:04.400314+00:00"
+  },
+  "recipe_finalize_status": "skipped",
+  "recipe_kb_session_id": "20260914T094955Z-aa171c76",
+  "recipe_sediment_enabled": true,
+  "reference_envs": {},
+  "reference_model": "",
+  "reference_server_args": "",
+  "reference_source": "",
+  "rejected_kernel_ids": [],
+  "rejected_kernel_patches": [],
+  "research_lane_capacity": 4,
+  "research_scout_enabled": true,
+  "research_scout_interval": 3,
+  "research_scout_last_round": -1,
+  "research_scout_runs": 0,
+  "research_scout_seen_pr_ids": [],
+  "resume_pending_revalidation": false,
+  "resumed_ts": "2026-09-14T10:21:42.752045+00:00",
+  "robustness_options": {},
+  "roofline_attempts": [],
+  "roofline_failure_streak": 0,
+  "roofline_snapshots": [],
+  "rounds_since_last_keep": {
+    "communication": 2,
+    "compiler": 2,
+    "framework": 2,
+    "kernel_agent": 2,
+    "pr_intelligence": 2,
+    "research_scout": 2,
+    "static_recon": 2,
+    "systems": 2
+  },
+  "rounds_since_last_specialist": {
+    "communication": 2,
+    "compiler": 2,
+    "framework": 0,
+    "kernel_agent": 2,
+    "pr_intelligence": 2,
+    "research_scout": 2,
+    "static_recon": 2,
+    "systems": 2
+  },
+  "sandbox_user_id": "",
+  "saturated_directions": {},
+  "schema_version": 6,
+  "session_id": "Ornith-1.5-35B-A3B_20260914T094955Z_a8127778",
+  "specialist_patch_verdicts": {
+    "3bbb58e289654e3bb358a8db44343c2f": "approve",
+    "d00cdedfc173451eaf5b312d08e00da9": "approve"
+  },
+  "specialist_reauthor_attempts": {},
+  "specialist_rounds": [
+    {
+      "allocated_gpu_ids": [
+        0,
+        1
+      ],
+      "completed_at": "2026-09-14T11:47:08.123295+00:00",
+      "confidence": 0.93,
+      "cycle": 0,
+      "domain": "enablement_specialist",
+      "empty": true,
+      "framework_agent_authoring": true,
+      "gap_canonical_id": "gap.enablement.unknown",
+      "new_findings": [
+        {
+          "accuracy_risk": "none",
+          "domain_tags": [
+            "enablement",
+            "magpie",
+            "rocm",
+            "gfx90a"
+          ],
+          "expected_impact": "Explains why 'unknown' symptom persisted: baseline never reached a server, so baseline_tput stayed 0.0 for 8+ coordinator rounds.",
+          "source": "runs/baseline/cd3d94f7.../baseline_stderr.log + vllm/model_executor/models/registry.py + reproducible probes in this run (see per-finding sources)",
+          "what": "The launch failure is NOT a model/vLLM gap. The model (Qwen3_5MoeForConditionalGeneration / qwen3_5_moe, hybrid 30 linear-attn + 10 full-attn, 256-expert MoE) is natively supported by vLLM 0.28.0+rocm723 and resolves at runtime. There are THREE stacked harness-layer blockers in Magpie's benchmark CHILD ENV, all now localized and the first three cleared: (B1, attempt-1, still live in tree) no gfx90a runner type in image_selector; (B2) host-physical HIP_VISIBLE_DEVICES=2,3 vs the ROCR_VISIBLE_DEVICES=0,1 GPU lease; (B3) the session-injected PATH=/opt/venv/bin:... which contains no vllm/hf/transformers."
+        },
+        {
+          "accuracy_risk": "none (env/child-process plumbing only; no numerical path change)",
+          "domain_tags": [
+            "rocm",
+            "visible-devices",
+            "hip",
+            "magpie",
+            "enablement"
+          ],
+          "expected_impact": "Mandatory: without it no server ever initialises, so the baseline and every downstream proposal measure nothing.",
+          "source": "scratch/gpuprobe runs + scratch/neg2/server.log:54,78 + /opt/envs/vllm/lib/python3.12/site-packages/vllm/platforms/rocm.py:128-158 + Magpie/modes/benchmark/benchmarker.py:776,800 (env=os.environ.copy() then benchmark.envs applied verbatim)",
+          "what": "B2 mechanism (this attempt's primary find): ROCR_VISIBLE_DEVICES filters at the HSA layer AND renumbers the surviving agents to 0..N-1. HIP_VISIBLE_DEVICES is applied on top of that already-remapped list, so a host-physical HIP pin (2,3) with ROCR=0,1 selects NOTHING. torch.cuda.device_count() still reports 2 (from ROCR's count) while every allocation dies with 'RuntimeError: No CUDA GPUs are available', and vLLM's worker startup surfaces it as 'Engine core initialization failed'. Reproduced both ways: isolation probe (HIP=2,3+ROCR=0,1 -> FAIL; HIP=0,1 or unset -> 2x MI250X gfx90a + matmul OK) and negative control NEG-2 (ORIGINAL Magpie script + a healthy PATH + HIP=2,3/ROCR=0,1 -> rc=1, worker RuntimeError at scratch/neg2/server.log:54). vllm/platforms/rocm.py:_sync_hip_cuda_env_vars only cross-checks HIP vs CUDA and cannot see this because ROCR is a different layer."
+        },
+        {
+          "accuracy_risk": "none",
+          "domain_tags": [
+            "path",
+            "magpie",
+            "inferencex",
+            "enablement"
+          ],
+          "expected_impact": "Unblocks both the server phase and the throughput client phase.",
+          "source": "scratch/neg1/out.log:28 + probe: env -i PATH=<baseline PATH> -> 'vllm MISSING', python3=/opt/venv/bin/python3, import vllm -> ModuleNotFoundError; and InferenceX/utils/bench_serving/benchmark_serving.py --help failing under unpatched PATH vs succeeding with /opt/envs/vllm/bin prepended",
+          "what": "B3 mechanism (independent, and the failure that appears immediately behind B2): the InferenceX/Magpie vllm_mi300x.sh launches 'setsid vllm serve' and runs the serving client with a bare 'python3'. The session YAML injects PATH=/opt/venv/bin:/usr/local/sbin:...:/bin, but /opt/venv has no vllm, no hf and no transformers, so the server phase dies in ~2s with 'setsid: failed to execute vllm: No such file or directory' (NEG-1, rc=1) and the client phase dies on 'ModuleNotFoundError: No module named huggingface_hub'. Magpie itself runs from /opt/envs/vllm/bin/python3, i.e. the correct framework env was known at runtime but never propagated to the child."
+        },
+        {
+          "accuracy_risk": "none",
+          "domain_tags": [
+            "enablement",
+            "vllm",
+            "rocm",
+            "e2e-validation"
+          ],
+          "expected_impact": "Raises the combo from non-runnable (0.0 tok/s baseline, 8 denied coordinator rounds) to measurably serving; unblocks the baseline gate.",
+          "source": "scratch/ixrun/ws/server.log, scratch/completion.json, scratch/e2e2/inferencex_result.json (date 20260914-114227)",
+          "what": "DELIVERABLE VERIFIED END-TO-END: with patch 003 applied (i.e. the two new Magpie helpers repairing the child env), the real serving path ran on my leased cards \u2014 TP2 + expert-parallel vLLM 0.28.0 on 2x MI250X booted ('Resolved architecture: Qwen3_5MoeForConditionalGeneration', CUDA-graph capture complete, /health 200), generated correct text ('The capital of France is' -> ' Paris.', 16 tok in 2.3s), and completed a full Magpie/InferenceX benchmark_serving run: 64/64 successful requests, 56.9s, output 1151.77 tok/s, total 2303.54 tok/s, mean TTFT 4358.9ms, mean TPOT 50.3ms at concurrency 64 with ISL/OSL 1024/1024 and max_model_len 6144. These are MY validation numbers on my cards for the runnability gate, NOT the sealed baseline (the coordinator owns that measurement)."
+        },
+        {
+          "accuracy_risk": "none",
+          "domain_tags": [
+            "magpie",
+            "patch-propagation"
+          ],
+          "expected_impact": "Keeps future enablement edits from landing in a file that gets overwritten each run.",
+          "source": "Magpie/modes/benchmark/benchmarker.py:546-570 and :704-770 + ls of InferenceX benchmarks dir + grep gfx90a in live image_selector.py",
+          "what": "Patch-propagation note for the next round: Magpie._prepare_benchmark_scripts() re-copies Magpie/scripts/benchmark/*.sh over the InferenceX cache on EVERY run, so editing only the .cache/InferenceX@3d55815.../benchmarks copy would be silently reverted. The durable place is the Magpie package. Script selection is deterministic here: priority-2 native 'benchmarks/gptoss_bf16_mi300x.sh' does not exist, so priority 3 selects the (patched) Magpie generic vllm_mi300x.sh. Attempt-1's image_selector gfx90a alias is still present at Magpie/modes/benchmark/image_selector.py:139 (image_selector.py.orig backup alongside), i.e. the REVERT concerned the deeper layers, not that line."
+        },
+        {
+          "accuracy_risk": "none for throughput; blocks the gsm8k accuracy read",
+          "domain_tags": [
+            "lm-eval",
+            "eval",
+            "network",
+            "magpie"
+          ],
+          "expected_impact": "Determines whether the accuracy floor can be measured at all this session; throughput gate is unaffected.",
+          "source": "/opt/envs/vllm/bin/python3 -c 'import lm_eval' -> ModuleNotFoundError; /tmp/lmeval{,2,3,4,5}.log; Magpie/scripts/benchmark/vllm_mi300x.sh:148-158; InferenceX benchmarks/benchmark_lib.sh:870-887 and :1767-1783",
+          "what": "Residual RISK (not a code gap, and not fixed by patch 003): the baseline config sets RUN_EVAL=true, vllm_mi300x.sh does 'run_eval ... || exit $?' so an eval-phase failure fails the whole run even after throughput already succeeded, and lm_eval is NOT importable in /opt/envs/vllm. InferenceX's _install_lm_eval_deps() cannot fetch it on this host right now: pip fails against both mirrors.aliyun.com and pypi.org with 'Connection broken: IncompleteRead/BrokenPipe/ConnectionReset', and the stale mirror additionally reports ResolutionImpossible for the 'api' extra. The harness installs it itself (pip install --break-system-packages 'lm-eval[api]' then a pinned --no-deps force-reinstall of EleutherAI/lm-evaluation-harness@b315ef3b), so a reachable index is the only requirement."
+        },
+        {
+          "accuracy_risk": "low-moderate: split-KV and QuickReduce at world>=4 change summation order, so temp=0 token-exact comparability against an older baseline breaks (accuracy floor itself unaffected)",
+          "domain_tags": [
+            "gfx90a",
+            "aiter",
+            "moe-config",
+            "perf-levers"
+          ],
+          "expected_impact": "Points the explore/static_recon rounds at the levers that actually apply to this host.",
+          "source": "vllm/_aiter_ops.py:134-155 + vllm/model_executor/layers/mi250_kernels.py + vllm/v1/attention/ops/rocm_splitkv_pa.py + scratch/ixrun/ws/server.log and 78b25f.../scratch/server3.log warnings",
+          "what": "Perf-lever map for whoever follows (enablement is done, so this is hand-off, not this round's deliverable): AITER is hard-gated off on gfx90a in this build (vllm/_aiter_ops.py:134-155 returns get_cdna_version() > 2, i.e. CDNA3+ only), so VLLM_ROCM_USE_AITER=1 is a no-op on MI250X \u2014 confirmed live: 'Final IR op priority ... rms_norm=[native]'. In-tree MI250X paths DO exist and are env-gated: vllm/model_executor/layers/mi250_kernels.py (MI250_GATE_GEMV) and vllm/v1/attention/ops/rocm_splitkv_pa.py (VLLM_ROCM_SPLITKV_PA). Also observed: 'Config file not found at vllm/model_executor/layers/fused_moe/configs/E=128,N=512,device_name=AMD_Instinct_MI250X_MI250.json' -> MoE is running on default (untuned) configs, and 'Cannot use ROCm custom paged attention kernel, falling back to Triton'."
+        }
+      ],
+      "notes": [
+        "worktree_setup_failed:no_git_framework_source_root",
+        "patch_safety_numeric:1151.77 tok/s,4358.9ms,50.3ms"
+      ],
+      "proposal_set": [],
+      "proposals_total": 0,
+      "reason": "",
+      "residual_questions": [
+        "Is the gsm8k eval part of the RUNNABILITY gate for this enablement round? If yes, the host needs a reachable PyPI index (or a preinstalled lm-eval): InferenceX auto-installs it inside run_eval, but pip currently fails on both mirrors.aliyun.com and pypi.org with connection resets. Suggested one-time command if the Coordinator has a working egress/proxy: python3 -m pip install --no-cache-dir --retries 10 'lm-eval[api]'.",
+        "Should HIP_VISIBLE_DEVICES be removed from the pod/launcher env entirely? Patch 003 repairs it per-child (safe, non-invasive), but the root inconsistency is that the container entrypoint exports host-physical HIP ids while hyperloom pins logical ROCR ids for the lease.",
+        "The two Magpie helpers are framework-generic; only the ROCm/ROCR alignment branch is exercised on NVIDIA-free hosts. Confirm no CI expects the old 'only repin when HIP is unset' behaviour in vllm_mi300x.sh."
+      ],
+      "round_id": "d00cdedfc173451eaf5b312d08e00da9",
+      "source": "specialist:d00cdedfc173451eaf5b312d08e00da9",
+      "source_phase": "ENABLEMENT",
+      "summary": "Made Ornith-1.5-35B-A3B + vLLM RUNNABLE, attacking a different (deeper) layer than the reverted attempt-1 patch. Attempt 1's gfx90a->mi300x runner alias is still live in the tree, so the real remaining blockers were two stacked Magpie CHILD-ENV bugs: (B2) the pod exports host-physical HIP_VISIBLE_DEVICES=2,3 while the lease pins ROCR_VISIBLE_DEVICES=0,1 \u2014 ROCR filters and renumbers at HSA, so HIP selects nothing -> 'RuntimeError: No CUDA GPUs are available' / 'Engine core ini",
+      "tags": [
+        "framework"
+      ],
+      "task_id": "d00cdedfc173451eaf5b312d08e00da9"
+    },
+    {
+      "allocated_gpu_ids": [
+        0,
+        1
+      ],
+      "completed_at": "2026-09-14T12:42:35.811470+00:00",
+      "confidence": 0.9,
+      "cycle": 0,
+      "domain": "enablement_specialist",
+      "empty": true,
+      "framework_agent_authoring": true,
+      "gap_canonical_id": "gap.enablement.unknown",
+      "new_findings": [
+        {
+          "accuracy_risk": "none (child-env plumbing + failure-mode classification only; no numerical path change)",
+          "domain_tags": [
+            "enablement",
+            "magpie",
+            "inferencex",
+            "path",
+            "rocm"
+          ],
+          "expected_impact": "Makes the runnable delta independent of the parent-harness environment: the patched benchmark script self-heals its child env even when Magpie-side patch 003 is absent or when the host exports a framework-less PATH.",
+          "source": "runs/baseline/3f5caae8.../benchmark_vllm_20260914_114944/{server.log,benchmark_stderr.log} (died 'setsid: failed to execute vllm' at 11:49 WITH 003 reverted) + integrate_patch op record (patches_applied then patches_reverted, verdict DISCARDED, reason 'session wall-clock budget exhausted before this round ran') + Magpie/modes/benchmark/benchmarker.py mtime 09:13 == 77457-byte backup (003 not in tree)",
+          "what": "The 11:49 baseline failure was patch-003 REVERTED, not patch-003 broken: the previous enablement session hit its wall-clock at 11:47, the coordinator applied 003 at 11:48, its verification bench never ran ('session wall-clock budget exhausted before this round ran'), so the patch was reverted and the 11:49 baseline re-ran the unpatched tree and re-hit the SAME B3 failure (client/server PATH=/opt/venv/bin:... has no vllm CLI; and note a /usr/local/bin/vllm symlink appeared at 11:56, plus a TraceLens .pth makes /opt/venv/bin/python3 see vllm/transformers now -- the host is healthier than at failure time but the injected benchmark.envs.PATH still has no guaranteed framework env)."
+        },
+        {
+          "accuracy_risk": "none for throughput; converts a wholesale run-kill into an accuracy=None record only when the eval DEPENDENCY is missing; a real eval failure (lm_eval importable but scoring fails) still exits non-zero",
+          "domain_tags": [
+            "eval",
+            "lm-eval",
+            "magpie",
+            "enablement",
+            "gfx90a"
+          ],
+          "expected_impact": "Removes the last stage that could discard an otherwise-successful benchmark run: run_eval failure == whole-run failure under RUN_EVAL=true.",
+          "source": "Magpie/scripts/benchmark/vllm_mi300x.sh eval block ('run_eval --framework lm-eval --port $PORT || exit $?' after the throughput stage) + InferenceX benchmark_lib.sh:870-887 (_install_lm_eval_deps pip-with-default-retries against a link that dies mid-transfer: 'Connection broken: BrokenPipeError') + integrate_patch.py:2995-3005 (boot-origin gate: accuracy None -> correctness_ok None -> provisional KEEP, but only if run status succeeded; _execute_local_benchmark sets success=False on ANY non-zero script rc)",
+          "what": "Deepest remaining failure in the full chain (server + throughput verified OK by patch 003 in the prior round and re-verified by me this round) is the EVAL stage: with RUN_EVAL=true the script '|| exit $?' on run_eval, and lm_eval is not shipped in the image; InferenceX lazy-installs it with pip default retries which this host's lossy link reliably breaks (I reproduced: ~350KB/s with repeated mid-download BrokenPipe; my retry-wrapped install succeeded only on an attempt with --retries 30 --timeout 120). Patch 004 makes the eval-stage failure mode-aware (missing dependency -> warn + continue so the throughput result survives; real eval failure -> stays fatal)."
+        },
+        {
+          "accuracy_risk": "none",
+          "domain_tags": [
+            "enablement",
+            "e2e-validation",
+            "vllm",
+            "rocm",
+            "gsm8k"
+          ],
+          "expected_impact": "Raises confidence that the coordinator's next gated bench of this combo will produce BOTH throughput and an accuracy score (floor 0.5) in one run.",
+          "source": "scratch/e2e004/{out.log,server.log} (guard lines + 'Capturing CUDA graphs' + 'Starting vLLM server on http://0.0.0.0:8899', /health 200, completions returns 'Paris') and scratch/evalsmoke/out/.../results_2026-09-14T12-34-19.json (gsm8k exact_match strict+flexible = 0.8, n=5 smoke slice)",
+          "what": "End-to-end validation of patch 004 on my leased cards under the EXACT hostile baseline env (PATH=/opt/venv/bin:/usr/local/sbin:... , HIP_VISIBLE_DEVICES=2,3 host-physical, ROCR_VISIBLE_DEVICES=0,1, TP2/EP vllm serve with the baseline's --distributed-executor-backend mp --enable-expert-parallel): guards fired ('prepending /opt/envs/vllm/bin to PATH', 're-pinning HIP 2,3 -> 0,1'), server booted with CUDA-graph capture, /health 200, correct greedy generation, and a REAL gsm8k lm-eval run against it completed and scored (limit=5 smoke slice, exact_match 0.8 on that 5-sample slice -- advisory only, the full-dataset floor check belongs to the coordinator). lm-eval 0.4.13 is now installed into /opt/envs/vllm site-packages on this host, so the eval stage will lazy-skip its pip install and run directly."
+        }
+      ],
+      "notes": [
+        "worktree_setup_failed:no_git_framework_source_root"
+      ],
+      "proposal_set": [],
+      "proposals_total": 0,
+      "reason": "",
+      "residual_questions": [
+        "Patch 004 modifies Magpie/scripts/benchmark/vllm_mi300x.sh, which _prepare_benchmark_scripts() re-copies into the InferenceX cache before every run -- so the patch only needs to land in the Magpie package (it does; same funnel as patch 003). Confirm integrate_patch applies against /opt/envs/vllm/lib/python3.12/site-packages with the same -p1/-p2 auto-level it used for 003 (I verified 'git apply --check -p1' passes from the framework root, standalone AND stacked on 003).",
+        "Host note: the container now also has /usr/local/bin/vllm -> /opt/envs/vllm/bin/vllm and lm-eval 0.4.13 installed (by prior-session residue + my retry-wrapped install). If the gate runs in a FRESH container these may be absent -- setup_commands replays the lm-eval install; the PATH repair is what patch 004 covers.",
+        "The eval-stage warn-and-continue branch is only reachable when the throughput stage already succeeded; verify the orchestrator treats a status=succeeded run with accuracy=None as provisional-KEEP (boot-origin) rather than hard-fail for THIS session's contract (integrate_patch.py:2995-3005 says provisional-KEEP, but enablement_mode='all' with an accuracy floor of 0.5 should be double-checked against the eventual KEEP rule)."
+      ],
+      "round_id": "3bbb58e289654e3bb358a8db44343c2f",
+      "source": "specialist:3bbb58e289654e3bb358a8db44343c2f",
+      "source_phase": "ENABLEMENT",
+      "summary": "Round goal: land the durable runnable+eval delta for Ornith-1.5-35B-A3B under vLLM. Localized why the 11:49 baseline still died at 'setsid: failed to execute vllm': patch 003 had been REVERTED by the prior session's wall-clock timeout (its bench never ran), so the baseline re-hit B3 unpatched -- 003 itself is sound and is re-applied as base. Authored patch 004 on the Magpie benchmark script (the point-of-use layer, so it works with OR without 003): (1) self-heals the child fr",
+      "tags": [
+        "framework"
+      ],
+      "task_id": "3bbb58e289654e3bb358a8db44343c2f"
+    }
+  ],
+  "stack_fingerprint_meta": {
+    "image_digest": "rocm-ai/vllm:0.28.0-rocm7.2.4",
+    "rocm": "7.2.4",
+    "vllm": "0.28.0+rocm723"
+  },
+  "start_ts": "2026-09-14T09:49:55.896192+00:00",
+  "static_recon_enabled": true,
+  "static_recon_runs": 0,
+  "stop_reason": "enablement_stalled",
+  "stop_ts": "2026-09-14T12:44:52.695094+00:00",
+  "target_advisory_enabled": true,
+  "target_gap_pct": 0.0,
+  "target_reached_at": "",
+  "target_summary": "Establish baseline on Ornith-1.5-35B-A3B then drive cumulative_gain_validated to >= 30.0% within 3.0h.",
+  "teardown_timings_sec": {
+    "artifact_package": 0.387,
+    "close_backends": 0.0,
+    "coordinator_stop": 0.002,
+    "final_json": 0.001,
+    "langfuse": 0.005,
+    "session_lock": 0.0,
+    "total": 0.395
+  },
+  "tick": 153,
+  "tp": 2,
+  "warm_history_injected": false,
+  "warm_kernel_kb_attempted": false,
+  "warm_kernel_kb_plan": [],
+  "warm_replay_attempted": false,
+  "warm_replay_enabled": true,
+  "warm_replay_min_confidence": 0.7,
+  "warm_replay_min_reproduce_pct": 0.8,
+  "warm_replay_outcome": {},
+  "warm_replay_pending": {},
+  "warm_start_context": {
+    "do_not_repeat": [],
+    "lessons": [],
+    "match": {
+      "canonical_id": "inference:ornith-1.5-35b-a3b:unknown_gpu:vllm:qwen3_5_moe:qwen3_5moeforconditionalgeneration:0.28.0:bf16",
+      "confidence": 0.0,
+      "source": "local-json",
+      "tier": "seed_only"
+    },
+    "pitfalls": [],
+    "proven_prior": [],
+    "status": "seed_only"
+  },
+  "warm_start_lessons": [],
+  "warm_start_pitfalls": [],
+  "warm_start_recipe": {
+    "confidence": 0.0,
+    "hw": "unknown_gpu",
+    "recipe": {
+      "architectures": [
+        "Qwen3_5MoeForConditionalGeneration"
+      ],
+      "authority": "EXPERIENTIAL",
+      "best_config": {},
+      "best_throughput": 0.0,
+      "canonical_id": "inference:ornith-1.5-35b-a3b:unknown_gpu:vllm:qwen3_5_moe:qwen3_5moeforconditionalgeneration:0.28.0:bf16",
+      "conc": 64,
+      "confidence": 0.85,
+      "created_at": "2026-09-14T09:49:56.086570+00:00",
+      "ep": 2,
+      "evidence_refs": [],
+      "framework_name": "vllm",
+      "framework_version": "0.28.0",
+      "hardware": "unknown_gpu",
+      "image_digest": "rocm-ai/vllm:0.28.0-rocm7.2.4",
+      "isl": 1024,
+      "kernel_optimizations": [],
+      "last_profiled": "",
+      "lessons": [],
+      "max_model_len": 6144,
+      "model": "Ornith-1.5-35B-A3B",
+      "model_class": "moe_swa",
+      "model_type": "qwen3_5_moe",
+      "osl": 1024,
+      "pitfalls": [],
+      "precision": "bf16",
+      "provenance": {
+        "details": {
+          "sid": "20260914T094955Z-aa171c76"
+        },
+        "generated_at": "2026-09-14T10:21:42.756937+00:00",
+        "generator": "t0_anchor",
+        "source": "hyperloom-inference-optimizer"
+      },
+      "remaining_gaps": [],
+      "rocm_version": "7.2.4",
+      "sessions": [],
+      "stack_fingerprint": {
+        "aiter_commit": "",
+        "rocm_version": "7.2.4",
+        "vllm_version": "0.28.0+rocm723"
+      },
+      "tp": 2,
+      "updated_at": "2026-09-14T10:21:42.757072+00:00",
+      "version": 2,
+      "what_failed": [],
+      "what_worked": []
+    },
+    "tier": "seed_only",
+    "workload": "Ornith-1.5-35B-A3B"
+  },
+  "warm_start_ts": "2026-09-14T09:49:56+00:00"
+}

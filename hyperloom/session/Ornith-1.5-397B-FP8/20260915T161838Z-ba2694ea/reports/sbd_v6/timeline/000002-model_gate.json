@@ -1,0 +1,77 @@
+{
+  "end_time": "2026-09-15T16:18:39+00:00",
+  "ext": {
+    "checks": [
+      {
+        "detail": {
+          "action": "proceed",
+          "allow_mm_text_fallback": true,
+          "architecture": "Qwen3_5MoeForConditionalGeneration",
+          "model_type": "qwen3_5_moe",
+          "signal": "multimodal config key 'vision_config'"
+        },
+        "gate_id": "unsupported_model_arch",
+        "order": 1,
+        "skip_reason": null,
+        "status": "warned",
+        "verdict": "text_coercible"
+      },
+      {
+        "detail": {
+          "config_path": "/mnt/kioxia-cm6-3t8/ai/models/ornith-ai/Ornith-1.5-397B-FP8/config.json",
+          "detector": null,
+          "incompatible": false,
+          "reason": null
+        },
+        "gate_id": "model_config_compat",
+        "order": 2,
+        "skip_reason": null,
+        "status": "passed"
+      },
+      {
+        "detail": {
+          "fits": true,
+          "headroom": 512,
+          "isl": 1024,
+          "max_position_embeddings": 262144,
+          "osl": 1024,
+          "policy": "no_context_length_override",
+          "required": 2560
+        },
+        "gate_id": "context_window",
+        "order": 3,
+        "skip_reason": null,
+        "status": "passed"
+      }
+    ],
+    "degraded": {
+      "active": true,
+      "warnings": [
+        {
+          "architecture": "Qwen3_5MoeForConditionalGeneration",
+          "kind": "multimodal_text_fallback",
+          "model_type": "qwen3_5_moe",
+          "signal": "multimodal config key 'vision_config'"
+        }
+      ]
+    },
+    "failed_gate_id": null,
+    "run_kind": "fresh",
+    "skip_reason": null,
+    "workload": {
+      "allow_mm_text_fallback": true,
+      "framework": "vllm",
+      "gpu_type": "mi250x",
+      "headroom_env": "HYPERLOOM_CONTEXT_HEADROOM_TOKENS",
+      "headroom_tokens": 512,
+      "isl": 1024,
+      "model_name": "Ornith-1.5-397B-FP8",
+      "model_path": "/mnt/kioxia-cm6-3t8/ai/models/ornith-ai/Ornith-1.5-397B-FP8",
+      "osl": 1024
+    }
+  },
+  "kind": "model_gate",
+  "start_time": "2026-09-15T16:18:38+00:00",
+  "status": "degraded",
+  "type": "model_gate"
+}

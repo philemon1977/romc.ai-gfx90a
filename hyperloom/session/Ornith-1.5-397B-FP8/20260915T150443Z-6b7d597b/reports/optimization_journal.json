@@ -1,0 +1,32 @@
+{
+  "session_id": "20260915T150443Z-6b7d597b",
+  "model": "Ornith-1.5-397B-FP8",
+  "hardware": "",
+  "framework": "vllm",
+  "baseline_throughput": 0.0,
+  "final_throughput": null,
+  "total_gain_pct": null,
+  "entries": [
+    {
+      "phase": "PRELUDE",
+      "iter": 1,
+      "kind": "other",
+      "change": "target_analysis",
+      "outcome": "KEEP",
+      "task_id": "8165db5725044b27ab231339a8f7e19d",
+      "ts": "2026-09-15T15:05:15Z",
+      "tick": 1
+    },
+    {
+      "phase": "PRELUDE",
+      "iter": 1,
+      "kind": "baseline",
+      "change": "baseline",
+      "outcome": "REVERT",
+      "error_class": "server_init_dead",
+      "task_id": "a94eb5cd0057482a967dde0bc8535d9a",
+      "ts": "2026-09-15T15:15:40Z",
+      "tick": 1
+    }
+  ]
+}

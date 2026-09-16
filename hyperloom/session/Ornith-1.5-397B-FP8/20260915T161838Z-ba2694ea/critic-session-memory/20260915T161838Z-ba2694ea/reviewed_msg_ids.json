@@ -1,0 +1,42 @@
+{
+  "b4e9885e2f9242ffa41d95be10b276ea": {
+    "verdict": "approve",
+    "ts": "2026-09-15T16:19:12.616334+00:00",
+    "decision_id": null
+  },
+  "489349cb807845008c64f43e0464adaa": {
+    "verdict": "approve",
+    "ts": "2026-09-15T16:19:12.616778+00:00",
+    "decision_id": null
+  },
+  "93d45150ac83445a93f04d340020cc37": {
+    "verdict": "advise",
+    "ts": "2026-09-15T17:03:07.280542+00:00",
+    "decision_id": null
+  },
+  "db0fa098e46743059ab520598008f82b": {
+    "verdict": "approve",
+    "ts": "2026-09-15T17:12:40.309746+00:00",
+    "decision_id": null
+  },
+  "be6e4b7fd7874328ab36cfc2c543ed0b": {
+    "verdict": "approve",
+    "ts": "2026-09-15T18:04:53.623577+00:00",
+    "decision_id": null
+  },
+  "271e82e66336448a9a55dac99ff4fc0c": {
+    "verdict": "approve",
+    "ts": "2026-09-15T18:06:16.012268+00:00",
+    "decision_id": null
+  },
+  "b254752b394c4ca2854d1008e81fe264": {
+    "verdict": "advise",
+    "ts": "2026-09-15T19:03:29.180166+00:00",
+    "decision_id": null
+  },
+  "9c3e98365a0b4c038ecb8818864f44dd": {
+    "verdict": "approve",
+    "ts": "2026-09-15T19:05:20.413943+00:00",
+    "decision_id": null
+  }
+}

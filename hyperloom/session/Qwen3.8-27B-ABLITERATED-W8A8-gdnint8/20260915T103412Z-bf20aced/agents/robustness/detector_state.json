@@ -1,0 +1,51 @@
+{
+  "action_ladder": {
+    "last_emitted": {
+      "agent_stall\u001fagent=orchestration": 2,
+      "aiter_jit_build_stuck": 6,
+      "budget_strategy_drift": 3,
+      "deadline_imminent": 6,
+      "deadline_warning": 6
+    }
+  },
+  "aiter_jit": {
+    "last_build_count": 6,
+    "last_so_count": 118,
+    "stale_build_streak": 5
+  },
+  "gpu_leak": {
+    "consecutive_hits": 0
+  },
+  "preflight_model_gpu_fit": {
+    "fired_fingerprint": [
+      "Qwen3.8-27B-ABLITERATED-W8A8-gdnint8",
+      "",
+      "",
+      1,
+      "bf16",
+      6144,
+      64
+    ]
+  },
+  "progress": {
+    "gain_history": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "last_tick": 5,
+    "macro_cycle": 0
+  },
+  "ray_pending": {
+    "consecutive_hits": 0,
+    "last_pending": 0
+  },
+  "rca_throttle": {
+    "last_called_unix": {
+      "agent_stall\u001fagent=orchestration": 1789472464.8837376,
+      "deadline_imminent": 1789478900.835093
+    }
+  }
+}

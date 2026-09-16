@@ -1,0 +1,61 @@
+{
+  "claw_session_id": null,
+  "code_revision": "",
+  "created_at_utc": "2026-09-14T09:49:55+00:00",
+  "dependencies": {
+    "inferencex": {
+      "commit": "3d55815",
+      "path": "/home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966",
+      "remote": "https://github.com/SemiAnalysisAI/InferenceX.git"
+    },
+    "magpie": {
+      "commit": "",
+      "path": "/opt/envs/vllm/lib/python3.12/site-packages",
+      "remote": ""
+    }
+  },
+  "ep": 2,
+  "framework": "vllm",
+  "gfx_arch": "gfx90a",
+  "gpu_specialist_capacity": 2,
+  "gpu_type": "",
+  "graph_mode": null,
+  "host": "amd-server",
+  "image": "rocm-ai/vllm:0.28.0-rocm7.2.4",
+  "kb_degraded_reason": null,
+  "max_minutes": 180,
+  "model_name": "Ornith-1.5-35B-A3B",
+  "model_path": "/mnt/stripe-3mix-3t2/models/ornith-ai/Ornith-1.5-35B-A3B",
+  "objective": {
+    "kind": "gain_pct",
+    "value": 30.0
+  },
+  "pid": 9393,
+  "pr_degraded_reason": "ir3_auto",
+  "reference_script": null,
+  "research_lane_capacity": 4,
+  "sandbox_user_id": null,
+  "schema_version": 4,
+  "server_args": [
+    "--distributed-executor-backend",
+    "mp"
+  ],
+  "server_args_hash": "88d0926b0da2fc3db1c3ee5d9e4dd5529dfbac5c3323d98ef2871ac12befa491",
+  "session_dir": "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-35B-A3B/20260914T094955Z-aa171c76",
+  "session_id": "Ornith-1.5-35B-A3B_20260914T094955Z_a8127778",
+  "stack_fingerprint": {
+    "aiter": "unknown",
+    "rocm": "7.2.4",
+    "sglang": "unknown",
+    "vllm": "0.28.0+rocm723"
+  },
+  "tp": 2,
+  "user_data_path": "/home/qiba/ROCm.AI/hyperloom/session",
+  "workload": {
+    "conc": 64,
+    "isl": 1024,
+    "max_model_len": 6144,
+    "osl": 1024,
+    "precision": "bf16"
+  }
+}
