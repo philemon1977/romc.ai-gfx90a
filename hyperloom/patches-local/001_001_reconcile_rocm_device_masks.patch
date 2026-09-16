@@ -1,0 +1,185 @@
+diff --git a/Magpie/modes/benchmark/benchmarker.py b/Magpie/modes/benchmark/benchmarker.py
+index 6b44089..fef6869 100644
+--- a/Magpie/modes/benchmark/benchmarker.py
++++ b/Magpie/modes/benchmark/benchmarker.py
+@@ -56,6 +56,164 @@ MAGPIE_BUILTIN_SCRIPTS = frozenset(
+     }
+ )
+ 
++# Cached once: the vendor probe shells out to ``rocminfo``, and the reconciliation
++# below runs on every local benchmark invocation.
++_GPU_VENDOR_CACHE: Optional[Tuple[Any, Any]] = None
++
++# Visible-device masks on a ROCm host, outermost (inherited) first.
++_ROCM_DEVICE_MASK_VARS: Tuple[str, ...] = (
++    "ROCR_VISIBLE_DEVICES",
++    "HIP_VISIBLE_DEVICES",
++    "CUDA_VISIBLE_DEVICES",
++)
++
++
++def _gpu_is_amd() -> bool:
++    """True on a ROCm host, using Magpie's own vendor probe (cached).
++
++    Returns:
++        bool: False whenever the vendor cannot be established, so an
++        unidentifiable host is left exactly as the caller configured it.
++    """
++    global _GPU_VENDOR_CACHE
++    if _GPU_VENDOR_CACHE is None:
++        try:
++            _GPU_VENDOR_CACHE = detect_gpu()
++        except Exception:
++            logger.debug("detect_gpu() failed; skipping device-mask reconciliation")
++            _GPU_VENDOR_CACHE = (GPUVendor.UNKNOWN, None)
++    return _GPU_VENDOR_CACHE[0] == GPUVendor.AMD
++
++
++def _reconcile_rocm_device_masks(env: Dict[str, str]) -> Optional[str]:
++    """Make ``HIP``/``CUDA_VISIBLE_DEVICES`` consistent with ``ROCR`` in a child env.
++
++    A launcher inherited from the harness can carry a ``HIP_VISIBLE_DEVICES`` /
++    ``CUDA_VISIBLE_DEVICES`` carve written in *physical* device ids, while the
++    benchmark config contributes ``ROCR_VISIBLE_DEVICES`` sized to ``TP``. ROCR
++    filters at the HSA agent layer and re-indexes what survives to ``0..n-1``, so
++    HIP/CUDA must then carry *logical* indices into that reduced set; forwarding
++    the inherited physical ids is wrong twice over. Two distinct launch failures
++    come out of that contradiction, both upstream of any model code:
++
++    * ``len(HIP) > len(ROCR)`` - ``torch._parse_visible_devices()`` raises
++      outright. vLLM calls it during ``import vllm`` (``env_override`` probes
++      ``torch.cuda.is_available()`` at import time), so the server dies before
++      binding a port and the run surfaces only as "never became healthy", with
++      nothing model-side to classify.
++    * equal count but out of range (``ROCR=0`` with ``HIP=2``) - does *not*
++      raise; it yields ``torch.cuda.is_available() == False``, so the server
++      fails later and far less legibly on the first device placement.
++
++    A leaked ``CUDA_VISIBLE_DEVICES`` alone is enough to reach the first case:
++    vLLM's ``_sync_hip_cuda_env_vars`` copies it onto ``HIP_VISIBLE_DEVICES`` at
++    import, and a HIP/CUDA disagreement is itself a hard ``ValueError`` there.
++
++    The InferenceX launchers already encode the intended rule -
++    ``benchmarks/vllm_mi300x.sh`` derives ``HIP_VISIBLE_DEVICES=0..n-1`` from
++    ``ROCR_VISIBLE_DEVICES`` - but guard it with ``[ -z "$HIP_VISIBLE_DEVICES" ]``
++    and so cannot fire for a value inherited from the parent environment. This is
++    that same reconciliation, applied at the layer that owns the merge.
++
++    Behaviour is deliberately conservative:
++
++    * acts only on a ROCm host, and only when an effective ROCR mask exists (a
++      config that pins nothing is the launcher's business, not ours);
++    * a mask already valid for the ROCR set is left untouched, so an
++      intentionally multi-card launch stays multi-card;
++    * ROCR is never modified or removed - it is the harness's own pin and is
++      taken as the authority the other masks are reconciled *against*;
++    * on a HIP/CUDA disagreement HIP wins, matching vLLM's own precedence;
++    * any unexpected shape returns ``None`` without touching ``env`` - env
++      hygiene must never itself break a launch.
++
++    Args:
++        env: The child environment about to be handed to the benchmark launcher.
++            Mutated in place when a repair is made.
++
++    Returns:
++        Optional[str]: Description of the repair, or ``None`` when nothing changed.
++    """
++    try:
++        if not isinstance(env, dict):
++            return None
++
++        # Match case-insensitively but write through the key that exists, so a
++        # lower-cased entry cannot survive alongside its corrected twin.
++        present: Dict[str, str] = {}
++        for key in env:
++            name = str(key).upper()
++            if name in _ROCM_DEVICE_MASK_VARS:
++                present.setdefault(name, key)
++
++        def _mask(name: str) -> Optional[str]:
++            key = present.get(name)
++            if key is None:
++                return None
++            value = str(env[key] if env[key] is not None else "").strip()
++            # Empty string means "unset" to both ROCr and vLLM.
++            return value or None
++
++        rocr = _mask("ROCR_VISIBLE_DEVICES")
++        if rocr is None:
++            return None
++
++        hip = _mask("HIP_VISIBLE_DEVICES")
++        cuda = _mask("CUDA_VISIBLE_DEVICES")
++        if hip is None and cuda is None:
++            # Nothing inherited to contradict: the launcher derives HIP itself.
++            return None
++
++        if not _gpu_is_amd():
++            return None
++
++        rocr_ids = [d for d in (p.strip() for p in rocr.split(",")) if d]
++        count = len(rocr_ids)
++        if count == 0:
++            return None
++        logical = ",".join(str(i) for i in range(count))
++
++        def _valid(mask: str) -> bool:
++            """True when ``mask`` indexes the re-indexed set without exceeding it."""
++            parts = [d for d in (p.strip() for p in mask.split(",")) if d]
++            if not parts or len(parts) > count:
++                return False
++            # Non-numeric entries are UUIDs; leave those to the runtime.
++            return all(not d.isdigit() or int(d) < count for d in parts)
++
++        fixed: Dict[str, str] = {}
++        for name, mask in (
++            ("HIP_VISIBLE_DEVICES", hip),
++            ("CUDA_VISIBLE_DEVICES", cuda),
++        ):
++            if mask is not None and not _valid(mask):
++                fixed[name] = logical
++        if (
++            "HIP_VISIBLE_DEVICES" not in fixed
++            and hip is not None
++            and cuda is not None
++            and hip != cuda
++        ):
++            # vLLM raises on the pair disagreeing even when both are in range.
++            fixed["CUDA_VISIBLE_DEVICES"] = hip
++
++        if not fixed:
++            return None
++
++        changes = []
++        for name, value in fixed.items():
++            key = present.get(name, name)
++            before = env.get(key)
++            env[key] = value
++            changes.append(f"{name}: {before!r} -> {value!r}")
++        return (
++            f"ROCR_VISIBLE_DEVICES={rocr!r} re-indexes the visible set to "
++            f"0..{count - 1}; reconciled " + "; ".join(changes)
++        )
++    except Exception:  # pragma: no cover - env hygiene must never break a launch
++        logger.debug("device-mask reconciliation skipped", exc_info=True)
++        return None
++
+ 
+ class BenchmarkMode:
+     """
+@@ -800,6 +958,15 @@ class BenchmarkMode:
+         for key, value in env_vars.items():
+             env[key] = str(value)
+ 
++        # ``env`` started as ``os.environ.copy()``, so any device mask the harness
++        # exported (typically a physical HIP/CUDA carve) is in it right next to
++        # the ROCR pin this config just wrote. Reconcile them before the launcher
++        # inherits the pair; the launcher's own derivation only covers the case
++        # where HIP arrives unset.
++        repair = _reconcile_rocm_device_masks(env)
++        if repair:
++            logger.warning("Device-mask reconciliation for local run: %s", repair)
++
+         return cmd, env
+ 
+     def _execute_local_benchmark_with_reuse(

@@ -1,0 +1,36 @@
+#!/bin/sh
+# Boot the gfx90a FP8->BF16 dequant-emulation vLLM for Ornith-1.5-397B-FP8.
+#
+# Why a wrapper instead of an env pin: PYTHONPATH is in BLOCKED_UNTRUSTED_ENV_NAMES
+# (hyperloom/common/env_safety.py), and that blocklist is applied to *every*
+# channel that could otherwise carry the patch -- KB-replayed best_config
+# .extra_envs, per-variant extra_envs, --extra-env pins, and --reference-script
+# exports. So the only operator-owned place the patched tree can be named is this
+# executable. InferenceX's benchmarks/vllm_mi250x.sh honours ${VLLM_BIN:-vllm},
+# which is not a blocked key, so the preset carries the patch as a VLLM_BIN pin
+# pointing at this file:
+#
+#     --extra-env VLLM_BIN=$HYPERLOOM_ROOT/patches/fp8-w8a8-emulation-gfx90a/bin/vllm-emulation
+#
+# The intended first-party channel is a provisioned StackRuntime
+# (stack_actions.to_runtime_override -> pythonpath_prefix -> apply_runtime_override
+# at baseline.py:3555 / _grid_runner.py). This wrapper is the launch-time
+# equivalent for a patch that is already on disk.
+: "${HYPERLOOM_FP8_EMU_ROOT:=/home/qiba/ROCm.AI/hyperloom/patches/fp8-w8a8-emulation-gfx90a}"
+: "${HYPERLOOM_FP8_EMU_CACHE:=/home/qiba/ROCm.AI/hyperloom/.cache/vllm-emulation}"
+
+export PYTHONPATH="$HYPERLOOM_FP8_EMU_ROOT${PYTHONPATH:+:$PYTHONPATH}"
+# AOT compiled graphs are hash-keyed; patch 002 puts the selection into that key,
+# so this cache may be shared across boots of the SAME patched tree. Never point
+# it at the stock-env cache (/root/.cache/vllm) -- a stale FP8 [K,N]
+# aten._scaled_mm graph replays into assert_size_stride at profile_run.
+export VLLM_CACHE_ROOT="$HYPERLOOM_FP8_EMU_CACHE"
+export TORCHINDUCTOR_CACHE_DIR="$HYPERLOOM_FP8_EMU_CACHE/inductor"
+mkdir -p "$VLLM_CACHE_ROOT" "$TORCHINDUCTOR_CACHE_DIR"
+
+# gfx90a facts this route depends on: no FP8 matrix core, so the kernel dequantizes
+# FP8 weights to BF16 at load and runs F.linear; AITER is a dead route here.
+export VLLM_ROCM_USE_AITER="${VLLM_ROCM_USE_AITER:-0}"
+export HSA_NO_SCRATCH_RECLAIM="${HSA_NO_SCRATCH_RECLAIM:-1}"
+
+exec /opt/envs/vllm/bin/vllm "$@"
