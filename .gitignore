@@ -72,6 +72,13 @@ __pycache__/
 .mypy_cache/
 .ruff_cache/
 
+# --- 工具运行期标记（0 字节锁 / 就绪时间戳，非产出） -------------------------
+.lock
+!.gitignore.lock
+server_ready_at
+*.pid
+heartbeat.json
+
 # --- 机密与本机配置（提交 .env.example，实际 .env 不入库） --------------------
 .env
 .env.*
