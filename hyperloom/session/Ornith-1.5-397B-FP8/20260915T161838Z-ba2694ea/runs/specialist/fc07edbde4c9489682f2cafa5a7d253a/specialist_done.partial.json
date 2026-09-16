@@ -1,0 +1,14 @@
+{
+  "intent_type": "specialist_done",
+  "payload": {
+    "confidence": 0.75,
+    "domain": "enablement_specialist",
+    "empty": false,
+    "gap_canonical_id": "gap.enablement.unknown",
+    "summary": "Root cause of the CURRENT (deeper) boot failure localized: it is NOT a new code gap but a stale vLLM torch.compile AOT cache. The kept FP8-emulation patch changes only UNTRACED files (kernel registry __init__.py + new emulation.py), so vllm/compilation/caching.py still hashes identical traced sources and reloads the pre-patch artifact /root/.cache/vllm/torch_compile_cache/torch_aot_compile/63eba2e.../rank_*_0/model (created 15:13, before the 17:03 patched run). That artifact hard-codes extern_kernels._scaled_mm on an FP8 [K,N] weight, so replay against the now-BF16 [N,K] dequantized weight dies at assert_size_stride arg10_1 (4096,2560)/(1,4096) vs actual (2560,4096)/(4096,1). Verifying by booting the patched tree on my cards with a fresh compile cache and stacking any further gap fixes.",
+    "new_findings": [{"what": "vLLM 0.28 AOT compile-cache verification (vllm/compilation/caching.py:_verify_source_unchanged) only re-checks the traced files recorded by the EXISTING artifact. A kernel-selection patch that swaps which file gets traced (here FP8 scaled_mm -> new scaled_mm/emulation.py) does NOT invalidate the artifact, so the engine reloads a graph built for the OLD FP8 layout and dies at assert_size_stride in profile_run. Any future kernel-selection enablement patch needs a cache-invalidation env (VLLM_DISABLE_COMPILE_CACHE=1) or a VLLM_CACHE_ROOT override.", "source": "/root/.cache/vllm/torch_compile_cache/torch_aot_compile/63eba2e.../rank_0_0/model (mtime 15:13, pre-patch) + vllm/compilation/decorators.py:560-575 + vllm/compilation/caching.py:573-620 + server.log assert_size_stride arg10_1 (4096,2560)/(1,4096) vs actual (2560,4096)/(4096,1)", "expected_impact": "Unblocks the whole enablement ladder for Ornith-1.5-397B-FP8 on MI250X: with a fresh compile the graph is traced against the dequantized BF16 weights and profile_run can proceed instead of aborting.", "accuracy_risk": "none (pure build-cache correctness)", "domain_tags": ["vllm", "torch.compile", "cache-invalidation", "enablement"]}],
+    "patches_written": [],
+    "proposal_set": [],
+    "residual_questions": []
+  }
+}

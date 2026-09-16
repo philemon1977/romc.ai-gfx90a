@@ -1,0 +1,38 @@
+{
+  "kind": "coordinator_inbox",
+  "session_id": "20260915T161838Z-ba2694ea",
+  "decision_id": null,
+  "kb_writes": [],
+  "notes": [],
+  "intent_envelope": {
+    "intents": [
+      {
+        "intent_type": "review_verdict",
+        "payload": {
+          "target_proposal_msg_id": "db0fa098e46743059ab520598008f82b",
+          "verdict": "approve",
+          "source": "critic",
+          "reasoning": "PRELUDE baseline is the natural cold-start evidence producer and is consistent with the phase orientation; required context is present, and no contradicting KB prior or packet defect was observed.",
+          "predicted_gain_pct": 0.0,
+          "kb_evidence": [],
+          "packet_evidence": [
+            "review_constraints.phase",
+            "review_constraints.phase_orientation",
+            "review_constraints.action_verdict_policy.baseline",
+            "review_constraints.proposal_action_classes.db0fa098e46743059ab520598008f82b"
+          ],
+          "risks": [],
+          "required_evidence": [],
+          "alternative_action": null,
+          "advice_text": "",
+          "notes": [
+            "predicted_gain_pct is ignored for baseline; no optimization gain is being promoted here.",
+            "The proposal's needs_review flag is not itself a blocker because baseline is expected at PRELUDE."
+          ],
+          "failure_reason_code": "",
+          "confidence": "high"
+        }
+      }
+    ]
+  }
+}

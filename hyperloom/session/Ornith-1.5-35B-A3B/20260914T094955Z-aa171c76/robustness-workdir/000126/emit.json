@@ -1,0 +1,29 @@
+{
+  "intent_envelope": {
+    "intents": [
+      {
+        "intent_type": "alert",
+        "payload": {
+          "severity": "medium",
+          "summary": "PRELUDE phase budget 857% consumed (1851s of 216s cap)",
+          "detail": {
+            "symptom": "phase_budget_nearly_exhausted",
+            "severity": "medium",
+            "subject": {},
+            "source": "shared_state",
+            "evidence": {
+              "phase": "PRELUDE",
+              "elapsed_sec": 1851,
+              "cap_sec": 216,
+              "used_pct": 857.0
+            },
+            "suggestion": "wind down this phase or escalate a phase change"
+          }
+        }
+      }
+    ]
+  },
+  "session_id": "20260914T094955Z-aa171c76",
+  "tick_index": 1,
+  "parse_warnings": []
+}

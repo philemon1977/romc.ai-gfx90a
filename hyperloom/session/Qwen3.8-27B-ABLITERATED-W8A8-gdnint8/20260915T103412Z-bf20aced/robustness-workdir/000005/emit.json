@@ -1,0 +1,81 @@
+{
+  "intent_envelope": {
+    "intents": [
+      {
+        "intent_type": "alert",
+        "payload": {
+          "severity": "high",
+          "summary": "wall-clock budget 97% consumed (elapsed=174.1min / budget=180min) and cumulative_gain_validated=0.00% — wind the session down before the deadline cuts it",
+          "detail": {
+            "symptom": "deadline_imminent",
+            "severity": "high",
+            "subject": {},
+            "source": "local",
+            "evidence": {
+              "elapsed_minutes": 174.1,
+              "remaining_minutes": 5.9,
+              "budget_minutes": 180.0,
+              "burn_pct": 0.967,
+              "cumulative_gain_validated": 0.0,
+              "imminent_pct": 0.85,
+              "productive_gain_pct": 0.5
+            },
+            "suggestion": "propose report to finalize at the last validated gain"
+          }
+        }
+      },
+      {
+        "intent_type": "alert",
+        "payload": {
+          "severity": "high",
+          "summary": "only 5.9min remain (<= 30min); validated_gain still 0; wind the session down now",
+          "detail": {
+            "symptom": "deadline_warning",
+            "severity": "high",
+            "subject": {},
+            "source": "local",
+            "evidence": {
+              "elapsed_minutes": 174.1,
+              "remaining_minutes": 5.9,
+              "budget_minutes": 180.0,
+              "deadline_warning_minutes": 30.0,
+              "cumulative_gain_validated": 0.0,
+              "productive_gain_pct": 0.5
+            },
+            "suggestion": "propose report to finalize at the last validated gain"
+          }
+        }
+      },
+      {
+        "intent_type": "alert",
+        "payload": {
+          "severity": "medium",
+          "summary": "aiter jit build_count=6 unchanged for 5 consecutive ticks; a prior hipcc invocation likely crashed mid-build",
+          "detail": {
+            "symptom": "aiter_jit_build_stuck",
+            "severity": "medium",
+            "subject": {},
+            "source": "local",
+            "evidence": {
+              "build_count": 6,
+              "stale_ticks": 5,
+              "stale_build_threshold": 1,
+              "jit_dir": "/opt/envs/vllm/lib/python3.12/site-packages/aiter/jit"
+            },
+            "suggestion": "observe; if it persists, suggest cleaning <jit_dir>/build/ manually between runs"
+          }
+        }
+      }
+    ]
+  },
+  "session_id": "20260915T103412Z-bf20aced",
+  "tick_index": 1,
+  "parse_warnings": [],
+  "llm_usage": {
+    "input_tokens": 1034,
+    "output_tokens": 600,
+    "calls": 1,
+    "latency_ms": 4632,
+    "model": "qwen3.8-flash-next"
+  }
+}

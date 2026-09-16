@@ -1,0 +1,24 @@
+{
+ "log": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260915T103412Z-bf20aced/runs/baseline/51ac28ff8aed4ad59746fdb889fae7bb/benchmark_vllm_20260915_103510/server.log",
+ "stats_lines_total": 310,
+ "stats_span": "10:37:34 - 11:30:24 (10s cadence; one 90s gap 10:51:44->10:53:14, engine drained to R=0/W=0; no stats emitted while fully idle)",
+ "waiting_gt0_count": 20,
+ "running_lt64_count": 100,
+ "running_eq64_count": 210,
+ "running64_gtenearzero": "0 lines with R=64 and gt<50; 7 lines with R=64 and gt<100 (min 80.4 tok/s)",
+ "prefill_stall_pattern": "No true R=64/near-zero-gen stalls (min gt at R=64 is 80.4). Worst low-gen windows are batch-turnover/ramp-in: 10:40:54-10:41:14 (R=16/34/50, W=48/30/14, gt=175.6/27.0/43.7, ~30s) and 10:53:14-10:54:04 (R=11->60, W=53->4, gt=4.6->58.1, ~60s) after the 90s idle gap 10:51:44->10:53:14 (R hit 0 at 10:51:34 - phase boundary/warmup-to-run reset); also ~10-20s refiles at 10:43:04-24, 10:45:14-34, 10:47:24-34, 10:49:34-44 with R=60-61, W=1, pt=1638-1843, gt=65-71.",
+ "re_sawtooth": "10:37-10:51: decode plateaus gt~660-730 with pt=0 alternate with 1-line prefill bursts pt~1300-1843 gt~65-200. 10:53 onward: mixed pt~750-1400 with gt~100-280 (no pure-decode plateau).",
+ "recomputing": 0,
+ "preempt": 0,
+ "token_budget": 0,
+ "chunk_mentions": 2,
+ "backends": {
+  "full_attention": "ROCM_ATTN (rocm.py:703, TURBOQUANT incompatible -> override from ['ROCM_ATTN','TRITON_ATTN']); chunked_prefill_paged_decode.py:463 WARNING: Cannot use ROCm custom paged attention kernel, falling back to Triton",
+  "gdn_linear": "Triton/FLA GDN prefill kernel (qwen_gdn_linear_attn.py:163, head_k_dim=128); GDN decode kernel: triton (fused_gdn_decode_post_conv_mtp not built)",
+  "vit_mm_encoder": "FLASH_ATTN"
+ },
+ "block_size_784": "interface.py:911 attention block size set to 784 tokens (page size >= mamba page size); interface.py:935 mamba page padded 0.13%; config.py:605 Mamba cache mode 'align' for Qwen3_5ForConditionalGeneration (prefix caching on)",
+ "kv_cache": "GPU KV cache 294,473 tokens, max concurrency 47.93x @6144 (kv_cache_utils.py:1869); observed usage max ~58.5%",
+ "max_waiting": 53,
+ "aiter_missing_tuned_shapes": "many '[aiter] ... not found tuned config' lines incl. M:784/1568/1667/1671/1697/1702 (a8w8 int8 GEMM, default config)"
+}

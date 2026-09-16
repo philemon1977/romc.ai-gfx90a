@@ -1,0 +1,11 @@
+{
+  "event": "launch",
+  "pid": 53378,
+  "session_dir": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B/20260914T130352Z-dbbaaa94",
+  "session_id": "Qwen3.8-27B_20260914T130352Z_400d29b3",
+  "run_log": "",
+  "manifest": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B/20260914T130352Z-dbbaaa94/manifest.json",
+  "gpu_type": "",
+  "framework": "vllm",
+  "model": "/mnt/stripe-3mix-3t2/models/Qwen/Qwen3.8-27B"
+}

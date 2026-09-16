@@ -1,0 +1,35 @@
+benchmark:
+  framework: vllm
+  model: /mnt/kioxia-cm6-3t8/ai/models/ornith-ai/Ornith-1.5-397B-FP8
+  precision: fp8
+  run_mode: local
+  envs:
+    TP: 8
+    CONC: 64
+    ISL: 1024
+    OSL: 1024
+    RANDOM_RANGE_RATIO: 1
+    MAX_MODEL_LEN: 6144
+    VLLM_EXECUTE_MODEL_TIMEOUT_SECONDS: '1200'
+    PATH: /opt/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+    ROCR_VISIBLE_DEVICES: 0,1,2,3,4,5,6,7
+    NUM_PROMPTS: 320
+    NUM_WARMUPS: 8
+    AITER_LOG_TUNED_CONFIG: '1'
+    MAGPIE_TRUST_REMOTE_CODE: '1'
+    BENCH_TRUST_REMOTE_CODE: '1'
+    HF_HUB_TRUST_REMOTE_CODE: '1'
+    RUN_EVAL: 'true'
+  gpu_selection:
+    auto: false
+  timeout_seconds: 7200
+  profiler:
+    torch_profiler:
+      enabled: false
+    system_profiler:
+      enabled: false
+    tracelens:
+      enabled: false
+  runner_type: mi250x
+  benchmark_script: vllm_mi250x.sh
+  inferencex_path: /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966

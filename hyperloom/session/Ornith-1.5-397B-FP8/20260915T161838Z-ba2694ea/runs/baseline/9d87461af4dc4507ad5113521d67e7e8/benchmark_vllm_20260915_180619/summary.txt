@@ -1,0 +1,50 @@
+============================================================
+Benchmark Result: VLLM
+============================================================
+Model: /mnt/kioxia-cm6-3t8/ai/models/ornith-ai/Ornith-1.5-397B-FP8
+Status: FAILED
+
+GPU Hardware Monitoring:
+  Samples: 57 (122.7s)
+  Temperature: 45.0°C - 48.0°C (avg: 46.6°C)
+  GPU Clock: 800 - 1700 MHz (avg: 990)
+  Power: 97.0 - 127.0 W (avg: 102.1)
+
+Errors:
+  - Benchmark process failed with code 1
+  - stderr: + [[ all == \s\e\r\v\e\r ]]
++ [[ all == \a\l\l ]]
++ SERVER_PID=35052
++ [[ all == \a\l\l ]]
++ trap 'magpie_stop_benchmark_server_stack "$SERVER_PID"' EXIT INT TERM
++ wait_for_server_ready --port 8888 --server-log /home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/runs/baseline/9d87461af4dc4507ad5113521d67e7e8/benchmark_vllm_20260915_180619/server.log --server-pid 35052
++ local port=
++ local server_log=
++ local server_pid=
++ local sleep_interval=5
++ [[ 6 -gt 0 ]]
++ case $1 in
++ port=8888
++ shift 2
++ [[ 4 -gt 0 ]]
++ case $1 in
++ server_log=/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/runs/baseline/9d87461af4dc4507ad5113521d67e7e8/benchmark_vllm_20260915_180619/server.log
++ shift 2
++ [[ 2 -gt 0 ]]
++ case $1 in
++ setsid vllm serve /mnt/kioxia-cm6-3t8/ai/models/ornith-ai/Ornith-1.5-397B-FP8 --port 8888 --tensor-parallel-size=8 --gpu-memory-utilization 0.95 --max-model-len 6144 --trust-remote-code
++ server_pid=35052
++ shift
+  - inferencex_result.json not found - benchmark may have failed locally
+  - stderr (last 500 chars): om/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/runs/baseline/9d87461af4dc4507ad5113521d67e7e8/benchmark_vllm_20260915_180619/server.log ]]
++ [[ -z 35052 ]]
++ wait_for_ready --endpoint http://0.0.0.0:8888/health --log /home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/runs/baseline/9d87461af4dc4507ad5113521d67e7e8/benchmark_vllm_20260915_180619/server.log --pid 35052 --sleep-interval 5
++ set +x
+Process died before http://0.0.0.0:8888/health became ready.
+
+  - server.log errors: (APIServer pid=35052)     raise RuntimeError(
+(APIServer pid=35052) RuntimeError: Engine core initialization failed. See root cause above. Failed core proc(s): {}
+
+Workspace: /home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/runs/baseline/9d87461af4dc4507ad5113521d67e7e8/benchmark_vllm_20260915_180619
+Execution time: 125.05s
+============================================================

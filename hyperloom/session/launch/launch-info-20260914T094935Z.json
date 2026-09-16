@@ -1,0 +1,11 @@
+{
+  "event": "launch",
+  "pid": 9393,
+  "session_dir": "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-35B-A3B/20260914T094955Z-aa171c76",
+  "session_id": "Ornith-1.5-35B-A3B_20260914T094955Z_a8127778",
+  "run_log": "",
+  "manifest": "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-35B-A3B/20260914T094955Z-aa171c76/manifest.json",
+  "gpu_type": "",
+  "framework": "vllm",
+  "model": "/mnt/stripe-3mix-3t2/models/ornith-ai/Ornith-1.5-35B-A3B"
+}

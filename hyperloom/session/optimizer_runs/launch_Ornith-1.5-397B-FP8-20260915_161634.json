@@ -1,0 +1,11 @@
+{
+  "event": "launch",
+  "pid": 12899,
+  "session_dir": "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161654Z-c63294cb",
+  "session_id": "Ornith-1.5-397B-FP8_20260915T161654Z_2e8fbd36",
+  "run_log": "",
+  "manifest": "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161654Z-c63294cb/manifest.json",
+  "gpu_type": "",
+  "framework": "vllm",
+  "model": "/mnt/kioxia-cm6-3t8/ai/models/ornith-ai/Ornith-1.5-397B-FP8"
+}

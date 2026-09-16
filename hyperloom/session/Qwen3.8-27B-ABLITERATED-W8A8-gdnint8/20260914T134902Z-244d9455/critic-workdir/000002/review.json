@@ -1,0 +1,41 @@
+{
+  "review_verdicts": [
+    {
+      "target_proposal_msg_id": "2a8dce703fd541beaa7698ae0047b91d",
+      "verdict": "advise",
+      "source": "critic",
+      "reasoning": "Enablement landing is structurally eligible: specialist provenance, framework-agent authoring, enablement tag, and no contradicting KB prior. However, integrate_patch is atypical for PRELUDE, and the self-reported predicted_gain_pct is non-authoritative; this is a phase/payload-shape concern, not a reject.",
+      "confidence": "medium",
+      "predicted_gain_pct": null,
+      "kb_evidence": [],
+      "packet_evidence": [
+        "params.enablement",
+        "params.framework_agent_authoring",
+        "params.provenance",
+        "params.enablement_base_patches",
+        "predicted_gain_pct"
+      ],
+      "risks": [
+        {
+          "severity": "minor",
+          "summary": "Atypical PRELUDE action plus non-authoritative predicted gain field."
+        }
+      ],
+      "required_evidence": [],
+      "notes": [
+        "KB priors are silent; cold-start enablement is not blocked by that alone.",
+        "Do not require throughput before/after or a restated rollback plan for enablement_landing.",
+        "If baseline/target_analysis has not established the model state, return to PRELUDE sequencing before landing."
+      ],
+      "failure_reason_code": "",
+      "persist_to_kb": false,
+      "topic": "prelude-enablement-phase-hint"
+    }
+  ],
+  "advice": [
+    {
+      "target_proposal_msg_id": "2a8dce703fd541beaa7698ae0047b91d",
+      "body_md": "Proceed only if orchestration requires framework-agent enablement before PRELUDE baseline/target_analysis; otherwise re-sequence after baseline. The predicted_gain_pct field was ignored as a non-authoritative payload-shape claim."
+    }
+  ]
+}

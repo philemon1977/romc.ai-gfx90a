@@ -1,0 +1,33 @@
+W20260914 13:50:16.332976 137865368831808 agent.cpp:461] Attempt to enable hip visiblity for agent-4 which is not visible to HSA (ROCR)
+W20260914 13:50:16.340664 137865368831808 agent.cpp:461] Attempt to enable hip visiblity for agent-5 which is not visible to HSA (ROCR)
+WARNING 09-14 13:50:19 [rocm.py:134] Using CUDA_VISIBLE_DEVICES on ROCm is deprecated and support will be removed in vLLM v0.26.0. Please use HIP_VISIBLE_DEVICES instead.
+Traceback (most recent call last):
+  File "<frozen runpy>", line 189, in _run_module_as_main
+  File "<frozen runpy>", line 112, in _get_module_details
+  File "/opt/envs/wu1w/lib/python3.12/site-packages/vllm/__init__.py", line 14, in <module>
+    import vllm.env_override  # noqa: F401
+    ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/envs/wu1w/lib/python3.12/site-packages/vllm/env_override.py", line 858, in <module>
+    _patch_inductor_fallback_allow_list()
+  File "/opt/envs/wu1w/lib/python3.12/site-packages/vllm/env_override.py", line 835, in _patch_inductor_fallback_allow_list
+    from torch._inductor import lowering as _lowering
+  File "/opt/envs/wu1w/lib/python3.12/site-packages/torch/_inductor/lowering.py", line 61, in <module>
+    from . import config, inductor_prims, ir, test_operators  # NOQA: F401
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/envs/wu1w/lib/python3.12/site-packages/torch/_inductor/ir.py", line 92, in <module>
+    from .runtime.benchmarking import benchmarker
+  File "/opt/envs/wu1w/lib/python3.12/site-packages/torch/_inductor/runtime/benchmarking.py", line 20, in <module>
+    inductor_config.use_experimental_benchmarker and torch.cuda.is_available()
+                                                     ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/envs/wu1w/lib/python3.12/site-packages/torch/cuda/__init__.py", line 182, in is_available
+    return device_count() > 0
+           ^^^^^^^^^^^^^^
+  File "/opt/envs/wu1w/lib/python3.12/site-packages/torch/cuda/__init__.py", line 1139, in device_count
+    nvml_count = _device_count_amdsmi()
+                 ^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/envs/wu1w/lib/python3.12/site-packages/torch/cuda/__init__.py", line 1036, in _device_count_amdsmi
+    visible_devices = _parse_visible_devices()
+                      ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/envs/wu1w/lib/python3.12/site-packages/torch/cuda/__init__.py", line 849, in _parse_visible_devices
+    raise RuntimeError(
+RuntimeError: HIP_VISIBLE_DEVICES contains more devices than ROCR_VISIBLE_DEVICES

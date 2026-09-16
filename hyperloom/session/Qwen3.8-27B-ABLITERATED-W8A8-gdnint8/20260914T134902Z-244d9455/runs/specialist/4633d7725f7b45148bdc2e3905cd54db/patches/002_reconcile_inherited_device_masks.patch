@@ -1,0 +1,165 @@
+diff --git a/hyperloom/orchestrator/actions/executors/_grid_runner.py b/hyperloom/orchestrator/actions/executors/_grid_runner.py
+index 1a4222a..a9d083e 100644
+--- a/hyperloom/orchestrator/actions/executors/_grid_runner.py
++++ b/hyperloom/orchestrator/actions/executors/_grid_runner.py
+@@ -669,6 +669,16 @@ def _build_variant_yaml(
+         envs.pop(str(k), None)
+     for k, v in variant.extra_envs.items():
+         envs[str(k)] = str(v)
++    # A variant's ROCR pin renumbers the visible set, but any HIP/CUDA mask it
++    # did NOT set is still inherited from the lease in PHYSICAL ids, and Magpie
++    # overlays ``benchmark.envs`` on top of ``os.environ.copy()`` - so the
++    # contradiction reaches the launcher, where torch either raises outright or
++    # silently finds no usable device. Reconcile the pair against the
++    # authoritative ROCR mask, on the path that also honours an explicit
++    # HIP/CUDA override (which the baseline materializer scrubs).
++    from ._workload_envs import reconcile_rocm_device_masks
++
++    reconcile_rocm_device_masks(envs, where=f"grid:{variant.name}")
+     # The three AgentX bounds took this rung's CONC through ``variant_conc``
+     # above, not through this merge: raising the client's grace alone would make
+     # the round wait inside a cap that did not move with it.
+diff --git a/hyperloom/orchestrator/actions/executors/_workload_envs.py b/hyperloom/orchestrator/actions/executors/_workload_envs.py
+index 4ca3fdb..8c3ec68 100644
+--- a/hyperloom/orchestrator/actions/executors/_workload_envs.py
++++ b/hyperloom/orchestrator/actions/executors/_workload_envs.py
+@@ -653,6 +653,119 @@ class FrameworkScriptMismatchError(ValueError):
+     """
+ 
+ 
++def reconcile_rocm_device_masks(envs: dict[str, Any], *, where: str = "") -> None:
++    """Make an inherited HIP/CUDA visible-devices mask agree with the ROCR pin.
++
++    ``ROCR_VISIBLE_DEVICES`` filters at the HSA agent layer and RENUMBERS what
++    survives to ``0..N-1``, so the HIP-level masks (``HIP_VISIBLE_DEVICES`` /
++    ``CUDA_VISIBLE_DEVICES``) that index into that set must carry LOGICAL ids.
++    The lease the harness exports is written in PHYSICAL ids, so once the config
++    narrows ROCR (to ``TP`` devices) the pair contradicts it. Two distinct launch
++    failures come out of that, neither of them model-side:
++
++    * ``len(HIP) > len(ROCR)`` — ``torch.cuda._parse_visible_devices()`` raises
++      ``HIP_VISIBLE_DEVICES contains more devices than ROCR_VISIBLE_DEVICES``.
++    * equal count, out of range (``ROCR=0`` with ``HIP=2``) — no raise; it yields
++      ``torch.cuda.is_available() is False``, and the server dies later and far
++      less legibly on the first device placement with ``No CUDA GPUs are
++      available``.
++
++    The mask names are deliberately NOT settable as a variant ``extra_envs``
++    override on every path (they are scrubbed as ``GPU_MASK_ENV_NAMES`` from
++    untrusted sources, and Magpie's own reconciliation is not live on the
++    baseline path), so a leaked carve otherwise reaches the launcher untouched.
++    This fixes it at the single layer that already OWNS the ROCR pin — right
++    after the TP-derived value is written — so the baseline, grid and
++    integrate-patch launches all render a consistent triple.
++
++    Conservative by construction: inert off ROCm (no ``/dev/kfd``), inert when no
++    ROCR mask is in effect, and inert when the mask is already valid, so an
++    intentional multi-card or UUID pin is left alone. Never raises: env hygiene
++    must not itself break a launch.
++
++    Args:
++        envs: The ``benchmark.envs`` mapping about to be rendered. Mutated in
++            place when a repair is made.
++        where: Caller label for the log line.
++    """
++    try:
++        if not isinstance(envs, dict):
++            return
++        # Case-insensitive match, written through the key that exists, so a
++        # lower-cased entry cannot survive beside its corrected twin.
++        present: dict[str, str] = {}
++        for key in envs:
++            upper = str(key).upper()
++            if upper in ("ROCR_VISIBLE_DEVICES", "HIP_VISIBLE_DEVICES", "CUDA_VISIBLE_DEVICES"):
++                present.setdefault(upper, key)
++
++        def _value(name: str) -> str:
++            key = present.get(name)
++            if key is None:
++                return ""
++            return str(envs[key] if envs[key] is not None else "").strip()
++
++        rocr = _value("ROCR_VISIBLE_DEVICES") or os.environ.get(
++            "ROCR_VISIBLE_DEVICES", ""
++        ).strip()
++        if not rocr:
++            return
++        rocr_ids = [t for t in (p.strip() for p in rocr.split(",")) if t]
++        count = len(rocr_ids)
++        if count == 0:
++            return
++
++        # A leaked mask usually is NOT in this YAML at all — Magpie starts the
++        # child env from ``os.environ.copy()`` and only overlays these envs, so
++        # the inherited value reaches the launcher unless it is written here.
++        def _inherited(name: str) -> str:
++            return _value(name) or os.environ.get(name, "").strip()
++
++        hip = _inherited("HIP_VISIBLE_DEVICES")
++        cuda = _inherited("CUDA_VISIBLE_DEVICES")
++        if not hip and not cuda:
++            # Nothing inherited to contradict: the launcher derives HIP itself.
++            return
++        if not any(os.path.exists(p) for p in ("/dev/kfd", "/sys/module/amdgpu")):
++            return
++
++        def _valid(mask: str) -> bool:
++            parts = [t for t in (p.strip() for p in mask.split(",")) if t]
++            if not parts or len(parts) > count:
++                return False
++            # Non-numeric tokens are UUIDs; those are the runtime's business.
++            return all(not d.isdigit() or int(d) < count for d in parts)
++
++        effective = hip or cuda
++        if _valid(effective) and (not hip or not cuda or hip == cuda):
++            return
++
++        logical = ",".join(str(i) for i in range(count))
++        repaired = []
++        for name, current in (("HIP_VISIBLE_DEVICES", hip), ("CUDA_VISIBLE_DEVICES", cuda)):
++            if not current:
++                continue
++            if current != logical:
++                # Write through the existing key so casing is preserved, and
++                # create one when the value is only inherited: both must end up
++                # equal, since vLLM raises on a HIP/CUDA disagreement.
++                key = present.get(name, name)
++                envs[key] = logical
++                repaired.append(f"{name}: {current!r} -> {logical!r}")
++        if repaired:
++            log.warning(
++                "%s: ROCR_VISIBLE_DEVICES=%r re-indexes the visible set to 0..%d; "
++                "reconciled %s",
++                where or "device-mask reconciliation",
++                rocr,
++                count - 1,
++                "; ".join(repaired),
++            )
++    except Exception:  # pragma: no cover - env hygiene must never break a launch
++        log.debug("device-mask reconciliation skipped", exc_info=True)
++
++
++
+ def _visible_gpu_count() -> int:
+     """Return how many GPUs are visible to this pod (0 = none / unknown).
+ 
+@@ -1096,6 +1209,8 @@ def materialize_config_with_envs(
+             )
+         envs["ROCR_VISIBLE_DEVICES"] = derived
+ 
++    reconcile_rocm_device_masks(envs, where="materialize")
++
+     # Last-resort fallbacks kept in sync with the CLI workload defaults
+     # (parser.DEFAULT_ISL/OSL/CONC); normally the CLI has already projected the
+     # resolved values into these envs before materialization.
+@@ -1883,6 +1998,10 @@ def materialize_config_with_envs(
+         )
+         envs.clear()
+         envs.update(filtered_envs)
++    # Re-run after every late merge (``extra_envs``, ``--extra-env``, the
++    # reference recipe): a HIP/CUDA mask arriving through one of those still
++    # indexes the set ROCR just re-numbered.
++    reconcile_rocm_device_masks(envs, where="materialize(final)")
+     output_dir.mkdir(parents=True, exist_ok=True)
+     materialized = output_dir / out_name
+     with materialized.open("w", encoding="utf-8") as f:

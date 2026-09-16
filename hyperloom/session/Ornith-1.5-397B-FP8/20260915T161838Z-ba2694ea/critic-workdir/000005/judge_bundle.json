@@ -1,0 +1,259 @@
+{
+  "kind": "coordinator_inbox",
+  "session_id": "20260915T161838Z-ba2694ea",
+  "decision_id": null,
+  "phase": "PRELUDE",
+  "merged_context": {
+    "model": "Ornith-1.5-397B-FP8",
+    "framework": "vllm",
+    "gpu_type": "mi250x",
+    "model_path": "/mnt/kioxia-cm6-3t8/ai/models/ornith-ai/Ornith-1.5-397B-FP8",
+    "tp": 8,
+    "workload": {
+      "conc": 64,
+      "isl": 1024,
+      "max_model_len": 6144,
+      "osl": 1024,
+      "precision": "fp8"
+    },
+    "precision": "fp8",
+    "phase": "PRELUDE",
+    "macro_cycle": 0
+  },
+  "missing_context": [
+    "model_family",
+    "scale",
+    "objective",
+    "baseline_tput",
+    "baseline_label",
+    "current_best",
+    "session_label"
+  ],
+  "required_context": [],
+  "proposals": [
+    {
+      "msg_id": "be6e4b7fd7874328ab36cfc2c543ed0b",
+      "from_agent": "coordinator",
+      "payload": {
+        "action_name": "integrate_patch",
+        "provenance": "specialist",
+        "predicted_gain_pct": 0.0,
+        "params": {
+          "specialist_task_id": "fc07edbde4c9489682f2cafa5a7d253a",
+          "provenance": "specialist:enablement_specialist",
+          "patch_name": "cold-compile-fallback-no-cache",
+          "source_phase": "FRAMEWORK_AGENT",
+          "domain": "enablement_specialist",
+          "gap_canonical_id": "gap.enablement.unknown",
+          "gap_layer": "framework",
+          "lever_kind": "enablement",
+          "framework_agent_authoring": true,
+          "enablement": true,
+          "enablement_before_signature": {
+            "kind": "unknown",
+            "offending_file": "/opt/envs/vllm/lib/python3.12/site-packages/vllm/v1/engine/core.py",
+            "offending_symbol": "",
+            "raw_excerpt": "Traceback (most recent call last): (EngineCore pid=27111) ERROR 09-15 17:19:10 [core.py:1346] File \"/opt/envs/vllm/lib/python3.12/site-packages/vllm/v1/engine/core.py\", line 1315, in run_engine_core",
+            "confidence": 0.0,
+            "bridge_layer": "",
+            "secondary_kinds": []
+          },
+          "enablement_base_patches": [
+            "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/runs/specialist/9d27140cf07749878ef698ad2789b20d/patches/001_gfx90a_fp8_w8a8_bf16_emulation.patch"
+          ]
+        },
+        "needs_review": true
+      },
+      "seq": 52,
+      "action_name": "integrate_patch",
+      "predicted_gain_pct": 0.0
+    }
+  ],
+  "messages": [],
+  "decision": {},
+  "kb_priors_by_proposal": {
+    "be6e4b7fd7874328ab36cfc2c543ed0b": []
+  },
+  "kb_priors_for_decision": [],
+  "kb_priors_trace": {
+    "configured": true,
+    "mode": "per_proposal",
+    "client_mode": "inmemory",
+    "scope_filter": {
+      "org": "hyperloom",
+      "framework": "vllm",
+      "model": "ornith-1.5-397b-fp8",
+      "workload": "{'conc': 64, 'isl': 1024, 'max_model_len': 6144, 'osl': 1024, 'precision': 'fp8'}",
+      "precision": "fp8"
+    },
+    "limit": 5,
+    "requests": [
+      {
+        "msg_id": "be6e4b7fd7874328ab36cfc2c543ed0b",
+        "topic": "integrate_patch",
+        "cache": "miss",
+        "count": 0
+      }
+    ]
+  },
+  "robustness_priors": [
+    {
+      "symptom_name": "ray_head_dead",
+      "severity": "high",
+      "tick_index": 1,
+      "timestamp_unix": 1789489152.819286,
+      "summary": "ray head unreachable: ray status timed out after 5.0s",
+      "rca_text": "The ray status probe timed out after 5.0s, and the returncode is None with empty stderr,",
+      "intents": [
+        {
+          "intent_type": "alert",
+          "payload": {
+            "severity": "high",
+            "summary": "ray head unreachable: ray status timed out after 5.0s",
+            "detail": {
+              "symptom": "ray_head_dead",
+              "severity": "high",
+              "subject": {},
+              "source": "local",
+              "evidence": {
+                "reason": "ray status timed out after 5.0s",
+                "stderr": "",
+                "returncode": null
+              },
+              "suggestion": "prune_branch(kernel_opt); escalate to restart Ray head — GEAK + kernel submissions are pending until ray is back"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "symptom_name": "local_server_unreachable",
+      "severity": "high",
+      "tick_index": 3,
+      "timestamp_unix": 1789491787.503785,
+      "summary": "local server probe http://127.0.0.1:8888/health status=error",
+      "rca_text": "The health probe to http://127.0.0.1:8888/health returned status=error with status_code=None and error=connect: ConnectError, meaning no HTTP response was received rather than a server-side error code. server_process_seen=True shows a server process exists, but benchmark_client_seen=False indicates the client has not observed a usable server endpoint. These values point to a process that is present but not accepting connections on the probed address. A concrete remediation is to restart the inference server, with forced GPU cleanup if the recovery path supports it, to re-establish a",
+      "intents": [
+        {
+          "intent_type": "alert",
+          "payload": {
+            "severity": "high",
+            "summary": "local server probe http://127.0.0.1:8888/health status=error",
+            "detail": {
+              "symptom": "local_server_unreachable",
+              "severity": "high",
+              "subject": {
+                "url": "http://127.0.0.1:8888/health"
+              },
+              "source": "local",
+              "evidence": {
+                "url": "http://127.0.0.1:8888/health",
+                "status": "error",
+                "status_code": null,
+                "error": "connect: ConnectError",
+                "server_process_seen": true,
+                "benchmark_client_seen": false
+              },
+              "suggestion": "delegate(recover, force_gpu_cleanup=True) to restart the inference server"
+            }
+          }
+        },
+        {
+          "intent_type": "delegate",
+          "payload": {
+            "action_name": "recover",
+            "params": {
+              "reason": "local_server_unreachable",
+              "force_gpu_cleanup": true,
+              "evidence": {
+                "url": "http://127.0.0.1:8888/health",
+                "status": "error",
+                "status_code": null,
+                "error": "connect: ConnectError",
+                "server_process_seen": true,
+                "benchmark_client_seen": false
+              }
+            },
+            "idempotency_key": "recover-server-unreachable-tick-3-fbe8ae04"
+          }
+        }
+      ]
+    },
+    {
+      "symptom_name": "log_error_pattern",
+      "severity": "high",
+      "tick_index": 4,
+      "timestamp_unix": 1789492360.532229,
+      "summary": "log error pattern 'RuntimeError: Engine core initialization failed' matched 1 times",
+      "rca_text": "",
+      "intents": [
+        {
+          "intent_type": "alert",
+          "payload": {
+            "severity": "high",
+            "summary": "log error pattern 'RuntimeError: Engine core initialization failed' matched 1 times",
+            "detail": {
+              "symptom": "log_error_pattern",
+              "severity": "high",
+              "subject": {
+                "pattern": "RuntimeError: Engine core initialization failed"
+              },
+              "source": "local",
+              "evidence": {
+                "pattern": "RuntimeError: Engine core initialization failed",
+                "count": 1,
+                "samples": [
+                  "[server.log] (APIServer pid=25168) RuntimeError: Engine core initialization failed. See root cause above. Failed core proc(s): {'EngineCore': 1}"
+                ]
+              },
+              "suggestion": "delegate(recover, force_gpu_cleanup=True) or escalate strategy"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "kb_read_skipped_reason": null,
+  "review_constraints": {
+    "allowed_verdicts": [
+      "advise",
+      "approve",
+      "needs_review",
+      "redirect",
+      "reject"
+    ],
+    "ceiling_importance": 0.84,
+    "approve_requires": [
+      "specialist_or_default_grid_provenance",
+      "in_phase_allowed_action",
+      "no_contradicting_kb_prior"
+    ],
+    "bundle_action_class": "enablement_landing",
+    "proposal_action_classes": {
+      "be6e4b7fd7874328ab36cfc2c543ed0b": "enablement_landing"
+    },
+    "approve_requires_by_class": {
+      "patch_landing": [
+        "comparable_before_after_benchmark",
+        "accuracy_gate_or_waiver",
+        "active_path_proof_when_relevant",
+        "rollback_plan"
+      ],
+      "evidence_producer": [
+        "specialist_or_default_grid_provenance",
+        "in_phase_allowed_action",
+        "no_contradicting_kb_prior"
+      ],
+      "enablement_landing": [
+        "specialist_or_default_grid_provenance",
+        "in_phase_allowed_action",
+        "no_contradicting_kb_prior"
+      ],
+      "framework_op": []
+    }
+  },
+  "notes": [
+    "scope_cache_key=framework=vllm|model=ornith-1.5-397b-fp8|org=hyperloom|precision=fp8|workload={'conc': 64, 'isl': 1024, 'max_model_len': 6144, 'osl': 1024, 'precision': 'fp8'}|limit=10",
+    "robustness_priors_injected count=3 path=/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/agents/robustness/findings/20260915T161838Z-ba2694ea.jsonl"
+  ]
+}

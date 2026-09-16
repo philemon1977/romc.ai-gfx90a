@@ -1,0 +1,100 @@
+MAGPIE_PYTHON=/opt/venv/bin/python cannot import Magpie; ignoring it and auto-detecting an interpreter that can. (A stale value is often baked into kernel-agent.env.sh when install.sh resolved it before Magpie was pip-installed.)
+MAGPIE_PYTHON=/opt/venv/bin/python cannot import Magpie; ignoring it and auto-detecting an interpreter that can. (A stale value is often baked into kernel-agent.env.sh when install.sh resolved it before Magpie was pip-installed.)
+Preflight: WARNING — ignoring unsupported .env key MODEL_PATH from /home/qiba/ROCm.AI/hyperloom/.env
+Preflight: WARNING — ignoring unsupported .env key PYTHON from /home/qiba/ROCm.AI/hyperloom/.env
+Preflight: WARNING — ignoring unsupported .env key MAGPIE_PATH from /home/qiba/ROCm.AI/hyperloom/.env
+Preflight: WARNING — ignoring unsupported .env key MAGPIE_PYTHON from /home/qiba/ROCm.AI/hyperloom/.env
+Preflight: WARNING — ignoring unsupported .env key PYTHONPATH from /home/qiba/ROCm.AI/hyperloom/.env
+Preflight: WARNING — ignoring unsupported .env key INFERENCEX_PATH from /home/qiba/ROCm.AI/hyperloom/.env
+Preflight: WARNING — ignoring unsupported .env key TRACELENS_ROOT from /home/qiba/ROCm.AI/hyperloom/.env
+Preflight: WARNING — ignoring unsupported kernel-agent env key PYTHONPATH from /home/qiba/ROCm.AI/hyperloom/session/runtime/kernel-agent.env.sh
+2026-09-14 13:48:44,962 hyperloom.orchestrator.actions.executors._grid_runner [WARNING] MAGPIE_PYTHON=/opt/venv/bin/python cannot import Magpie; ignoring it and auto-detecting an interpreter that can. (A stale value is often baked into kernel-agent.env.sh when install.sh resolved it before Magpie was pip-installed.)
+Preflight: claude_agent_sdk OK
+Preflight: openai_codex OK
+Preflight: openai OK
+Preflight: httpx OK
+Preflight: ~/.claude/config.json already points at upstream
+Preflight: platform [amd-server] — SMT off, NPS1 (2 NUMA nodes / 2 sockets), governor schedutil
+Preflight: WARNING — cpufreq governor is 'schedutil', not 'performance'; clock ramp can distort latency percentiles and roofline measurements
+Preflight: ray OK
+Preflight: benchmark_serving client deps OK
+Preflight: vllm importable (/opt/envs/vllm/bin/python3); the vllm platform confirms a ROCm build
+Preflight: WARNING — CLI(s) not on PATH: ['codex']. ClaudeBackend / CodexBackend may fall back to direct HTTP. Run src/hyperloom/agents/kernel/scripts/install.sh to bring them in.
+Preflight diagnostics:
+  asset_root          = /home/qiba/ROCm.AI/hyperloom/hyperloom/inference_optimizer
+  session_dir         = /home/qiba/ROCm.AI/hyperloom/session  (USER_DATA_PATH=/home/qiba/ROCm.AI/hyperloom/session, default=/workspace/hyperloom)
+  magpie_python       = /opt/envs/vllm/bin/python3
+  INFERENCEX_PATH     = /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966
+  aiter jit cache     = 125 .so / 2198 MB (WARM) at /opt/envs/vllm/lib/python3.12/site-packages/aiter/jit
+  cold_start_timeout  = 9000s
+  warm_timeout        = 7800s
+  ANTHROPIC_BASE_URL  = http://127.0.0.1:9100
+  kb_status           = OK
+  pr_monitor_status   = DEGRADED (ir3_auto)
+  kb_degraded_reason  = -
+  pr_degraded_reason  = ir3_auto
+  recipe_kb_queue     = pending=0 dead_letter=0 flushed=0 (root=/home/qiba/ROCm.AI/hyperloom/session/runtime/recipe_kb)
+Preflight: catalog probe got HTTP 405 for http://127.0.0.1:9100/models; endpoint exposes no /models route
+Preflight: WARNING — gateway has no /models route (HTTP 404/405); cannot verify --claude-model='qwen3.8-flash-next'. Proceeding.
+Framework       : vllm
+GPU type        : <unset> (Magpie will auto-detect)
+WARN: --precision='bf16' but checkpoint dtype is 'compressed-tensors'; using --precision flag as specified.
+Workload        : ISL=1024 OSL=1024 MAX_MODEL_LEN=6144 (auto) PRECISION=bf16 FRAMEWORK_VERSION=0.28.0
+Session dir     : /home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455
+Session id      : Qwen3.8-27B-ABLITERATED-W8A8-gdnint8_20260914T134902Z_5ae731fb  (manifest label only)
+Session layout under /home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455:
+  [ok] storage/
+  [ok] personas/
+  [ok] checkpoints/
+  [ok] kb/
+  [ok] findings/
+  [ok] reports/
+  [ok] agents/orchestration/
+  [ok] agents/critic/
+  [ok] agents/robustness/
+  [ok] runs/baseline/
+  [ok] runs/profile/
+  [ok] runs/backends/
+  [ok] runs/params/
+  [ok] runs/integrate/
+  [ok] runs/kernel_opt/
+  [ok] kernel-agent-workspace/
+  [ok] kernel-agent/
+  [ok] patches/
+  [ok] optimizer_runs/
+  [ok] manifest.json (written first)
+HYPERLOOM_LAUNCH event=launch pid=7219 session_dir=/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455 session_id=Qwen3.8-27B-ABLITERATED-W8A8-gdnint8_20260914T134902Z_5ae731fb run_log='' manifest=/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/manifest.json gpu_type='' framework=vllm model=/mnt/stripe-3mix-3t2/models/davetha/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8
+Launch info file: /home/qiba/ROCm.AI/hyperloom/session/launch/launch-info-int8-20260914T134844Z.json
+2026-09-14 13:49:03,078 hyperloom.common.gpu_partition [WARNING] GPU 0 reports compute-partition mode 'N/A', which this build does not know
+2026-09-14 13:49:03,079 root [WARNING] model_arch_missing_model_name: /home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/model_arch.json (cannot verify freshness)
+WARNING: DEGRADED MODE: model 'Qwen3.8-27B-ABLITERATED-W8A8-gdnint8' carries a multimodal signal (multimodal config key 'vision_config'; architecture 'Qwen3_5ForConditionalGeneration', model_type 'qwen3_5') but exposes a text-generation path. Hyperloom is running it on the TEXT path only — any image/audio inputs are ignored, so benchmark numbers reflect the text decoder alone. Pass --no-allow-mm-text-fallback to fail-fast instead.
+2026-09-14 13:49:03,082 hyperloom.inference_optimizer.cli.model_gate [WARNING] DEGRADED MODE: model 'Qwen3.8-27B-ABLITERATED-W8A8-gdnint8' carries a multimodal signal (multimodal config key 'vision_config'; architecture 'Qwen3_5ForConditionalGeneration', model_type 'qwen3_5') but exposes a text-generation path. Hyperloom is running it on the TEXT path only — any image/audio inputs are ignored, so benchmark numbers reflect the text decoder alone. Pass --no-allow-mm-text-fallback to fail-fast instead.
+Recipe KB        : session_id=20260914T134902Z-244d9455 workload=inference:qwen3.8-27b-abliterated-w8a8-gdnint8:unknown_gpu:vllm:qwen3_5:qwen3_5forconditionalgeneration:0.28.0:bf16 (warm=seed_only, pitfalls=0, lessons=0)
+PR Monitor       : DISABLED (ir3_auto)
+Objective       : kind=gain_pct target_gain_pct=30.0
+Optimize phase  : ENABLED
+Research scout  : ENABLED at PRELUDE (re-dispatch every 3 explore rounds)
+Target advisory : ENABLED (External target gap injected into prompts; advisory-only)
+Recipe sediment : ENABLED (KEEP/REVERT provenance written to persistent recipe)
+2026-09-14 13:49:04,472 hyperloom.orchestrator.framework.paths [WARNING] ignoring non-absolute framework source root: 'lib/python3/dist-packages/'
+2026-09-14 13:49:04,472 hyperloom.orchestrator.framework.paths [WARNING] ignoring non-absolute framework source root: 'lib/python2.7/dist-packages/'
+2026-09-14 13:49:04,515 hyperloom.orchestrator.framework.paths [WARNING] ignoring non-absolute framework source root: 'lib/python3/dist-packages/'
+2026-09-14 13:49:04,515 hyperloom.orchestrator.framework.paths [WARNING] ignoring non-absolute framework source root: 'lib/python2.7/dist-packages/'
+Backends        : orchestration=Claude(qwen3.8-flash-next), kernel=DISABLED, critic=critic-agent(kb=inmemory, protocol=anthropic, model=qwen3.8-flash-next, root=/home/qiba/ROCm.AI/hyperloom/hyperloom/agents/critic), robustness=robustness-agent(root=/home/qiba/ROCm.AI/hyperloom/hyperloom/agents/robustness)
+Max ticks       : unlimited (budget = 3.0h)
+Tick interval   : 0.0s
+
+[target_analysis] no --compare-against-gpu set; will write a marker JSON at $SESSION_DIR/target_analysis/target_baseline.json (reason=no_target_gpu_configured) — set --compare-against-gpu to fetch real InferenceX reference data.
+2026-09-14 13:50:28,348 hyperloom.orchestrator.framework.paths [WARNING] ignoring non-absolute framework source root: 'lib/python3/dist-packages/'
+2026-09-14 13:50:28,348 hyperloom.orchestrator.framework.paths [WARNING] ignoring non-absolute framework source root: 'lib/python2.7/dist-packages/'
+2026-09-14 13:51:09,754 hyperloom.orchestrator.loop.writeback [WARNING] PolicyGate denied intent: source=orchestration type=propose_action rule=enablement_round_in_flight reason=baseline: an enablement authoring round is in flight (task=f7d894c78b934f999e9620224b74c1da)
+2026-09-14 13:51:12,229 hyperloom.orchestrator.framework.paths [WARNING] ignoring non-absolute framework source root: 'lib/python3/dist-packages/'
+2026-09-14 13:51:12,229 hyperloom.orchestrator.framework.paths [WARNING] ignoring non-absolute framework source root: 'lib/python2.7/dist-packages/'
+*** SIGTERM received at time=1789394133 on cpu 35 ***
+PC: @     0x70761e0d1072  (unknown)  epoll_wait
+    @     0x70761dfec330       3120  (unknown)
+    @     0x70761d8b6848  (unknown)  select_epoll_poll
+[2026-09-14 13:55:33,726 E 7219 7219] logging.cc:497: *** SIGTERM received at time=1789394133 on cpu 35 ***
+[2026-09-14 13:55:33,726 E 7219 7219] logging.cc:497: PC: @     0x70761e0d1072  (unknown)  epoll_wait
+[2026-09-14 13:55:33,726 E 7219 7219] logging.cc:497:     @     0x70761dfec330       3120  (unknown)
+[2026-09-14 13:55:33,727 E 7219 7219] logging.cc:497:     @     0x70761d8b6848  (unknown)  select_epoll_poll

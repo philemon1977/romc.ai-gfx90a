@@ -1,0 +1,139 @@
+MAGPIE_PYTHON=/opt/venv/bin/python cannot import Magpie; ignoring it and auto-detecting an interpreter that can. (A stale value is often baked into kernel-agent.env.sh when install.sh resolved it before Magpie was pip-installed.)
+MAGPIE_PYTHON=/opt/venv/bin/python cannot import Magpie; ignoring it and auto-detecting an interpreter that can. (A stale value is often baked into kernel-agent.env.sh when install.sh resolved it before Magpie was pip-installed.)
+Stale aiter locks cleared: dir=/root/.aiter/build deleted=3 skipped_fresh=0 errors=0
+Preflight: WARNING — ignoring unsupported .env key MODEL_PATH from /home/qiba/ROCm.AI/hyperloom/.env
+Preflight: WARNING — ignoring unsupported .env key PYTHON from /home/qiba/ROCm.AI/hyperloom/.env
+Preflight: WARNING — ignoring unsupported .env key MAGPIE_PATH from /home/qiba/ROCm.AI/hyperloom/.env
+Preflight: WARNING — ignoring unsupported .env key MAGPIE_PYTHON from /home/qiba/ROCm.AI/hyperloom/.env
+Preflight: WARNING — ignoring unsupported .env key PYTHONPATH from /home/qiba/ROCm.AI/hyperloom/.env
+Preflight: WARNING — ignoring unsupported .env key INFERENCEX_PATH from /home/qiba/ROCm.AI/hyperloom/.env
+Preflight: WARNING — ignoring unsupported .env key TRACELENS_ROOT from /home/qiba/ROCm.AI/hyperloom/.env
+Preflight: WARNING — ignoring unsupported kernel-agent env key PYTHONPATH from /home/qiba/ROCm.AI/hyperloom/session/runtime/kernel-agent.env.sh
+2026-09-15 10:33:52,938 hyperloom.orchestrator.actions.executors._grid_runner [WARNING] MAGPIE_PYTHON=/opt/venv/bin/python cannot import Magpie; ignoring it and auto-detecting an interpreter that can. (A stale value is often baked into kernel-agent.env.sh when install.sh resolved it before Magpie was pip-installed.)
+Preflight: claude_agent_sdk OK
+Preflight: openai_codex OK
+Preflight: openai OK
+Preflight: httpx OK
+Preflight: ~/.claude/config.json already points at upstream
+Preflight: platform [amd-server] — SMT off, NPS1 (2 NUMA nodes / 2 sockets), governor schedutil
+Preflight: WARNING — cpufreq governor is 'schedutil', not 'performance'; clock ramp can distort latency percentiles and roofline measurements
+Preflight: ray OK
+Preflight: benchmark_serving client deps OK
+Preflight: vllm importable (/opt/envs/vllm/bin/python3); the vllm platform confirms a ROCm build
+Preflight: WARNING — CLI(s) not on PATH: ['codex']. ClaudeBackend / CodexBackend may fall back to direct HTTP. Run src/hyperloom/agents/kernel/scripts/install.sh to bring them in.
+Preflight diagnostics:
+  asset_root          = /home/qiba/ROCm.AI/hyperloom/hyperloom/inference_optimizer
+  session_dir         = /home/qiba/ROCm.AI/hyperloom/session  (USER_DATA_PATH=/home/qiba/ROCm.AI/hyperloom/session, default=/workspace/hyperloom)
+  magpie_python       = /opt/envs/vllm/bin/python3
+  INFERENCEX_PATH     = /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966
+  aiter jit cache     = 124 .so / 1879 MB (WARM) at /opt/envs/vllm/lib/python3.12/site-packages/aiter/jit
+  cold_start_timeout  = 9000s
+  warm_timeout        = 7800s
+  ANTHROPIC_BASE_URL  = http://127.0.0.1:9100
+  kb_status           = OK
+  pr_monitor_status   = DEGRADED (ir3_auto)
+  kb_degraded_reason  = -
+  pr_degraded_reason  = ir3_auto
+  recipe_kb_queue     = pending=0 dead_letter=0 flushed=0 (root=/home/qiba/ROCm.AI/hyperloom/session/runtime/recipe_kb)
+Preflight: catalog probe got HTTP 405 for http://127.0.0.1:9100/models; endpoint exposes no /models route
+Preflight: WARNING — gateway has no /models route (HTTP 404/405); cannot verify --claude-model='qwen3.8-flash-next'. Proceeding.
+Framework       : vllm
+GPU type        : <unset> (Magpie will auto-detect)
+WARN: --precision='bf16' but checkpoint dtype is 'compressed-tensors'; using --precision flag as specified.
+Workload        : ISL=1024 OSL=1024 MAX_MODEL_LEN=6144 (auto) PRECISION=bf16 FRAMEWORK_VERSION=0.28.0
+Session dir     : /home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260915T103412Z-bf20aced
+Session id      : Qwen3.8-27B-ABLITERATED-W8A8-gdnint8_20260915T103412Z_ebc83030  (manifest label only)
+Session layout under /home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260915T103412Z-bf20aced:
+  [ok] storage/
+  [ok] personas/
+  [ok] checkpoints/
+  [ok] kb/
+  [ok] findings/
+  [ok] reports/
+  [ok] agents/orchestration/
+  [ok] agents/critic/
+  [ok] agents/robustness/
+  [ok] runs/baseline/
+  [ok] runs/profile/
+  [ok] runs/backends/
+  [ok] runs/params/
+  [ok] runs/integrate/
+  [ok] runs/kernel_opt/
+  [ok] kernel-agent-workspace/
+  [ok] kernel-agent/
+  [ok] patches/
+  [ok] optimizer_runs/
+  [ok] manifest.json (written first)
+HYPERLOOM_LAUNCH event=launch pid=1843 session_dir=/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260915T103412Z-bf20aced session_id=Qwen3.8-27B-ABLITERATED-W8A8-gdnint8_20260915T103412Z_ebc83030 run_log='' manifest=/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260915T103412Z-bf20aced/manifest.json gpu_type='' framework=vllm model=/mnt/stripe-3mix-3t2/models/davetha/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8
+Launch info file: /home/qiba/ROCm.AI/hyperloom/session/launch/launch-info-int8-baseline-20260915T103352Z.json
+2026-09-15 10:34:12,765 hyperloom.common.gpu_partition [WARNING] GPU 0 reports compute-partition mode 'N/A', which this build does not know
+2026-09-15 10:34:12,923 root [WARNING] model_arch_missing_model_name: /home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260915T103412Z-bf20aced/model_arch.json (cannot verify freshness)
+WARNING: DEGRADED MODE: model 'Qwen3.8-27B-ABLITERATED-W8A8-gdnint8' carries a multimodal signal (multimodal config key 'vision_config'; architecture 'Qwen3_5ForConditionalGeneration', model_type 'qwen3_5') but exposes a text-generation path. Hyperloom is running it on the TEXT path only — any image/audio inputs are ignored, so benchmark numbers reflect the text decoder alone. Pass --no-allow-mm-text-fallback to fail-fast instead.
+2026-09-15 10:34:12,927 hyperloom.inference_optimizer.cli.model_gate [WARNING] DEGRADED MODE: model 'Qwen3.8-27B-ABLITERATED-W8A8-gdnint8' carries a multimodal signal (multimodal config key 'vision_config'; architecture 'Qwen3_5ForConditionalGeneration', model_type 'qwen3_5') but exposes a text-generation path. Hyperloom is running it on the TEXT path only — any image/audio inputs are ignored, so benchmark numbers reflect the text decoder alone. Pass --no-allow-mm-text-fallback to fail-fast instead.
+Recipe KB        : session_id=20260915T103412Z-bf20aced workload=inference:qwen3.8-27b-abliterated-w8a8-gdnint8:unknown_gpu:vllm:qwen3_5:qwen3_5forconditionalgeneration:0.28.0:bf16 (warm=seed_only, pitfalls=0, lessons=0)
+PR Monitor       : DISABLED (ir3_auto)
+Objective       : kind=gain_pct target_gain_pct=30.0
+Optimize phase  : ENABLED
+Research scout  : ENABLED at PRELUDE (re-dispatch every 3 explore rounds)
+Target advisory : ENABLED (External target gap injected into prompts; advisory-only)
+Recipe sediment : ENABLED (KEEP/REVERT provenance written to persistent recipe)
+2026-09-15 10:34:14,508 hyperloom.orchestrator.framework.paths [WARNING] ignoring non-absolute framework source root: 'lib/python3/dist-packages/'
+2026-09-15 10:34:14,508 hyperloom.orchestrator.framework.paths [WARNING] ignoring non-absolute framework source root: 'lib/python2.7/dist-packages/'
+2026-09-15 10:34:14,566 hyperloom.orchestrator.framework.paths [WARNING] ignoring non-absolute framework source root: 'lib/python3/dist-packages/'
+2026-09-15 10:34:14,566 hyperloom.orchestrator.framework.paths [WARNING] ignoring non-absolute framework source root: 'lib/python2.7/dist-packages/'
+Backends        : orchestration=Claude(qwen3.8-flash-next), kernel=DISABLED, critic=critic-agent(kb=inmemory, protocol=anthropic, model=qwen3.8-flash-next, root=/home/qiba/ROCm.AI/hyperloom/hyperloom/agents/critic), robustness=robustness-agent(root=/home/qiba/ROCm.AI/hyperloom/hyperloom/agents/robustness)
+Max ticks       : unlimited (budget = 3.0h)
+Tick interval   : 0.0s
+
+[target_analysis] no --compare-against-gpu set; will write a marker JSON at $SESSION_DIR/target_analysis/target_baseline.json (reason=no_target_gpu_configured) — set --compare-against-gpu to fetch real InferenceX reference data.
+2026-09-15 11:30:27,248 hyperloom.orchestrator.phases.prelude [WARNING] PRELUDE: skipping the initial profile — 1906s of preparation budget left (bound=optimization_reserve) against an expected 3347s. The optimization phases keep the time instead.
+2026-09-15 11:30:27,253 hyperloom.orchestrator.framework.paths [WARNING] ignoring non-absolute framework source root: 'lib/python3/dist-packages/'
+2026-09-15 11:30:27,253 hyperloom.orchestrator.framework.paths [WARNING] ignoring non-absolute framework source root: 'lib/python2.7/dist-packages/'
+2026-09-15 11:30:27,292 hyperloom.orchestrator.framework.paths [WARNING] ignoring non-absolute framework source root: 'lib/python3/dist-packages/'
+2026-09-15 11:30:27,293 hyperloom.orchestrator.framework.paths [WARNING] ignoring non-absolute framework source root: 'lib/python2.7/dist-packages/'
+2026-09-15 11:40:11,943 hyperloom.orchestrator.framework.paths [WARNING] ignoring non-absolute framework source root: 'lib/python3/dist-packages/'
+2026-09-15 11:40:11,943 hyperloom.orchestrator.framework.paths [WARNING] ignoring non-absolute framework source root: 'lib/python2.7/dist-packages/'
+2026-09-15 11:40:11,979 hyperloom.orchestrator.framework.paths [WARNING] ignoring non-absolute framework source root: 'lib/python3/dist-packages/'
+2026-09-15 11:40:11,979 hyperloom.orchestrator.framework.paths [WARNING] ignoring non-absolute framework source root: 'lib/python2.7/dist-packages/'
+2026-09-15 11:41:02,245 hyperloom.orchestrator.framework.paths [WARNING] ignoring non-absolute framework source root: 'lib/python3/dist-packages/'
+2026-09-15 11:41:02,245 hyperloom.orchestrator.framework.paths [WARNING] ignoring non-absolute framework source root: 'lib/python2.7/dist-packages/'
+2026-09-15 11:41:02,297 hyperloom.orchestrator.framework.paths [WARNING] ignoring non-absolute framework source root: 'lib/python3/dist-packages/'
+2026-09-15 11:41:02,297 hyperloom.orchestrator.framework.paths [WARNING] ignoring non-absolute framework source root: 'lib/python2.7/dist-packages/'
+2026-09-15 11:41:10,958 hyperloom.orchestrator.actions.executors._grid_runner [WARNING] MAGPIE_PYTHON=/opt/venv/bin/python cannot import Magpie; ignoring it and auto-detecting an interpreter that can. (A stale value is often baked into kernel-agent.env.sh when install.sh resolved it before Magpie was pip-installed.)
+2026-09-15 11:41:22,172 hyperloom.orchestrator.actions.executors._grid_runner [WARNING] MAGPIE_PYTHON=/opt/venv/bin/python cannot import Magpie; ignoring it and auto-detecting an interpreter that can. (A stale value is often baked into kernel-agent.env.sh when install.sh resolved it before Magpie was pip-installed.)
+2026-09-15 11:41:22,212 hyperloom.orchestrator.actions.executors._grid_runner [WARNING] grid_runner: 6651s left cannot fit this variant's 2 remaining round(s) of 6695s (spent on: the variants before this one); skipping 1 remaining variant(s) rather than launching a pass whose measured round cannot follow it
+2026-09-15 11:41:22,212 hyperloom.orchestrator.actions.executors.explore [WARNING] explore: the decision round of variant gdn-ssm-state-bf16 was stopped by the run (session_time_exhausted); it and the 3 variant(s) after it stay out of the ledger so a resume can retry them
+2026-09-15 12:11:25,609 hyperloom.orchestrator.framework.paths [WARNING] ignoring non-absolute framework source root: 'lib/python3/dist-packages/'
+2026-09-15 12:11:25,609 hyperloom.orchestrator.framework.paths [WARNING] ignoring non-absolute framework source root: 'lib/python2.7/dist-packages/'
+2026-09-15 12:12:15,628 hyperloom.orchestrator.actions.executors._grid_runner [WARNING] MAGPIE_PYTHON=/opt/venv/bin/python cannot import Magpie; ignoring it and auto-detecting an interpreter that can. (A stale value is often baked into kernel-agent.env.sh when install.sh resolved it before Magpie was pip-installed.)
+2026-09-15 12:12:15,667 hyperloom.orchestrator.actions.executors._grid_runner [WARNING] grid_runner: 4797s left cannot fit this variant's 2 remaining round(s) of 6695s (spent on: the variants before this one); skipping 1 remaining variant(s) rather than launching a pass whose measured round cannot follow it
+2026-09-15 12:12:15,668 hyperloom.orchestrator.actions.executors.explore [WARNING] explore: the decision round of variant gdn-ssm-state-bf16 was stopped by the run (session_time_exhausted); it and the 3 variant(s) after it stay out of the ledger so a resume can retry them
+2026-09-15 12:19:54,099 hyperloom.orchestrator.framework.paths [WARNING] ignoring non-absolute framework source root: 'lib/python3/dist-packages/'
+2026-09-15 12:19:54,100 hyperloom.orchestrator.framework.paths [WARNING] ignoring non-absolute framework source root: 'lib/python2.7/dist-packages/'
+2026-09-15 12:20:31,780 hyperloom.orchestrator.actions.executors._grid_runner [WARNING] MAGPIE_PYTHON=/opt/venv/bin/python cannot import Magpie; ignoring it and auto-detecting an interpreter that can. (A stale value is often baked into kernel-agent.env.sh when install.sh resolved it before Magpie was pip-installed.)
+2026-09-15 12:20:31,823 hyperloom.orchestrator.actions.executors._grid_runner [WARNING] grid_runner: 4301s left cannot fit this variant's 2 remaining round(s) of 6695s (spent on: the variants before this one); skipping 1 remaining variant(s) rather than launching a pass whose measured round cannot follow it
+2026-09-15 12:20:31,823 hyperloom.orchestrator.actions.executors.explore [WARNING] explore: the decision round of variant gdn-ssm-state-bf16 was stopped by the run (session_time_exhausted); it and the 1 variant(s) after it stay out of the ledger so a resume can retry them
+2026-09-15 12:30:52,915 hyperloom.orchestrator.framework.paths [WARNING] ignoring non-absolute framework source root: 'lib/python3/dist-packages/'
+2026-09-15 12:30:52,915 hyperloom.orchestrator.framework.paths [WARNING] ignoring non-absolute framework source root: 'lib/python2.7/dist-packages/'
+2026-09-15 13:27:21,798 hyperloom.orchestrator.framework.paths [WARNING] ignoring non-absolute framework source root: 'lib/python3/dist-packages/'
+2026-09-15 13:27:21,798 hyperloom.orchestrator.framework.paths [WARNING] ignoring non-absolute framework source root: 'lib/python2.7/dist-packages/'
+2026-09-15 13:27:21,857 hyperloom.orchestrator.framework.paths [WARNING] ignoring non-absolute framework source root: 'lib/python3/dist-packages/'
+2026-09-15 13:27:21,857 hyperloom.orchestrator.framework.paths [WARNING] ignoring non-absolute framework source root: 'lib/python2.7/dist-packages/'
+2026-09-15 13:28:25,709 hyperloom.orchestrator.framework.paths [WARNING] ignoring non-absolute framework source root: 'lib/python3/dist-packages/'
+2026-09-15 13:28:25,709 hyperloom.orchestrator.framework.paths [WARNING] ignoring non-absolute framework source root: 'lib/python2.7/dist-packages/'
+2026-09-15 13:28:25,808 hyperloom.orchestrator.actions.executors._grid_runner [WARNING] MAGPIE_PYTHON=/opt/venv/bin/python cannot import Magpie; ignoring it and auto-detecting an interpreter that can. (A stale value is often baked into kernel-agent.env.sh when install.sh resolved it before Magpie was pip-installed.)
+2026-09-15 13:28:25,842 hyperloom.orchestrator.actions.executors._grid_runner [WARNING] grid_runner: 227s left cannot fit this variant's 2 remaining round(s) of 6695s (spent on: the variants before this one); skipping 1 remaining variant(s) rather than launching a pass whose measured round cannot follow it
+Final summary     : /home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260915T103412Z-bf20aced/reports/final.json
+Session breakdown : (already written by CLOSE phase sequencer; skipping cli.finally safety-net write)
+Artifact package  : /workspace/hyperloom-session-packages/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8_20260915T103412Z_ebc83030.zip
+
+================ Final summary ================
+  stop_reason          : sweep_done
+  session_id           : Qwen3.8-27B-ABLITERATED-W8A8-gdnint8_20260915T103412Z_ebc83030
+  model                : Qwen3.8-27B-ABLITERATED-W8A8-gdnint8
+  baseline             : 512.5 tok/s/GPU
+  cumulative_gain_val  : 0.00% ⚠ never validated — no `explore` KEEP has landed yet
+  current_best         : {'action': 'baseline', 'tput': 512.5489837765601, 'hot_tput': 512.5489837765601, 'cold_tput': None, 'ttft_mean_ms': 6438.83871172502, 'e2el_mean_ms': 127638.58423805004, 'tpot_mean_ms': 118.47482456141253, 'input_throughput': None, 'total_throughput': 1025.0979675531203, 'tpot_p90_ms': 121.69417872785141, 'intvty_p90': None, 'workspace': '/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260915T103412Z-bf20aced/runs/baseline/51ac28ff8aed4ad59746fdb889fae7bb/benchmark_vllm_20260915_103510', 'measurement': {'schema_version': 2, 'tput': 512.5489837765601, 'benchmark_workspace': '/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260915T103412Z-bf20aced/runs/baseline/51ac28ff8aed4ad59746fdb889fae7bb/benchmark_vllm_20260915_103510', 'server_log_path': '/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260915T103412Z-bf20aced/runs/baseline/51ac28ff8aed4ad59746fdb889fae7bb/benchmark_vllm_20260915_103510/server.log', 'launch_evidence': {'schema_version': 1, 'materialized_config_path': '/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260915T103412Z-bf20aced/runs/baseline/51ac28ff8aed4ad59746fdb889fae7bb/baseline_config.with_envs.yaml', 'recipe_digest': 'sha256:61218263f822a5933973ba025c61f4891097602c63d99731aabe70a3e6d2b833', 'framework': 'vllm', 'model_path': '/mnt/stripe-3mix-3t2/models/davetha/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8', 'requested_server_args': '--trust-remote-code --language-model-only --quantization compressed-tensors --safetensors-load-strategy eager --compilation-config {"cudagraph_mode":"FULL_DECODE_ONLY"}', 'requested_server_flags': '--trust-remote-code --language-model-only --quantization compressed-tensors --safetensors-load-strategy eager --compilation-config {"cudagraph_mode":"FULL_DECODE_ONLY"}', 'requested_server_env': {'TP': '1', 'CONC': '64', 'ISL': '1024', 'OSL': '1024', 'RANDOM_RANGE_RATIO': '1', 'MAX_MODEL_LEN': '6144', 'VLLM_EXECUTE_MODEL_TIMEOUT_SECONDS': '1200', 'PATH': '/opt/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin', 'ROCR_VISIBLE_DEVICES': '0', 'NUM_PROMPTS': '320', 'NUM_WARMUPS': '8', 'VLLM_ROCM_USE_AITER': '1', 'VLLM_ROCM_USE_AITER_LINEAR': '1', 'VLLM_BIN': '/usr/local/bin/vllm-wu1w', 'VLLM_CACHE_ROOT': '/tmp/vllm-cache-hl', 'AITER_LOG_TUNED_CONFIG': '1', 'MAGPIE_TRUST_REMOTE_CODE': '1', 'BENCH_TRUST_REMOTE_CODE': '1', 'HF_HUB_TRUST_REMOTE_CODE': '1', 'RUN_EVAL': 'true'}, 'actual_server_log_path': '/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260915T103412Z-bf20aced/runs/baseline/51ac28ff8aed4ad59746fdb889fae7bb/benchmark_vllm_20260915_103510/server.log', 'observed_server_launch_flags': '', 'observed_server_identity': {}, 'warm_reuse': {'reused_ready_server': False, 'provenance': 'fresh_or_unobserved', 'source_server_log_path': '/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260915T103412Z-bf20aced/runs/baseline/51ac28ff8aed4ad59746fdb889fae7bb/benchmark_vllm_20260915_103510/server.log'}}, 'launch_evidence_path': '/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260915T103412Z-bf20aced/runs/baseline/51ac28ff8aed4ad59746fdb889fae7bb/launch_evidence.json', 'resolved_server_launch_flags': '', 'observed_server_identity': {}, 'resolved_server_config': {}, 'launch_identity': 'sha256:c39f9b998b574e33c168d527ed7f5c76416d02f8cd6591bd5fa759f3308cb6d4', 'declared_launch_identity': 'sha256:c39f9b998b574e33c168d527ed7f5c76416d02f8cd6591bd5fa759f3308cb6d4', 'observed_launch_identity': '', 'identity_verification_status': 'verified_declared_only'}}
+  pruned_families      : []
+  crash_count          : 0
+===============================================

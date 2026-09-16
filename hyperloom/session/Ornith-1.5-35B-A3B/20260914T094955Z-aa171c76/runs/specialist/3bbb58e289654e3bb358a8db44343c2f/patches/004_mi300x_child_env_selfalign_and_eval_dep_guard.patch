@@ -1,0 +1,119 @@
+diff --git a/Magpie/scripts/benchmark/vllm_mi300x.sh b/Magpie/scripts/benchmark/vllm_mi300x.sh
+index ccfed15..591738d 100644
+--- a/Magpie/scripts/benchmark/vllm_mi300x.sh
++++ b/Magpie/scripts/benchmark/vllm_mi300x.sh
+@@ -23,6 +23,89 @@ source "$(dirname "$0")/server_cleanup.sh"
+ # shellcheck source=magpie_bench_remote_compat.sh
+ [[ -f "$(dirname "$0")/magpie_bench_remote_compat.sh" ]] && source "$(dirname "$0")/magpie_bench_remote_compat.sh"
+ 
++# ---------------------------------------------------------------------------
++# Point-of-use self-alignment of the child environment.
++#
++# Both the server (`setsid vllm serve`) and the accuracy/throughput clients
++# (bare `python3`, `hf download`) are resolved through PATH. `benchmark.envs`
++# is applied to the child verbatim, so a PATH naming only a *different*
++# interpreter environment than the one vLLM is installed into takes the whole
++# run down in ~2s with `setsid: failed to execute vllm: No such file or
++# directory` -- even though Magpie itself is running from the correct one.
++#
++# Repair it here rather than relying on the parent harness: locate an
++# environment that really provides the CLI (and the modules the client imports)
++# and prepend it. A PATH that already resolves the framework is left untouched
++# and left in front, so an intentionally different environment still wins.
++# ---------------------------------------------------------------------------
++_magpie_env_has_cli() {  # $1 = bin dir, $2 = command
++    [ -n "${1:-}" ] && [ -x "$1/$2" ]
++}
++
++_magpie_env_has_module() {  # $1 = bin dir, $2 = python module
++    [ -n "${1:-}" ] && [ -x "$1/python3" ] \
++        && "$1/python3" -c "import importlib.util,sys;sys.exit(0 if importlib.util.find_spec('$2') else 1)" >/dev/null 2>&1
++}
++
++_magpie_lm_eval_importable() {
++    python3 -c "import importlib.util,sys;sys.exit(0 if importlib.util.find_spec('lm_eval') else 1)" >/dev/null 2>&1
++}
++
++_magpie_child_env_ok() {  # server CLI AND client interpreter resolve to a working framework env
++    command -v vllm >/dev/null 2>&1 || return 1
++    command -v python3 >/dev/null 2>&1 || return 1
++    python3 -c 'import importlib.util as u, sys; sys.exit(0 if all(u.find_spec(m) for m in ("transformers", "huggingface_hub")) else 1)' >/dev/null 2>&1 || return 1
++}
++
++if ! _magpie_child_env_ok; then
++    _magpie_bin=""
++    for _cand in "${MAGPIE_PYTHON:-}" "${VLLM_PYTHON:-}" "$(command -v python3 || true)"; do
++        [ -n "$_cand" ] || continue
++        _dir=$(dirname "$_cand")
++        if _magpie_env_has_cli "$_dir" vllm && _magpie_env_has_module "$_dir" transformers; then
++            _magpie_bin="$_dir"; break
++        fi
++    done
++    if [ -z "$_magpie_bin" ]; then
++        for _cand in ${VLLM_VENV_ROOT:+"$VLLM_VENV_ROOT/bin"} /opt/envs/*/bin; do
++            [ -n "$_cand" ] || continue
++            if _magpie_env_has_cli "$_cand" vllm && _magpie_env_has_module "$_cand" transformers; then
++                _magpie_bin="$_cand"; break
++            fi
++        done
++    fi
++    if [ -n "$_magpie_bin" ]; then
++        echo "[vllm_mi300x] server CLI or client interpreter cannot resolve the framework env; prepending '$_magpie_bin' to PATH"
++        export PATH="$_magpie_bin:$PATH"
++    else
++        echo "[vllm_mi300x] WARN: no environment providing 'vllm' + 'transformers' found; the run will likely fail" >&2
++    fi
++    unset _magpie_bin _cand _dir
++fi
++
++# A ROCr-level mask filters AND renumbers the surviving agents to 0..N-1, so a
++# HIP/CUDA pin carried in host-physical ids selects nothing: the process ends up
++# with 0 usable GPUs while torch.cuda.device_count() still reports the ROCr
++# count, and every allocation dies with "No CUDA GPUs are available" (which
++# vLLM surfaces as "Engine core initialization failed"). Do this before the
++# first device consumer (`hf download`), and keep it idempotent -- values that
++# are already logical are left alone, so this co-exists with the same repair on
++# the harness side.
++if [ -n "${ROCR_VISIBLE_DEVICES:-}" ]; then
++    _magpie_n=$(echo "$ROCR_VISIBLE_DEVICES" | awk -F, '{print NF}')
++    _magpie_logical=$(seq -s, 0 $((_magpie_n - 1)))
++    for _magpie_var in HIP_VISIBLE_DEVICES CUDA_VISIBLE_DEVICES; do
++        _magpie_cur="${!_magpie_var:-}"
++        [ -n "$_magpie_cur" ] || continue
++        case ",$_magpie_logical," in
++          *",$_magpie_cur,"*) : ;;                       # already a logical index
++          *) echo "[vllm_mi300x] $_magpie_var=$_magpie_cur is not logical to ROCR_VISIBLE_DEVICES=$ROCR_VISIBLE_DEVICES; re-pinning to $_magpie_logical"
++             export "$_magpie_var=$_magpie_logical" ;;
++        esac
++    done
++    unset _magpie_var _magpie_cur _magpie_n _magpie_logical
++fi
++
+ PHASE="${MAGPIE_RUN_PHASE:-all}"
+ case "$PHASE" in
+   all|server|client) ;;
+@@ -153,8 +236,22 @@ if [[ "$PHASE" != "server" && "${RUN_EVAL}" = "true" ]]; then
+             echo "[vllm_mi300x] RUN_EVAL=true with BENCHMARK_BASE_URL but magpie_run_eval_remote_direct shim not available; skipping eval (results gate will see accuracy=None)."
+         fi
+     else
+-        run_eval --framework lm-eval --port "$PORT" || exit $?
+-        append_lm_eval_summary
++        run_eval --framework lm-eval --port "$PORT"
++        _magpie_eval_rc=$?
++        if [ "$_magpie_eval_rc" -eq 0 ]; then
++            append_lm_eval_summary
++        elif ! _magpie_lm_eval_importable; then
++            # The serving image does not ship lm-eval; run_eval installs it
++            # lazily, and when the package index is unreachable that install is
++            # the ONLY thing that failed -- the throughput stage already
++            # completed. Report it as a missing eval dependency (accuracy
++            # stays absent) instead of discarding the finished run. A failing
++            # eval with lm-eval importable is a real result and stays fatal.
++            echo "[vllm_mi300x] WARN: eval stage failed (rc=${_magpie_eval_rc}) and lm_eval is still not importable; treating as a missing eval dependency, not a model failure. The gate will see accuracy=None for this run." >&2
++        else
++            exit "$_magpie_eval_rc"
++        fi
++        unset _magpie_eval_rc
+     fi
+ fi
+ set +x

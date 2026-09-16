@@ -1,0 +1,25 @@
+{
+ "intent_type": "specialist_done",
+ "payload": {
+  "confidence": 0.8,
+  "domain": "enablement_specialist",
+  "empty": false,
+  "gap_canonical_id": "gap.enablement.unknown",
+  "summary": "DIAGNOSED two stacked boot blockers. (1) Harness: gpu_type=mi250x pins benchmark_script vllm_mi250x.sh which does not exist in Magpie/InferenceX, so the benchmark subprocess dies before the server is even launched ('Specified benchmark_script not found'). Providing the script as an artifact. (2) Real framework gap (from the previous session's server.log): arch Qwen3_5MoeForConditionalGeneration IS registered in vllm 0.28.0+rocm723 and weights load, but profile_run aborts with \"torch._scaled_mm is only supported on CUDA devices with compute capability >= 9.0 or 8.9, or ROCm MI300+\" - 8x MI250X (gfx90a/CDNA2) has no FP8 MMA, yet gfx90a reports capability (9,0) so ChannelWise/PerTensor Torch FP8 kernels' cc<89 gate never fires and they are selected. Added FP8W8A8EmulationLinearKernel (dequantize FP8 weight once at load, run BF16 F.linear) ahead of the Torch FP8 kernels in the ROCm registry, gated to CDNA<3 only. Verified: registry now selects the emulation kernel on this host; unit numerics match true per-token/per-channel FP8 math; full TP=8 boot of the 397B checkpoint on the patched tree is in progress.",
+  "new_findings": [],
+  "patches_written": [
+   "patches/001_gfx90a_fp8_w8a8_bf16_emulation.patch"
+  ],
+  "artifacts_written": [
+   {
+    "source": "artifacts/vllm_mi250x.sh",
+    "target": "/opt/envs/vllm/lib/python3.12/site-packages/Magpie/scripts/benchmark/vllm_mi250x.sh",
+    "kind": "benchmark_script",
+    "description": "PLACEHOLDER"
+   }
+  ],
+  "proposal_set": [],
+  "residual_questions": [],
+  "setup_commands": []
+ }
+}

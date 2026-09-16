@@ -1,0 +1,36 @@
+{
+  "target": "/opt/envs/vllm/lib/python3.12/site-packages/vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py",
+  "version": "vllm 0.28.0+rocm723, gfx90a",
+  "notes_on_log_offsets": "installed file logs at :159/:501/:505; running log showed :163/:505/:510 (a ~4-line offset, same code). A patched fork exists at /opt/envs/wu1w/.../qwen_gdn_linear_attn.py that adds a fused_gdn_hip torch-library shim, but the fused_gdn_hip module is NOT installed (importlib find_spec -> None).",
+  "q1_decode_kernels": {
+    "selector": "VLLM_GDN_DECODE_KERNEL env var, choices {cuda, triton}, default cuda (vllm/envs.py:130,1216-1220); consumed at qwen_gdn_linear_attn.py:492-505",
+    "implementations": [
+      "cuda: torch.ops._C.fused_gdn_decode_post_conv_mtp (qwen_gdn_linear_attn.py:532-533,1750-1765) - NOT built in this ROCm wheel (verified hasattr False)",
+      "triton/FLA fused_sigmoid_gating_delta_rule_update (qwen_gdn_linear_attn.py:1528-1547 -> third_party/flash_linear_attention/ops/fused_sigmoid_gating.py:181)",
+      "triton/FLA packed decode fused_recurrent_gated_delta_rule_packed_decode (qwen_gdn_linear_attn.py:1270-1282,1632-1684 -> fused_recurrent.py:343), gated by VLLM_ENABLE_FLA_PACKED_RECURRENT_DECODE (envs.py:129,1210, default 1)",
+      "AITER Triton decode gdn_aiter_fused_rearrange_sigmoid_gated_delta_rule (qwen_gdn_linear_attn.py:79-85,1566-1630) - GATED OFF on gfx90a: are_gdn_triton_kernels_available is @if_aiter_supported requiring get_cdna_version()>2 (platforms/rocm.py:362-371, gfx90a=2) and VLLM_ROCM_USE_AITER default False (envs.py:134); also requires gqa_interleaved_layout (qwen file:1217-1222). Runtime probe: GDN_AITER_TRITON_AVAILABLE=False."
+    ],
+    "verdict": "Only the Triton/FLA decode path is available; cuda op not built, AITER path gated off on gfx90a; fallback happened because 'torch.ops._C.fused_gdn_decode_post_conv_mtp is not built' (line 533) with VLLM_GDN_DECODE_KERNEL unset (explicit set would raise, lines 496-499)."
+  },
+  "q2_state_dtype": {
+    "cache_dtype_source": "base.py:53-58 -> mamba_utils.py:113-128: ssm dtype = mamba_ssm_cache_dtype if != auto else mamba_cache_dtype/model dtype; cache tensor is kv_cache[1] passed directly (qwen_gdn_linear_attn.py:1300,1652)",
+    "kernel_behavior": "reads cache in its native dtype then upcasts on load: b_h = tl.load(p_h0,...).to(tl.float32) (fused_recurrent.py:307 and :120; fused_sigmoid_gating.py:120); writes with b_h.to(p_ht.dtype.element_ty) (fused_recurrent.py:340,161; fused_sigmoid_gating.py:166,170)",
+    "verdict": "No separate internal fp32 copy of the state; the kernel reads/writes the cache dtype directly (fp32 registers only transiently)."
+  },
+  "q3_arithmetic": {
+    "accumulator": "b_h = tl.zeros([BV,BK], dtype=tl.float32) (fused_sigmoid_gating.py:102; fused_recurrent.py:102); all recurrence math (exp(g) decay, b_v -= sum(b_h*k), b_h += b_v*k, b_o) is fp32; q/k/v/g/a/b/A_log/dt_bias all .to(tl.float32) first",
+    "verdict": "bf16 ssm cache only narrows the store->load round-trip (state re-quantized to bf16 once per token); intra-step arithmetic stays fp32."
+  },
+  "q4_prefill_switch": {
+    "switch": "--gdn-prefill-backend CLI / additional_config['gdn_prefill_backend'] (engine/arg_utils.py:758,1692,2496-2497), choices flashinfer|triton|cutedsl, default None='auto'; resolution in _resolve_gdn_prefill_backend qwen_gdn_linear_attn.py:93-141; dispatch ChunkGatedDeltaRule :220-241",
+    "rocm_gfx90a": "ROCm platform is not is_cuda (platforms/interface.py:189-190), so line 117-118 returns triton for ANY request; flashinfer needs SM90/SM10.x+head_k_dim128+CUDA>=13 (:127-134), cutedsl SM10.x only. No 'fused' or 'aiter' prefill option exists; AITER GDN kernels are decode-only.",
+    "verdict": "Triton/FLA chunk is the only viable prefill kernel on gfx90a; requested=auto correctly logs Triton/FLA (line 159); other values would warn and fall back (:228-233)."
+  },
+  "q5_shape_blocksize": {
+    "grid": "decode grid = (NK=1, NV=cdiv(V,BV), N_seqs*HV) with BK=next_pow2(K)=128, BV=min(next_pow2(V),32)=32 (fused_sigmoid_gating.py:208-210,241; fused_recurrent.py:195-196,217); packed variant adds Z-split when B*HV>65535 (fused_recurrent.py:452-455)",
+    "state_indexing": "one state page per sequence: non_spec_state_indices_tensor = block_table_tensor[:,0] (v1/attention/backends/gdn_attn.py:260); spec decode uses [batch, num_spec] indices with NULL_BLOCK_ID=0 early-out (fused_recurrent.py:299-303)",
+    "bytes": "per token per layer HBM state traffic = HV*(V*K)*2(read+write)*sizeof(ssm dtype); bf16 vs fp32 cache halves it (~0.52MB vs ~1.05MB/token/layer at HV_local=8,K=V=128) and halves page_size_bytes (v1/kv_cache_interface.py:677-685) -> more resident state blocks; grid sizes unchanged",
+    "spec": "num_spec widens conv state (conv_kernel_size-1+num_spec, mamba_utils.py:258-260) and adds state block copies; fused CUDA path additionally caps num_spec<=8 (qwen file:89,1810)",
+    "verdict": "Grid depends on token/sequence count and head dims (not mamba block_size); ssm dtype changes per-step HBM bytes 2x and cache-block count, not kernel tiling."
+  }
+}

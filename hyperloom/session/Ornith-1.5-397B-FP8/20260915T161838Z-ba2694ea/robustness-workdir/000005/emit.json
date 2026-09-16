@@ -1,0 +1,52 @@
+{
+  "intent_envelope": {
+    "intents": [
+      {
+        "intent_type": "alert",
+        "payload": {
+          "severity": "medium",
+          "summary": "aiter jit build_count=6 unchanged for 5 consecutive ticks; a prior hipcc invocation likely crashed mid-build",
+          "detail": {
+            "symptom": "aiter_jit_build_stuck",
+            "severity": "medium",
+            "subject": {},
+            "source": "local",
+            "evidence": {
+              "build_count": 6,
+              "stale_ticks": 5,
+              "stale_build_threshold": 1,
+              "jit_dir": "/opt/envs/vllm/lib/python3.12/site-packages/aiter/jit"
+            },
+            "suggestion": "observe; if it persists, suggest cleaning <jit_dir>/build/ manually between runs"
+          }
+        }
+      },
+      {
+        "intent_type": "alert",
+        "payload": {
+          "severity": "medium",
+          "summary": "wall-clock budget 59% consumed with cumulative_gain_validated=0.00% — early strategy hint: cheap actions are not paying off",
+          "detail": {
+            "symptom": "budget_strategy_drift",
+            "severity": "medium",
+            "subject": {},
+            "source": "local",
+            "evidence": {
+              "elapsed_minutes": 106.2,
+              "remaining_minutes": 73.8,
+              "budget_minutes": 180.0,
+              "burn_pct": 0.59,
+              "cumulative_gain_validated": 0.0,
+              "strategy_drift_pct": 0.5,
+              "warn_pct": 0.7
+            },
+            "suggestion": "alert orchestration: consider shrinking scope to params/sweep before crossing the warn threshold"
+          }
+        }
+      }
+    ]
+  },
+  "session_id": "20260915T161838Z-ba2694ea",
+  "tick_index": 1,
+  "parse_warnings": []
+}

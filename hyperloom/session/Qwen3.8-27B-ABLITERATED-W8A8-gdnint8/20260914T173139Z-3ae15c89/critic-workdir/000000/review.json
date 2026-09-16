@@ -1,0 +1,49 @@
+{
+  "review_verdicts": [
+    {
+      "target_proposal_msg_id": "4e650115d5414f1a95b936136ea643e8",
+      "verdict": "approve",
+      "source": "critic",
+      "reasoning": "target_analysis is archival: it transcribes existing state without new measurements, so the promotion benchmark/accuracy/rollback gate does not apply. Phase is PRELUDE and the action is expected there.",
+      "confidence": "high",
+      "predicted_gain_pct": 0.0,
+      "kb_evidence": [],
+      "packet_evidence": [
+        "review_constraints.action_verdict_policy.target_analysis",
+        "review_constraints.phase_orientation",
+        "review_constraints.proposal_action_classes"
+      ],
+      "risks": [],
+      "required_evidence": [],
+      "notes": [
+        "Archival action approved by primary per-proposal rule."
+      ],
+      "failure_reason_code": "",
+      "persist_to_kb": false,
+      "topic": "prelude-target-analysis-archival"
+    },
+    {
+      "target_proposal_msg_id": "d170b7b0db8c49709aa339432eed6789",
+      "verdict": "approve",
+      "source": "critic",
+      "reasoning": "baseline is exploration: its purpose is to generate the first measured evidence, so the before/after promotion gate does not apply. It is a natural PRELUDE next step.",
+      "confidence": "high",
+      "predicted_gain_pct": 0.0,
+      "kb_evidence": [],
+      "packet_evidence": [
+        "review_constraints.action_verdict_policy.baseline",
+        "review_constraints.phase_orientation",
+        "merged_context.phase"
+      ],
+      "risks": [],
+      "required_evidence": [],
+      "notes": [
+        "No contradicting KB prior; silent priors are cold-start acceptable for exploration."
+      ],
+      "failure_reason_code": "",
+      "persist_to_kb": false,
+      "topic": "prelude-baseline-exploration"
+    }
+  ],
+  "advice": []
+}

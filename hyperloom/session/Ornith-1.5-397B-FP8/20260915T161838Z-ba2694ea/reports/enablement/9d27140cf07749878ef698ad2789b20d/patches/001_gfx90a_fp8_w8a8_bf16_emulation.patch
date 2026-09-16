@@ -1,0 +1,302 @@
+diff --git a/vllm/model_executor/kernels/linear/__init__.py b/vllm/model_executor/kernels/linear/__init__.py
+index 3413d4a..99a2a19 100644
+--- a/vllm/model_executor/kernels/linear/__init__.py
++++ b/vllm/model_executor/kernels/linear/__init__.py
+@@ -178,6 +178,9 @@ from vllm.model_executor.kernels.linear.scaled_mm.b12x_block import (
+ from vllm.model_executor.kernels.linear.scaled_mm.b12x_tensor import (
+     B12xTensorFP8ScaledMMLinearKernel,
+ )
++from vllm.model_executor.kernels.linear.scaled_mm.emulation import (
++    FP8W8A8EmulationLinearKernel,
++)
+ from vllm.model_executor.kernels.linear.scaled_mm.cpu import (
+     CPUFp8BlockScaledMMKernel,
+     CPUInt8ScaledMMLinearKernel,
+@@ -326,6 +329,7 @@ _LINEAR_BACKEND_KERNEL_MAP: dict[str, set[type]] = {
+         ExllamaLinearKernel,
+     },
+     "emulation": {
++        FP8W8A8EmulationLinearKernel,
+         EmulationMxfp8LinearKernel,
+         EmulationNvFp4LinearKernel,
+         EmulationMxfp6LinearKernel,
+@@ -409,6 +413,14 @@ _POSSIBLE_FP8_KERNELS: dict[PlatformEnum, list[type[FP8ScaledMMLinearKernel]]] =
+         AiterPreshuffledPerTokenFp8ScaledMMLinearKernel,
+         AiterPerTokenFp8ScaledMMLinearKernel,
+         ROCmFP8ScaledMMLinearKernel,
++        # CDNA1/CDNA2 (gfx908/gfx90a, e.g. MI250X) have no FP8 matrix unit and
++        # torch._scaled_mm rejects FP8 there outright, but the Torch kernels
++        # below are selected anyway: gfx90a reports compute capability (9, 0),
++        # so their inherited `compute_capability < 89` gate does not fire and
++        # the engine aborts inside profile_run. Dequantize-and-run-BF16 comes
++        # ahead of them; its is_supported() is gated to exactly those GPUs, so
++        # CDNA3+/CUDA selection is unchanged.
++        FP8W8A8EmulationLinearKernel,
+         PerTensorTorchFP8ScaledMMLinearKernel,
+         RowWiseTorchFP8ScaledMMLinearKernel,
+         ChannelWiseTorchFP8ScaledMMLinearKernel,
+@@ -1179,6 +1191,7 @@ __all__ = [
+     "CutlassInt8ScaledMMLinearKernel",
+     "FlashInferFP8ScaledMMLinearKernel",
+     "ChannelWiseTorchFP8ScaledMMLinearKernel",
++    "FP8W8A8EmulationLinearKernel",
+     "PerTensorTorchFP8ScaledMMLinearKernel",
+     "RowWiseTorchFP8ScaledMMLinearKernel",
+     "ROCmFP8ScaledMMLinearKernel",
+diff --git a/vllm/model_executor/kernels/linear/scaled_mm/__init__.py b/vllm/model_executor/kernels/linear/scaled_mm/__init__.py
+index 39f9abd..339bf29 100644
+--- a/vllm/model_executor/kernels/linear/scaled_mm/__init__.py
++++ b/vllm/model_executor/kernels/linear/scaled_mm/__init__.py
+@@ -7,6 +7,9 @@ from vllm.model_executor.kernels.linear.scaled_mm.aiter import (
+ from vllm.model_executor.kernels.linear.scaled_mm.BlockScaledMMLinearKernel import (
+     Fp8BlockScaledMMLinearKernel,
+ )
++from vllm.model_executor.kernels.linear.scaled_mm.emulation import (
++    FP8W8A8EmulationLinearKernel,
++)
+ from vllm.model_executor.kernels.linear.scaled_mm.cpu import (
+     CPUFp8BlockScaledMMKernel,
+     CPUInt8ScaledMMLinearKernel,
+@@ -67,5 +70,6 @@ __all__ = [
+     "ZentorchInt8ScaledMMLinearKernel",
+     "Fp8BlockScaledMMLinearKernel",
+     "CPUFp8BlockScaledMMKernel",
++    "FP8W8A8EmulationLinearKernel",
+     "XPUFp8BlockScaledMMKernel",
+ ]
+diff --git a/vllm/model_executor/kernels/linear/scaled_mm/emulation.py b/vllm/model_executor/kernels/linear/scaled_mm/emulation.py
+new file mode 100644
+index 0000000..12cba47
+--- /dev/null
++++ b/vllm/model_executor/kernels/linear/scaled_mm/emulation.py
+@@ -0,0 +1,230 @@
++# SPDX-License-Identifier: Apache-2.0
++# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
++
++"""FP8 w8a8 dense-linear emulation for AMD GPUs without hardware FP8.
++
++``torch._scaled_mm`` hard-rejects FP8 inputs on ROCm parts older than MI300
++("torch._scaled_mm is only supported on CUDA devices with compute capability
++>= 9.0 or 8.9, or ROCm MI300+"). CDNA1/CDNA2 GPUs (gfx908 / gfx90a, e.g.
++MI250X) have no FP8 matrix instruction at all, so *no* scaled-mm provider can
++serve an FP8 checkpoint there. Before this kernel existed, the ROCm FP8
++registry fell through the aiter / skinny-GEMM / rowwise gates (all correctly
++arch-gated) and landed on ``ChannelWiseTorchFP8ScaledMMLinearKernel``, whose
++inherited ``compute capability >= 89`` gate is fooled by gfx90a reporting
++capability ``(9, 0)`` -- so the engine aborted inside ``profile_run``.
++
++This kernel bridges the gap: it dequantizes the FP8 weight to the activation
++dtype ONCE at load time and then runs a plain ``F.linear``. That is the same
++recipe already used in-tree by
++
++* ``model_executor/kernels/linear/mxfp8/emulation.py`` and
++  ``nvfp4/emulation.py`` -- dequantize, then run a plain higher-precision GEMM,
++* ``model_executor/layers/quantization/fp8.py`` -- the ``VLLM_BATCH_INVARIANT``
++  per-tensor / per-channel path ("dequant to BF16 and run GEMM").
++
++Why dequantize instead of writing a Triton FP8 GEMM: on gfx90a a Triton FP8
++w8a8 ``tl.dot`` has to upconvert the operands anyway and reaches only a small
++fraction of what a native BF16 ``torch.mm`` does, so keeping the weights in
++FP8 to save memory would buy memory at a large dense-GEMM speed cost. Only
++*dense* linears take this path (MoE experts keep their own kernels), so the
++1-byte -> 2-byte growth is bounded by the non-expert parameter count.
++
++Accuracy: the FP8 (E4M3) -> BF16 cast is exact -- E4M3's 3+1 mantissa bits and
++4-bit exponent both fit in BF16 -- so the only error added versus a true scaled
++GEMM is one BF16 rounding of the dequantized weight against the ~2^-4 intrinsic
++FP8 weight-quantization error. The activation is additionally NOT re-quantized
++to FP8 (it stays BF16), which removes the activation-quant error term the FP8
++path would have had.
++
++Opt out with ``VLLM_DISABLED_KERNELS=FP8W8A8EmulationLinearKernel``.
++"""
++
++import torch
++from torch.nn.parameter import Parameter
++
++from vllm.logger import init_logger
++from vllm.model_executor.layers.fusion.quant_activation import (
++    QuantizedActivation,
++)
++from vllm.model_executor.layers.quantization.utils.quant_utils import GroupShape
++from vllm.platforms import current_platform
++from vllm.model_executor.utils import replace_parameter
++
++from .ScaledMMLinearKernel import (
++    FP8ScaledMMLinearKernel,
++    FP8ScaledMMLinearLayerConfig,
++)
++
++logger = init_logger(__name__)
++
++_FP8_DTYPES = (
++    torch.float8_e4m3fn,
++    torch.float8_e4m3fnuz,
++    torch.float8_e5m2,
++    torch.float8_e5m2fnuz,
++)
++
++
++def rocm_lacks_hardware_fp8() -> bool:
++    """True on AMD CDNA1/CDNA2 GPUs: no FP8 MMA, no ``torch._scaled_mm``."""
++    if not current_platform.is_rocm():
++        return False
++
++    from vllm.platforms.rocm import get_cdna_version, on_cdna
++
++    # get_cdna_version(): gfx908 -> 1, gfx90a -> 2, gfx942 -> 3, gfx950 -> 4.
++    # Hardware FP8 (and hence hipBLASLt FP8 scaled-mm) starts at CDNA3.
++    return on_cdna() and get_cdna_version() < 3
++
++
++class FP8W8A8EmulationLinearKernel(FP8ScaledMMLinearKernel):
++    """FP8 w8a8 dense linear via load-time dequant, for GPUs without FP8 HW."""
++
++    # Accumulated over all rewritten layers, for one informational log line.
++    _fp8_bytes = 0
++    _dq_bytes = 0
++
++    @classmethod
++    def is_supported(
++        cls, compute_capability: int | None = None
++    ) -> tuple[bool, str | None]:
++        if not rocm_lacks_hardware_fp8():
++            return False, (
++                "is only used on pre-MI300 ROCm GPUs, which have no hardware "
++                "FP8 and no torch._scaled_mm support."
++            )
++        return True, None
++
++    @classmethod
++    def can_implement(
++        cls, c: FP8ScaledMMLinearLayerConfig
++    ) -> tuple[bool, str | None]:
++        if c.weight_quant_key.scale.group_shape.is_per_group():
++            return False, "cannot implement block/group-wise FP8 weights."
++        if c.activation_quant_key.scale.group_shape.is_per_group():
++            return False, "cannot implement block/group-wise FP8 activations."
++        out_dtype = c.out_dtype or torch.get_default_dtype()
++        if not out_dtype.is_floating_point or out_dtype.itemsize < 2:
++            return False, f"requires a >= 2-byte floating point output dtype."
++        return True, None
++
++    @staticmethod
++    def _as_nk(weight: torch.Tensor) -> torch.Tensor:
++        """Return ``weight`` oriented as [N, K] (out_features, in_features).
++
++        Quant methods leave the prepared parameter transposed to [K, N] and
++        tag it with ``input_dim=0`` / ``output_dim=1``; prefer that contract
++        over guessing from strides.
++        """
++        if weight.dim() != 2:
++            return weight
++        input_dim = getattr(weight, "input_dim", None)
++        if input_dim == 0:
++            return weight.t()
++        if input_dim == 1:
++            return weight
++        # No dim tags: fall back to the layout the compressed-tensors schemes
++        # produce (transposed view => stride(0) == 1).
++        if weight.stride(0) == 1 and weight.stride(1) != 1:
++            return weight.t()
++        return weight
++
++    def _dequant(
++        self,
++        weight: torch.Tensor,
++        weight_scale: torch.Tensor | None,
++    ) -> torch.Tensor:
++        """Dequantize an FP8 weight, returning a float32 [N, K] tensor."""
++        w_nk = self._as_nk(weight)
++        if w_nk.stride(-1) != 1:
++            w_nk = w_nk.contiguous()
++        n, k = w_nk.shape
++        w_f32 = w_nk.to(torch.float32)
++
++        if weight_scale is None:
++            return w_f32
++        if weight_scale.numel() == 1:
++            return w_f32 * weight_scale.to(torch.float32).reshape(-1)[0]
++
++        scale = weight_scale.to(torch.float32).reshape(-1)
++        if scale.numel() == n:
++            return w_f32 * scale.unsqueeze(1)
++        if scale.numel() == k:
++            return w_f32 * scale.unsqueeze(0)
++        raise ValueError(
++            f"FP8 emulation: weight_scale with {scale.numel()} elements "
++            f"matches neither N={n} nor K={k}."
++        )
++
++    def input_quant_key(self):
++        # The activation is never quantized here, so no manual-fusion partner
++        # may hoist FP8 quantization upstream of this layer.
++        return None
++
++    def process_weights_after_loading(self, layer: torch.nn.Module) -> None:
++        weight, weight_scale, _, _ = self._get_layer_params(layer)
++        if weight is None or weight.dtype not in _FP8_DTYPES:
++            # Already dequantized by an earlier pass, or never FP8 at all.
++            return
++
++        out_dtype = self.config.out_dtype or torch.get_default_dtype()
++        w_dq = self._dequant(weight, weight_scale).to(out_dtype)
++
++        self.__class__._fp8_bytes += weight.numel() * weight.element_size()
++        self.__class__._dq_bytes += w_dq.numel() * w_dq.element_size()
++        logger.info_once(
++            "Emulating FP8 w8a8 dense linears with %s GEMM on this GPU (no "
++            "hardware FP8 and no torch._scaled_mm support): dequantizing "
++            "weights at load time. So far %.2f GiB of FP8 weights -> %.2f GiB.",
++            str(out_dtype).replace("torch.", ""),
++            self.__class__._fp8_bytes / 2**30,
++            self.__class__._dq_bytes / 2**30,
++            scope="global",
++        )
++
++        # Store as a [N, K] parameter so apply_weights can call F.linear
++        # directly; the weight loader has already run.
++        replace_parameter(
++            layer, "weight", Parameter(w_dq, requires_grad=False)
++        )
++        layer.weight.input_dim = 1
++        layer.weight.output_dim = 0
++        # The scale has been folded into the weight: drop the reference so the
++        # FP8-side bookkeeping cannot be mistaken for a live quantized tensor.
++        if weight_scale is not None:
++            replace_parameter(
++                layer,
++                "weight_scale",
++                Parameter(torch.ones((), dtype=out_dtype), requires_grad=False),
++            )
++
++    def apply_weights(
++        self,
++        layer: torch.nn.Module,
++        x: torch.Tensor | QuantizedActivation,
++        bias: torch.Tensor | None = None,
++    ) -> torch.Tensor:
++        if isinstance(x, QuantizedActivation):
++            # Defensive only: this kernel does not advertise input_quant_key(),
++            # so manual fusion never hands us a pre-quantized activation.
++            x = (x.data.to(torch.float32) * x.scale).to(x.orig_dtype).view(
++                *x.orig_shape
++            )
++
++        weight = layer.weight
++        if weight.dtype in _FP8_DTYPES:
++            # Not pre-dequantized (process_weights_after_loading was skipped):
++            # dequantize on the fly so we never reach torch._scaled_mm.
++            _, weight_scale, _, _ = self._get_layer_params(layer)
++            weight = self._dequant(weight, weight_scale)
++
++        # F.linear needs matching dtypes; .to() is a no-op when they already do.
++        return torch.nn.functional.linear(x, weight.to(x.dtype), bias).to(x.dtype)
++
++    def apply_scaled_mm(self, **kwargs) -> torch.Tensor:
++        # This kernel overrides apply_weights and must never call
++        # torch._scaled_mm, which does not exist on pre-MI300 ROCm.
++        raise NotImplementedError(
++            "FP8W8A8EmulationLinearKernel dequantizes and runs F.linear; "
++            "apply_scaled_mm is intentionally not implemented."
++        )

@@ -1,0 +1,38 @@
+{
+  "intent_envelope": {
+    "intents": [
+      {
+        "intent_type": "alert",
+        "payload": {
+          "severity": "high",
+          "summary": "agent orchestration silent for 3996s (threshold=300s)",
+          "detail": {
+            "symptom": "agent_stall",
+            "severity": "high",
+            "subject": {
+              "agent": "orchestration"
+            },
+            "source": "local",
+            "evidence": {
+              "agent": "orchestration",
+              "idle_seconds": 3996,
+              "last_seen_unix": 1789468466,
+              "threshold_s": 300
+            },
+            "suggestion": "escalate strategy if agent remains silent"
+          }
+        }
+      }
+    ]
+  },
+  "session_id": "20260915T103412Z-bf20aced",
+  "tick_index": 1,
+  "parse_warnings": [],
+  "llm_usage": {
+    "input_tokens": 983,
+    "output_tokens": 600,
+    "calls": 1,
+    "latency_ms": 5962,
+    "model": "qwen3.8-flash-next"
+  }
+}

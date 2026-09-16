@@ -1,0 +1,65 @@
+{
+  "kind": "coordinator_inbox",
+  "session_id": "20260915T103412Z-bf20aced",
+  "decision_id": null,
+  "kb_writes": [],
+  "notes": [],
+  "intent_envelope": {
+    "intents": [
+      {
+        "intent_type": "review_verdict",
+        "payload": {
+          "target_proposal_msg_id": "3dc3f3b9318d485db6e106ac1a00002c",
+          "verdict": "approve",
+          "source": "critic",
+          "reasoning": "Framework-agent enablement landing with specialist provenance and silent KB priors; throughput before/after is not required for this class, and invalid configs are handled by the downstream runnable/accuracy gate.",
+          "predicted_gain_pct": 0.0,
+          "kb_evidence": [],
+          "packet_evidence": [
+            "review_constraints.proposal_action_classes.3dc3f3b9318d485db6e106ac1a00002c",
+            "proposals[0].payload.params.provenance",
+            "proposals[0].payload.params.framework_agent_authoring",
+            "proposals[0].payload.params.framework_agent_candidate_id"
+          ],
+          "risks": [
+            {
+              "severity": "minor",
+              "summary": "TRITON_ATTN backend selection is not independently throughput-benchmarked at this gate; downstream execution gate remains responsible for revert if unusable."
+            }
+          ],
+          "required_evidence": [],
+          "alternative_action": null,
+          "advice_text": "",
+          "notes": [
+            "predicted_gain_pct=0.0 treated as framework-agent candidate bookkeeping, not a self-reported performance claim."
+          ],
+          "failure_reason_code": "",
+          "confidence": "medium"
+        }
+      },
+      {
+        "intent_type": "review_verdict",
+        "payload": {
+          "target_proposal_msg_id": "ab25ca16f31c47d99fe6249bba39b4df",
+          "verdict": "approve",
+          "source": "critic",
+          "reasoning": "Archival report in CLOSE introduces no new measurements and requires no before/after benchmark gate.",
+          "predicted_gain_pct": 0.0,
+          "kb_evidence": [],
+          "packet_evidence": [
+            "review_constraints.proposal_action_classes.ab25ca16f31c47d99fe6249bba39b4df",
+            "review_constraints.action_verdict_policy.report",
+            "review_constraints.phase_orientation"
+          ],
+          "risks": [],
+          "required_evidence": [],
+          "alternative_action": null,
+          "advice_text": "",
+          "notes": [],
+          "failure_reason_code": "",
+          "confidence": "high"
+        }
+      }
+    ]
+  }
+}

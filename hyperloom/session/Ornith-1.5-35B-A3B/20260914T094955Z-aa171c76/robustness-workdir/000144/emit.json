@@ -1,0 +1,60 @@
+{
+  "intent_envelope": {
+    "intents": [
+      {
+        "intent_type": "alert",
+        "payload": {
+          "severity": "high",
+          "summary": "agent orchestration silent for 3126s (threshold=300s)",
+          "detail": {
+            "symptom": "agent_stall",
+            "severity": "high",
+            "subject": {
+              "agent": "orchestration"
+            },
+            "source": "local",
+            "evidence": {
+              "agent": "orchestration",
+              "idle_seconds": 3126,
+              "last_seen_unix": 1789383394,
+              "threshold_s": 300
+            },
+            "suggestion": "escalate strategy if agent remains silent"
+          }
+        }
+      },
+      {
+        "intent_type": "alert",
+        "payload": {
+          "severity": "medium",
+          "summary": "wall-clock budget 72% consumed with cumulative_gain_validated=0.00% — consider escalating strategy before the wind-down",
+          "detail": {
+            "symptom": "budget_burn_no_gain",
+            "severity": "medium",
+            "subject": {},
+            "source": "local",
+            "evidence": {
+              "elapsed_minutes": 87.0,
+              "remaining_minutes": 61.2,
+              "budget_minutes": 120.0,
+              "burn_pct": 0.725,
+              "cumulative_gain_validated": 0.0,
+              "warn_pct": 0.7
+            },
+            "suggestion": "escalate_strategy_change to wind down exploration and report"
+          }
+        }
+      }
+    ]
+  },
+  "session_id": "20260914T094955Z-aa171c76",
+  "tick_index": 1,
+  "parse_warnings": [],
+  "llm_usage": {
+    "input_tokens": 983,
+    "output_tokens": 553,
+    "calls": 1,
+    "latency_ms": 4360,
+    "model": "qwen3.8-flash-next"
+  }
+}

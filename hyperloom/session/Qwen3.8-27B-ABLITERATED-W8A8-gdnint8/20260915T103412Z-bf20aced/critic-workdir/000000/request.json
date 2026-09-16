@@ -1,0 +1,21 @@
+{
+  "kind": "coordinator_inbox",
+  "session_id": "20260915T103412Z-bf20aced",
+  "raw_prompt": "SESSION_DIR=/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260915T103412Z-bf20aced\n=== Phase ===\nphase     : PRELUDE\ncycle     : 0\nentered   : 2026-09-15T10:34:14+00:00\nbudget    : pct=0.10 elapsed_sec=11 cumulative_sec=11 remaining_sec=943\nallowed   : baseline, target_analysis\n=== Shared session state ===\nsession_id=Qwen3.8-27B-ABLITERATED-W8A8-gdnint8_20260915T103412Z_ebc83030\nmodel=Qwen3.8-27B-ABLITERATED-W8A8-gdnint8  class=dense\nbaseline_tput=0.0  baseline_acc=0.0\nbaseline_failure_streak=0\ncurrent_best=(none)\noptimization_stack=(none)\ncumulative_gain_validated=0.0% (stack_len_at_validation=0, ts=(never))\ncurrent_action=(idle)\ncrash_count=0\npruned_families=(none)\nlast_profile_trace=(none)\nlast_profile_status=(none)\nlast_profile_args=''\ndiscovered_flags_error=(none)\nlast_trace_analyze=(none)\nprofiler_digest=(none)\nanalysis_md=(no TraceLens snapshot yet — analysis is auto-enqueued by the Coordinator at the end of PRELUDE and on every +10% validated-gain crossing; wait for the pending task to land, or continue with specialist / explore work that does not need analysis.md. `roofline` and `profile` are Coordinator-managed; you may also propose them directly if the situation warrants it.)\nparams_no_promote_streak=0\nexplore_search=\n    cursor=0  accepted=0  rejected=0  tested=0\ndiscovered_flags=(none — first backends/params round will populate)\nlast_kernel_opt=(none)\npending_keep_kernels=(none)\nhas_keep_pending_integrate=false\nkernel_opt_attempts_count=0\nrejected_kernel_patches=(none)\nrejected_kernel_ids=(none)\nlast_baseline=(none)\nlast_profile=(none)\nlast_gemm_tuning=(none)\nlast_explore=(none)\nattempts_history=(no attempts recorded)\nlast_action_failures=(none)\ntick=1  target_gap_pct=30.00\nmacro_cycle=0\nstop_reason=(none)\nclosing_phase=False  closing_started_unix=0.0  closing_report_task_id=(none)\n=== Resource pools ===\nserving_tp=1\ngpu_specialist_capacity=8\nserving_disjoint_gpu_pool=7  (non-bench needs_gpu specialists admit against this)\nwhole_machine_gpu_pool=8  (bench / framework-authoring specialists admit against this)\nresearch_lane_capacity=16  (concurrent specialists)\ngpu_research_lane_capacity=1  (mutually exclusive with serving / benchmark / profile)\n=== Inbox for critic (newest last) ===\n  seq=1 msg_id=421172bb9f0c408789e40061996757db from=coordinator topic=observation kind='resume_consistency' payload={'kind': 'resume_consistency', 'skipped': False, 'fixes': [], 'warnings': []}\n  seq=2 msg_id=4cd21bdc9521419e80bdf02f9e6e1695 from=orchestration topic=proposal payload={'action_name': 'target_analysis', 'predicted_gain_pct': 0, 'needs_review': True}\n  seq=3 msg_id=d41c377232104c6f8b6320ff4b0e930f from=orchestration topic=proposal payload={'action_name': 'baseline', 'predicted_gain_pct': 0, 'needs_review': True}",
+  "context": {
+    "model": "Qwen3.8-27B-ABLITERATED-W8A8-gdnint8",
+    "framework": "vllm",
+    "model_path": "/mnt/stripe-3mix-3t2/models/davetha/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8",
+    "tp": 1,
+    "workload": {
+      "conc": 64,
+      "isl": 1024,
+      "max_model_len": 6144,
+      "osl": 1024,
+      "precision": "bf16"
+    },
+    "precision": "bf16",
+    "phase": "PRELUDE",
+    "macro_cycle": 0
+  }
+}

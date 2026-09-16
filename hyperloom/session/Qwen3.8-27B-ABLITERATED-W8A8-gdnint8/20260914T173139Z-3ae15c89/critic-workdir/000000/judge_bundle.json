@@ -1,0 +1,133 @@
+{
+  "kind": "coordinator_inbox",
+  "session_id": "20260914T173139Z-3ae15c89",
+  "decision_id": null,
+  "phase": "PRELUDE",
+  "merged_context": {
+    "model": "Qwen3.8-27B-ABLITERATED-W8A8-gdnint8",
+    "framework": "vllm",
+    "model_path": "/mnt/stripe-3mix-3t2/models/davetha/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8",
+    "tp": 1,
+    "workload": {
+      "conc": 64,
+      "isl": 1024,
+      "max_model_len": 6144,
+      "osl": 1024,
+      "precision": "bf16"
+    },
+    "precision": "bf16",
+    "phase": "PRELUDE",
+    "macro_cycle": 0
+  },
+  "missing_context": [
+    "model_family",
+    "scale",
+    "objective",
+    "baseline_tput",
+    "baseline_label",
+    "current_best",
+    "session_label"
+  ],
+  "required_context": [],
+  "proposals": [
+    {
+      "msg_id": "4e650115d5414f1a95b936136ea643e8",
+      "from_agent": "orchestration",
+      "payload": {
+        "action_name": "target_analysis",
+        "predicted_gain_pct": 0,
+        "needs_review": true
+      },
+      "seq": 2,
+      "action_name": "target_analysis",
+      "predicted_gain_pct": 0.0
+    },
+    {
+      "msg_id": "d170b7b0db8c49709aa339432eed6789",
+      "from_agent": "orchestration",
+      "payload": {
+        "action_name": "baseline",
+        "predicted_gain_pct": 0,
+        "needs_review": true
+      },
+      "seq": 3,
+      "action_name": "baseline",
+      "predicted_gain_pct": 0.0
+    }
+  ],
+  "messages": [],
+  "decision": {},
+  "kb_priors_by_proposal": {
+    "4e650115d5414f1a95b936136ea643e8": [],
+    "d170b7b0db8c49709aa339432eed6789": []
+  },
+  "kb_priors_for_decision": [],
+  "kb_priors_trace": {
+    "configured": true,
+    "mode": "per_proposal",
+    "client_mode": "inmemory",
+    "scope_filter": {
+      "org": "hyperloom",
+      "framework": "vllm",
+      "model": "qwen3.8-27b-abliterated-w8a8-gdnint8",
+      "model_family": "qwen",
+      "workload": "{'conc': 64, 'isl': 1024, 'max_model_len': 6144, 'osl': 1024, 'precision': 'bf16'}",
+      "precision": "bf16"
+    },
+    "limit": 5,
+    "requests": [
+      {
+        "msg_id": "4e650115d5414f1a95b936136ea643e8",
+        "topic": "target_analysis",
+        "cache": "miss",
+        "count": 0
+      },
+      {
+        "msg_id": "d170b7b0db8c49709aa339432eed6789",
+        "topic": "baseline",
+        "cache": "miss",
+        "count": 0
+      }
+    ]
+  },
+  "robustness_priors": [],
+  "kb_read_skipped_reason": null,
+  "review_constraints": {
+    "allowed_verdicts": [
+      "advise",
+      "approve",
+      "needs_review",
+      "redirect",
+      "reject"
+    ],
+    "ceiling_importance": 0.84,
+    "approve_requires": [],
+    "bundle_action_class": "framework_op",
+    "proposal_action_classes": {
+      "4e650115d5414f1a95b936136ea643e8": "framework_op",
+      "d170b7b0db8c49709aa339432eed6789": "framework_op"
+    },
+    "approve_requires_by_class": {
+      "patch_landing": [
+        "comparable_before_after_benchmark",
+        "accuracy_gate_or_waiver",
+        "active_path_proof_when_relevant",
+        "rollback_plan"
+      ],
+      "evidence_producer": [
+        "specialist_or_default_grid_provenance",
+        "in_phase_allowed_action",
+        "no_contradicting_kb_prior"
+      ],
+      "enablement_landing": [
+        "specialist_or_default_grid_provenance",
+        "in_phase_allowed_action",
+        "no_contradicting_kb_prior"
+      ],
+      "framework_op": []
+    }
+  },
+  "notes": [
+    "scope_cache_key=framework=vllm|model=qwen3.8-27b-abliterated-w8a8-gdnint8|model_family=qwen|org=hyperloom|precision=bf16|workload={'conc': 64, 'isl': 1024, 'max_model_len': 6144, 'osl': 1024, 'precision': 'bf16'}|limit=10"
+  ]
+}

@@ -1,0 +1,76 @@
+{
+  "intent_envelope": {
+    "intents": [
+      {
+        "intent_type": "alert",
+        "payload": {
+          "severity": "high",
+          "summary": "agent orchestration silent for 1786s (threshold=300s)",
+          "detail": {
+            "symptom": "agent_stall",
+            "severity": "high",
+            "subject": {
+              "agent": "orchestration"
+            },
+            "source": "local",
+            "evidence": {
+              "agent": "orchestration",
+              "idle_seconds": 1786,
+              "last_seen_unix": 1789411957,
+              "threshold_s": 300
+            },
+            "suggestion": "escalate strategy if agent remains silent"
+          }
+        }
+      },
+      {
+        "intent_type": "alert",
+        "payload": {
+          "severity": "high",
+          "summary": "wall-clock budget 92% consumed (elapsed=110.7min / budget=120min) and cumulative_gain_validated=0.00% — wind the session down before the deadline cuts it",
+          "detail": {
+            "symptom": "deadline_imminent",
+            "severity": "high",
+            "subject": {},
+            "source": "local",
+            "evidence": {
+              "elapsed_minutes": 110.7,
+              "remaining_minutes": 9.3,
+              "budget_minutes": 120.0,
+              "burn_pct": 0.922,
+              "cumulative_gain_validated": 0.0,
+              "imminent_pct": 0.85,
+              "productive_gain_pct": 0.5
+            },
+            "suggestion": "propose report to finalize at the last validated gain"
+          }
+        }
+      },
+      {
+        "intent_type": "alert",
+        "payload": {
+          "severity": "high",
+          "summary": "only 9.3min remain (<= 30min); validated_gain still 0; wind the session down now",
+          "detail": {
+            "symptom": "deadline_warning",
+            "severity": "high",
+            "subject": {},
+            "source": "local",
+            "evidence": {
+              "elapsed_minutes": 110.7,
+              "remaining_minutes": 9.3,
+              "budget_minutes": 120.0,
+              "deadline_warning_minutes": 30.0,
+              "cumulative_gain_validated": 0.0,
+              "productive_gain_pct": 0.5
+            },
+            "suggestion": "propose report to finalize at the last validated gain"
+          }
+        }
+      }
+    ]
+  },
+  "session_id": "20260914T173139Z-3ae15c89",
+  "tick_index": 1,
+  "parse_warnings": []
+}

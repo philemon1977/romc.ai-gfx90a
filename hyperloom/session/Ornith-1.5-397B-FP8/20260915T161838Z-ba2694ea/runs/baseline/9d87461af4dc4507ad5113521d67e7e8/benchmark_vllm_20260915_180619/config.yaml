@@ -1,0 +1,76 @@
+benchmark_script: vllm_mi250x.sh
+docker_image: null
+envs:
+  AITER_LOG_TUNED_CONFIG: '1'
+  BENCH_TRUST_REMOTE_CODE: '1'
+  CONC: 64
+  HF_HUB_TRUST_REMOTE_CODE: '1'
+  ISL: 1024
+  MAGPIE_TRUST_REMOTE_CODE: '1'
+  MAX_MODEL_LEN: 6144
+  NUM_PROMPTS: 320
+  NUM_WARMUPS: 8
+  OSL: 1024
+  PATH: /opt/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+  RANDOM_RANGE_RATIO: 1
+  RUN_EVAL: 'true'
+  TP: 8
+  VLLM_EXECUTE_MODEL_TIMEOUT_SECONDS: '1200'
+framework: vllm
+gap_analysis:
+  auto_clone_repos: true
+  categories:
+  - kernel
+  - gpu
+  enabled: false
+  find_kernel_sources: false
+  ignore_categories:
+  - gpu_user_annotation
+  - user_annotation
+  kernel_source_repos: null
+  min_duration_us: 0.0
+  repos_base_dir: null
+  top_k: 20
+  trace_end_pct: 100.0
+  trace_start_pct: 0.0
+gpu_arch: null
+gpu_selection:
+  auto: false
+  candidates: null
+  count: null
+  min_free_memory_gb: 8.0
+hf_cache_path: null
+inferencex_path: /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966
+model: /mnt/kioxia-cm6-3t8/ai/models/ornith-ai/Ornith-1.5-397B-FP8
+precision: fp8
+profiler:
+  gpu_monitor:
+    device_id: null
+    enabled: true
+    interval_sec: 2.0
+  system_profiler:
+    enabled: false
+    profile_args: []
+  torch_profiler:
+    enabled: false
+  tracelens:
+    analysis_mode: inference
+    analysis_stages:
+    - prefilldecode
+    - decode
+    - prefill
+    auto_patch_runtime: true
+    cli_timeout_seconds: 1800
+    enabled: false
+    export_format: csv
+    gpu_arch_config: null
+    multi_rank_report_enabled: true
+    num_steps: 32
+    perf_report_enabled: true
+    restore_patches: true
+    runtime_patch_force_rebuild: false
+    runtime_patch_image_tag: null
+    tracelens_repo_path: null
+run_mode: local
+runner_type: mi250x
+timeout_seconds: 7200

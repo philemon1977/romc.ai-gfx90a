@@ -1,0 +1,83 @@
+{
+  "intent_envelope": {
+    "intents": [
+      {
+        "intent_type": "alert",
+        "payload": {
+          "severity": "high",
+          "summary": "hard deadline cutoff: only 4.5min remain (<= 5min); finalize now",
+          "detail": {
+            "symptom": "deadline_hard_cutoff",
+            "severity": "high",
+            "subject": {},
+            "source": "local",
+            "evidence": {
+              "elapsed_minutes": 38.1,
+              "remaining_minutes": 4.5,
+              "budget_minutes": 180.0,
+              "deadline_hard_cutoff_minutes": 5.0,
+              "cumulative_gain_validated": 0.0
+            },
+            "suggestion": "propose report immediately; any new task started now will be cut by the deadline supervisor"
+          }
+        }
+      },
+      {
+        "intent_type": "alert",
+        "payload": {
+          "severity": "medium",
+          "summary": "log error pattern 'Address already in use' matched 1 times",
+          "detail": {
+            "symptom": "log_error_pattern",
+            "severity": "medium",
+            "subject": {
+              "pattern": "Address already in use"
+            },
+            "source": "local",
+            "evidence": {
+              "pattern": "Address already in use",
+              "count": 1,
+              "samples": [
+                "[server.log] (APIServer pid=11444) OSError: [Errno 98] Address already in use"
+              ]
+            },
+            "suggestion": "review log evidence with RCA before further action"
+          }
+        }
+      },
+      {
+        "intent_type": "alert",
+        "payload": {
+          "severity": "medium",
+          "summary": "log error pattern 'RuntimeError' matched 1 times",
+          "detail": {
+            "symptom": "log_error_pattern",
+            "severity": "medium",
+            "subject": {
+              "pattern": "RuntimeError"
+            },
+            "source": "local",
+            "evidence": {
+              "pattern": "RuntimeError",
+              "count": 1,
+              "samples": [
+                "[server.log] (APIServer pid=22117)     raise RuntimeError("
+              ]
+            },
+            "suggestion": "review log evidence with RCA before further action"
+          }
+        }
+      }
+    ]
+  },
+  "session_id": "20260914T134902Z-244d9455",
+  "tick_index": 1,
+  "parse_warnings": [],
+  "llm_usage": {
+    "input_tokens": 993,
+    "output_tokens": 597,
+    "calls": 1,
+    "latency_ms": 4662,
+    "model": "qwen3.8-flash-next"
+  }
+}

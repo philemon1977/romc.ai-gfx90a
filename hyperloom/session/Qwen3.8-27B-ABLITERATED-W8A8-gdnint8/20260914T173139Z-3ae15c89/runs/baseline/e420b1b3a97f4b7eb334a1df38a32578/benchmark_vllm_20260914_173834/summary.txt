@@ -1,0 +1,28 @@
+============================================================
+Benchmark Result: VLLM
+============================================================
+Model: /mnt/stripe-3mix-3t2/models/davetha/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8
+Status: SUCCESS
+
+Throughput:
+  Request throughput: 0.43 req/s
+  Output throughput: 444.86 tok/s
+  Total throughput: 889.71 tok/s
+  Completed requests: 320
+  Duration: 736.60s
+
+Latency:
+  TTFT (mean/p99): 6121.43ms / 33176.39ms
+  TPOT (mean/p99): 137.81ms / 142.67ms
+  ITL (mean/p99): 137.81ms / 924.17ms
+  E2EL (mean/p99): 147098.07ms / 176948.29ms
+
+GPU Hardware Monitoring:
+  Samples: 1748 (3766.1s)
+  Temperature: 45.0°C - 51.0°C (avg: 48.7°C)
+  GPU Clock: 800 - 800 MHz (avg: 800)
+  Power: 96.0 - 98.0 W (avg: 97.5)
+
+Workspace: /home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T173139Z-3ae15c89/runs/baseline/e420b1b3a97f4b7eb334a1df38a32578/benchmark_vllm_20260914_173834
+Execution time: 3768.60s
+============================================================

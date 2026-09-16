@@ -1,0 +1,16 @@
+{
+  "intent_envelope": {
+    "intents": [
+      {
+        "intent_type": "send_message",
+        "payload": {
+          "topic": "heartbeat",
+          "body_md": "ok (robustness-agent)"
+        }
+      }
+    ]
+  },
+  "session_id": "20260915T150443Z-6b7d597b",
+  "tick_index": 1,
+  "parse_warnings": []
+}

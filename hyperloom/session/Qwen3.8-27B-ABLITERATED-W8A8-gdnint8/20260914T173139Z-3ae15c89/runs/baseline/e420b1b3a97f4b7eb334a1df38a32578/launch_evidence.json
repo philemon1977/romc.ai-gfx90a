@@ -1,0 +1,39 @@
+{
+  "actual_server_log_path": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T173139Z-3ae15c89/runs/baseline/e420b1b3a97f4b7eb334a1df38a32578/benchmark_vllm_20260914_173834/server.log",
+  "framework": "vllm",
+  "materialized_config_path": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T173139Z-3ae15c89/runs/baseline/e420b1b3a97f4b7eb334a1df38a32578/baseline_config.with_envs.yaml",
+  "model_path": "/mnt/stripe-3mix-3t2/models/davetha/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8",
+  "observed_server_identity": {},
+  "observed_server_launch_flags": "",
+  "recipe_digest": "sha256:61218263f822a5933973ba025c61f4891097602c63d99731aabe70a3e6d2b833",
+  "requested_server_args": "--trust-remote-code --language-model-only --quantization compressed-tensors --safetensors-load-strategy eager --compilation-config {\"cudagraph_mode\":\"FULL_DECODE_ONLY\"}",
+  "requested_server_env": {
+    "AITER_LOG_TUNED_CONFIG": "1",
+    "BENCH_TRUST_REMOTE_CODE": "1",
+    "CONC": "64",
+    "HF_HUB_TRUST_REMOTE_CODE": "1",
+    "ISL": "1024",
+    "MAGPIE_TRUST_REMOTE_CODE": "1",
+    "MAX_MODEL_LEN": "6144",
+    "NUM_PROMPTS": "320",
+    "NUM_WARMUPS": "8",
+    "OSL": "1024",
+    "PATH": "/opt/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+    "RANDOM_RANGE_RATIO": "1",
+    "ROCR_VISIBLE_DEVICES": "0",
+    "RUN_EVAL": "true",
+    "TP": "1",
+    "VLLM_BIN": "/usr/local/bin/vllm-wu1w",
+    "VLLM_CACHE_ROOT": "/tmp/vllm-cache-hl",
+    "VLLM_EXECUTE_MODEL_TIMEOUT_SECONDS": "1200",
+    "VLLM_ROCM_USE_AITER": "1",
+    "VLLM_ROCM_USE_AITER_LINEAR": "1"
+  },
+  "requested_server_flags": "--trust-remote-code --language-model-only --quantization compressed-tensors --safetensors-load-strategy eager --compilation-config {\"cudagraph_mode\":\"FULL_DECODE_ONLY\"}",
+  "schema_version": 1,
+  "warm_reuse": {
+    "provenance": "fresh_or_unobserved",
+    "reused_ready_server": false,
+    "source_server_log_path": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T173139Z-3ae15c89/runs/baseline/e420b1b3a97f4b7eb334a1df38a32578/benchmark_vllm_20260914_173834/server.log"
+  }
+}

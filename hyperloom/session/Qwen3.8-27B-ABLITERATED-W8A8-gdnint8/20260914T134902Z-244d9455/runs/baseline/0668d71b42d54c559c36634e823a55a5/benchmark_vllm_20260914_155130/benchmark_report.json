@@ -1,0 +1,45 @@
+{
+  "success": false,
+  "framework": "vllm",
+  "model": "/mnt/stripe-3mix-3t2/models/davetha/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8",
+  "throughput": null,
+  "latency": null,
+  "kernel_summary": [],
+  "top_bottlenecks": [],
+  "tracelens_analysis": null,
+  "gap_analysis": null,
+  "gpu_monitor": {
+    "sample_count": 27,
+    "duration_sec": 56.09,
+    "temperature_c": {
+      "min": 47.0,
+      "max": 47.0,
+      "avg": 47.0
+    },
+    "gpu_clock_mhz": {
+      "min": 800,
+      "max": 800,
+      "avg": 800.0
+    },
+    "mem_clock_mhz": {
+      "min": 1600,
+      "max": 1600,
+      "avg": 1600.0
+    },
+    "power_watts": {
+      "min": 96.0,
+      "max": 97.0,
+      "avg": 97.0
+    }
+  },
+  "workspace_dir": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/baseline/0668d71b42d54c559c36634e823a55a5/benchmark_vllm_20260914_155130",
+  "execution_time": 58.60168433189392,
+  "profiling_enabled": false,
+  "errors": [
+    "Benchmark process failed with code 1",
+    "stderr: + [[ all == \\s\\e\\r\\v\\e\\r ]]\n+ [[ all == \\a\\l\\l ]]\n+ SERVER_PID=22117\n+ [[ all == \\a\\l\\l ]]\n+ trap 'magpie_stop_benchmark_server_stack \"$SERVER_PID\"' EXIT INT TERM\n+ wait_for_server_ready --port 8888 --server-log /home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/baseline/0668d71b42d54c559c36634e823a55a5/benchmark_vllm_20260914_155130/server.log --server-pid 22117\n+ local port=\n+ local server_log=\n+ local server_pid=\n+ local sleep_interval=5\n+ setsid /usr/local/bin/vllm-wu1w serve /mnt/stripe-3mix-3t2/models/davetha/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8 --port 8888 --tensor-parallel-size=1 --gpu-memory-utilization 0.95 --max-model-len 6144 --trust-remote-code --trust-remote-code --language-model-only --quantization compressed-tensors --safetensors-load-strategy eager --compilation-config '{\"cudagraph_mode\":\"FULL_DECODE_ONLY\"}'\n+ [[ 6 -gt 0 ]]\n+ case $1 in\n+ port=8888\n+ shift 2\n+ [[ 4 -gt 0 ]]\n+ case $1 in\n+ server_log=/home/qiba/ROCm.",
+    "inferencex_result.json not found - benchmark may have failed locally",
+    "stderr (last 500 chars): -W8A8-gdnint8/20260914T134902Z-244d9455/runs/baseline/0668d71b42d54c559c36634e823a55a5/benchmark_vllm_20260914_155130/server.log ]]\n+ [[ -z 22117 ]]\n+ wait_for_ready --endpoint http://0.0.0.0:8888/health --log /home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/baseline/0668d71b42d54c559c36634e823a55a5/benchmark_vllm_20260914_155130/server.log --pid 22117 --sleep-interval 5\n+ set +x\nProcess died before http://0.0.0.0:8888/health became ready.\n",
+    "server.log errors: (APIServer pid=22117)     raise RuntimeError(\n(APIServer pid=22117) RuntimeError: Engine core initialization failed. See root cause above. Failed core proc(s): {}"
+  ]
+}

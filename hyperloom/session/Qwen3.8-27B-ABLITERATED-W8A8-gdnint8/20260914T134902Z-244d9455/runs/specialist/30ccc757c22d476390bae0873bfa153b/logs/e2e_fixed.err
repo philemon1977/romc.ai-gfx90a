@@ -1,0 +1,60 @@
+W20260914 15:32:56.795739 130872156231488 agent.cpp:461] Attempt to enable hip visiblity for agent-4 which is not visible to HSA (ROCR)
+RUN_EVAL is disabled: no per-variant accuracy gate, so accuracy regressions will not be caught. Set RUN_EVAL=true to restore the gate. This warning fires once per process.
+2026-09-14 15:32:58,273 - Magpie.main - INFO - Starting benchmark: vllm / /mnt/stripe-3mix-3t2/models/davetha/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8
+2026-09-14 15:32:58,274 - Magpie.modes.benchmark.image_selector - INFO - Loaded image mapping from /opt/envs/vllm/lib/python3.12/site-packages/Magpie/benchmark_images.yaml
+2026-09-14 15:32:58,274 - Magpie.modes.benchmark.image_selector - DEBUG - Available frameworks: ['vllm', 'sglang', 'atom']
+2026-09-14 15:32:58,274 - Magpie.modes.benchmark.benchmarker - INFO - Starting benchmark: vllm / /mnt/stripe-3mix-3t2/models/davetha/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8
+2026-09-14 15:32:58,275 - Magpie.modes.benchmark.inferencex - DEBUG - InferenceX found at: /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966
+2026-09-14 15:32:58,278 - Magpie.modes.benchmark.benchmarker - INFO - Copied Magpie script atom_mi355x.sh to /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966/benchmarks
+2026-09-14 15:32:58,278 - Magpie.modes.benchmark.benchmarker - INFO - Copied Magpie script magpie_bench_remote_compat.sh to /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966/benchmarks
+2026-09-14 15:32:58,279 - Magpie.modes.benchmark.benchmarker - INFO - Copied Magpie script xdit_mi355x.sh to /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966/benchmarks
+2026-09-14 15:32:58,279 - Magpie.modes.benchmark.benchmarker - INFO - Copied Magpie script vllm_mi355x_mm.sh to /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966/benchmarks
+2026-09-14 15:32:58,279 - Magpie.modes.benchmark.benchmarker - INFO - Copied Magpie script server_cleanup.sh to /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966/benchmarks
+2026-09-14 15:32:58,279 - Magpie.modes.benchmark.benchmarker - INFO - Copied Magpie script xdit_mi300x.sh to /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966/benchmarks
+2026-09-14 15:32:58,280 - Magpie.modes.benchmark.benchmarker - INFO - Copied Magpie script sglang_mi355x.sh to /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966/benchmarks
+2026-09-14 15:32:58,280 - Magpie.modes.benchmark.benchmarker - INFO - Copied Magpie script xdit_bench_common.sh to /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966/benchmarks
+2026-09-14 15:32:58,280 - Magpie.modes.benchmark.benchmarker - INFO - Copied Magpie script sglang_mi300x.sh to /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966/benchmarks
+2026-09-14 15:32:58,281 - Magpie.modes.benchmark.benchmarker - INFO - Copied Magpie script atom_mi300x.sh to /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966/benchmarks
+2026-09-14 15:32:58,281 - Magpie.modes.benchmark.benchmarker - INFO - Copied Magpie script vllm_mi300x.sh to /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966/benchmarks
+2026-09-14 15:32:58,281 - Magpie.modes.benchmark.benchmarker - INFO - Copied Magpie script vllm_mi355x.sh to /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966/benchmarks
+2026-09-14 15:32:58,282 - Magpie.modes.benchmark.benchmarker - INFO - Copied Magpie script vllm_mi300x_mm.sh to /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966/benchmarks
+2026-09-14 15:32:58,461 - Magpie.utils.gpu - INFO - Detected AMD GPU: gfx90a
+2026-09-14 15:32:58,461 - Magpie.modes.benchmark.image_selector - DEBUG - Runner type for gfx90a: mi300x
+2026-09-14 15:32:58,467 - Magpie.modes.benchmark.benchmarker - INFO - Using Magpie generic script: vllm_mi300x.sh
+2026-09-14 15:32:58,467 - Magpie.modes.benchmark.benchmarker - INFO - Selected benchmark script: benchmarks/vllm_mi300x.sh
+2026-09-14 15:32:58,470 - Magpie.modes.benchmark.workspace - DEBUG - Saved config snapshot: /home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/specialist/30ccc757c22d476390bae0873bfa153b/scratch/e2e_fixed/variant_00_specialist-rebench/benchmark_vllm_20260914_153258/config.yaml
+2026-09-14 15:32:58,470 - Magpie.modes.benchmark.workspace - INFO - Created benchmark workspace: /home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/specialist/30ccc757c22d476390bae0873bfa153b/scratch/e2e_fixed/variant_00_specialist-rebench/benchmark_vllm_20260914_153258
+2026-09-14 15:32:58,628 - Magpie.utils.gpu_monitor - DEBUG - GPU monitor started (device=0, interval=2.0s)
+2026-09-14 15:32:58,629 - Magpie.modes.benchmark.benchmarker - INFO - GPU monitor started (device=0, interval=2.0s)
+2026-09-14 15:32:58,629 - Magpie.modes.benchmark.benchmarker - DEBUG - Skipping /workspace symlink (RESULT_DIR=/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/specialist/30ccc757c22d476390bae0873bfa153b/scratch/e2e_fixed/variant_00_specialist-rebench/benchmark_vllm_20260914_153258 is passed via env)
+2026-09-14 15:32:58,629 - Magpie.modes.benchmark.benchmarker - INFO - Running local benchmark with server lifecycle (reuse-aware)
+2026-09-14 15:32:58,636 - Magpie.modes.benchmark.benchmarker - INFO - Using Magpie generic script: vllm_mi300x.sh
+2026-09-14 15:32:58,648 - Magpie.modes.benchmark.benchmarker - INFO - Using Magpie generic script: vllm_mi300x.sh
+2026-09-14 15:32:58,648 - Magpie.modes.benchmark.benchmarker - INFO - server_lifecycle: starting shared server phase (timeout 7380s)
+2026-09-14 15:34:55,744 - Magpie.modes.benchmark.benchmarker - INFO - server_lifecycle: persistent server is healthy (pid=14417, port=8931)
+2026-09-14 15:34:55,757 - Magpie.modes.benchmark.benchmarker - INFO - Using Magpie generic script: vllm_mi300x.sh
+2026-09-14 15:37:37,196 - Magpie.modes.benchmark.benchmarker - DEBUG - Saved stdout to /home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/specialist/30ccc757c22d476390bae0873bfa153b/scratch/e2e_fixed/variant_00_specialist-rebench/benchmark_vllm_20260914_153258/benchmark_stdout.log
+2026-09-14 15:37:37,196 - Magpie.modes.benchmark.benchmarker - DEBUG - Saved stderr to /home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/specialist/30ccc757c22d476390bae0873bfa153b/scratch/e2e_fixed/variant_00_specialist-rebench/benchmark_vllm_20260914_153258/benchmark_stderr.log
+2026-09-14 15:37:37,196 - Magpie.modes.benchmark.benchmarker - INFO - Local benchmark completed successfully
+2026-09-14 15:37:37,196 - Magpie.modes.benchmark.benchmarker - DEBUG - stdout (last 500 chars):                        35.60     
+P99 ITL (ms):                            36.26     
+P99.9 ITL (ms):                          172.17    
+----------------End-to-end Latency----------------
+Mean E2EL (ms):                          37149.20  
+Median E2EL (ms):                        37170.69  
+P90 E2EL (ms):                           37393.51  
+P99 E2EL (ms):                           37442.58  
+P99.9 E2EL (ms):                         37447.49  
+==================================================
+
+2026-09-14 15:38:07,217 - Magpie.modes.benchmark.benchmarker - INFO - server_lifecycle: cleanup finished (terminated pid=14417; removed reuse state files under /home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/specialist/30ccc757c22d476390bae0873bfa153b/scratch/e2e_fixed/server)
+2026-09-14 15:38:07,217 - Magpie.modes.benchmark.benchmarker - DEBUG - Saved stdout to /home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/specialist/30ccc757c22d476390bae0873bfa153b/scratch/e2e_fixed/variant_00_specialist-rebench/benchmark_vllm_20260914_153258/benchmark_stdout.log
+2026-09-14 15:38:07,218 - Magpie.modes.benchmark.benchmarker - DEBUG - Saved stderr to /home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/specialist/30ccc757c22d476390bae0873bfa153b/scratch/e2e_fixed/variant_00_specialist-rebench/benchmark_vllm_20260914_153258/benchmark_stderr.log
+2026-09-14 15:38:09,065 - Magpie.utils.gpu_monitor - DEBUG - GPU monitor stopped: 144 samples collected
+2026-09-14 15:38:09,065 - Magpie.modes.benchmark.benchmarker - INFO - GPU monitor stopped: 144 samples collected
+2026-09-14 15:38:09,066 - Magpie.modes.benchmark.result - INFO - Parsed benchmark result: 0.11 req/s
+2026-09-14 15:38:09,066 - Magpie.modes.benchmark.workspace - INFO - Saved benchmark report: /home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/specialist/30ccc757c22d476390bae0873bfa153b/scratch/e2e_fixed/variant_00_specialist-rebench/benchmark_vllm_20260914_153258/benchmark_report.json
+2026-09-14 15:38:09,067 - Magpie.modes.benchmark.workspace - INFO - Saved summary: /home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/specialist/30ccc757c22d476390bae0873bfa153b/scratch/e2e_fixed/variant_00_specialist-rebench/benchmark_vllm_20260914_153258/summary.txt
+2026-09-14 15:38:09,067 - Magpie.modes.benchmark.benchmarker - INFO - Benchmark completed in 310.79s
+2026-09-14 15:38:09,067 - Magpie.main - INFO - Benchmark completed successfully
+2026-09-14 15:38:09,067 - Magpie.main - INFO - Results saved to: /home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/specialist/30ccc757c22d476390bae0873bfa153b/scratch/e2e_fixed/variant_00_specialist-rebench/benchmark_vllm_20260914_153258

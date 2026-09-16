@@ -1,0 +1,189 @@
+{
+  "intent_type": "specialist_done",
+  "payload": {
+    "confidence": 0.66,
+    "domain": "candidate_discovery_specialist",
+    "empty": false,
+    "gap_canonical_id": "gap.framework.candidate_discovery.vllm",
+    "summary": "pr_monitor disabled; no git-diff candidate confirmable in 600s, so this is a config-only ranked set verified against the LIVE /opt/envs/wu1w tree (the Section 7 hint root /opt/envs/vllm is the WRONG tree). Re-framed the loss from 'prefill starvation' to 'mixed prefill+decode steps' across all 310 stats windows. 4 candidates, none ever measured (round-1 timed out at 0 variants). Ruled out with evidence: ReplaySSM, AITER env switches, GDN decode-kernel env variants, all KV-capacity tuning.",
+    "gap_progress": "candidates ranked and evidence-linked; awaiting first measurements",
+    "proposal_set": [
+      {
+        "name": "prefill-chunk-budget-4096",
+        "args_mode": "append",
+        "atomic": false,
+        "extra_args": "--max-num-batched-tokens 4096",
+        "reason": "Largest measured loss is mixed prefill+decode steps: steady decode hits gt~729 tok/s only in pure-decode windows (10:37:44-10:51:24), but from 10:53 onward every 10s window mixes prefill (pt 750-1400 tok/s) with decode and generation collapses to 100-280 tok/s. With ISL=1024 at the default budget of 2048, the scheduler fits 2 prompts per step, so ~44% of steps (100/310 windows had Running<64) are mixed and GDN+attention run at two different shapes per step. Raising the budget to 4096 lets 4 full prompts per step and, on the ~1400-1650 tok/s prefill streams, returns whole steps to pure decode. Capacity is not binding (KV peaks 58.5%, 294,473 tokens) and 8GiB of KV headroom was unclaimed at gpu-memory-utilization=0.95, so a larger step is affordable.",
+        "kb_evidence": [
+          "research_hints.md #1 (prefill/decode serialization, ~29% of wall clock buys zero output tokens)",
+          "research_hints.md #2 (KV capacity non-binding -> gpu-memory-utilization is the dead end, batch budget is not)"
+        ],
+        "pr_evidence": [],
+        "source_evidence": [
+          "runs/baseline/51ac28ff8aed4ad59746fdb889fae7bb/benchmark_vllm_20260915_103510/server.log stats lines 10:37:34-11:30:24 (310 windows; pure-decode gt 660-729 vs mixed gt 100-280; pt plateau ~1843)",
+          "/opt/envs/wu1w/lib/python3.12/site-packages/vllm/config/scheduler.py:42 DEFAULT_MAX_NUM_BATCHED_TOKENS=2048, :44 DEFAULT_MAX_NUM_SEQS=128 (no --max-num-* in base args => both at default)",
+          "runs/baseline/51ac28ff8aed4ad59746fdb889fae7bb/benchmark_vllm_20260915_103510/server.log kv_cache_utils.py:1869 GPU KV cache size 294,473 tokens / 47.93x concurrency"
+        ],
+        "expected_effect": "+2-6% output tok/s if mixed-step count falls; zero accuracy risk (pure scheduling change).",
+        "verdict": "worth_a_bench",
+        "route": "config_flag_only"
+      },
+      {
+        "name": "decoder-attn-triton-backend",
+        "args_mode": "append",
+        "atomic": false,
+        "extra_args": "--attention-backend TRITON_ATTN",
+        "reason": "The 16 full-attention layers got ROCM_ATTN by elimination, not merit: the selector logged 'Found incompatible backend(s) [TURBOQUANT] with AttentionType.DECODER. Overriding with ROCM_ATTN out of potential backends: [ROCM_ATTN, TRITON_ATTN]', and ROCM_ATTN then logged 'Cannot use ROCm custom paged attention kernel, falling back to Triton' - i.e. we are paying the ROCM_ATTN wrapper to reach a Triton kernel that TRITON_ATTN targets directly at head_dim=256. Zero numerical risk (same math, different kernel path) and it is the only cheap probe left on the attention side, since AITER ASM FA is ruled out at hd256 and the AITER unified-attention env is dead on this box.",
+        "kb_evidence": [
+          "research_hints.md #4 (backend chosen by elimination)",
+          "platform law 11: AITER fmha_v3 ASM covers hd128/192 only - do NOT propose ROCM_AITER_FA for this decoder"
+        ],
+        "pr_evidence": [],
+        "source_evidence": [
+          "runs/baseline/51ac28ff8aed4ad59746fdb889fae7bb/benchmark_vllm_20260915_103510/server.log rocm.py:703 backend-override line; runs/baseline/51ac28ff8aed4ad59746fdb889fae7bb/benchmark_vllm_20260915_103510/server.log chunked_prefill_paged_decode.py:463 Triton fallback WARNING",
+          "/opt/envs/wu1w/lib/python3.12/site-packages/vllm/platforms/rocm.py:485-493 builds the decoder backend priority list ending in AttentionBackendEnum.TRITON_ATTN (so TRITON_ATTN is a valid --attention-backend value here and will not die at launch)",
+          "/opt/envs/wu1w/lib/python3.12/site-packages/vllm/v1/attention/backends/rocm_attn.py:30,446 imports and calls the Triton chunked_prefill_paged_decode path"
+        ],
+        "expected_effect": "0-4%; may also drop one JIT/compile surprise from the measured window. Zero accuracy risk.",
+        "verdict": "worth_a_bench",
+        "route": "config_flag_only"
+      },
+      {
+        "name": "gdn-ssm-state-bf16",
+        "args_mode": "append",
+        "atomic": false,
+        "extra_args": "--mamba-ssm-cache-dtype bfloat16",
+        "reason": "48 of 64 layers are GDN and their recurrent state is fp32 only because the checkpoint declares mamba_ssm_dtype='float32' and vLLM auto-adopts it - not because a kernel requires fp32. At conc=64 that state store is the largest per-step HBM traffic source, so halving it attacks decode directly, and it also halves the mamba page that currently forces attention block_size up to 784 tokens. Verified in the LIVE tree that bf16 is a first-class choice and stays on the fused paths: MambaDType includes 'bfloat16' (config/cache.py:38) and FUSED_GDN_STATE_DTYPES=(float32,bfloat16), so fp16 would fall off the whitelist while bf16 does not. Held to rank 3 only because the accuracy gate, not throughput, is the binding risk on a W8A8 checkpoint at 0.9674.",
+        "kb_evidence": [
+          "research_hints.md #3 (fp32 state is checkpoint-declared, not kernel-required; ~75MB/request/decode step)",
+          "prior round-2 ranking put bf16 state first on throughput grounds"
+        ],
+        "pr_evidence": [],
+        "source_evidence": [
+          "/opt/envs/wu1w/lib/python3.12/site-packages/vllm/model_executor/models/config.py:784-804 (override of a declared mamba_ssm_dtype emits a warning only - the flag does apply)",
+          "/opt/envs/wu1w/lib/python3.12/site-packages/vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py:95 FUSED_GDN_STATE_DTYPES=(torch.float32, torch.bfloat16); :528 and :1812 gate the fused GDN paths on that whitelist",
+          "/opt/envs/wu1w/lib/python3.12/site-packages/vllm/config/cache.py:38 MambaDType Literal['auto','float32','float16','bfloat16']; engine/arg_utils.py:1237 exposes --mamba-ssm-cache-dtype",
+          "runs/baseline/51ac28ff8aed4ad59746fdb889fae7bb/benchmark_vllm_20260915_103510/server.log interface.py:911 'Setting attention block size to 784 tokens to ensure that attention page size is >= mamba page size'"
+        ],
+        "accuracy_risk": "MODERATE - the single highest-value candidate and the only one with numerical risk: deviates from vendor-declared fp32 state on a W8A8 checkpoint whose baseline accuracy is 0.9674. Recommend running the accuracy gate at a tightened floor before KEEP; revert if it slips.",
+        "expected_effect": "3-10% on the decode-dominated portion; unblocks smaller block/page sizes.",
+        "verdict": "worth_a_bench",
+        "route": "config_flag_only"
+      },
+      {
+        "name": "no-prefix-cache-packed-decode",
+        "args_mode": "append",
+        "atomic": true,
+        "extra_args": "--no-enable-prefix-caching",
+        "extra_envs": {
+          "VLLM_ENABLE_FLA_PACKED_RECURRENT_DECODE": "1"
+        },
+        "unset_envs": [
+          "AITER_LOG_TUNED_CONFIG"
+        ],
+        "reason": "ATOMIC: both halves are required. With prefix caching on, mamba cache mode is forced to 'align', which only snapshots the state of the last token of each scheduler step and makes the per-step CoW/page-identity bookkeeping run on every mixed step. The packed FLA recurrent-decode fast path (env default is already 1) fires ONLY when attn_metadata.num_prefills == 0 - so it never engages during the mixed steps that cost 100-280 gt/s, and it cannot engage while 'align' retains per-step state. Turning prefix caching off flips mode to 'none', drops the align bookkeeping and lets whole pure-decode steps take the packed path. Flagged as the speculative pick: it trades away a 75.4% prefix-cache hit rate, which the same log shows is doing real work, so the net can easily be negative. NOTE: unset_envs AITER_LOG_TUNED_CONFIG is hygiene only (hint #6 calls it pure log noise), not a third coupled half; drop it if you want a cleaner A/B attribution.",
+        "kb_evidence": [
+          "research_hints.md #2 (capacity not binding, so losing KV blocks is survivable)",
+          "baseline 75.4% prefix-cache hit => prefill work is already partly avoided, this may be the cost side"
+        ],
+        "pr_evidence": [],
+        "source_evidence": [
+          "/opt/envs/wu1w/lib/python3.12/site-packages/vllm/config/cache.py:137-144 (mamba_cache_mode docstring: 'align' is the default when prefix caching is enabled; 'none' when disabled)",
+          "/opt/envs/wu1w/lib/python3.12/site-packages/vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py:494-496 enable_packed_recurrent_decode from env; :1276-1283 packed decode requires spec_sequence_masks is None AND num_prefills == 0 AND num_decodes > 0",
+          "/opt/envs/wu1w/lib/python3.12/site-packages/vllm/envs.py:129,1210 VLLM_ENABLE_FLA_PACKED_RECURRENT_DECODE default True",
+          "runs/baseline/51ac28ff8aed4ad59746fdb889fae7bb/benchmark_vllm_20260915_103510/server.log config.py:605 'Mamba cache mode is set to align ... by default when prefix caching is enabled'"
+        ],
+        "expected_effect": "Unknown sign: -5% to +5%. Bench cheap; drop on any regression.",
+        "verdict": "worth_a_bench",
+        "route": "config_flag_only"
+      }
+    ],
+    "new_findings": [
+      {
+        "what": "The LIVE framework tree for this dispatch is /opt/envs/wu1w/lib/python3.12/site-packages/vllm, NOT the Section 7 hint root /opt/envs/vllm. /usr/local/bin/vllm-wu1w execs /opt/envs/wu1w/bin/python -m vllm.entrypoints.cli.main, and the PYTHONPATH shim (/home/qiba/ROCm.AI/hyperloom/envs/usersite-shim) carries only tqdm+filelock, so it overrides no vllm module. This independently confirms the prior static_recon residual question and it MATTERS for correctness of verdicts: every already_present / not_applicable call must be made against the wu1w root or it can be silently wrong.",
+        "source": "/usr/local/bin/vllm-wu1w; ls -d /opt/envs/{vllm,wu1w}/lib/python3.12/site-packages/vllm",
+        "expected_impact": "process - prevents false 'already present' and dead-code patch targets",
+        "accuracy_risk": "none (process finding)",
+        "domain_tags": [
+          "environment",
+          "tooling",
+          "candidate_discovery"
+        ]
+      },
+      {
+        "what": "--use-replayssm is NOT applicable to this model. It is an exposed CLI flag (engine/arg_utils.py:1251) and the gate reads 'Requires mamba_cache_mode none or align and the Triton mamba backend' (config/cache.py:147-153), but the ring-buffer implementation lives only in mamba_mixer2.py (Nemotron-H / Mamba2 SSM mixer) and nemotron_h.py. Grep of the Qwen GDN directory finds zero replayssm references in qwen_gdn_linear_attn.py. Setting it on this checkpoint would allocate nothing and change nothing.",
+        "source": "/opt/envs/wu1w/lib/python3.12/site-packages/vllm/model_executor/layers/mamba/mamba_mixer2.py:505-520,1060-1136; models/nemotron_h.py:748-785; grep -rn replayssm model_executor/layers/mamba/gdn/ (empty)",
+        "expected_impact": "negative knowledge: frees a proposal slot and retires the prior round's 'port PR 48792 ReplaySSM, top ceiling' candidate as not_applicable for this arch",
+        "accuracy_risk": "none",
+        "domain_tags": [
+          "gdn",
+          "mamba",
+          "not_applicable",
+          "candidate_discovery"
+        ]
+      },
+      {
+        "what": "No candidate in this gap's ledger has ever been MEASURED. state.json explore_attempts for round 8057120570b44c71be84f1c1c1796a33 records decision=no_promote with error_class=session_time_exhausted and '4 variant(s) went unmeasured', and explore_search.tested={} / accepted=[] / rejected=[]. The 3 candidates proposed twice already (bf16 GDN state, TRITON_ATTN decoder, chunk budget 4096) are therefore still unbenchched, not tried-and-failed. Ordering them for a single-round fit matters more than adding new ideas.",
+        "source": "state.json explore_attempts[0], explore_search (tested={}, accepted=[], rejected=[]), orchestration_memory.current_plan",
+        "expected_impact": "process: tells the Coordinator these are first measurements, so KEEP-threshold 1.00% is being judged against an untested stack",
+        "accuracy_risk": "none",
+        "domain_tags": [
+          "ledger",
+          "process",
+          "candidate_discovery"
+        ]
+      },
+      {
+        "what": "The prefill-stall model in the scout hint is coarsely right but mechanically different, and the difference changes which lever helps. There is NO window with Running=64 and near-zero generation (min gt at R=64 is 80.4). The losses are (a) batch-turnover windows where Running collapses (R=0,W=0 engine drain 10:51:34-44 plus a 90s stats gap to 10:53:14) and (b) sustained MIXED prefill+decode steps from 10:53 onward at pt 750-1400 / gt 100-280. Prefill stream plateaued at ~1843 tok/s (2 prompts/step at the 2048 default). So this is a step-composition problem, not a starvation problem: batch-budget and decode-path-unity levers are on the hot path, capacity levers are not.",
+        "source": "runs/baseline/51ac28ff8aed4ad59746fdb889fae7bb/benchmark_vllm_20260915_103510/server.log, 310 loggers.py:310 stats lines",
+        "expected_impact": "re-ranks the candidate set: prefill-chunk-budget moves above the dtype change on risk-adjusted value",
+        "accuracy_risk": "none (analysis only)",
+        "domain_tags": [
+          "scheduling",
+          "profiling",
+          "roofline"
+        ]
+      },
+      {
+        "what": "AITER is falling back to default GEMM solutions for exactly the shapes this workload produces. The log records a8w8 INT8 ScaledMM at M:784 (N:16384/34816/17408/14336/5120) and M:1568/1667/1697 with 'not found tuned config in a8w8_tuned_gemm.csv, will use default config'. M:784 is the mamba-derived attention block size, and 1568 = 2x784. On gfx90a get_cdna_version()==2 makes is_aiter_found_and_supported() False, so the AITER tuning bridges stay dead and no env switch here will help. A config-only nudge is --mamba-block-size (exists at engine/arg_utils.py:1240), but it collides with prefix caching because block_size 784 exists precisely to make the mamba and attention page sizes equal, so it is a patch-scale decision, not a flag.",
+        "source": "/opt/envs/wu1w/lib/python3.12/site-packages/aiter/ops/gemm_op_a8w8.py:480; aiter/jit/core.py:97,153; server.log interface.py:911 and AITER tuned-config misses",
+        "expected_impact": "1-5% if tuned shapes can be steered without breaking page-size equality; needs kernel/patch ownership",
+        "accuracy_risk": "none if it only changes GEMM solution selection",
+        "domain_tags": [
+          "gemm",
+          "aiter",
+          "gfx90a",
+          "tuning"
+        ]
+      },
+      {
+        "what": "VLLM_GDN_DECODE_KERNEL defaults to 'cuda' in envs.py:130 but the live engine logged 'GDN decode kernel: triton', i.e. the fused CUDA/HIP op is not built and the code fell back cleanly. Two rules follow: proposing VLLM_GDN_DECODE_KERNEL=triton is a no-op re-statement of the status quo, and proposing 'cuda' FAILS THE LAUNCH because when the var is explicitly present in os.environ the code raises ValueError instead of falling back (qwen_gdn_linear_attn.py:500-506).",
+        "source": "/opt/envs/wu1w/lib/python3.12/site-packages/vllm/envs.py:130,1216-1220; model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py:497-510; server.log qwen_gdn_linear_attn.py:510",
+        "expected_impact": "negative knowledge: removes two tempting env-only proposals",
+        "accuracy_risk": "none",
+        "domain_tags": [
+          "gdn",
+          "build",
+          "env"
+        ]
+      },
+      {
+        "what": "GPU KV cache usage peaked at 58.5%, Waiting>0 in only 20 of 310 windows, and there were ZERO 'Recomputing' and ZERO preemption events across the whole run, against 294,473 cached tokens / 47.93x concurrency at 6144. 8.4GiB of KV headroom sat unclaimed at gpu-memory-utilization=0.95. This independently reproduces hint #2 and is why no proposal here touches capacity or gpu-memory-utilization.",
+        "source": "server.log loggers.py:310 kv% column, kv_cache_utils.py:1869, gpu_worker.py:593",
+        "expected_impact": "negative knowledge: confirms capacity-tuning dead end",
+        "accuracy_risk": "none",
+        "domain_tags": [
+          "kv_cache",
+          "anti-pattern"
+        ]
+      }
+    ],
+    "residual_questions": [
+      "Confirm the authoritative framework_source_roots are /opt/envs/wu1w/... (the vllm-wu1w entrypoint) and drop /opt/envs/vllm/... from the Section 7 hint list for this session, or patch-capable specialists will keep editing a tree the server never imports.",
+      "Should the accuracy gate floor be tightened for --mamba-ssm-cache-dtype bfloat16 specifically, and is baseline 0.9674 the metric to protect? This is the highest-value throughput candidate and the only one with numerical risk; without a stated floor the Coordinator cannot decide KEEP on it.",
+      "The chunk-budget and packed-decode candidates both want the same thing: fewer GDN steps that mix prefill and decode in one batch. Is there engine-level evidence in 0.28.0+rocm723 that mixed GDN steps run worse (per-step kernel trace), or is the gt 100-280 in mixed windows purely the arithmetic of fewer decode tokens per step? The latter would drop my top proposal's expected gain to ~0.",
+      "M:784 / M:1568 INT8 GEMMs hit no tuned AITER config on gfx90a. Who owns steering that - a kernel-side tuned-CSV entry for those shapes, or can a config-only --mamba-block-size change keep mamba and attention page sizes equal while landing on tuned shapes?",
+      "explore round-1 died on session_time_exhausted with 4 variants unmeasured. If the bench budget per round is ~1900s, please tell me how many variants fit per round so I can return exactly that many instead of an over-long ladder."
+    ]
+  }
+}

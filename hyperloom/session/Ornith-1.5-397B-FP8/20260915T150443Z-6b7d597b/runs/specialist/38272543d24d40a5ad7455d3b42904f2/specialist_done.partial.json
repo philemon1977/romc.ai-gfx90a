@@ -1,0 +1,41 @@
+{
+ "intent_type": "specialist_done",
+ "payload": {
+  "confidence": 0.7,
+  "domain": "enablement_specialist",
+  "empty": false,
+  "gap_canonical_id": "gap.enablement.unknown",
+  "summary": "ROOT CAUSE FOUND: model arch (Qwen3_5MoeForConditionalGeneration) IS supported by installed vLLM 0.28.0+rocm723 and weights load fine; boot dies in profile_run at the first FP8 dense linear with 'torch._scaled_mm is only supported on CUDA devices with compute capability >= 9.0 or 8.9, or ROCm MI300+'. Host is 8x MI250X (gfx90a, CDNA2) which has NO hardware FP8 MMA. vLLM's ROCm kernel registry falls through aiter (disabled/CDNA3+), ROCmFP8ScaledMM (CDNA3+ gate), PerTensor/RowWise torch gates, and lands on ChannelWiseTorchFP8ScaledMMLinearKernel whose is_supported() cc>=89 gate is fooled by gfx90a reporting capability (9,0). Working on a Triton FP8 w8a8 per-token/per-channel bridging kernel patch.",
+  "new_findings": [
+   {
+    "what": "gfx90a reports torch compute capability (9,0) = cc 90, so vLLM's TorchFP8ScaledMMLinearKernel.is_supported(cc<89) gate wrongly passes on MI250X and torch._scaled_mm then aborts at runtime",
+    "source": "/opt/envs/vllm/lib/python3.12/site-packages/vllm/model_executor/kernels/linear/scaled_mm/pytorch.py:38-48 + platforms/rocm.py:245 (gfx90a -> (9,0))",
+    "expected_impact": "Explains the whole 'unknown' boot failure; fixes mis-selection of a hardware-FP8 kernel on a non-FP8 arch",
+    "accuracy_risk": "none",
+    "domain_tags": [
+     "vllm",
+     "rocm",
+     "fp8",
+     "gfx90a",
+     "kernel-selection"
+    ]
+   },
+   {
+    "what": "Triton tl.dot on float8_e4m3fn inputs DOES execute on gfx90a (Triton 3.7.1; ~9.7 TFLOPS native-fp8 path, ~32 TFLOPS when upcast to bf16), so a Triton FP8 w8a8 GEMM is a viable enablement bridge where torch._scaled_mm is not",
+    "source": "local probe on GPU7: scratch/t_fp8.py",
+    "expected_impact": "Unblocks boot without dequantizing ~400GB of FP8 weights to BF16 (which would OOM: 8x64GB HBM)",
+    "accuracy_risk": "low (fp32 accumulate, per-token/per-channel dequant identical to the intended ChannelWiseTorch math)",
+    "domain_tags": [
+     "triton",
+     "rocm",
+     "fp8",
+     "enablement"
+    ]
+   }
+  ],
+  "proposal_set": [],
+  "patches_written": [],
+  "residual_questions": [],
+  "artifacts_written": []
+ }
+}

@@ -1,0 +1,12 @@
+{
+  "decoder_type": "dense (Qwen3_5, VL-wrapped ckpt -> serve text-only with --language-model-only)",
+  "attention": "hybrid GDN linear_attention + full_attention (1 of every 4 layers), GQA 24Q/4KV",
+  "layer_mix": "64 layers: 48 linear-attn (GDN) + 16 full-attn, full_attention_interval=4",
+  "kv_cache_per_token": "small (only 1/4 layers hold KV); block_size forced to ~848 tokens by mamba/GDN page alignment",
+  "active_params": "27B total",
+  "num_experts": 0,
+  "experts_per_tok": 0,
+  "mtp": "not built into 0.28.0+rocm723 here; fused_gdn_decode_post_conv_mtp falls back to Triton GDN (verified non-bottleneck)",
+  "norm": "rmsnorm",
+  "notes": "gfx90a/MI250X PLATFORM LAWS (measured on this box, 2026-09, see /home/qiba/ai docs): (1) AITER INT8 a8w8 ScaledMM LINEAR is VALIDATED and FAST on gfx90a - VLLM_ROCM_USE_AITER=1 + VLLM_ROCM_USE_AITER_LINEAR=1 select AiterInt8ScaledMMLinearKernel; 'not found tuned config in a8w8_tuned_gemm.csv -> default' is CORRECT behavior, do not chase tuned tables. (2) AITER fused-MoE is DEAD on gfx90a (CK 2-stage bf16 stage2 silently writes zeros; CDNA2 lacks global_atomic_pk_add_bf16). Never propose enabling aiter MoE. Triton fused MoE is optimal for MoE models. (3) FP8/FP4 compute physically absent (no FP8 ALU). fp8-KV storage is UNRELIABLE on 0.28.0+rocm723 (silent fallback/crash) - do not propose --kv-cache-dtype fp8. (4) NEVER enable custom allreduce (use_custom_allreduce) on gfx90a: silently corrupts output ('!!!'). Keep PYNCCL. (5) MoE/INT8 tuned-config seed tables measured WORSE than defaults on this box (A/B) - do not propose them as wins. (6) INT8 and BF16 have equal peak (181) on CDNA2; a8w8 wins via scheduling maturity (~2.9x vs Triton INT8). (7) --safetensors-load-strategy eager is REQUIRED here (loader silently dies without it on this storage). (8) Speculative decoding (dflash) tokens/step is a function of prompt style: random-token benchmark corpora collapse acceptance; measured random-prompt numbers CANNOT judge spec-decode levers. (9) Random-token Magpie corpus IS valid for GEMM/config/graph levers. (10) One MI250X die == one MI210 (gfx90a/104CU/64GiB): INT8 W8A8 27B single-die BF16-out serving hits ~80 tok/s single-stream WITH dflash on natural prose, ~50-65 without; TP=1 preferred for 27B-class weights (no cross-die comm)."
+}

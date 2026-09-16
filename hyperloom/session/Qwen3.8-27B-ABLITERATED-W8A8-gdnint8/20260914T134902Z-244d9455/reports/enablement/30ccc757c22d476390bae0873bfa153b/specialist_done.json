@@ -1,0 +1,134 @@
+{
+  "_specialist_notes": [
+    "worktree_setup_failed:no_git_framework_source_root"
+  ],
+  "allocated_gpu_ids": [
+    0
+  ],
+  "artifacts_written": [],
+  "confidence": 0.9,
+  "domain": "enablement_specialist",
+  "empty": false,
+  "gap_canonical_id": "gap.enablement.unknown",
+  "new_findings": [
+    {
+      "accuracy_risk": "none",
+      "domain_tags": [
+        "vllm",
+        "qwen3_5",
+        "gdn",
+        "hybrid_attention",
+        "runnability",
+        "enablement",
+        "gfx90a"
+      ],
+      "expected_impact": "Reframes the round entirely: no ladder climb (Rung 2-5) is needed for this model, so a config-only delta is the correct and sufficient deliverable.",
+      "source": "/mnt/stripe-3mix-3t2/models/davetha/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/config.json; /opt/envs/wu1w/lib/python3.12/site-packages/vllm/model_executor/models/registry.py:203-204,592-595; in-session logs/repro_server.log + logs/reproB_fixed.log (port 8899, GPU 0, exact production server_args from manifest.json)",
+      "what": "The gap 'vllm cannot launch Qwen3.8-27B-ABLITERATED-W8A8-gdnint8: unknown' is NOT an architecture/weight/kernel enablement gap. architectures=['Qwen3_5ForConditionalGeneration'] / model_type=qwen3_5 IS in the LIVE serving env's registry (registry.py:592 -> qwen3_5.Qwen3_5ForConditionalGeneration), and a full clean boot was reproduced: 64-layer hybrid GDN (48 linear_attention) + full_attention (16) per layer_types, AITER INT8 a8w8 ScaledMM selected for the Linear GEMMs under VLLM_ROCM_USE_AITER[_LINEAR]=1, weights 27.47 GiB, 35/35 CUDA graphs captured (FULL_DECODE_ONLY), engine init 16-17 s, GET /health 200, and correct tokens on both endpoints ('The capital of France is' -> ' Paris. The capital of Germany is Berlin.'; chat '17+25' -> '42')."
+    },
+    {
+      "accuracy_risk": "none",
+      "domain_tags": [
+        "rocm",
+        "device-visibility",
+        "enablement",
+        "magpie",
+        "inferencex"
+      ],
+      "expected_impact": "This is the single blocker to booting at all; pinning HIP/CUDA to the logical index clears it (measured, not inferred).",
+      "source": "in-session scratch/e2e_control/variant_00_specialist-rebench/benchmark_vllm_20260914_153851/server.log (gpu_worker.py:379 -> torch/cuda/__init__.py:501) vs scratch/e2e_fixed/variant_00_specialist-rebench/benchmark_vllm_20260914_153258/inferencex_result.json + logs/e2e_fixed.json; /opt/envs/wu1w/lib/python3.12/site-packages/vllm/platforms/rocm.py:127-156",
+      "what": "PROVEN BY A/B ON THE PRODUCTION GATE PATH with the kept Magpie patch NOT live (it applies cleanly but is currently reverted in the tree): the harness inherits ROCR_VISIBLE_DEVICES=0 + HIP_VISIBLE_DEVICES=2. Counts are equal, so torch._parse_visible_devices() passes and vLLM binds the socket, then EngineCore dies deeper and illegibly at worker init_device -> torch.accelerator.set_device_index -> torch._C._cuda_init() -> 'RuntimeError: No CUDA GPUs are available'. ROCR filters at the HSA agent layer and re-indexes survivors to 0..n-1, so a PHYSICAL id 2 in HIP selects nothing. Control (same leaked env, no delta) = that exact traceback + 'Process died before http://0.0.0.0:8932/health became ready'; candidate (only extra_envs HIP/CUDA_VISIBLE_DEVICES=0) = status SUCCESS, /health 200, inferencex_result.json produced."
+    },
+    {
+      "accuracy_risk": "none",
+      "domain_tags": [
+        "hyperloom",
+        "magpie",
+        "grid_semantics",
+        "enablement"
+      ],
+      "expected_impact": "Prevents a future round from proposing unset_envs or 'just unset HIP', which look correct but are provably inert against an inherited var.",
+      "source": "/opt/envs/vllm/lib/python3.12/site-packages/Magpie/modes/benchmark/benchmarker.py:776,800; /opt/envs/vllm/lib/python3.12/site-packages/hyperloom/orchestrator/actions/executors/_grid_runner.py:664-671; InferenceX@3d55815/benchmarks/vllm_mi300x.sh:63-68",
+      "what": "Only one config mechanism can fix the leak, and the obvious alternative cannot. A variant's extra_envs is written into benchmark.envs, which Magpie applies OVER an os.environ.copy() in _build_local_command (benchmarker.py:776 'env = os.environ.copy()', then :800 'for key, value in env_vars.items(): env[key] = str(value)') -> it DOES override an inherited leak. unset_envs only pops the key from the YAML dict (_grid_runner.py:664-669), after which Magpie re-adds the inherited value from os.environ -> it CANNOT remove an inherited var. Simply removing HIP does not work either: the InferenceX launcher derives HIP from ROCR only under '[ -z \"$HIP_VISIBLE_DEVICES\" ]' (vllm_mi300x.sh:65-68), which an inherited value defeats. HIP must therefore be SET to a value via extra_envs."
+    },
+    {
+      "accuracy_risk": "none",
+      "domain_tags": [
+        "vllm",
+        "rocm",
+        "device-visibility",
+        "enablement"
+      ],
+      "expected_impact": "Makes the enablement delta robust to whichever mask the harness leaks, instead of trading one failure mode for another.",
+      "source": "/opt/envs/wu1w/lib/python3.12/site-packages/vllm/platforms/rocm.py:127-156; in-session scratch/e2e_fixed/variant_00_specialist-rebench/config.yaml (ROCR=0, HIP=0, CUDA=0) + its server.log",
+      "what": "HIP_VISIBLE_DEVICES and CUDA_VISIBLE_DEVICES must be set TOGETHER and EQUAL, so the delta is atomic. vLLM's _sync_hip_cuda_env_vars() runs at import, raises a hard ValueError on any HIP/CUDA disagreement, and copies an inherited CUDA value onto HIP when HIP is unset. A one-sided pin (HIP=0 while CUDA leaks a physical id) converts a device-selection bug into an import-time crash. Validated empirically: the successful boot had ROCR=0 + HIP=0 + CUDA=0 all set, emitting only the benign 'Using CUDA_VISIBLE_DEVICES on ROCm is deprecated' warning."
+    },
+    {
+      "accuracy_risk": "none",
+      "domain_tags": [
+        "environment",
+        "magpie",
+        "inferencex",
+        "lifecycle",
+        "enablement"
+      ],
+      "expected_impact": "Removes two phantom gaps so the next round spends its budget on the real gate (accuracy/throughput) instead of re-diagnosing the launcher.",
+      "source": "in-session /opt/venv/bin/python3 -c 'import huggingface_hub, transformers'; InferenceX@3d55815/benchmarks/benchmark_lib.sh:682,870-885; runs/baseline/48e0ae2b0af74c03b4b40c847fc99d3b/benchmark_vllm_20260914_151400/server.log; ps/ss/rocm-smi probes",
+      "what": "Both blockers the prior round named as its 'next domino' are ALREADY resolved, so neither needs re-authoring. (1) bench-client deps: /opt/venv/bin/python3 (first on the gate's PATH, and the bare 'python3' benchmark_lib.sh:682 uses) now imports huggingface_hub 1.29.0 + transformers 5.16.1, i.e. the recorded setup_commands were replayed and the ModuleNotFoundError that killed the earlier client is gone. (2) lm-eval needs no pre-provisioning - it self-installs at eval time (benchmark_lib.sh:870-885, pip guarded with '|| true'). (3) attempt[1]'s 'OSError: [Errno 98] Address already in use' on port 8888 was a stale server inherited from failed attempt[0], not a model gap: nothing listens on 88xx/89xx now and GPU 0 VRAM returned to ~11 MB; the mechanism is real (an APIServer that dies leaves VLLM::EngineCore orphaned - observed in-session as pid 12279 still holding memory after its parent exited)."
+    },
+    {
+      "accuracy_risk": "none",
+      "domain_tags": [
+        "integration",
+        "allowlist",
+        "venv-routing",
+        "enablement",
+        "aiter",
+        "gdn"
+      ],
+      "expected_impact": "Explains how a prior round's patch could be approved and integrated yet change nothing, and redirects future vllm-side authoring to the live tree or to a proposal.",
+      "source": "/usr/local/bin/vllm-wu1w; diff -rq --exclude=__pycache__ of the two vllm trees; state.json enablement.framework_root; manifest.json dependencies.magpie.path",
+      "what": "ROUTING FACT for any future patch authoring here: the serving interpreter is NOT the allowlisted /opt/envs/vllm tree. VLLM_BIN=/usr/local/bin/vllm-wu1w execs /opt/envs/wu1w/bin/python -m vllm.entrypoints.cli.main, so a vllm-side patch authored against /opt/envs/vllm/.../vllm is INERT on the gate. The two trees are near-identical 0.28.0 builds differing in exactly 3 source files (_aiter_ops.py, _custom_ops.py, model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py); /opt/envs/wu1w carries prior optimization work - an is_aiter_attention_supported() gfx90a carve-out widening AITER Linear past the stock CDNA3-only gate, a fused_gdn_hip op fallback, and GDN MTP head divisibility relaxed from num_v_heads==8*num_k_heads to a remainder test. Magpie itself ships only in /opt/envs/vllm, which is why the kept patch targets Magpie and IS on the serving path."
+    }
+  ],
+  "patch_grounding": {},
+  "patches_written": [],
+  "proposal_set": [
+    {
+      "args_mode": "append",
+      "atomic": true,
+      "extra_args": "",
+      "extra_envs": {
+        "CUDA_VISIBLE_DEVICES": "0",
+        "HIP_VISIBLE_DEVICES": "0"
+      },
+      "kb_evidence": [
+        "framework: ROCR re-indexes the visible set to 0..n-1, so HIP takes logical indices - Magpie's own documented rule at benchmarker.py:517-522",
+        "in-session A/B: leaked HIP=2 -> EngineCore 'No CUDA GPUs are available'; HIP=0 -> full boot, 35/35 CUDA graphs, /health 200, correct tokens"
+      ],
+      "name": "rocm_logical_hip_mask_pin",
+      "pr_evidence": [],
+      "reason": "Makes the combo boot. The harness inherits HIP_VISIBLE_DEVICES=2 (a PHYSICAL id) while the gate config pins ROCR_VISIBLE_DEVICES=0; ROCR filters at the HSA layer and re-indexes survivors to 0..n-1, so HIP must carry the LOGICAL index. Because the counts are equal, torch's length check passes and the failure lands deep and illegibly: EngineCore 'RuntimeError: No CUDA GPUs are available' at init_device. PROVEN by A/B on the real Magpie/InferenceX gate path under the identical inherited leak and with the kept patch NOT applied: control reproduced the crash, this delta alone yielded status SUCCESS, /health 200 and a produced inferencex_result.json (110.19 tok/s on a deliberately reduced 8-prompt/conc=4 config used only to keep the proof fast - NOT a baseline-comparable number). extra_envs rather than unset_envs is required: unset only pops the YAML dict while Magpie re-adds the inherited value from os.environ, and the launcher's '[ -z HIP ]' derivation cannot fire on an inherited value. Both vars are pinned equal and together because vLLM raises ValueError on a HIP/CUDA disagreement and copies an inherited CUDA onto HIP. Scoped to TP=1 (this session's fixed TP), where the logical set is exactly {0}; mirrors Magpie's own documented gpu_selection rule (benchmarker.py:519-522).",
+      "remove_args": [],
+      "scope": "domain",
+      "source_evidence": [
+        "/opt/envs/vllm/lib/python3.12/site-packages/Magpie/modes/benchmark/benchmarker.py:776,800 (config envs override the os.environ copy)",
+        "/opt/envs/vllm/lib/python3.12/site-packages/Magpie/modes/benchmark/benchmarker.py:517-522 (HIP must be logical 0..N-1 after ROCR filtering)",
+        "/opt/envs/vllm/lib/python3.12/site-packages/hyperloom/orchestrator/actions/executors/_grid_runner.py:664-671 (unset_envs pops only from the YAML dict)",
+        "/opt/envs/wu1w/lib/python3.12/site-packages/vllm/platforms/rocm.py:127-156 (_sync_hip_cuda_env_vars raises on HIP/CUDA disagreement)",
+        "/home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966/benchmarks/vllm_mi300x.sh:63-68 (derivation guarded by -z HIP, cannot repair an inherited value)",
+        "scratch/e2e_fixed/variant_00_specialist-rebench/benchmark_vllm_20260914_153258/inferencex_result.json (SUCCESS)",
+        "scratch/e2e_control/variant_00_specialist-rebench/benchmark_vllm_20260914_153851/server.log (No CUDA GPUs are available)"
+      ],
+      "unset_envs": []
+    }
+  ],
+  "residual_questions": [
+    "EVAL-PATH RISK for the accuracy gate (I deliberately did NOT touch it - altering it would be changing the eval contract): this checkpoint's chat_template.jinja injects a large built-in operator system prompt plus xhigh reasoning-effort instructions. Measured live: a 12-token one-line user question cost prompt_tokens=1225, and the model emits a long <|im_start|> reasoning block before its answer (the chat probe reasoned out loud, then printed '42'). If the gate's gsm8k eval goes through /v1/chat/completions, that ~1.2k-token prefix plus CoT tail can press against max_model_len=6144 and can defeat strict/regex answer extraction, so a low score there should not be read as a W8A8 quantization regression without first confirming which endpoint run_lm_eval uses.",
+    "Should the next round keep BOTH the approved Magpie reconciliation patch and this env pin? They are mutually consistent (both resolve to HIP=0), so either alone boots and both together are harmless - but if re-application of 001_reconcile_rocm_device_masks.patch ever fails, this proposal is the patch-free safety net that still boots. I authored no replacement patch to avoid duplicating already-approved work.",
+    "Port hygiene between attempts: attempt[1] died on 'OSError: [Errno 98] Address already in use' on gate port 8888 because a server from failed attempt[0] still held it. Is there a pre-flight port release before a retry? I did not kill any foreign pid (Iron Rule 7), so this can recur on a retry-after-failure and would again be misclassified as a model-side launch failure."
+  ],
+  "setup_commands": [],
+  "summary": "Gap is a ROCm device-mask leak, not a model gap: Qwen3_5ForConditionalGeneration IS registered and runnable in the live serving env (/opt/envs/wu1w). A/B on the real Magpie path under the inherited leak (ROCR=0 vs HIP=2): control -> EngineCore 'No CUDA GPUs are available'; with only the proposed extra_envs HIP/CUDA_VISIBLE_DEVICES=0 (logical index) -> SUCCESS, /health 200, result.json. No new patch: the kept reconciliation patch applies cleanly; the client install is verified live.",
+  "ts": "2026-09-14T15:45:43.566132+00:00"
+}

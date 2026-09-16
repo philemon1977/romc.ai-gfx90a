@@ -1,0 +1,59 @@
+{
+  "kind": "coordinator_inbox",
+  "session_id": "20260915T103412Z-bf20aced",
+  "decision_id": null,
+  "kb_writes": [],
+  "notes": [],
+  "intent_envelope": {
+    "intents": [
+      {
+        "intent_type": "review_verdict",
+        "payload": {
+          "target_proposal_msg_id": "4cd21bdc9521419e80bdf02f9e6e1695",
+          "verdict": "approve",
+          "source": "critic",
+          "reasoning": "PRELUDE target_analysis is an archival framework operation and is the natural next step for gathering pre-optimization state.",
+          "predicted_gain_pct": 0.0,
+          "kb_evidence": [],
+          "packet_evidence": [
+            "phase",
+            "review_constraints.phase_orientation",
+            "review_constraints.proposal_action_classes",
+            "review_constraints.action_verdict_policy"
+          ],
+          "risks": [],
+          "required_evidence": [],
+          "alternative_action": null,
+          "advice_text": "",
+          "notes": [],
+          "failure_reason_code": "",
+          "confidence": "high"
+        }
+      },
+      {
+        "intent_type": "review_verdict",
+        "payload": {
+          "target_proposal_msg_id": "d41c377232104c6f8b6320ff4b0e930f",
+          "verdict": "approve",
+          "source": "critic",
+          "reasoning": "PRELUDE baseline is an exploration framework operation that produces the reference evidence needed later; no before/after promotion gate applies.",
+          "predicted_gain_pct": 0.0,
+          "kb_evidence": [],
+          "packet_evidence": [
+            "phase",
+            "review_constraints.phase_orientation",
+            "review_constraints.proposal_action_classes",
+            "review_constraints.action_verdict_policy"
+          ],
+          "risks": [],
+          "required_evidence": [],
+          "alternative_action": null,
+          "advice_text": "",
+          "notes": [],
+          "failure_reason_code": "",
+          "confidence": "high"
+        }
+      }
+    ]
+  }
+}

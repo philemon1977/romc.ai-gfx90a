@@ -1,0 +1,7 @@
+{
+  "aborted_at_utc": "2026-09-15T17:11:36Z",
+  "error": "(Worker_TP2 pid=25273) (Worker_TP6 pid=25277) ERROR 09-15 17:10:45 [multiproc_executor.py:1047] \nERROR 09-15 17:10:45 [multiproc_executor.py:1047] \n(EngineCore pid=25227) ERROR 09-15 17:10:45 [core.py:1346] EngineCore failed to start.\n(EngineCore pid=25227) ERROR 09-15 17:10:45 [core.py:1346] Traceback (most recent call last):\n(EngineCore pid=25227) ERROR 09-15 17:10:45 [core.py:1346]   File \"/opt/envs/vllm/lib/python3.12/site-packages/vllm/v1/engine/core.py\", line 1315, in run_engine_core",
+  "error_class": "magpie_nonzero_invalid_measurement",
+  "extra_args": "",
+  "variant": "integrate-patch-9d27140c"
+}

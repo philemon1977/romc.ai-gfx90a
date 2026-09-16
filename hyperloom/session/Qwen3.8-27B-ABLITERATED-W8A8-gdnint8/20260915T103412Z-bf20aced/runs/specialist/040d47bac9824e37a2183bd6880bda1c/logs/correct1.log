@@ -1,0 +1,19 @@
+Traceback (most recent call last):
+  File "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260915T103412Z-bf20aced/runs/specialist/040d47bac9824e37a2183bd6880bda1c/scratch/correct.py", line 28, in <module>
+    asyncio.run(main())
+  File "/opt/envs/vllm/lib/python3.12/asyncio/runners.py", line 195, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/opt/envs/vllm/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/envs/vllm/lib/python3.12/asyncio/base_events.py", line 691, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260915T103412Z-bf20aced/runs/specialist/040d47bac9824e37a2183bd6880bda1c/scratch/correct.py", line 17, in main
+    outs[p]=await asyncio.gather(*[run(p,pr,n) for pr in prims])
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260915T103412Z-bf20aced/runs/specialist/040d47bac9824e37a2183bd6880bda1c/scratch/correct.py", line 12, in run
+    d=await r.json(); return d['choices'][0]['text']
+                             ~^^^^^^^^^^^
+KeyError: 'choices'

@@ -1,0 +1,242 @@
+diff --git a/Magpie/modes/benchmark/image_selector.py b/Magpie/modes/benchmark/image_selector.py
+index 8e0fceb..ac57538 100644
+--- a/Magpie/modes/benchmark/image_selector.py
++++ b/Magpie/modes/benchmark/image_selector.py
+@@ -11,6 +11,7 @@ Selects appropriate Docker images based on framework and GPU architecture.
+ 
+ import logging
+ import os
++import re
+ from pathlib import Path
+ from typing import Dict, Optional
+ 
+@@ -21,18 +22,41 @@ from ...utils.gpu import detect_gpu
+ logger = logging.getLogger(__name__)
+ 
+ 
++# Family aliases: an exact GPU architecture that has no dedicated entry in
++# benchmark_images.yaml / the InferenceX runner table falls back to the
++# closest supported family runner. This keeps generic (framework-agnostic)
++# benchmark paths working on architectures that are ABI-compatible with a
++# listed member of the family.
++_ARCH_FAMILY_RUNNERS: Dict[str, str] = {
++    # CDNA2 (MI50/MI100/MI210/MI250/MI250X) shares the mi300x script family.
++    "gfx90a": "mi300x",
++}
++
++
++def _canonical_arch(gpu_arch: Optional[str]) -> Optional[str]:
++    """Strip target-feature suffixes from a ROCm arch triple.
++
++    e.g. ``"gfx90a:sramecc+:xnack-"`` -> ``"gfx90a"``, ``"gfx942"`` ->
++    ``"gfx942"``. Returns ``None`` for empty/non-string input so callers can
++    keep their existing "unknown architecture" handling.
++    """
++    if not gpu_arch or not isinstance(gpu_arch, str):
++        return None
++    return gpu_arch.split(":", 1)[0].strip()
++
++
+ class ImageSelector:
+     """
+     Selects Docker images based on framework and GPU architecture.
+-    
++
+     Loads image mappings from benchmark_images.yaml and provides
+     automatic selection based on detected GPU hardware.
+     """
+-    
++
+     def __init__(self, config_path: Optional[str] = None):
+         """
+         Initialize the image selector.
+-        
++
+         Args:
+             config_path: Path to benchmark_images.yaml. If None, uses default
+                         location relative to Magpie package.
+@@ -40,18 +64,18 @@ class ImageSelector:
+         if config_path is None:
+             # Default: Magpie/benchmark_images.yaml
+             config_path = str(Path(__file__).parent.parent.parent / "benchmark_images.yaml")
+-        
++
+         self.config_path = config_path
+         self._mapping: Dict[str, Dict[str, str]] = {}
+         self._load_config()
+-    
++
+     def _load_config(self) -> None:
+         """Load image mapping configuration from YAML file."""
+         if not os.path.exists(self.config_path):
+             logger.warning(f"Image config not found: {self.config_path}, using empty mapping")
+             self._mapping = {}
+             return
+-        
++
+         try:
+             with open(self.config_path, 'r') as f:
+                 self._mapping = yaml.safe_load(f) or {}
+@@ -60,7 +84,7 @@ class ImageSelector:
+         except Exception as e:
+             logger.error(f"Failed to load image config: {e}")
+             self._mapping = {}
+-    
++
+     def select_image(
+         self,
+         framework: str,
+@@ -69,16 +93,16 @@ class ImageSelector:
+     ) -> str:
+         """
+         Select appropriate Docker image for benchmark.
+-        
++
+         Args:
+             framework: Framework name ("vllm", "sglang", or "atom")
+-            gpu_arch: GPU architecture (e.g., "gfx942", "sm_90"). 
++            gpu_arch: GPU architecture (e.g., "gfx942", "sm_90").
+                      Auto-detected if not specified.
+             override_image: If provided, use this image instead of auto-selection
+-        
++
+         Returns:
+             Docker image name
+-        
++
+         Raises:
+             ValueError: If no suitable image found
+         """
+@@ -86,16 +110,16 @@ class ImageSelector:
+         if override_image:
+             logger.info(f"Using override image: {override_image}")
+             return override_image
+-        
++
+         # Auto-detect GPU architecture if not provided
+         if gpu_arch is None:
+             vendor, detected_arch = detect_gpu()
+             gpu_arch = detected_arch
+             logger.info(f"Auto-detected GPU: {vendor.name}, arch: {gpu_arch}")
+-        
++
+         # Normalize framework name
+         framework = framework.lower()
+-        
++
+         # Get framework mapping
+         framework_mapping = self._mapping.get(framework, {})
+         if not framework_mapping:
+@@ -104,13 +128,16 @@ class ImageSelector:
+                 f"Available frameworks: {list(self._mapping.keys())}. "
+                 f"Please add '{framework}' to {self.config_path}"
+             )
+-        
+-        # Try to find image for the architecture
+-        if gpu_arch and gpu_arch in framework_mapping:
+-            image = framework_mapping[gpu_arch]
+-            logger.info(f"Selected image for {framework}/{gpu_arch}: {image}")
+-            return image
+-        
++
++        # Try to find image for the architecture (accept a bare or
++        # target-feature-triple form, e.g. "gfx90a:sramecc+:xnack-")
++        candidates = self._arch_lookup_keys(gpu_arch)
++        for key in candidates:
++            if key in framework_mapping:
++                image = framework_mapping[key]
++                logger.info(f"Selected image for {framework}/{key}: {image}")
++                return image
++
+         # No matching architecture found - raise error
+         available_archs = list(framework_mapping.keys())
+         raise ValueError(
+@@ -118,20 +145,34 @@ class ImageSelector:
+             f"Available architectures: {available_archs}. "
+             f"Please add '{gpu_arch}' to {self.config_path} or use --docker-image to override."
+         )
+-    
++
++    @staticmethod
++    def _arch_lookup_keys(gpu_arch: Optional[str]) -> list:
++        """Return the ordered set of mapping keys to try for ``gpu_arch``."""
++        if not gpu_arch or not isinstance(gpu_arch, str):
++            return []
++        keys = [gpu_arch]
++        canonical = _canonical_arch(gpu_arch)
++        if canonical and canonical not in keys:
++            keys.append(canonical)
++        return keys
++
+     def get_runner_type(self, gpu_arch: Optional[str] = None) -> str:
+         """
+         Get InferenceX runner type based on GPU architecture.
+-        
++
+         Args:
+             gpu_arch: GPU architecture. Auto-detected if not specified.
+-        
++
+         Returns:
+             Runner type string (e.g., "mi300x", "h100")
++
++        Raises:
++            ValueError: If the architecture is unknown and has no family alias.
+         """
+         if gpu_arch is None:
+             _, gpu_arch = detect_gpu()
+-        
++
+         # Map GPU architectures to runner types
+         arch_to_runner = {
+             # AMD GPUs
+@@ -144,21 +185,39 @@ class ImageSelector:
+             "sm_90a": "h200",     # H200
+             "sm_100": "b200",     # B200
+         }
+-        
+-        runner = arch_to_runner.get(gpu_arch, None)
+-        if runner is None:
+-            logger.warning(f"No runner type found for {gpu_arch}")
+-            raise ValueError(f"No runner type found for {gpu_arch}")
+-        logger.debug(f"Runner type for {gpu_arch}: {runner}")
+-        return runner
+-    
++
++        for key in self._arch_lookup_keys(gpu_arch):
++            runner = arch_to_runner.get(key)
++            if runner is not None:
++                logger.debug(f"Runner type for {key}: {runner}")
++                return runner
++
++        # Exact-entry miss: fall back to the CDNA/CI family alias table so
++        # architectures without a dedicated InferenceX runner (e.g. gfx90a /
++        # MI250X on the CDNA2 line) still resolve to the closest maintained
++        # generic script family.
++        canonical = _canonical_arch(gpu_arch)
++        if canonical is not None:
++            family_runner = _ARCH_FAMILY_RUNNERS.get(canonical)
++            if family_runner is not None:
++                logger.info(
++                    "No dedicated InferenceX runner for %s; using family "
++                    "runner '%s' (generic benchmark path).",
++                    gpu_arch,
++                    family_runner,
++                )
++                return family_runner
++
++        logger.warning(f"No runner type found for {gpu_arch}")
++        raise ValueError(f"No runner type found for {gpu_arch}")
++
+     def list_available_images(self, framework: Optional[str] = None) -> Dict[str, Dict[str, str]]:
+         """
+         List all available images.
+-        
++
+         Args:
+             framework: Filter by framework name, or None for all
+-        
++
+         Returns:
+             Dictionary of framework -> arch -> image mappings
+         """

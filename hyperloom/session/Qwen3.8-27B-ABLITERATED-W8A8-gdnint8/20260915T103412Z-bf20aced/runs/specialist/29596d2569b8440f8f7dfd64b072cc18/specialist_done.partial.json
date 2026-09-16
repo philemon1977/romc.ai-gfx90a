@@ -1,0 +1,293 @@
+{
+ "intent_type": "specialist_done",
+ "payload": {
+  "confidence": 0.68,
+  "domain": "candidate_discovery_specialist",
+  "empty": false,
+  "gap_canonical_id": "inference:qwen3.8-27b-abliterated-w8a8-gdnint8:unknown_gpu:vllm:qwen3_5:qwen3_5forconditionalgeneration:0.28.0:bf16#throughput_below_target",
+  "new_findings": [
+   {
+    "what": "RESOLVED residual question (bf16 GDN state): the fused GDN kernels consume a narrowed recurrent state DIRECTLY and bf16 is a whitelisted fast-path dtype. qwen_gdn_linear_attn.py:90 declares FUSED_GDN_STATE_DTYPES=(torch.float32, torch.bfloat16) and that tuple gates the fused decode/MTP paths at lines 523 and 1806. bf16 is deliberately included; float16 is NOT. So --mamba-ssm-cache-dtype bfloat16 does not force a slow fallback on 0.28.0+rocm723.",
+    "source": "/opt/envs/vllm/lib/python3.12/site-packages/vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py:90,523,1806",
+    "expected_impact": "Unblocks the largest decode-side bandwidth lever; ~75MB/req/step of state traffic halves.",
+    "accuracy_risk": "none (analysis)",
+    "domain_tags": [
+     "candidate_discovery",
+     "gdn",
+     "mamba_cache",
+     "rocm"
+    ]
+   },
+   {
+    "what": "Upstream independently confirms GDN has no recurrent-state dtype constraint. Open PR 54123 adds an early rejection for incompatible mamba_ssm_cache_dtype but scopes it to mamba1_state_dtype(), stating 'Mamba2 and GatedDeltaNet layers never call selective_scan_fn ... so the check is scoped to mamba1_state_dtype() only and mamba2_state_dtype()/gated_delta_net_state_dtype() are left untouched'. The fp32-or-activation-dtype rule is a Mamba1 CUDA-kernel artifact that does not exist on this model's path.",
+    "source": "https://github.com/vllm-project/vllm/pull/54123 (head_sha 23ae4da3cdc84c430963a93b930f6f5bb8246872)",
+    "expected_impact": "Raises confidence in rank 1 from local-source-only to local+upstream evidence.",
+    "accuracy_risk": "none (analysis)",
+    "domain_tags": [
+     "gdn",
+     "mamba_cache",
+     "pr_intelligence"
+    ]
+   },
+   {
+    "what": "ReplaySSM landed in two stages and this tree has only the first: Mamba2 standard decode (PR 48018, merged as 866fea2b9) is present as ops/replayssm_config.py + ops/selective_state_update_replayssm_output_only.py, while GDN standard decode (PR 48792, still open) is entirely absent (0 grep hits in gdn_attn.py, qwen3_5.py, gdn/base.py). That is exactly why --use-replayssm looks available but cannot reach this model's 48 linear-attn layers.",
+    "source": "https://github.com/vllm-project/vllm/pull/48792 vs /opt/envs/vllm/lib/python3.12/site-packages/vllm/model_executor/layers/mamba/ops/",
+    "expected_impact": "Defines a concrete, bounded patch (15 files, kernel is Triton-only) that removes rather than halves the dominant decode store.",
+    "accuracy_risk": "moderate: ring-buffer reconstruction of the delta-rule state changes numerics vs per-step exact store; needs the accuracy gate.",
+    "domain_tags": [
+     "candidate_discovery",
+     "gdn",
+     "replayssm",
+     "pr_intelligence"
+    ]
+   },
+   {
+    "what": "Async scheduling is ON by default in this build and 'align' mamba_cache_mode is explicitly patched to coexist with it. VllmConfig sets async_scheduling=True when the field is None unless the model is pooling, uses a non-EAGLE spec method, or the executor lacks support (config/vllm.py:1185-1234) - none apply (engine dump shows speculative_config=None, DP/TP=1). gpu_model_runner.py:2167 keys its hybrid CPU-sync race guard on `use_async_scheduling and cache_config.mamba_cache_mode != 'align'`, and the baseline log shows mode 'align'.",
+    "source": "/opt/envs/vllm/lib/python3.12/site-packages/vllm/config/vllm.py:1185-1234,554-560; /opt/envs/vllm/lib/python3.12/site-packages/vllm/v1/worker/gpu_model_runner.py:2167; runs/baseline/51ac28ff8aed4ad59746fdb889fae7bb/benchmark_vllm_20260915_103510/server.log:14",
+    "expected_impact": "Removes an entire candidate class from the search space; redirects the 29% prefill dead-time hunt to GPU-kernel work.",
+    "accuracy_risk": "none (analysis)",
+    "domain_tags": [
+     "negative_knowledge",
+     "scheduler",
+     "prefill_overlap"
+    ]
+   },
+   {
+    "what": "AITER's CDNA2 gate has NO env override. _aiter_ops.is_aiter_found_and_supported() returns get_cdna_version() > 2 gated only on IS_AITER_FOUND + is_rocm(). VLLM_ROCM_USE_AITER=1 is already set in the base env and per its own docstring 'adds env var check' on top of the arch test rather than bypassing it - so it cannot enable GDN decode fast paths on gfx90a without patching aiter.",
+    "source": "/opt/envs/vllm/lib/python3.12/site-packages/vllm/_aiter_ops.py:134-155; /opt/envs/vllm/lib/python3.12/site-packages/vllm/envs.py:1242-1244; baseline_config.with_envs.yaml",
+    "expected_impact": "Negative knowledge: frees proposal slots from a dead end.",
+    "accuracy_risk": "none (analysis)",
+    "domain_tags": [
+     "negative_knowledge",
+     "aiter",
+     "cdna2",
+     "rocm"
+    ]
+   },
+   {
+    "what": "Three levers in this build hard-fail or no-op and must not be re-proposed: (a) VLLM_GDN_DECODE_KERNEL=cuda - the op torch.ops._C.fused_gdn_decode_post_conv_mtp is not built in this ROCm wheel and setting the env explicitly RAISES rather than falling back (qwen_gdn_linear_attn.py:496-505); (b) --enable-mamba-cache-stochastic-rounding - raises on any non-CUDA platform (config/mamba.py:85-92) and needs cvt.rs on sm100, plus requires float16 state; (c) --use-replayssm - dispatches to the Mamba2 selective_state_update kernel only.",
+    "source": "/opt/envs/vllm/lib/python3.12/site-packages/vllm/config/mamba.py:85-92; /opt/envs/vllm/lib/python3.12/site-packages/vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py:493-510; /opt/envs/vllm/lib/python3.12/site-packages/vllm/v1/attention/backends/mamba_attn.py:171-195; runs/baseline/51ac28ff8aed4ad59746fdb889fae7bb/benchmark_vllm_20260915_103510/server.log",
+    "expected_impact": "Prevents 3 wasted bench slots on paths that crash the engine at startup or silently no-op.",
+    "accuracy_risk": "none (analysis)",
+    "domain_tags": [
+     "negative_knowledge",
+     "gdn",
+     "rocm",
+     "mamba_cache"
+    ]
+   },
+   {
+    "what": "The decoder attention backend was selected by elimination and the incumbent then fell back to Triton anyway: 'Found incompatible backend(s) [TURBOQUANT] with AttentionType.DECODER. Overriding with ROCM_ATTN out of potential backends: [ROCM_ATTN, TRITON_ATTN]' plus a runtime fallback into chunked_prefill_paged_decode. The global --attention-backend cannot perturb GDN: MambaBase.get_attn_backend() resolves through the separate get_mamba_attn_backend(mamba_type) registry, so GDN stays on the Triton/FLA path (head_k_dim=128) either way.",
+    "source": "runs/baseline/51ac28ff8aed4ad59746fdb889fae7bb/benchmark_vllm_20260915_103510/server.log: rocm.py:703, qwen_gdn_linear_attn.py:163; /opt/envs/vllm/lib/python3.12/site-packages/vllm/model_executor/layers/mamba/abstract.py:81-83; /opt/envs/vllm/lib/python3.12/site-packages/vllm/v1/attention/selector.py:174-183",
+    "expected_impact": "Makes the one remaining backend probe a zero-numerics-risk, correctly-scoped experiment.",
+    "accuracy_risk": "none (same math, different kernel)",
+    "domain_tags": [
+     "candidate_discovery",
+     "attention_backend",
+     "rocm",
+     "prefill"
+    ]
+   },
+   {
+    "what": "The 784-token attention block size is a consequence of the fp32 state, not an independent knob: 'Setting attention block size to 784 tokens to ensure that attention page size is >= mamba page size' + 'Padding mamba page size by 0.13%'. Halving the state dtype shrinks the mamba page and relaxes this, which is a second-order amplification of rank 1 and also explains why capacity tuning is dead here (usage peaks 38-57%, Waiting: 0).",
+    "source": "runs/baseline/51ac28ff8aed4ad59746fdb889fae7bb/benchmark_vllm_20260915_103510/server.log: interface.py:911,935; /opt/envs/vllm/lib/python3.12/site-packages/vllm/config/cache.py:116-124",
+    "expected_impact": "Links rank 1 to finer attention paging; warns that any page-size change alters prefix-cache granularity.",
+    "accuracy_risk": "none (analysis)",
+    "domain_tags": [
+     "mamba_cache",
+     "page_size",
+     "negative_knowledge"
+    ]
+   }
+  ],
+  "proposal_set": [
+   {
+    "name": "gdn_ssm_state_bf16",
+    "rank": 1,
+    "verdict": "worth_a_bench",
+    "route": "bench_as_config",
+    "extra_args": "--mamba-ssm-cache-dtype bfloat16",
+    "args_mode": "append",
+    "atomic": false,
+    "reason": "TOP RANKED because it is the only candidate that both attacks the largest measured cost and is benchable THIS cycle with no patch. The GDN recurrent state is fp32 solely because the checkpoint declares mamba_ssm_dtype='float32' and Qwen3_5ForConditionalGenerationConfig.verify_and_update_config (models/config.py:781-805) copies it into cache_config.mamba_ssm_cache_dtype only when that field is 'auto'; an explicit flag takes the else-branch, which logs 'Using the user-specified value' and proceeds - no assert, no downstream requirement. MambaStateDtypeCalculator._mamba_state_dtype (mamba_utils.py:96-107) reads the flag verbatim into STR_DTYPE_TO_TORCH_DTYPE, so the state cache is allocated bf16 and per-step state traffic (~75MB/req/step over 48 linear-attn layers at conc=64) halves. bfloat16 over float16 is deliberate: qwen_gdn_linear_attn.py:90 declares FUSED_GDN_STATE_DTYPES=(float32, bfloat16) - bf16 is the whitelisted narrowed dtype and fp16 is NOT, and bf16 keeps fp32's exponent range so a 1024-step delta-rule recurrence cannot overflow. This is also the round's answered residual question: the fused kernels consume bf16 state directly rather than falling back.",
+    "kb_evidence": [
+     "prior: state cache is the single largest per-step HBM traffic source; --mamba-ssm-cache-dtype is first-class in 0.28.0+rocm723 and accepts bfloat16",
+     "prior: capacity is NOT binding (KV peak 38-57%, Waiting: 0) - this lever is bandwidth, not blocks"
+    ],
+    "pr_evidence": [
+     {
+      "repo": "vllm-project/vllm",
+      "number": 54123,
+      "state": "open",
+      "title": "[Bugfix] Reject incompatible mamba_ssm_cache_dtype before it crashes EngineCore",
+      "url": "https://github.com/vllm-project/vllm/pull/54123",
+      "relevance": "Upstream confirms by construction that the fp32-or-==activation-dtype constraint lives in the Mamba1 selective_scan CUDA kernel only. Its body states the check is 'scoped to mamba1_state_dtype() only and mamba2_state_dtype()/gated_delta_net_state_dtype() are left untouched' - i.e. GDN has no dtype constraint to violate, and this build (which predates the fix) would never reject the flag anyway."
+     },
+     {
+      "repo": "vllm-project/vllm",
+      "number": 52191,
+      "state": "merged",
+      "title": "[CPU] Support FP16/BF16 persisted GDN state on AMX",
+      "url": "https://github.com/vllm-project/vllm/pull/52191",
+      "relevance": "Merged upstream precedent that bf16 GDN recurrent state is a supported persisted representation, not a degenerate path."
+     }
+    ],
+    "source_evidence": [
+     "/opt/envs/vllm/lib/python3.12/site-packages/vllm/model_executor/models/config.py:781-805",
+     "/opt/envs/vllm/lib/python3.12/site-packages/vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py:90,523,1806",
+     "/opt/envs/vllm/lib/python3.12/site-packages/vllm/model_executor/layers/mamba/mamba_utils.py:96-107",
+     "/opt/envs/vllm/lib/python3.12/site-packages/vllm/config/cache.py:38,133",
+     "/opt/envs/vllm/lib/python3.12/site-packages/vllm/engine/arg_utils.py:1237",
+     "runs/baseline/51ac28ff8aed4ad59746fdb889fae7bb/benchmark_vllm_20260915_103510/server.log: interface.py:911,935 (attention block size forced to 784 tokens to match the mamba page)"
+    ]
+   },
+   {
+    "name": "gdn_replayssm_standard_decode",
+    "rank": 2,
+    "verdict": "worth_a_bench",
+    "route": "needs_patch_author_against_upstream",
+    "extra_args": "",
+    "args_mode": "append",
+    "atomic": false,
+    "reason": "HIGHEST CEILING, but not benchable until a patch exists, which is why it ranks below the flag-only candidate rather than above it. ReplaySSM does not halve the per-step state store like bf16 - it deletes it on non-flush steps, keeping a small ring of (k, d, g) inputs and writing the full delta-rule state back only every L=16 steps. Upstream's own framing: 'GDN decode is memory-bound ... that per-step state store dominates HBM traffic ... On the non-flush steps the per-step state store becomes a small input append, which removes the dominant traffic.' The installed tree has only stage 1 of this series: the Mamba2 half landed (ops/replayssm_config.py and ops/selective_state_update_replayssm_output_only.py are present) but the GDN half is absent - grep -c replayssm returns 0 in v1/attention/backends/gdn_attn.py, model_executor/models/qwen3_5.py and layers/mamba/gdn/base.py. So --use-replayssm CANNOT be proposed as a config variant here: it dispatches into the Mamba2 selective_state_update kernel, not the GDN mixer (that is why it is not in this round's config proposals). Direct diff apply is not available: there is no git tree for vllm on this host (/sgl-workspace/vllm does not exist) and the installed site-packages tree is read-only, so a patch-capable specialist must port it. Port is Triton-only on the kernel side, which is genuinely promising for gfx90a, but note upstream measured H100 only - CDNA2 perf is unproven, and 'the baseline only becomes bandwidth-bound at large batch' means conc=64 must actually be past that knee. Composable with rank 1 later (narrowed checkpoint state + ring buffer).",
+    "repo": "vllm-project/vllm",
+    "number": 48792,
+    "pr_title": "[Kernel] ReplaySSM: cache SSM inputs for faster Gated DeltaNet standard decode",
+    "diff_url": "https://github.com/vllm-project/vllm/pull/48792.diff",
+    "head_sha": "9df5212b04e3e60714a697835b8c203d4b87269e",
+    "pr_state": "open (unmerged)",
+    "files_touched": [
+     "vllm/third_party/flash_linear_attention/ops/fused_recurrent_replayssm.py (+425, new)",
+     "vllm/v1/attention/backends/gdn_attn.py (+140,-1)",
+     "vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py (+152,-26)",
+     "vllm/model_executor/models/qwen3_5.py (+39,-9)",
+     "vllm/model_executor/layers/mamba/mamba_utils.py (+38)",
+     "vllm/model_executor/layers/mamba/gdn/base.py (+6,-1)",
+     "vllm/model_executor/layers/mamba/ops/replayssm_config.py (+14,-3)",
+     "vllm/config/vllm.py (+2,-1)",
+     "+4 test/bench files (15 files total)"
+    ],
+    "kb_evidence": [
+     "prior: ~29% of wall clock buys zero output tokens; decode-side traffic levers are worth roughly the same as prefill-side ones",
+     "prior: 784-token attention block size is inflated purely to match the mamba page size"
+    ],
+    "pr_evidence": [
+     {
+      "repo": "vllm-project/vllm",
+      "number": 48018,
+      "state": "merged",
+      "title": "ReplaySSM Mamba2 standard decode (stage 1 of the same split, landed as 866fea2b9)",
+      "url": "https://github.com/vllm-project/vllm/pull/48018",
+      "relevance": "Explains exactly why the installed tree has the ring-buffer plumbing for Mamba2 but not for GDN - the feature was split and only stage 1 is in 0.28.0+rocm723."
+     },
+     {
+      "repo": "vllm-project/vllm",
+      "number": 47576,
+      "state": "draft",
+      "title": "Full ReplaySSM design across Mamba2 and GDN, standard and speculative decode",
+      "url": "https://github.com/vllm-project/vllm/pull/47576",
+      "relevance": "Parent design PR; derivation in https://dao-lab.ai/blog/2026/replayssm/"
+     }
+    ],
+    "source_evidence": [
+     "/opt/envs/vllm/lib/python3.12/site-packages/vllm/model_executor/layers/mamba/ops/ (replayssm_config.py, selective_state_update_replayssm_output_only.py present; no fused_recurrent_replayssm.py)",
+     "/opt/envs/vllm/lib/python3.12/site-packages/vllm/v1/attention/backends/mamba_attn.py:171-195 (Mamba2-shaped ring: B_cache (ngroups, buffer_len, dstate))",
+     "/opt/envs/vllm/lib/python3.12/site-packages/vllm/config/cache.py:148-160 (use_replayssm / replayssm_buffer_len)"
+    ]
+   },
+   {
+    "name": "decoder_attn_triton_backend",
+    "rank": 3,
+    "verdict": "worth_a_bench",
+    "route": "bench_as_config",
+    "extra_args": "--attention-backend TRITON_ATTN",
+    "args_mode": "append",
+    "atomic": false,
+    "reason": "Zero numerical risk and independent of ranks 1-2, so it is the right third slot and the fallback if the accuracy gate rejects bf16 state. The current decoder backend was chosen by elimination, not merit: 'Found incompatible backend(s) [TURBOQUANT] with AttentionType.DECODER. Overriding with ROCM_ATTN out of potential backends: ['ROCM_ATTN', 'TRITON_ATTN']' (rocm.py:703), and ROCM_ATTN then fell back at runtime into the Triton chunked_prefill_paged_decode kernel (chunked_prefill_paged_decode.py:463) - the incumbent is already partly Triton. Prefill windows are ~29% of wall clock with near-total prefill/decode serialization, so prefill kernel cost is worth as much as decode-speed work. Scoped blast radius, verified in source: GDN layers never consult this config at all - MambaBase.get_attn_backend() (layers/mamba/abstract.py:81-83) returns get_mamba_attn_backend(self.mamba_type), a separate registry, and the global AttentionConfig.backend only feeds the standard attention path (v1/attention/selector.py:174-183). So the GDN kernels and the fp32/bf16 state traffic are untouched, and no AITER fmha_v3 hd256 path is reachable (platform law 11). Caveat on the ordering: TRITON_ATTN was listed as merely 'compatible', never measured here, so the sign of the gain is genuinely unknown - that is exactly what makes it cheap-and-safe rather than high-confidence.",
+    "kb_evidence": [
+     "prior: decoder backend selected by elimination; head_dim=256 is inside ROCM_ATTN's supported head sizes [32..256] but is the awkward size for the AITER ASM path"
+    ],
+    "pr_evidence": [
+     {
+      "repo": "vllm-project/vllm",
+      "number": 54194,
+      "state": "merged",
+      "title": "[Kernel] Make prefix-prefill tiling independent of the KV page size",
+      "url": "https://github.com/vllm-project/vllm/pull/54194",
+      "relevance": "Same failure mode this proposal routes around: with the attention block size pinned to 784 tokens to match the mamba page, page-size-coupled prefill tiling is unusually coarse. Whether ROCM_ATTN or TRITON_ATTN copes better with a 784-token page is the open question."
+     }
+    ],
+    "source_evidence": [
+     "runs/baseline/51ac28ff8aed4ad59746fdb889fae7bb/benchmark_vllm_20260915_103510/server.log: rocm.py:703 (backend override), qwen_gdn_linear_attn.py:163 ('Using Triton/FLA GDN prefill kernel (requested=auto, head_k_dim=128)')",
+     "/opt/envs/vllm/lib/python3.12/site-packages/vllm/model_executor/layers/mamba/abstract.py:81-83",
+     "/opt/envs/vllm/lib/python3.12/site-packages/vllm/v1/attention/selector.py:174-183",
+     "/opt/envs/vllm/lib/python3.12/site-packages/vllm/v1/attention/backends/rocm_attn.py:193"
+    ]
+   }
+  ],
+  "upstream_audit": [
+   {
+    "candidate": "VLLM_ENABLE_FLA_PACKED_RECURRENT_DECODE",
+    "verdict": "already_present",
+    "evidence": "/opt/envs/vllm/lib/python3.12/site-packages/vllm/envs.py:129 default True, read at /opt/envs/vllm/lib/python3.12/site-packages/vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py:489-491; the packed decode kernel name fused_recurrent_gated_delta_rule_packed_decode is what upstream cites as the ReplaySSM baseline",
+    "note": "Setting it is a no-op; only the OFF direction is testable and that is a regression probe, not a win. Target 4 answered."
+   },
+   {
+    "candidate": "async scheduling / chunked-prefill-decode overlap",
+    "verdict": "already_present",
+    "evidence": "/opt/envs/vllm/lib/python3.12/site-packages/vllm/config/vllm.py:1185-1234 sets async_scheduling=True when None unless pooling / non-EAGLE spec / unsupported executor (baseline dump shows speculative_config=None, DP=1, so none apply); /opt/envs/vllm/lib/python3.12/site-packages/vllm/v1/worker/gpu_model_runner.py:2167 keys the hybrid CPU-sync guard on `use_async_scheduling and mamba_cache_mode != 'align'`, and runs/baseline/51ac28ff8aed4ad59746fdb889fae7bb/benchmark_vllm_20260915_103510/server.log:14 shows mode 'align'",
+    "note": "Target 3 answered: the CPU-side overlap lever for hybrid GDN is already in the stack and explicitly patched for 'align' mode. Remaining prefill headroom is GPU-kernel-side, not scheduler-side. If the Coordinator can read the resolved config from a launch dump, confirm async_scheduling=True rather than inferring it."
+   },
+   {
+    "candidate": "AITER GDN/CDNA fast paths via env override",
+    "verdict": "not_applicable",
+    "evidence": "/opt/envs/vllm/lib/python3.12/site-packages/vllm/_aiter_ops.py:134-155 is_aiter_found_and_supported() returns get_cdna_version() > 2 gated only on IS_AITER_FOUND and is_rocm(); no env carve-out exists. VLLM_ROCM_USE_AITER=1 is ALREADY set in the base env (baseline_config.with_envs.yaml) and only adds 'should we use it' on top of 'can we', which gfx90a fails",
+    "note": "Target 5 answered NEGATIVE: no env-only route; enabling AITER GDN decode fast paths on gfx90a needs a source patch to aiter itself."
+   },
+   {
+    "candidate": "VLLM_GDN_DECODE_KERNEL=cuda (fused CUDA GDN decode)",
+    "verdict": "not_applicable",
+    "evidence": "runs/baseline/51ac28ff8aed4ad59746fdb889fae7bb/benchmark_vllm_20260915_103510/server.log: 'Falling back to the Triton GDN decode path: torch.ops._C.fused_gdn_decode_post_conv_mtp is not built' then 'GDN decode kernel: triton'; /opt/envs/vllm/lib/python3.12/site-packages/vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py:493-505 hard-raises if the env var is set explicitly and the op is missing",
+    "note": "The op is absent from this ROCm wheel, so no env value enables it - and forcing it turns a fallback into a startup crash. Excluded."
+   },
+   {
+    "candidate": "--enable-mamba-cache-stochastic-rounding + --mamba-ssm-cache-dtype float16",
+    "verdict": "not_applicable",
+    "evidence": "/opt/envs/vllm/lib/python3.12/site-packages/vllm/config/mamba.py:85-92 raises 'Stochastic rounding for Mamba cache is only supported on NVIDIA CUDA platforms' for any non-CUDA platform, and additionally requires is_device_capability_family(100) for the triton backend (cvt.rs PTX); /opt/envs/vllm/lib/python3.12/site-packages/vllm/config/vllm.py:1106-1115 requires mamba_ssm_cache_dtype=='float16'",
+    "note": "Numerically the most attractive way to de-risk fp16/bf16 state drift, but hard-locked to CUDA+Blackwell. This is also why float16 was not chosen for rank 1."
+   },
+   {
+    "candidate": "--use-replayssm as a plain config variant",
+    "verdict": "needs_patch",
+    "evidence": "Flag exists (/opt/envs/vllm/lib/python3.12/site-packages/vllm/config/cache.py:155-160) but the ring buffers are allocated in the Mamba2 backend for the Mamba2 state layout (/opt/envs/vllm/lib/python3.12/site-packages/vllm/v1/attention/backends/mamba_attn.py:171-195); 0 replayssm references in gdn_attn.py / qwen3_5.py / gdn/base.py",
+    "note": "Would not reach this model's GDN layers. Folded into rank 2 as the patch scope rather than wasted as a config slot."
+   },
+   {
+    "candidate": "gpu-memory-utilization / KV capacity tuning",
+    "verdict": "not_applicable",
+    "evidence": "scout prior: GPU KV cache usage peaks 38-57.3%, 'Waiting: 0 reqs' throughout, prefix hit rate 38-76%; base already runs --gpu-memory-utilization 0.95 (log api_utils.py:272)",
+    "note": "Explicitly skipped to free slots, per the scout's negative knowledge."
+   },
+   {
+    "candidate": "MTP / speculative decoding (Qwen3_5MTP)",
+    "verdict": "not_applicable_to_this_benchmark",
+    "evidence": "/opt/envs/vllm/lib/python3.12/site-packages/vllm/model_executor/models/qwen3_5_mtp.py exists and is registered; /opt/envs/vllm/lib/python3.12/site-packages/vllm/config/speculative.py:551-572 auto-derives n_predict from text_config.mtp_num_hidden_layers=1; 15 usable 'mtp.*' bf16 weights in the index",
+    "note": "Framework support IS present (contradicting the model_arch.json note), but the sealed corpus is random-token (RANDOM_RANGE_RATIO=1 per baseline_config.with_envs.yaml), which collapses draft acceptance - a measured number here could neither credit nor discredit it. Also note /opt/envs/vllm/lib/python3.12/site-packages/vllm/config/vllm.py:1158-1163: async scheduling stays enabled with MTP, so it would interact with the already-present overlap."
+   },
+   {
+    "candidate": "attention_config.backend_per_kind for a scoped decoder swap",
+    "verdict": "benchable_as_config_but_redundant",
+    "evidence": "/opt/envs/vllm/lib/python3.12/site-packages/vllm/config/attention.py:30-38 + /opt/envs/vllm/lib/python3.12/site-packages/vllm/v1/attention/selector.py:170-183 (per-KVCacheSpecKind override, kinds in v1/kv_cache_interface.py:128-138)",
+    "note": "A cleaner alternative to rank 3's global flag, but redundant here because GDN layers resolve through the separate mamba registry anyway (abstract.py:81-83), so the global flag has the same blast radius. Kept as a fallback if the global override is rejected by the selector at startup."
+   }
+  ],
+  "residual_questions": [
+   "PATCH-SCOPED for a patch-capable specialist, not a config slot: port PR 48792 (GDN ReplaySSM standard decode, head_sha 9df5212b04e3e60714a697835b8c203d4b87269e, 15 files) onto this tree. The Mamba2 stage is already present, the new kernel is pure Triton (no CDNA3 dependency), and it removes the dominant per-step state store instead of halving it. Verify the batch-size knee first - upstream notes 'the baseline only becomes bandwidth-bound at large batch' and only measured H100.",
+   "Is async_scheduling actually True at runtime in the baseline? I infer it from the default-on rule in config/vllm.py:1185-1234 (speculative_config=None, TP=DP=1 in the engine dump), but the string never appears in server.log. If the Coordinator can dump the resolved SchedulerConfig, confirm it - if it is somehow False, forcing it on becomes a real candidate against the 29% prefill dead time.",
+   "Does conc=64 sit past the knee where GDN decode is bandwidth-bound? If steady-state decode (729 tok/s) is dominated by the int8 GEMMs rather than the state store, rank 1's ceiling collapses toward the page-alignment effect alone and rank 2 should be de-prioritised.",
+   "If bf16 state passes throughput but fails a tightened accuracy floor: does the delta-rule recurrence accumulate in fp32 and only narrow the STORE (sub-1-ulp drift per step, recoverable), or read the state back as the operand dtype (drift compounds over 1024 steps)? The distinction decides whether a smaller step - e.g. bf16 state with a longer OSL accuracy probe - is acceptable. Not resolvable from vllm's Python layer alone; needs the FLA kernel's internal accumulator dtype read.",
+   "Which of the 360 prompts drive the 38-76% prefix-cache hit rate? If the random-token corpus is reusing prefixes, prefill is cheaper than the 5x38.5s accounting implies and the decode side deserves all remaining slots."
+  ],
+  "summary": "pr_monitor down; surveyed installed 0.28.0+rocm723 tree + GitHub API. Residual Q answered: FUSED_GDN_STATE_DTYPES=(fp32,bf16) whitelists bf16 GDN state (fp16 not); --mamba-ssm-cache-dtype overrides checkpoint fp32 with a warning only. Ranked: (1) bf16 state, benchable now; (2) port PR 48792 GDN ReplaySSM, top ceiling, needs patch; (3) TRITON_ATTN decoder, zero-numerics probe. Ruled out: async sched (on by default), CUDA GDN op (not built), stochastic rounding (CUDA-only), AITER CDNA2 gate, FLA packed decode."
+ }
+}

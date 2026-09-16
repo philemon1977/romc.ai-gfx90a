@@ -1,0 +1,97 @@
+MAGPIE_PYTHON=/opt/venv/bin/python cannot import Magpie; ignoring it and auto-detecting an interpreter that can. (A stale value is often baked into kernel-agent.env.sh when install.sh resolved it before Magpie was pip-installed.)
+MAGPIE_PYTHON=/opt/venv/bin/python cannot import Magpie; ignoring it and auto-detecting an interpreter that can. (A stale value is often baked into kernel-agent.env.sh when install.sh resolved it before Magpie was pip-installed.)
+Preflight: WARNING — ignoring unsupported kernel-agent env key PYTHONPATH from /home/qiba/ROCm.AI/hyperloom/session/runtime/kernel-agent.env.sh
+2026-09-15 16:16:35,344 hyperloom.orchestrator.actions.executors._grid_runner [WARNING] MAGPIE_PYTHON=/opt/venv/bin/python cannot import Magpie; ignoring it and auto-detecting an interpreter that can. (A stale value is often baked into kernel-agent.env.sh when install.sh resolved it before Magpie was pip-installed.)
+Preflight: claude_agent_sdk OK
+Preflight: openai_codex OK
+Preflight: openai OK
+Preflight: httpx OK
+Preflight: ~/.claude/config.json already points at upstream
+Preflight: platform [amd-server] — SMT off, NPS1 (2 NUMA nodes / 2 sockets), governor schedutil
+Preflight: WARNING — cpufreq governor is 'schedutil', not 'performance'; clock ramp can distort latency percentiles and roofline measurements
+Preflight: ray OK
+Preflight: benchmark_serving client deps OK
+Preflight: vllm importable (/opt/envs/vllm/bin/python3); the vllm platform confirms a ROCm build
+Preflight: WARNING — CLI(s) not on PATH: ['codex']. ClaudeBackend / CodexBackend may fall back to direct HTTP. Run src/hyperloom/agents/kernel/scripts/install.sh to bring them in.
+Preflight diagnostics:
+  asset_root          = /home/qiba/ROCm.AI/hyperloom/hyperloom/inference_optimizer
+  session_dir         = /home/qiba/ROCm.AI/hyperloom/session  (USER_DATA_PATH=/home/qiba/ROCm.AI/hyperloom/session, default=/workspace/hyperloom)
+  magpie_python       = /opt/envs/vllm/bin/python3
+  INFERENCEX_PATH     = /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966
+  aiter jit cache     = 124 .so / 1879 MB (WARM) at /opt/envs/vllm/lib/python3.12/site-packages/aiter/jit
+  cold_start_timeout  = 9000s
+  warm_timeout        = 7800s
+  ANTHROPIC_BASE_URL  = http://127.0.0.1:9100
+  kb_status           = OK
+  pr_monitor_status   = DEGRADED (ir3_auto)
+  kb_degraded_reason  = -
+  pr_degraded_reason  = ir3_auto
+  recipe_kb_queue     = pending=0 dead_letter=0 flushed=0 (root=/home/qiba/ROCm.AI/hyperloom/session/runtime/recipe_kb)
+2026-09-15 16:16:48,919 httpx [INFO] HTTP Request: GET http://127.0.0.1:9100/models "HTTP/1.1 405 Method Not Allowed"
+Preflight: catalog probe got HTTP 405 for http://127.0.0.1:9100/models; endpoint exposes no /models route
+Preflight: WARNING — gateway has no /models route (HTTP 404/405); cannot verify --claude-model='qwen3.8-flash-next'. Proceeding.
+Framework       : vllm
+GPU type        : <unset> (Magpie will auto-detect)
+WARN: --precision='fp8' but checkpoint dtype is 'compressed-tensors'; using --precision flag as specified.
+Workload        : ISL=1024 OSL=1024 MAX_MODEL_LEN=6144 (auto) PRECISION=fp8 FRAMEWORK_VERSION=0.28.0
+Session dir     : /home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161654Z-c63294cb
+Session id      : Ornith-1.5-397B-FP8_20260915T161654Z_2e8fbd36  (manifest label only)
+Session layout under /home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161654Z-c63294cb:
+  [ok] storage/
+  [ok] personas/
+  [ok] checkpoints/
+  [ok] kb/
+  [ok] findings/
+  [ok] reports/
+  [ok] agents/orchestration/
+  [ok] agents/critic/
+  [ok] agents/robustness/
+  [ok] runs/baseline/
+  [ok] runs/profile/
+  [ok] runs/backends/
+  [ok] runs/params/
+  [ok] runs/integrate/
+  [ok] runs/kernel_opt/
+  [ok] kernel-agent-workspace/
+  [ok] kernel-agent/
+  [ok] patches/
+  [ok] optimizer_runs/
+  [ok] manifest.json (written first)
+HYPERLOOM_LAUNCH event=launch pid=12899 session_dir=/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161654Z-c63294cb session_id=Ornith-1.5-397B-FP8_20260915T161654Z_2e8fbd36 run_log='' manifest=/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161654Z-c63294cb/manifest.json gpu_type='' framework=vllm model=/mnt/kioxia-cm6-3t8/ai/models/ornith-ai/Ornith-1.5-397B-FP8
+Launch info file: /home/qiba/ROCm.AI/hyperloom/session/optimizer_runs/launch_Ornith-1.5-397B-FP8-20260915_161634.json
+2026-09-15 16:16:54,640 hyperloom.common.gpu_partition [WARNING] GPU 0 reports compute-partition mode 'N/A', which this build does not know
+WARNING: DEGRADED MODE: model 'Ornith-1.5-397B-FP8' carries a multimodal signal (multimodal config key 'vision_config'; architecture 'Qwen3_5MoeForConditionalGeneration', model_type 'qwen3_5_moe') but exposes a text-generation path. Hyperloom is running it on the TEXT path only — any image/audio inputs are ignored, so benchmark numbers reflect the text decoder alone. Pass --no-allow-mm-text-fallback to fail-fast instead.
+2026-09-15 16:16:54,643 hyperloom.inference_optimizer.cli.model_gate [WARNING] DEGRADED MODE: model 'Ornith-1.5-397B-FP8' carries a multimodal signal (multimodal config key 'vision_config'; architecture 'Qwen3_5MoeForConditionalGeneration', model_type 'qwen3_5_moe') but exposes a text-generation path. Hyperloom is running it on the TEXT path only — any image/audio inputs are ignored, so benchmark numbers reflect the text decoder alone. Pass --no-allow-mm-text-fallback to fail-fast instead.
+2026-09-15 16:16:55,460 hyperloom.orchestrator.knowledge.recipe_kb_t0 [INFO] warm-start tier same_arch_class rejected all 1 candidates
+2026-09-15 16:16:55,467 hyperloom.orchestrator.knowledge.recipe_kb_t0 [INFO] warm-start tier same_gpu_isa rejected all 2 candidates
+2026-09-15 16:16:55,475 hyperloom.orchestrator.knowledge.recipe_kb_t0 [INFO] warm-start tier compatible_framework_version rejected all 2 candidates
+2026-09-15 16:16:55,482 hyperloom.orchestrator.knowledge.recipe_kb_t0 [INFO] warm-start config donor tier same_arch_class rejected all 1 candidates
+2026-09-15 16:16:55,489 hyperloom.orchestrator.knowledge.recipe_kb_t0 [INFO] warm-start config donor tier same_gpu_isa rejected all 2 candidates
+2026-09-15 16:16:55,496 hyperloom.orchestrator.knowledge.recipe_kb_t0 [INFO] warm-start config donor tier compatible_framework_version rejected all 2 candidates
+Recipe KB        : session_id=20260915T161654Z-c63294cb workload=inference:ornith-1.5-397b-fp8:unknown_gpu:vllm:qwen3_5_moe:qwen3_5moeforconditionalgeneration:0.28.0:fp8 (warm=seed_only, pitfalls=0, lessons=0)
+PR Monitor       : DISABLED (ir3_auto)
+Objective       : kind=gain_pct target_gain_pct=30.0
+Optimize phase  : ENABLED
+Research scout  : ENABLED at PRELUDE (re-dispatch every 3 explore rounds)
+Target advisory : ENABLED (External target gap injected into prompts; advisory-only)
+Recipe sediment : ENABLED (KEEP/REVERT provenance written to persistent recipe)
+2026-09-15 16:16:55,908 hyperloom.orchestrator.roles.critic_agent [INFO] critic_agent_backend static_context source=manifest keys=['framework', 'model', 'model_path', 'precision', 'tp', 'workload']
+2026-09-15 16:16:56,841 hyperloom.orchestrator.specialists.mcp_config [INFO] specialist_mcp_config: no MCP servers to wire (pr_monitor disabled?); skipping config file generation
+Backends        : orchestration=Claude(qwen3.8-flash-next), kernel=DISABLED, critic=critic-agent(kb=inmemory, protocol=anthropic, model=qwen3.8-flash-next, root=/home/qiba/ROCm.AI/hyperloom/hyperloom/agents/critic), robustness=robustness-agent(root=/home/qiba/ROCm.AI/hyperloom/hyperloom/agents/robustness)
+Max ticks       : unlimited (budget = 3.0h)
+Tick interval   : 30.0s
+
+[target_analysis] no --compare-against-gpu set; will write a marker JSON at $SESSION_DIR/target_analysis/target_baseline.json (reason=no_target_gpu_configured) — set --compare-against-gpu to fetch real InferenceX reference data.
+2026-09-15 16:16:56,841 hyperloom.orchestrator.loop.coordinator [INFO] Coordinator.run: SIGINT/SIGTERM handlers installed
+2026-09-15 16:16:56,850 hyperloom.orchestrator.loop.conversation [INFO] orchestration prompt mode=SEED seeded=False tick=1
+2026-09-15 16:16:56,859 claude_agent_sdk._internal.transport.subprocess_cli [INFO] Using bundled Claude Code CLI: /opt/envs/vllm/lib/python3.12/site-packages/claude_agent_sdk/_bundled/claude
+2026-09-15 16:17:04,067 hyperloom.orchestrator.roles.claude [INFO] claude tool_use validation failed: intents[0].payload must be object, got str
+2026-09-15 16:17:09,285 hyperloom.orchestrator.roles.claude [INFO] claude[conv] turn: resumed=False prev_session= new_session=a55ee5b7dca3 tool_blocks=3 intents=2 prompt_chars=4129
+2026-09-15 16:17:25,609 hyperloom.orchestrator.roles.critic_agent [INFO] critic_agent_backend turn=0 session=20260915T161654Z-c63294cb proposals=2 verdicts=[('approve', 'critic'), ('approve', 'critic')] kb_skipped=None required_context=[] finish=end_turn kb_priors=0
+2026-09-15 16:17:37,190 hyperloom.orchestrator.roles.robustness_agent [INFO] robustness_agent_backend turn=0 session=20260915T161654Z-c63294cb tick_index=1 intents=[('alert', 'high')] parse_warnings=0
+2026-09-15 16:17:37,199 hyperloom.orchestrator.actions.executors.target_analysis [INFO] target_analysis_executor: no compare_against_gpu set; writing skipped summary and returning
+2026-09-15 16:17:37,199 hyperloom.orchestrator.actions.executors.target_analysis [INFO] target_analysis_executor: status=skipped reason=model_mapping_miss rows=0 (model name mapping miss for '/mnt/kioxia-cm6-3t8/ai/models/ornith-ai/Ornith-1.5-397B-FP8'; no InferenceX name found)
+2026-09-15 16:17:37,362 hyperloom.orchestrator.actions.executors.baseline [INFO] baseline_executor: WARM start — aiter jit/build/ at /opt/envs/vllm/lib/python3.12/site-packages/aiter/jit has 124 .so, 1879 MB. Using default timeout=7800s.
+2026-09-15 16:17:37,387 hyperloom.orchestrator.actions.executors.baseline [INFO] baseline_executor: cold-start double-run not eligible (benchmark_script='' is not a Magpie built-in (['atom_mi300x.sh', 'atom_mi355x.sh', 'sglang_mi300x.sh', 'sglang_mi355x.sh', 'vllm_mi300x.sh', 'vllm_mi355x.sh'])); running single round.
+2026-09-15 16:17:37,387 hyperloom.orchestrator.loop.sub_agent_runner [INFO] task_progress: task=4b3db7114126433fa0dc48d723690ec8 unit=baseline_round label=single status=started agent=orchestration
+2026-09-15 16:17:37,393 hyperloom.orchestrator.actions.executors.baseline [INFO] baseline_executor: launching Magpie cmd=['/opt/envs/vllm/bin/python3', '-m', 'Magpie', '-v', 'benchmark', '--benchmark-config', '/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161654Z-c63294cb/runs/baseline/4b3db7114126433fa0dc48d723690ec8/baseline_config.with_envs.yaml', '--output-dir', '/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161654Z-c63294cb/runs/baseline/4b3db7114126433fa0dc48d723690ec8', '--run-mode', 'local'] output_dir=/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161654Z-c63294cb/runs/baseline/4b3db7114126433fa0dc48d723690ec8

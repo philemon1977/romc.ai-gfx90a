@@ -1,0 +1,34 @@
+{
+  "review_verdicts": [
+    {
+      "target_proposal_msg_id": "742c4f0dd5ca4783826b7e0a76946dc3",
+      "verdict": "approve",
+      "source": "critic",
+      "reasoning": "Baseline in PRELUDE is the natural exploration action after the reported enablement integrate_patch; classified as framework_op/exploration and therefore not gated by before/after promotion evidence.",
+      "confidence": "high",
+      "predicted_gain_pct": 0.0,
+      "kb_evidence": [],
+      "packet_evidence": [
+        "phase_orientation",
+        "review_constraints.proposal_action_classes",
+        "review_constraints.action_verdict_policy",
+        "proposals.payload.note"
+      ],
+      "risks": [],
+      "required_evidence": [],
+      "notes": [
+        "No KB contradiction was recalled.",
+        "Self-reported predicted_gain_pct is ignored; the baseline itself will produce the evidence."
+      ],
+      "failure_reason_code": "",
+      "persist_to_kb": false,
+      "topic": "prelude-baseline-post-enablement"
+    }
+  ],
+  "advice": [
+    {
+      "target_proposal_msg_id": "742c4f0dd5ca4783826b7e0a76946dc3",
+      "body_md": "Treat this as the post-enablement reference run; confirm the unset CUDA/HIP device overrides do not mask a ROCm logical-device regression when comparing future optimization attempts."
+    }
+  ]
+}

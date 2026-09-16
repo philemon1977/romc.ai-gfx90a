@@ -1,0 +1,39 @@
+benchmark:
+  framework: vllm
+  model: /mnt/stripe-3mix-3t2/models/davetha/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8
+  precision: bf16
+  run_mode: local
+  envs:
+    TP: 1
+    CONC: 64
+    ISL: 1024
+    OSL: 1024
+    RANDOM_RANGE_RATIO: 1
+    MAX_MODEL_LEN: 6144
+    VLLM_EXECUTE_MODEL_TIMEOUT_SECONDS: '1200'
+    PATH: /opt/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+    ROCR_VISIBLE_DEVICES: '0'
+    NUM_PROMPTS: 320
+    NUM_WARMUPS: 8
+    EXTRA_VLLM_ARGS: --trust-remote-code --language-model-only --quantization compressed-tensors
+      --safetensors-load-strategy eager --compilation-config {"cudagraph_mode":"FULL_DECODE_ONLY"}
+    VLLM_ROCM_USE_AITER: '1'
+    VLLM_ROCM_USE_AITER_LINEAR: '1'
+    VLLM_BIN: /usr/local/bin/vllm-wu1w
+    VLLM_CACHE_ROOT: /tmp/vllm-cache-hl
+    AITER_LOG_TUNED_CONFIG: '1'
+    MAGPIE_TRUST_REMOTE_CODE: '1'
+    BENCH_TRUST_REMOTE_CODE: '1'
+    HF_HUB_TRUST_REMOTE_CODE: '1'
+    RUN_EVAL: 'true'
+  gpu_selection:
+    auto: false
+  timeout_seconds: 7200
+  profiler:
+    torch_profiler:
+      enabled: false
+    system_profiler:
+      enabled: false
+    tracelens:
+      enabled: false
+  inferencex_path: /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966

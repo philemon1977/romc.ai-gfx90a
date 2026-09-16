@@ -1,0 +1,18 @@
+{
+  "all_concurrencies": [],
+  "best": null,
+  "fetched_at": "2026-09-14T13:49:44Z",
+  "query": {
+    "framework": "",
+    "gpu": "",
+    "isl": 0,
+    "model": "",
+    "osl": 0,
+    "precision": ""
+  },
+  "reason": "model_mapping_miss",
+  "row_count": 0,
+  "source": "https://inferencex.semianalysis.com/api/v1",
+  "status": "skipped",
+  "warning": "model name mapping miss for '/mnt/stripe-3mix-3t2/models/davetha/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8'; no InferenceX name found"
+}

@@ -1,0 +1,146 @@
+{
+  "kind": "coordinator_inbox",
+  "session_id": "20260914T134902Z-244d9455",
+  "decision_id": null,
+  "phase": "PRELUDE",
+  "merged_context": {
+    "model": "Qwen3.8-27B-ABLITERATED-W8A8-gdnint8",
+    "framework": "vllm",
+    "model_path": "/mnt/stripe-3mix-3t2/models/davetha/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8",
+    "tp": 1,
+    "workload": {
+      "conc": 64,
+      "isl": 1024,
+      "max_model_len": 6144,
+      "osl": 1024,
+      "precision": "bf16"
+    },
+    "precision": "bf16",
+    "phase": "PRELUDE",
+    "macro_cycle": 0
+  },
+  "missing_context": [
+    "model_family",
+    "scale",
+    "objective",
+    "baseline_tput",
+    "baseline_label",
+    "current_best",
+    "session_label"
+  ],
+  "required_context": [],
+  "proposals": [],
+  "messages": [],
+  "decision": {},
+  "kb_priors_by_proposal": {},
+  "kb_priors_for_decision": [],
+  "kb_priors_trace": {
+    "configured": true,
+    "mode": "per_decision",
+    "client_mode": "inmemory",
+    "scope_filter": {
+      "org": "hyperloom",
+      "framework": "vllm",
+      "model": "qwen3.8-27b-abliterated-w8a8-gdnint8",
+      "model_family": "qwen",
+      "workload": "{'conc': 64, 'isl': 1024, 'max_model_len': 6144, 'osl': 1024, 'precision': 'bf16'}",
+      "precision": "bf16"
+    },
+    "limit": 5,
+    "requests": [
+      {
+        "msg_id": null,
+        "topic": "decision-20260914T134902Z-244d9455",
+        "cache": "hit",
+        "count": 0
+      }
+    ]
+  },
+  "robustness_priors": [
+    {
+      "symptom_name": "log_error_pattern",
+      "severity": "high",
+      "tick_index": 10,
+      "timestamp_unix": 1789401231.0229318,
+      "summary": "log error pattern 'RuntimeError: Engine core initialization failed' matched 1 times",
+      "rca_text": "The evidence shows a single APIServer pid=22117 log line reporting “",
+      "intents": [
+        {
+          "intent_type": "alert",
+          "payload": {
+            "severity": "high",
+            "summary": "log error pattern 'RuntimeError: Engine core initialization failed' matched 1 times",
+            "detail": {
+              "symptom": "log_error_pattern",
+              "severity": "high",
+              "subject": {
+                "pattern": "RuntimeError: Engine core initialization failed"
+              },
+              "source": "local",
+              "evidence": {
+                "pattern": "RuntimeError: Engine core initialization failed",
+                "count": 1,
+                "samples": [
+                  "[server.log] (APIServer pid=22117) RuntimeError: Engine core initialization failed. See root cause above. Failed core proc(s): {}"
+                ]
+              },
+              "suggestion": "delegate(recover, force_gpu_cleanup=True) or escalate strategy"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "symptom_name": "deadline_hard_cutoff",
+      "severity": "high",
+      "tick_index": 12,
+      "timestamp_unix": 1789404271.2612503,
+      "summary": "hard deadline cutoff: only 4.5min remain (<= 5min); finalize now",
+      "rca_text": "The evidence shows remaining_minutes 4.5, which is below the 5.0-minute cutoff threshold, so the run is already inside the hard cutoff window. cumulative_gain_validated 0.0 means no validated improvement has been banked, so additional work has no guaranteed value. elapsed_minutes 38.1 and budget_minutes 180.0 indicate the cutoff is driven by an external deadline rather than exhaustion of the nominal budget. The root cause is therefore a time-boundary condition: any new task started now risks termination before it can produce validated gain. Finalize and report immediately, and do not start new tasks.",
+      "intents": [
+        {
+          "intent_type": "alert",
+          "payload": {
+            "severity": "high",
+            "summary": "hard deadline cutoff: only 4.5min remain (<= 5min); finalize now",
+            "detail": {
+              "symptom": "deadline_hard_cutoff",
+              "severity": "high",
+              "subject": {},
+              "source": "local",
+              "evidence": {
+                "elapsed_minutes": 38.1,
+                "remaining_minutes": 4.5,
+                "budget_minutes": 180.0,
+                "deadline_hard_cutoff_minutes": 5.0,
+                "cumulative_gain_validated": 0.0
+              },
+              "suggestion": "propose report immediately; any new task started now will be cut by the deadline supervisor"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "kb_read_skipped_reason": null,
+  "review_constraints": {
+    "allowed_verdicts": [
+      "advise",
+      "approve",
+      "needs_review",
+      "redirect",
+      "reject"
+    ],
+    "ceiling_importance": 0.84,
+    "approve_requires": [
+      "comparable_before_after_benchmark",
+      "accuracy_gate_or_waiver",
+      "active_path_proof_when_relevant",
+      "rollback_plan"
+    ]
+  },
+  "notes": [
+    "scope_cache_key=framework=vllm|model=qwen3.8-27b-abliterated-w8a8-gdnint8|model_family=qwen|org=hyperloom|precision=bf16|workload={'conc': 64, 'isl': 1024, 'max_model_len': 6144, 'osl': 1024, 'precision': 'bf16'}|limit=10",
+    "robustness_priors_injected count=2 path=/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/agents/robustness/findings/20260914T134902Z-244d9455.jsonl"
+  ]
+}

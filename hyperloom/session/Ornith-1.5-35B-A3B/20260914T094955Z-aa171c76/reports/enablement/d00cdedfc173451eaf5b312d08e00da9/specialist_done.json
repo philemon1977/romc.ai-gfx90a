@@ -1,0 +1,115 @@
+{
+  "_specialist_notes": [
+    "worktree_setup_failed:no_git_framework_source_root",
+    "patch_safety_numeric:1151.77 tok/s,4358.9ms,50.3ms"
+  ],
+  "allocated_gpu_ids": [
+    0,
+    1
+  ],
+  "artifacts_written": [],
+  "confidence": 0.93,
+  "domain": "enablement_specialist",
+  "empty": false,
+  "gap_canonical_id": "gap.enablement.unknown",
+  "new_findings": [
+    {
+      "accuracy_risk": "none",
+      "domain_tags": [
+        "enablement",
+        "magpie",
+        "rocm",
+        "gfx90a"
+      ],
+      "expected_impact": "Explains why 'unknown' symptom persisted: baseline never reached a server, so baseline_tput stayed 0.0 for 8+ coordinator rounds.",
+      "source": "runs/baseline/cd3d94f7.../baseline_stderr.log + vllm/model_executor/models/registry.py + reproducible probes in this run (see per-finding sources)",
+      "what": "The launch failure is NOT a model/vLLM gap. The model (Qwen3_5MoeForConditionalGeneration / qwen3_5_moe, hybrid 30 linear-attn + 10 full-attn, 256-expert MoE) is natively supported by vLLM 0.28.0+rocm723 and resolves at runtime. There are THREE stacked harness-layer blockers in Magpie's benchmark CHILD ENV, all now localized and the first three cleared: (B1, attempt-1, still live in tree) no gfx90a runner type in image_selector; (B2) host-physical HIP_VISIBLE_DEVICES=2,3 vs the ROCR_VISIBLE_DEVICES=0,1 GPU lease; (B3) the session-injected PATH=/opt/venv/bin:... which contains no vllm/hf/transformers."
+    },
+    {
+      "accuracy_risk": "none (env/child-process plumbing only; no numerical path change)",
+      "domain_tags": [
+        "rocm",
+        "visible-devices",
+        "hip",
+        "magpie",
+        "enablement"
+      ],
+      "expected_impact": "Mandatory: without it no server ever initialises, so the baseline and every downstream proposal measure nothing.",
+      "source": "scratch/gpuprobe runs + scratch/neg2/server.log:54,78 + /opt/envs/vllm/lib/python3.12/site-packages/vllm/platforms/rocm.py:128-158 + Magpie/modes/benchmark/benchmarker.py:776,800 (env=os.environ.copy() then benchmark.envs applied verbatim)",
+      "what": "B2 mechanism (this attempt's primary find): ROCR_VISIBLE_DEVICES filters at the HSA layer AND renumbers the surviving agents to 0..N-1. HIP_VISIBLE_DEVICES is applied on top of that already-remapped list, so a host-physical HIP pin (2,3) with ROCR=0,1 selects NOTHING. torch.cuda.device_count() still reports 2 (from ROCR's count) while every allocation dies with 'RuntimeError: No CUDA GPUs are available', and vLLM's worker startup surfaces it as 'Engine core initialization failed'. Reproduced both ways: isolation probe (HIP=2,3+ROCR=0,1 -> FAIL; HIP=0,1 or unset -> 2x MI250X gfx90a + matmul OK) and negative control NEG-2 (ORIGINAL Magpie script + a healthy PATH + HIP=2,3/ROCR=0,1 -> rc=1, worker RuntimeError at scratch/neg2/server.log:54). vllm/platforms/rocm.py:_sync_hip_cuda_env_vars only cross-checks HIP vs CUDA and cannot see this because ROCR is a different layer."
+    },
+    {
+      "accuracy_risk": "none",
+      "domain_tags": [
+        "path",
+        "magpie",
+        "inferencex",
+        "enablement"
+      ],
+      "expected_impact": "Unblocks both the server phase and the throughput client phase.",
+      "source": "scratch/neg1/out.log:28 + probe: env -i PATH=<baseline PATH> -> 'vllm MISSING', python3=/opt/venv/bin/python3, import vllm -> ModuleNotFoundError; and InferenceX/utils/bench_serving/benchmark_serving.py --help failing under unpatched PATH vs succeeding with /opt/envs/vllm/bin prepended",
+      "what": "B3 mechanism (independent, and the failure that appears immediately behind B2): the InferenceX/Magpie vllm_mi300x.sh launches 'setsid vllm serve' and runs the serving client with a bare 'python3'. The session YAML injects PATH=/opt/venv/bin:/usr/local/sbin:...:/bin, but /opt/venv has no vllm, no hf and no transformers, so the server phase dies in ~2s with 'setsid: failed to execute vllm: No such file or directory' (NEG-1, rc=1) and the client phase dies on 'ModuleNotFoundError: No module named huggingface_hub'. Magpie itself runs from /opt/envs/vllm/bin/python3, i.e. the correct framework env was known at runtime but never propagated to the child."
+    },
+    {
+      "accuracy_risk": "none",
+      "domain_tags": [
+        "enablement",
+        "vllm",
+        "rocm",
+        "e2e-validation"
+      ],
+      "expected_impact": "Raises the combo from non-runnable (0.0 tok/s baseline, 8 denied coordinator rounds) to measurably serving; unblocks the baseline gate.",
+      "source": "scratch/ixrun/ws/server.log, scratch/completion.json, scratch/e2e2/inferencex_result.json (date 20260914-114227)",
+      "what": "DELIVERABLE VERIFIED END-TO-END: with patch 003 applied (i.e. the two new Magpie helpers repairing the child env), the real serving path ran on my leased cards \u2014 TP2 + expert-parallel vLLM 0.28.0 on 2x MI250X booted ('Resolved architecture: Qwen3_5MoeForConditionalGeneration', CUDA-graph capture complete, /health 200), generated correct text ('The capital of France is' -> ' Paris.', 16 tok in 2.3s), and completed a full Magpie/InferenceX benchmark_serving run: 64/64 successful requests, 56.9s, output 1151.77 tok/s, total 2303.54 tok/s, mean TTFT 4358.9ms, mean TPOT 50.3ms at concurrency 64 with ISL/OSL 1024/1024 and max_model_len 6144. These are MY validation numbers on my cards for the runnability gate, NOT the sealed baseline (the coordinator owns that measurement)."
+    },
+    {
+      "accuracy_risk": "none",
+      "domain_tags": [
+        "magpie",
+        "patch-propagation"
+      ],
+      "expected_impact": "Keeps future enablement edits from landing in a file that gets overwritten each run.",
+      "source": "Magpie/modes/benchmark/benchmarker.py:546-570 and :704-770 + ls of InferenceX benchmarks dir + grep gfx90a in live image_selector.py",
+      "what": "Patch-propagation note for the next round: Magpie._prepare_benchmark_scripts() re-copies Magpie/scripts/benchmark/*.sh over the InferenceX cache on EVERY run, so editing only the .cache/InferenceX@3d55815.../benchmarks copy would be silently reverted. The durable place is the Magpie package. Script selection is deterministic here: priority-2 native 'benchmarks/gptoss_bf16_mi300x.sh' does not exist, so priority 3 selects the (patched) Magpie generic vllm_mi300x.sh. Attempt-1's image_selector gfx90a alias is still present at Magpie/modes/benchmark/image_selector.py:139 (image_selector.py.orig backup alongside), i.e. the REVERT concerned the deeper layers, not that line."
+    },
+    {
+      "accuracy_risk": "none for throughput; blocks the gsm8k accuracy read",
+      "domain_tags": [
+        "lm-eval",
+        "eval",
+        "network",
+        "magpie"
+      ],
+      "expected_impact": "Determines whether the accuracy floor can be measured at all this session; throughput gate is unaffected.",
+      "source": "/opt/envs/vllm/bin/python3 -c 'import lm_eval' -> ModuleNotFoundError; /tmp/lmeval{,2,3,4,5}.log; Magpie/scripts/benchmark/vllm_mi300x.sh:148-158; InferenceX benchmarks/benchmark_lib.sh:870-887 and :1767-1783",
+      "what": "Residual RISK (not a code gap, and not fixed by patch 003): the baseline config sets RUN_EVAL=true, vllm_mi300x.sh does 'run_eval ... || exit $?' so an eval-phase failure fails the whole run even after throughput already succeeded, and lm_eval is NOT importable in /opt/envs/vllm. InferenceX's _install_lm_eval_deps() cannot fetch it on this host right now: pip fails against both mirrors.aliyun.com and pypi.org with 'Connection broken: IncompleteRead/BrokenPipe/ConnectionReset', and the stale mirror additionally reports ResolutionImpossible for the 'api' extra. The harness installs it itself (pip install --break-system-packages 'lm-eval[api]' then a pinned --no-deps force-reinstall of EleutherAI/lm-evaluation-harness@b315ef3b), so a reachable index is the only requirement."
+    },
+    {
+      "accuracy_risk": "low-moderate: split-KV and QuickReduce at world>=4 change summation order, so temp=0 token-exact comparability against an older baseline breaks (accuracy floor itself unaffected)",
+      "domain_tags": [
+        "gfx90a",
+        "aiter",
+        "moe-config",
+        "perf-levers"
+      ],
+      "expected_impact": "Points the explore/static_recon rounds at the levers that actually apply to this host.",
+      "source": "vllm/_aiter_ops.py:134-155 + vllm/model_executor/layers/mi250_kernels.py + vllm/v1/attention/ops/rocm_splitkv_pa.py + scratch/ixrun/ws/server.log and 78b25f.../scratch/server3.log warnings",
+      "what": "Perf-lever map for whoever follows (enablement is done, so this is hand-off, not this round's deliverable): AITER is hard-gated off on gfx90a in this build (vllm/_aiter_ops.py:134-155 returns get_cdna_version() > 2, i.e. CDNA3+ only), so VLLM_ROCM_USE_AITER=1 is a no-op on MI250X \u2014 confirmed live: 'Final IR op priority ... rms_norm=[native]'. In-tree MI250X paths DO exist and are env-gated: vllm/model_executor/layers/mi250_kernels.py (MI250_GATE_GEMV) and vllm/v1/attention/ops/rocm_splitkv_pa.py (VLLM_ROCM_SPLITKV_PA). Also observed: 'Config file not found at vllm/model_executor/layers/fused_moe/configs/E=128,N=512,device_name=AMD_Instinct_MI250X_MI250.json' -> MoE is running on default (untuned) configs, and 'Cannot use ROCm custom paged attention kernel, falling back to Triton'."
+    }
+  ],
+  "patch_grounding": {
+    "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-35B-A3B/20260914T094955Z-aa171c76/runs/specialist/d00cdedfc173451eaf5b312d08e00da9/patches/003_rocm_visible_devices_logical_repin.patch": "applies"
+  },
+  "patches_written": [
+    "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-35B-A3B/20260914T094955Z-aa171c76/runs/specialist/d00cdedfc173451eaf5b312d08e00da9/patches/003_rocm_visible_devices_logical_repin.patch"
+  ],
+  "proposal_set": [],
+  "residual_questions": [
+    "Is the gsm8k eval part of the RUNNABILITY gate for this enablement round? If yes, the host needs a reachable PyPI index (or a preinstalled lm-eval): InferenceX auto-installs it inside run_eval, but pip currently fails on both mirrors.aliyun.com and pypi.org with connection resets. Suggested one-time command if the Coordinator has a working egress/proxy: python3 -m pip install --no-cache-dir --retries 10 'lm-eval[api]'.",
+    "Should HIP_VISIBLE_DEVICES be removed from the pod/launcher env entirely? Patch 003 repairs it per-child (safe, non-invasive), but the root inconsistency is that the container entrypoint exports host-physical HIP ids while hyperloom pins logical ROCR ids for the lease.",
+    "The two Magpie helpers are framework-generic; only the ROCm/ROCR alignment branch is exercised on NVIDIA-free hosts. Confirm no CI expects the old 'only repin when HIP is unset' behaviour in vllm_mi300x.sh."
+  ],
+  "setup_commands": [],
+  "summary": "Made Ornith-1.5-35B-A3B + vLLM RUNNABLE, attacking a different (deeper) layer than the reverted attempt-1 patch. Attempt 1's gfx90a->mi300x runner alias is still live in the tree, so the real remaining blockers were two stacked Magpie CHILD-ENV bugs: (B2) the pod exports host-physical HIP_VISIBLE_DEVICES=2,3 while the lease pins ROCR_VISIBLE_DEVICES=0,1 \u2014 ROCR filters and renumbers at HSA, so HIP selects nothing -> 'RuntimeError: No CUDA GPUs are available' / 'Engine core initialization failed'; (B3) the injected PATH (/opt/venv/bin, no vllm/hf/transformers) -> 'setsid: failed to execute vllm: No such file or directory'. Each was proven independently fatal by negative control against the ORIGINAL scripts (scratch/neg1 rc=1 in ~2s, scratch/neg2 rc=1 worker RuntimeError). Patch 003 adds align_rocm_visible_devices() + ensure_framework_env_on_path() at _build_local_command, the single funnel every local server/client phase passes through, and hardens Magpie/scripts/benchmark/vllm_mi300x.sh, whose existing logic only repinned HIP when HIP was UNSET and so could never repair an already-set physical id. Verified on my cards: real TP2/EP vLLM server booted, CUDA graphs captured, /health 200, correct text generation, and a full Magpie/InferenceX benchmark_serving run completed 64/64 requests at 1151.77 tok/s output (TTFT 4358.9ms, TPOT 50.3ms) \u2014 my runnability numbers, not the sealed baseline. Cleared failure: child sees 0 usable GPUs + framework CLI missing. Next (deeper) failure: the eval stage only \u2014 lm_eval is not installed and pip cannot reach an index from this host; throughput gate is unaffected. GPU/cards left clean, no processes of mine running.",
+  "ts": "2026-09-14T11:47:08.119478+00:00"
+}

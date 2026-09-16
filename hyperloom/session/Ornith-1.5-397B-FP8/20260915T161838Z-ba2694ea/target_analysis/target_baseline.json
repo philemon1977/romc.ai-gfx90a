@@ -1,0 +1,18 @@
+{
+  "all_concurrencies": [],
+  "best": null,
+  "fetched_at": "2026-09-15T16:19:25Z",
+  "query": {
+    "framework": "",
+    "gpu": "",
+    "isl": 0,
+    "model": "",
+    "osl": 0,
+    "precision": ""
+  },
+  "reason": "model_mapping_miss",
+  "row_count": 0,
+  "source": "https://inferencex.semianalysis.com/api/v1",
+  "status": "skipped",
+  "warning": "model name mapping miss for '/mnt/kioxia-cm6-3t8/ai/models/ornith-ai/Ornith-1.5-397B-FP8'; no InferenceX name found"
+}

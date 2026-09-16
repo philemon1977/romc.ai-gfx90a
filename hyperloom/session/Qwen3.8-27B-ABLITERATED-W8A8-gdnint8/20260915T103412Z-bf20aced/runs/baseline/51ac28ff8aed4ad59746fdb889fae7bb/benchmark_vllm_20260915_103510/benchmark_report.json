@@ -1,0 +1,72 @@
+{
+  "success": true,
+  "framework": "vllm",
+  "model": "/mnt/stripe-3mix-3t2/models/davetha/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8",
+  "throughput": {
+    "request_throughput": 0.500536116969297,
+    "output_throughput": 512.5489837765601,
+    "total_token_throughput": 1025.0979675531203,
+    "completed_requests": 320,
+    "total_input_tokens": 327680,
+    "total_output_tokens": 327680,
+    "duration_seconds": 639.3145052899927
+  },
+  "latency": {
+    "ttft": {
+      "mean_ms": 6438.83871172502,
+      "median_ms": 3451.299113999994,
+      "p99_ms": 34512.50279330852,
+      "std_ms": 7620.795580228435
+    },
+    "tpot": {
+      "mean_ms": 118.47482456141253,
+      "median_ms": 121.2011725317719,
+      "p99_ms": 122.77951176996729,
+      "std_ms": 7.233642066295977
+    },
+    "itl": {
+      "mean_ms": 118.47482482351549,
+      "median_ms": 92.26306049822597,
+      "p99_ms": 944.0104170289123,
+      "std_ms": 141.22190323959023
+    },
+    "e2el": {
+      "mean_ms": 127638.58423805004,
+      "median_ms": 127426.37183599436,
+      "p99_ms": 158989.5337332753,
+      "std_ms": 11479.15691369463
+    }
+  },
+  "kernel_summary": [],
+  "top_bottlenecks": [],
+  "tracelens_analysis": null,
+  "gap_analysis": null,
+  "gpu_monitor": {
+    "sample_count": 1536,
+    "duration_sec": 3314.15,
+    "temperature_c": {
+      "min": 45.0,
+      "max": 50.0,
+      "avg": 47.0
+    },
+    "gpu_clock_mhz": {
+      "min": 800,
+      "max": 800,
+      "avg": 800.0
+    },
+    "mem_clock_mhz": {
+      "min": 1600,
+      "max": 1600,
+      "avg": 1600.0
+    },
+    "power_watts": {
+      "min": 96.0,
+      "max": 98.0,
+      "avg": 97.0
+    }
+  },
+  "workspace_dir": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260915T103412Z-bf20aced/runs/baseline/51ac28ff8aed4ad59746fdb889fae7bb/benchmark_vllm_20260915_103510",
+  "execution_time": 3316.679330587387,
+  "profiling_enabled": false,
+  "errors": []
+}

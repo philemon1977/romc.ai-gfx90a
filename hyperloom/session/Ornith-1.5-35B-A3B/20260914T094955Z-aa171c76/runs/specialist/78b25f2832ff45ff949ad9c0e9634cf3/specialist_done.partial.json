@@ -1,0 +1,52 @@
+{
+  "intent_type": "specialist_done",
+  "payload": {
+    "confidence": 0.9,
+    "domain": "enablement_specialist",
+    "empty": false,
+    "gap_canonical_id": "gap.enablement.unknown",
+    "new_findings": [
+      {
+        "what": "The reported 'vllm cannot launch Ornith-1.5-35B-A3B: unknown' is NOT a model/vLLM gap at all. It is a Magpie harness gap: Magpie's InferenceX benchmark path aborts before launching any server because ImageSelector.get_runner_type() has no entry for gfx90a (AMD MI250X / CDNA2) and raises 'ValueError: No runner type found for gfx90a' at Magpie/modes/benchmark/image_selector.py:151, called from benchmarker.py:544 via run() step 2 (line 154). failure_kind should be 'import_error/harness_arch_table' rather than 'unknown'.",
+        "source": "/opt/envs/vllm/lib/python3.12/site-packages/Magpie/modes/benchmark/image_selector.py:122-155 + Magpie/modes/benchmark/benchmarker.py:154,540-544 + runs/baseline/cd3d94f7ca294c10aaccfa48beae0663/baseline_stderr.log",
+        "expected_impact": "Unblocks the entire baseline measurement: without it the coordinator never starts the server, so baseline_throughput = 0 and every downstream proposal has nothing to compare against.",
+        "accuracy_risk": "none",
+        "domain_tags": ["magpie", "inferencex", "enablement", "gfx90a", "mi250x"]
+      },
+      {
+        "what": "The model itself IS natively supported by the installed stack. config.json declares architectures=['Qwen3_5MoeForConditionalGeneration'] / model_type='qwen3_5_moe' (hybrid: 30 linear_attention + 10 full_attention layers, 256 experts / 8 active, head_dim 256, mrope_interleaved). vLLM 0.28.0+rocm723 registers it at registry.py:593 and 'Resolved architecture: Qwen3_5MoeForConditionalGeneration' succeeds at runtime. No remote-code and no new model file is needed.",
+        "source": "/opt/envs/vllm/lib/python3.12/site-packages/vllm/model_executor/models/registry.py:203-205,592-596 + probe server.log",
+        "expected_impact": "Rules out Rung 2-5 work on the model arch; the enablement delta is purely harness-side.",
+        "accuracy_risk": "none",
+        "domain_tags": ["vllm", "qwen3_5_moe", "registry"]
+      },
+      {
+        "what": "The runner_type -> benchmark script chain is fully satisfiable once gfx90a aliases to 'mi300x': Magpie ships scripts/benchmark/vllm_mi300x.sh (generic, model-agnostic vllm serve + benchmark_serving + run_eval) and _get_benchmark_script() priority-2 native lookup 'gptoss_bf16_mi300x.sh' does NOT exist (only deprecated/gptoss_fp4_mi300x.sh), so selection deterministically lands on Magpie's own generic vllm_mi300x.sh. No InferenceX script is needed.",
+        "source": "/opt/envs/vllm/lib/python3.12/site-packages/Magpie/scripts/benchmark/vllm_mi300x.sh + Magpie/modes/benchmark/benchmarker.py:1428-1491 + .cache/InferenceX@3d55815.../benchmarks/",
+        "expected_impact": "Confirms the single-file alias is sufficient to reach an actual server boot, not just past the runner gate.",
+        "accuracy_risk": "none",
+        "domain_tags": ["magpie", "script-selection"]
+      },
+      {
+        "what": "The injected process env is internally inconsistent for ROCm: the dispatcher sets CUDA_VISIBLE_DEVICES=2,3 AND HIP_VISIBLE_DEVICES=2,3 while ROCR_VISIBLE_DEVICES=0,1. vLLM 0.28 raises 'ValueError: Inconsistent GPU visibility env vars: HIP_VISIBLE_DEVICES vs CUDA_VISIBLE_DEVICES' from platforms/rocm.py:143 _sync_hip_cuda_env_vars if the stale CUDA_VISIBLE_DEVICES is left set alongside HIP_VISIBLE_DEVICES. On this host ROCR_VISIBLE_DEVICES is the outer filter, so the consistent choice is to unset CUDA_VISIBLE_DEVICES and set HIP_VISIBLE_DEVICES to the logical range 0..N-1.",
+        "source": "observed probe abort in scratch/launcher.out + /opt/envs/vllm/lib/python3.12/site-packages/vllm/platforms/rocm.py:130-150",
+        "expected_impact": "Prevents a second, deeper boot failure immediately behind the runner-type gate.",
+        "accuracy_risk": "none",
+        "domain_tags": ["rocm", "env", "visible-devices"]
+      },
+      {
+        "what": "AITER is hard-gated OFF on gfx90a in this vLLM build: _aiter_ops.is_aiter_found_and_supported() returns get_cdna_version() > 2, i.e. CDNA3+ only, so VLLM_ROCM_USE_AITER=1 emitted by vllm_mi300x.sh is a no-op on MI250X (falls back to native/Triton). But IR op priority still reports rms_norm=['aiter','native'] on this path, and the model already has gfx90a-specific optimizations vendored in-tree (vllm/model_executor/layers/mi250_kernels.py with MI250_GATE_GEMV, vllm/v1/attention/ops/rocm_splitkv_pa.py with VLLM_ROCM_SPLITKV_PA).",
+        "source": "/opt/envs/vllm/lib/python3.12/site-packages/vllm/_aiter_ops.py:134-155 + vllm/model_executor/layers/mi250_kernels.py + vllm/v1/attention/ops/rocm_splitkv_pa.py",
+        "expected_impact": "Tells the next round the real perf levers on this host are the in-tree MI250X env gates (MI250_GATE_GEMV, VLLM_ROCM_SPLITKV_PA, QuickReduce), not AITER.",
+        "accuracy_risk": "low (split-KV and QuickReduce w>=4 change summation order, so temp=0 token-exact comparability vs an old baseline breaks; the accuracy floor itself is unaffected)",
+        "domain_tags": ["aiter", "gfx90a", "perf-levers"]
+      }
+    ],
+    "patches_written": [
+      "patches/001_gfx90a_runner_family_mi300x.patch"
+    ],
+    "proposal_set": [],
+    "residual_questions": [],
+    "summary": "ROOT CAUSE FOUND AND PATCHED: the launch failure is not the model or vLLM. Magpie's InferenceX benchmarker aborts at step 2 (_get_runner_type -> ImageSelector.get_runner_type, image_selector.py:151) because the arch->runner table has no gfx90a entry, so no vLLM server is ever started and the symptom was recorded as 'unknown'. Authored a minimal Magpie patch aliasing gfx90a (CDNA2/MI250X) to the maintained 'mi300x' generic runner family + tolerating the 'gfx90a:sramecc+:xnack-' triple form; verified with `patch -p1 --dry-run` against the live site-packages tree. Cleared failure: 'No runner type found for gfx90a'. Next (deeper) failure now being probed live: stale CUDA_VISIBLE_DEVICES=2,3 vs HIP_VISIBLE_DEVICES=2,3 conflict in vllm/platforms/rocm.py:143, then real model boot (Qwen3_5MoeForConditionalGeneration, hybrid linear+full attention, 256-expert MoE, TP2 on 2x MI250X 64GB)."
+  }
+}

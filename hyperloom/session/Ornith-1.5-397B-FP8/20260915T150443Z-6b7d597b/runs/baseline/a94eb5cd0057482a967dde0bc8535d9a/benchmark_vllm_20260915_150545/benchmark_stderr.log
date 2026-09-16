@@ -1,0 +1,30 @@
++ [[ all == \s\e\r\v\e\r ]]
++ [[ all == \a\l\l ]]
++ SERVER_PID=5815
++ [[ all == \a\l\l ]]
++ trap 'magpie_stop_benchmark_server_stack "$SERVER_PID"' EXIT INT TERM
++ wait_for_server_ready --port 8888 --server-log /home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T150443Z-6b7d597b/runs/baseline/a94eb5cd0057482a967dde0bc8535d9a/benchmark_vllm_20260915_150545/server.log --server-pid 5815
++ local port=
++ local server_log=
++ local server_pid=
++ local sleep_interval=5
++ [[ 6 -gt 0 ]]
++ case $1 in
++ port=8888
++ shift 2
++ [[ 4 -gt 0 ]]
++ case $1 in
++ setsid vllm serve /mnt/kioxia-cm6-3t8/ai/models/ornith-ai/Ornith-1.5-397B-FP8 --port 8888 --tensor-parallel-size=8 --gpu-memory-utilization 0.95 --max-model-len 6144 --trust-remote-code
++ server_log=/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T150443Z-6b7d597b/runs/baseline/a94eb5cd0057482a967dde0bc8535d9a/benchmark_vllm_20260915_150545/server.log
++ shift 2
++ [[ 2 -gt 0 ]]
++ case $1 in
++ server_pid=5815
++ shift 2
++ [[ 0 -gt 0 ]]
++ [[ -z 8888 ]]
++ [[ -z /home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T150443Z-6b7d597b/runs/baseline/a94eb5cd0057482a967dde0bc8535d9a/benchmark_vllm_20260915_150545/server.log ]]
++ [[ -z 5815 ]]
++ wait_for_ready --endpoint http://0.0.0.0:8888/health --log /home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T150443Z-6b7d597b/runs/baseline/a94eb5cd0057482a967dde0bc8535d9a/benchmark_vllm_20260915_150545/server.log --pid 5815 --sleep-interval 5
++ set +x
+Process died before http://0.0.0.0:8888/health became ready.

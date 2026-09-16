@@ -1,0 +1,11 @@
+{
+  "event": "launch",
+  "pid": 1967,
+  "session_dir": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T173139Z-3ae15c89",
+  "session_id": "Qwen3.8-27B-ABLITERATED-W8A8-gdnint8_20260914T173139Z_e9102f01",
+  "run_log": "",
+  "manifest": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T173139Z-3ae15c89/manifest.json",
+  "gpu_type": "",
+  "framework": "vllm",
+  "model": "/mnt/stripe-3mix-3t2/models/davetha/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8"
+}

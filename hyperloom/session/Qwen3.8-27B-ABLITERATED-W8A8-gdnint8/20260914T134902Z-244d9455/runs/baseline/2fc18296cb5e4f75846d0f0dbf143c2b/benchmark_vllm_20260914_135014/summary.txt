@@ -1,0 +1,52 @@
+============================================================
+Benchmark Result: VLLM
+============================================================
+Model: /mnt/stripe-3mix-3t2/models/davetha/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8
+Status: FAILED
+
+GPU Hardware Monitoring:
+  Samples: 6 (10.8s)
+  Temperature: 46.0°C - 46.0°C (avg: 46.0°C)
+  GPU Clock: 800 - 800 MHz (avg: 800)
+  Power: 96.0 - 97.0 W (avg: 96.8)
+
+Errors:
+  - Benchmark process failed with code 1
+  - stderr: + [[ all == \s\e\r\v\e\r ]]
++ [[ all == \a\l\l ]]
++ SERVER_PID=11051
++ [[ all == \a\l\l ]]
++ trap 'magpie_stop_benchmark_server_stack "$SERVER_PID"' EXIT INT TERM
++ wait_for_server_ready --port 8888 --server-log /home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/baseline/2fc18296cb5e4f75846d0f0dbf143c2b/benchmark_vllm_20260914_135014/server.log --server-pid 11051
++ local port=
++ local server_log=
++ local server_pid=
++ local sleep_interval=5
++ [[ 6 -gt 0 ]]
++ case $1 in
++ port=8888
++ shift 2
++ [[ 4 -gt 0 ]]
++ case $1 in
++ server_log=/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/baseline/2fc18296cb5e4f75846d0f0dbf143c2b/benchmark_vllm_20260914_135014/server.log
++ shift 2
++ [[ 2 -gt 0 ]]
++ case $1 in
++ server_pid=11051
++ shift 2
++ [[ 0 -gt 0 ]]
++ [[ -z 8888 ]]
++ [[ -z /home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/baseli
+  - inferencex_result.json not found - benchmark may have failed locally
+  - stderr (last 500 chars): er.log --pid 11051 --sleep-interval 5
++ set +x
++ setsid /usr/local/bin/vllm-wu1w serve /mnt/stripe-3mix-3t2/models/davetha/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8 --port 8888 --tensor-parallel-size=1 --gpu-memory-utilization 0.95 --max-model-len 6144 --trust-remote-code --trust-remote-code --language-model-only --quantization compressed-tensors --safetensors-load-strategy eager --compilation-config '{"cudagraph_mode":"FULL_DECODE_ONLY"}'
+Process died before http://0.0.0.0:8888/health became ready.
+
+  - server.log errors: Traceback (most recent call last):
+    raise RuntimeError(
+RuntimeError: HIP_VISIBLE_DEVICES contains more devices than ROCR_VISIBLE_DEVICES
+
+Workspace: /home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/baseline/2fc18296cb5e4f75846d0f0dbf143c2b/benchmark_vllm_20260914_135014
+Execution time: 13.32s
+============================================================

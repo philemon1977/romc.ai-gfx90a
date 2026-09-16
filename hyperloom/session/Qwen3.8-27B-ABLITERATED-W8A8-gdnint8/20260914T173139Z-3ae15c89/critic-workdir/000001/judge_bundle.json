@@ -1,0 +1,80 @@
+{
+  "kind": "coordinator_inbox",
+  "session_id": "20260914T173139Z-3ae15c89",
+  "decision_id": null,
+  "phase": "FRAMEWORK_AGENT",
+  "merged_context": {
+    "model": "Qwen3.8-27B-ABLITERATED-W8A8-gdnint8",
+    "framework": "vllm",
+    "model_path": "/mnt/stripe-3mix-3t2/models/davetha/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8",
+    "tp": 1,
+    "workload": {
+      "conc": 64,
+      "isl": 1024,
+      "max_model_len": 6144,
+      "osl": 1024,
+      "precision": "bf16"
+    },
+    "precision": "bf16",
+    "phase": "FRAMEWORK_AGENT",
+    "macro_cycle": 0
+  },
+  "missing_context": [
+    "model_family",
+    "scale",
+    "objective",
+    "baseline_tput",
+    "baseline_label",
+    "current_best",
+    "session_label"
+  ],
+  "required_context": [],
+  "proposals": [],
+  "messages": [],
+  "decision": {},
+  "kb_priors_by_proposal": {},
+  "kb_priors_for_decision": [],
+  "kb_priors_trace": {
+    "configured": true,
+    "mode": "per_decision",
+    "client_mode": "inmemory",
+    "scope_filter": {
+      "org": "hyperloom",
+      "framework": "vllm",
+      "model": "qwen3.8-27b-abliterated-w8a8-gdnint8",
+      "model_family": "qwen",
+      "workload": "{'conc': 64, 'isl': 1024, 'max_model_len': 6144, 'osl': 1024, 'precision': 'bf16'}",
+      "precision": "bf16"
+    },
+    "limit": 5,
+    "requests": [
+      {
+        "msg_id": null,
+        "topic": "decision-20260914T173139Z-3ae15c89",
+        "cache": "miss",
+        "count": 0
+      }
+    ]
+  },
+  "robustness_priors": [],
+  "kb_read_skipped_reason": null,
+  "review_constraints": {
+    "allowed_verdicts": [
+      "advise",
+      "approve",
+      "needs_review",
+      "redirect",
+      "reject"
+    ],
+    "ceiling_importance": 0.84,
+    "approve_requires": [
+      "comparable_before_after_benchmark",
+      "accuracy_gate_or_waiver",
+      "active_path_proof_when_relevant",
+      "rollback_plan"
+    ]
+  },
+  "notes": [
+    "scope_cache_key=framework=vllm|model=qwen3.8-27b-abliterated-w8a8-gdnint8|model_family=qwen|org=hyperloom|precision=bf16|workload={'conc': 64, 'isl': 1024, 'max_model_len': 6144, 'osl': 1024, 'precision': 'bf16'}|limit=10"
+  ]
+}

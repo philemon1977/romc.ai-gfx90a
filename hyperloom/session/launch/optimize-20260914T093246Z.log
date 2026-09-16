@@ -1,0 +1,24 @@
+MAGPIE_PYTHON=/opt/venv/bin/python cannot import Magpie; ignoring it and auto-detecting an interpreter that can. (A stale value is often baked into kernel-agent.env.sh when install.sh resolved it before Magpie was pip-installed.)
+MAGPIE_PYTHON=/opt/venv/bin/python cannot import Magpie; ignoring it and auto-detecting an interpreter that can. (A stale value is often baked into kernel-agent.env.sh when install.sh resolved it before Magpie was pip-installed.)
+Preflight: WARNING — ignoring unsupported .env key MODEL_PATH from /home/qiba/ROCm.AI/hyperloom/.env
+Preflight: WARNING — ignoring unsupported .env key PYTHON from /home/qiba/ROCm.AI/hyperloom/.env
+Preflight: WARNING — ignoring unsupported .env key MAGPIE_PATH from /home/qiba/ROCm.AI/hyperloom/.env
+Preflight: WARNING — ignoring unsupported .env key MAGPIE_PYTHON from /home/qiba/ROCm.AI/hyperloom/.env
+Preflight: WARNING — ignoring unsupported .env key PYTHONPATH from /home/qiba/ROCm.AI/hyperloom/.env
+Preflight: WARNING — ignoring unsupported .env key INFERENCEX_PATH from /home/qiba/ROCm.AI/hyperloom/.env
+Preflight: WARNING — ignoring unsupported .env key TRACELENS_ROOT from /home/qiba/ROCm.AI/hyperloom/.env
+Preflight: WARNING — ignoring unsupported kernel-agent env key PYTHONPATH from /home/qiba/ROCm.AI/hyperloom/session/runtime/kernel-agent.env.sh
+2026-09-14 09:32:46,465 hyperloom.orchestrator.actions.executors._grid_runner [WARNING] MAGPIE_PYTHON=/opt/venv/bin/python cannot import Magpie; ignoring it and auto-detecting an interpreter that can. (A stale value is often baked into kernel-agent.env.sh when install.sh resolved it before Magpie was pip-installed.)
+Preflight: claude_agent_sdk OK
+Preflight: openai_codex OK
+Preflight: openai OK
+Preflight: httpx OK
+Preflight: ~/.claude/config.json already points at upstream
+Preflight: platform [amd-server] — SMT off, NPS1 (2 NUMA nodes / 2 sockets), governor schedutil
+Preflight: WARNING — cpufreq governor is 'schedutil', not 'performance'; clock ramp can distort latency percentiles and roofline measurements
+Preflight: ray/click invalid (ray import failed: ModuleNotFoundError: No module named 'ray'), installing ray[default]==2.44.1 + click<8.3.0 ...
+WARNING: Connection interrupted while downloading.
+WARNING: Attempting to resume incomplete download (27.3 MB/68.1 MB, attempt 1)
+ERROR: pip's dependency resolver does not currently take into account all the packages that are installed. This behaviour is the source of the following dependency conflicts.
+huggingface-hub 1.29.0 requires click<9.0.0,>=8.4.2, but you have click 8.2.1 which is incompatible.
+WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.

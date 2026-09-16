@@ -1,0 +1,27 @@
+diff --git a/vllm/model_executor/layers/fused_moe/oracle/unquantized.py b/vllm/model_executor/layers/fused_moe/oracle/unquantized.py
+index cf884df..8b42d53 100644
+--- a/vllm/model_executor/layers/fused_moe/oracle/unquantized.py
++++ b/vllm/model_executor/layers/fused_moe/oracle/unquantized.py
+@@ -8,7 +8,7 @@ import torch
+ 
+ import vllm.envs as envs
+ import vllm.model_executor.layers.fused_moe.modular_kernel as mk
+-from vllm._aiter_ops import rocm_aiter_ops
++from vllm._aiter_ops import is_aiter_found_and_supported, rocm_aiter_ops
+ from vllm.config.kernel import MoEBackend
+ from vllm.logger import init_logger
+ from vllm.model_executor.layers.fused_moe.activation import MoEActivation
+@@ -302,6 +302,13 @@ def select_unquantized_moe_backend(
+             not envs.VLLM_ROCM_USE_AITER
+             or not envs.VLLM_ROCM_USE_AITER_MOE
+             or rocm_aiter_ops.is_rdna_aiter_enabled()
++            # An env-var request is not a device capability. AITER fused MoE has
++            # no CDNA2 (gfx90a) build, so honouring an explicit
++            # VLLM_ROCM_USE_AITER=1 here (e.g. exported by a generic CDNA3
++            # launch script) would raise out of _return_or_raise() and abort
++            # engine startup. Demote to the remaining backends instead,
++            # mirroring the capability test behind @if_aiter_supported.
++            or not is_aiter_found_and_supported()
+         )
+         if skip_aiter_moe:
+             if UnquantizedMoeBackend.AITER in AVAILABLE_BACKENDS:

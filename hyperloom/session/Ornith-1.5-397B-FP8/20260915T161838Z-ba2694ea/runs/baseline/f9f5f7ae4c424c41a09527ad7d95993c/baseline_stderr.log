@@ -1,0 +1,33 @@
+2026-09-15 16:19:38,897 - Magpie.main - INFO - Starting benchmark: vllm / /mnt/kioxia-cm6-3t8/ai/models/ornith-ai/Ornith-1.5-397B-FP8
+2026-09-15 16:19:38,898 - Magpie.modes.benchmark.image_selector - INFO - Loaded image mapping from /opt/envs/vllm/lib/python3.12/site-packages/Magpie/benchmark_images.yaml
+2026-09-15 16:19:38,898 - Magpie.modes.benchmark.image_selector - DEBUG - Available frameworks: ['vllm', 'sglang', 'atom']
+2026-09-15 16:19:38,898 - Magpie.modes.benchmark.benchmarker - INFO - Starting benchmark: vllm / /mnt/kioxia-cm6-3t8/ai/models/ornith-ai/Ornith-1.5-397B-FP8
+2026-09-15 16:19:38,898 - Magpie.modes.benchmark.inferencex - DEBUG - InferenceX found at: /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966
+2026-09-15 16:19:38,899 - Magpie.modes.benchmark.benchmarker - INFO - Copied Magpie script atom_mi355x.sh to /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966/benchmarks
+2026-09-15 16:19:38,899 - Magpie.modes.benchmark.benchmarker - INFO - Copied Magpie script magpie_bench_remote_compat.sh to /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966/benchmarks
+2026-09-15 16:19:38,900 - Magpie.modes.benchmark.benchmarker - INFO - Copied Magpie script xdit_mi355x.sh to /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966/benchmarks
+2026-09-15 16:19:38,900 - Magpie.modes.benchmark.benchmarker - INFO - Copied Magpie script vllm_mi355x_mm.sh to /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966/benchmarks
+2026-09-15 16:19:38,900 - Magpie.modes.benchmark.benchmarker - INFO - Copied Magpie script server_cleanup.sh to /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966/benchmarks
+2026-09-15 16:19:38,901 - Magpie.modes.benchmark.benchmarker - INFO - Copied Magpie script xdit_mi300x.sh to /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966/benchmarks
+2026-09-15 16:19:38,901 - Magpie.modes.benchmark.benchmarker - INFO - Copied Magpie script sglang_mi355x.sh to /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966/benchmarks
+2026-09-15 16:19:38,901 - Magpie.modes.benchmark.benchmarker - INFO - Copied Magpie script xdit_bench_common.sh to /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966/benchmarks
+2026-09-15 16:19:38,902 - Magpie.modes.benchmark.benchmarker - INFO - Copied Magpie script sglang_mi300x.sh to /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966/benchmarks
+2026-09-15 16:19:38,902 - Magpie.modes.benchmark.benchmarker - INFO - Copied Magpie script atom_mi300x.sh to /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966/benchmarks
+2026-09-15 16:19:38,902 - Magpie.modes.benchmark.benchmarker - INFO - Copied Magpie script vllm_mi300x.sh to /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966/benchmarks
+2026-09-15 16:19:38,902 - Magpie.modes.benchmark.benchmarker - INFO - Copied Magpie script vllm_mi355x.sh to /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966/benchmarks
+2026-09-15 16:19:38,903 - Magpie.modes.benchmark.benchmarker - INFO - Copied Magpie script vllm_mi300x_mm.sh to /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966/benchmarks
+2026-09-15 16:19:38,908 - Magpie.main - ERROR - Benchmark failed: ['Specified benchmark_script not found: vllm_mi250x.sh\nSearched in: /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966/benchmarks (including subdirectories)\nPlease ensure the file exists or remove the benchmark_script config.']
+============================================================
+Benchmark Result: 
+============================================================
+Model: 
+Status: FAILED
+
+Errors:
+  - Specified benchmark_script not found: vllm_mi250x.sh
+Searched in: /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966/benchmarks (including subdirectories)
+Please ensure the file exists or remove the benchmark_script config.
+
+Workspace: 
+Execution time: 0.00s
+============================================================

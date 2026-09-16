@@ -1,0 +1,35 @@
+{
+  "review_verdicts": [
+    {
+      "target_proposal_msg_id": "e59472666477436e8b080670a823b9c0",
+      "verdict": "approve",
+      "source": "critic",
+      "reasoning": "Enablement-tagged integrate_patch has specialist provenance and is classified as enablement_landing. KB priors are silent; the packet's boot-failure signature motivates a runnability fix. Throughput before/after and restated rollback are not required because the enablement integrate gate handles boot/accuracy rollback.",
+      "confidence": "high",
+      "predicted_gain_pct": 0.0,
+      "kb_evidence": [],
+      "packet_evidence": [
+        "proposals[0].payload.params.provenance",
+        "proposals[0].payload.params.enablement",
+        "proposals[0].payload.params.framework_agent_authoring",
+        "proposals[0].payload.params.enablement_before_signature.raw_excerpt",
+        "proposals[0].payload.params.enablement_base_patches",
+        "kb_priors_by_proposal"
+      ],
+      "risks": [],
+      "required_evidence": [],
+      "notes": [
+        "PRELUDE phase normally favors target_analysis/baseline; this is routed as framework-agent enablement, so the boot fix precedes baseline."
+      ],
+      "failure_reason_code": "",
+      "persist_to_kb": false,
+      "topic": "enablement-integrate-patch"
+    }
+  ],
+  "advice": [
+    {
+      "target_proposal_msg_id": "e59472666477436e8b080670a823b9c0",
+      "body_md": "If this action is not expected in PRELUDE outside enablement, confirm R1 routing before applying; otherwise the enablement structural gate is satisfied."
+    }
+  ]
+}

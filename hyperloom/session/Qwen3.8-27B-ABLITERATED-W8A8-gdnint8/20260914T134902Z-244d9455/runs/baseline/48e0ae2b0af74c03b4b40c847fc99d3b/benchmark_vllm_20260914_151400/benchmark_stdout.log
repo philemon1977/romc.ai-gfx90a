@@ -1,0 +1,43 @@
+W20260914 15:14:02.836444 131570101552960 agent.cpp:461] Attempt to enable hip visiblity for agent-4 which is not visible to HSA (ROCR)
+WARNING 09-14 15:14:21 [argparse_utils.py:422] Found duplicate keys --trust-remote-code
+(APIServer pid=11444) INFO 09-14 15:14:21 [api_utils.py:333] 
+(APIServer pid=11444) INFO 09-14 15:14:21 [api_utils.py:333]        █     █     █▄   ▄█
+(APIServer pid=11444) INFO 09-14 15:14:21 [api_utils.py:333]  ▄▄ ▄█ █     █     █ ▀▄▀ █  version 0.28.0
+(APIServer pid=11444) INFO 09-14 15:14:21 [api_utils.py:333]   █▄█▀ █     █     █     █  model   /mnt/stripe-3mix-3t2/models/davetha/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8
+(APIServer pid=11444) INFO 09-14 15:14:21 [api_utils.py:333]    ▀▀  ▀▀▀▀▀ ▀▀▀▀▀ ▀     ▀
+(APIServer pid=11444) INFO 09-14 15:14:21 [api_utils.py:333] 
+(APIServer pid=11444) INFO 09-14 15:14:21 [api_utils.py:272] non-default args: {'model_tag': '/mnt/stripe-3mix-3t2/models/davetha/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8', 'port': 8888, 'model': '/mnt/stripe-3mix-3t2/models/davetha/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8', 'trust_remote_code': True, 'max_model_len': 6144, 'quantization': 'compressed-tensors', 'safetensors_load_strategy': 'eager', 'gpu_memory_utilization': 0.95, 'language_model_only': True, 'compilation_config': {'mode': None, 'debug_dump_path': None, 'cache_dir': '', 'compile_cache_save_format': 'binary', 'backend': 'inductor', 'custom_ops': [], 'ir_enable_torch_wrap': None, 'splitting_ops': None, 'compile_mm_encoder': False, 'cudagraph_mm_encoder': False, 'encoder_cudagraph_token_budgets': [], 'encoder_cudagraph_max_vision_items_per_batch': 0, 'encoder_cudagraph_max_frames_per_batch': None, 'compile_sizes': None, 'compile_ranges_endpoints': None, 'inductor_compile_config': {'enable_auto_functionalized_v2': False, 'combo_kernels': True, 'benchmark_combo_kernel': True}, 'inductor_passes': {}, 'cudagraph_mode': <CUDAGraphMode.FULL_DECODE_ONLY: (2, 0)>, 'cudagraph_num_of_warmups': 0, 'cudagraph_capture_sizes': None, 'cudagraph_copy_inputs': False, 'cudagraph_specialize_lora': True, 'use_inductor_graph_partition': None, 'pass_config': {}, 'max_cudagraph_capture_size': None, 'dynamic_shapes_config': {'type': <DynamicShapesType.BACKED: 'backed'>, 'evaluate_guards': False, 'assume_32_bit_indexing': False}, 'local_cache_dir': None, 'fast_moe_cold_start': None, 'static_all_moe_layers': []}}
+(APIServer pid=11444) Traceback (most recent call last):
+(APIServer pid=11444)   File "<frozen runpy>", line 198, in _run_module_as_main
+(APIServer pid=11444)   File "<frozen runpy>", line 88, in _run_code
+(APIServer pid=11444)   File "/opt/envs/wu1w/lib/python3.12/site-packages/vllm/entrypoints/cli/main.py", line 103, in <module>
+(APIServer pid=11444)     main()
+(APIServer pid=11444)   File "/opt/envs/wu1w/lib/python3.12/site-packages/vllm/entrypoints/cli/main.py", line 97, in main
+(APIServer pid=11444)     args.dispatch_function(args)
+(APIServer pid=11444)   File "/opt/envs/wu1w/lib/python3.12/site-packages/vllm/entrypoints/cli/serve.py", line 152, in cmd
+(APIServer pid=11444)     uvloop.run(run_server(args))
+(APIServer pid=11444)   File "/opt/envs/wu1w/lib/python3.12/site-packages/uvloop/__init__.py", line 96, in run
+(APIServer pid=11444)     return __asyncio.run(
+(APIServer pid=11444)            ^^^^^^^^^^^^^^
+(APIServer pid=11444)   File "/opt/envs/wu1w/lib/python3.12/asyncio/runners.py", line 195, in run
+(APIServer pid=11444)     return runner.run(main)
+(APIServer pid=11444)            ^^^^^^^^^^^^^^^^
+(APIServer pid=11444)   File "/opt/envs/wu1w/lib/python3.12/asyncio/runners.py", line 118, in run
+(APIServer pid=11444)     return self._loop.run_until_complete(task)
+(APIServer pid=11444)            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(APIServer pid=11444)   File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+(APIServer pid=11444)   File "/opt/envs/wu1w/lib/python3.12/site-packages/uvloop/__init__.py", line 48, in wrapper
+(APIServer pid=11444)     return await main
+(APIServer pid=11444)            ^^^^^^^^^^
+(APIServer pid=11444)   File "/opt/envs/wu1w/lib/python3.12/site-packages/vllm/entrypoints/openai/api_server.py", line 738, in run_server
+(APIServer pid=11444)     listen_address, sock = setup_server(args, reuse_port=False)
+(APIServer pid=11444)                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(APIServer pid=11444)   File "/opt/envs/wu1w/lib/python3.12/site-packages/vllm/tracing/otel.py", line 178, in sync_wrapper
+(APIServer pid=11444)     return func(*args, **kwargs)
+(APIServer pid=11444)            ^^^^^^^^^^^^^^^^^^^^^
+(APIServer pid=11444)   File "/opt/envs/wu1w/lib/python3.12/site-packages/vllm/entrypoints/openai/api_server.py", line 617, in setup_server
+(APIServer pid=11444)     sock = create_server_socket(sock_addr, reuse_port=reuse_port)
+(APIServer pid=11444)            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(APIServer pid=11444)   File "/opt/envs/wu1w/lib/python3.12/site-packages/vllm/entrypoints/openai/api_server.py", line 566, in create_server_socket
+(APIServer pid=11444)     sock.bind(addr)
+(APIServer pid=11444) OSError: [Errno 98] Address already in use

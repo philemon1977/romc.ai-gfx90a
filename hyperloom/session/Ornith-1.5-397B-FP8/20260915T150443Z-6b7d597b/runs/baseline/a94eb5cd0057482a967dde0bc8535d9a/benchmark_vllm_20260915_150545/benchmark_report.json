@@ -1,0 +1,45 @@
+{
+  "success": false,
+  "framework": "vllm",
+  "model": "/mnt/kioxia-cm6-3t8/ai/models/ornith-ai/Ornith-1.5-397B-FP8",
+  "throughput": null,
+  "latency": null,
+  "kernel_summary": [],
+  "top_bottlenecks": [],
+  "tracelens_analysis": null,
+  "gap_analysis": null,
+  "gpu_monitor": {
+    "sample_count": 274,
+    "duration_sec": 591.62,
+    "temperature_c": {
+      "min": 47.0,
+      "max": 72.0,
+      "avg": 48.5
+    },
+    "gpu_clock_mhz": {
+      "min": 800,
+      "max": 1700,
+      "avg": 1131.5
+    },
+    "mem_clock_mhz": {
+      "min": 1600,
+      "max": 1600,
+      "avg": 1600.0
+    },
+    "power_watts": {
+      "min": 97.0,
+      "max": 312.0,
+      "avg": 118.2
+    }
+  },
+  "workspace_dir": "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T150443Z-6b7d597b/runs/baseline/a94eb5cd0057482a967dde0bc8535d9a/benchmark_vllm_20260915_150545",
+  "execution_time": 594.1321942806244,
+  "profiling_enabled": false,
+  "errors": [
+    "Benchmark process failed with code 1",
+    "stderr: + [[ all == \\s\\e\\r\\v\\e\\r ]]\n+ [[ all == \\a\\l\\l ]]\n+ SERVER_PID=5815\n+ [[ all == \\a\\l\\l ]]\n+ trap 'magpie_stop_benchmark_server_stack \"$SERVER_PID\"' EXIT INT TERM\n+ wait_for_server_ready --port 8888 --server-log /home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T150443Z-6b7d597b/runs/baseline/a94eb5cd0057482a967dde0bc8535d9a/benchmark_vllm_20260915_150545/server.log --server-pid 5815\n+ local port=\n+ local server_log=\n+ local server_pid=\n+ local sleep_interval=5\n+ [[ 6 -gt 0 ]]\n+ case $1 in\n+ port=8888\n+ shift 2\n+ [[ 4 -gt 0 ]]\n+ case $1 in\n+ setsid vllm serve /mnt/kioxia-cm6-3t8/ai/models/ornith-ai/Ornith-1.5-397B-FP8 --port 8888 --tensor-parallel-size=8 --gpu-memory-utilization 0.95 --max-model-len 6144 --trust-remote-code\n+ server_log=/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T150443Z-6b7d597b/runs/baseline/a94eb5cd0057482a967dde0bc8535d9a/benchmark_vllm_20260915_150545/server.log\n+ shift 2\n+ [[ 2 -gt 0 ]]\n+ case $1 in\n+ server_pid=5815\n+ shift 2\n",
+    "inferencex_result.json not found - benchmark may have failed locally",
+    "stderr (last 500 chars): loom/session/Ornith-1.5-397B-FP8/20260915T150443Z-6b7d597b/runs/baseline/a94eb5cd0057482a967dde0bc8535d9a/benchmark_vllm_20260915_150545/server.log ]]\n+ [[ -z 5815 ]]\n+ wait_for_ready --endpoint http://0.0.0.0:8888/health --log /home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T150443Z-6b7d597b/runs/baseline/a94eb5cd0057482a967dde0bc8535d9a/benchmark_vllm_20260915_150545/server.log --pid 5815 --sleep-interval 5\n+ set +x\nProcess died before http://0.0.0.0:8888/health became ready.\n",
+    "server.log errors: (APIServer pid=5815)     raise RuntimeError(\n(APIServer pid=5815) RuntimeError: Engine core initialization failed. See root cause above. Failed core proc(s): {'EngineCore': 1}"
+  ]
+}

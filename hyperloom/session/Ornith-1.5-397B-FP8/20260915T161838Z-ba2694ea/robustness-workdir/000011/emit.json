@@ -1,0 +1,57 @@
+{
+  "intent_envelope": {
+    "intents": [
+      {
+        "intent_type": "alert",
+        "payload": {
+          "severity": "high",
+          "summary": "hard deadline cutoff: only 4.9min remain (<= 5min); finalize now",
+          "detail": {
+            "symptom": "deadline_hard_cutoff",
+            "severity": "high",
+            "subject": {},
+            "source": "local",
+            "evidence": {
+              "elapsed_minutes": 175.1,
+              "remaining_minutes": 4.9,
+              "budget_minutes": 180.0,
+              "deadline_hard_cutoff_minutes": 5.0,
+              "cumulative_gain_validated": 0.0
+            },
+            "suggestion": "propose report immediately; any new task started now will be cut by the deadline supervisor"
+          }
+        }
+      },
+      {
+        "intent_type": "alert",
+        "payload": {
+          "severity": "medium",
+          "summary": "PRELUDE phase budget 3243% consumed (10506s of 324s cap)",
+          "detail": {
+            "symptom": "phase_budget_nearly_exhausted",
+            "severity": "medium",
+            "subject": {},
+            "source": "shared_state",
+            "evidence": {
+              "phase": "PRELUDE",
+              "elapsed_sec": 10506,
+              "cap_sec": 324,
+              "used_pct": 3243.0
+            },
+            "suggestion": "wind down this phase or escalate a phase change"
+          }
+        }
+      }
+    ]
+  },
+  "session_id": "20260915T161838Z-ba2694ea",
+  "tick_index": 1,
+  "parse_warnings": [],
+  "llm_usage": {
+    "input_tokens": 994,
+    "output_tokens": 465,
+    "calls": 1,
+    "latency_ms": 3568,
+    "model": "qwen3.8-flash-next"
+  }
+}

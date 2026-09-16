@@ -1,0 +1,45 @@
+============================================================
+Benchmark Result: VLLM
+============================================================
+Model: /mnt/stripe-3mix-3t2/models/davetha/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8
+Status: FAILED
+
+GPU Hardware Monitoring:
+  Samples: 25 (51.8s)
+  Temperature: 47.0°C - 49.0°C (avg: 47.7°C)
+  GPU Clock: 800 - 800 MHz (avg: 800)
+  Power: 97.0 - 99.0 W (avg: 97.2)
+
+Errors:
+  - server_lifecycle server phase exited with 1. stderr tail: er.log --pid 15517 --sleep-interval 5
++ setsid /usr/local/bin/vllm-wu1w serve /mnt/stripe-3mix-3t2/models/davetha/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8 --port 8932 --tensor-parallel-size=1 --gpu-memory-utilization 0.95 --max-model-len 6144 --trust-remote-code --trust-remote-code --language-model-only --quantization compressed-tensors --safetensors-load-strategy eager --compilation-config '{"cudagraph_mode":"FULL_DECODE_ONLY"}'
++ set +x
+Process died before http://0.0.0.0:8932/health became ready.
+
+  - inferencex_result.json not found - benchmark may have failed locally
+  - stderr (last 500 chars): er.log --pid 15517 --sleep-interval 5
++ setsid /usr/local/bin/vllm-wu1w serve /mnt/stripe-3mix-3t2/models/davetha/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8 --port 8932 --tensor-parallel-size=1 --gpu-memory-utilization 0.95 --max-model-len 6144 --trust-remote-code --trust-remote-code --language-model-only --quantization compressed-tensors --safetensors-load-strategy eager --compilation-config '{"cudagraph_mode":"FULL_DECODE_ONLY"}'
++ set +x
+Process died before http://0.0.0.0:8932/health became ready.
+
+  - server.log errors: (APIServer pid=15517)     raise RuntimeError(
+(APIServer pid=15517) RuntimeError: Engine core initialization failed. See root cause above. Failed core proc(s): {}
+
+Workspace: /home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/specialist/30ccc757c22d476390bae0873bfa153b/scratch/e2e_control/variant_00_specialist-rebench/benchmark_vllm_20260914_153851
+Execution time: 54.31s
+============================================================
+{
+  "error": "(EngineCore pid=15721) Triton cache error: compiled module hip_utils.so could not be loaded\n(EngineCore pid=15721) INFO 09-14 15:39:40 [registry.py:141] All limits of multimodal modalities supported by the model are set to 0, running in text-only mode.\n(EngineCore pid=15721) ERROR 09-14 15:39:40 [core.py:1346] EngineCore failed to start.\n(EngineCore pid=15721) ERROR 09-14 15:39:40 [core.py:1346] Traceback (most recent call last):\n(EngineCore pid=15721) ERROR 09-14 15:39:40 [core.py:1346]   File \"/opt/envs/wu1w/lib/python3.12/site-packages/vllm/v1/engine/core.py\", line 1315, in run_engine_core",
+  "gpu_ids": "0",
+  "itl_ms": null,
+  "ok": false,
+  "output_throughput": null,
+  "port": 8932,
+  "status": "failed",
+  "ttft_ms": null,
+  "warnings": [
+    "rebench_failed:neCore pid=15721) ERROR 09-14 15:39:40 [core.py:1346]   File \"/opt/envs/wu1w/lib/python3.12/site-packages/vllm/v1/engine/core.py\", line 1315, in run_engine_core",
+    "benchmark_report_success_false"
+  ],
+  "workspace": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/specialist/30ccc757c22d476390bae0873bfa153b/scratch/e2e_control/variant_00_specialist-rebench/benchmark_vllm_20260914_153851"
+}

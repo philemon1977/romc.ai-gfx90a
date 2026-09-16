@@ -1,0 +1,45 @@
+============================================================
+Benchmark Result: VLLM
+============================================================
+Model: /mnt/stripe-3mix-3t2/models/davetha/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8
+Status: FAILED
+
+GPU Hardware Monitoring:
+  Samples: 27 (56.1s)
+  Temperature: 47.0°C - 47.0°C (avg: 47.0°C)
+  GPU Clock: 800 - 800 MHz (avg: 800)
+  Power: 96.0 - 97.0 W (avg: 97.0)
+
+Errors:
+  - Benchmark process failed with code 1
+  - stderr: + [[ all == \s\e\r\v\e\r ]]
++ [[ all == \a\l\l ]]
++ SERVER_PID=22117
++ [[ all == \a\l\l ]]
++ trap 'magpie_stop_benchmark_server_stack "$SERVER_PID"' EXIT INT TERM
++ wait_for_server_ready --port 8888 --server-log /home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/baseline/0668d71b42d54c559c36634e823a55a5/benchmark_vllm_20260914_155130/server.log --server-pid 22117
++ local port=
++ local server_log=
++ local server_pid=
++ local sleep_interval=5
++ setsid /usr/local/bin/vllm-wu1w serve /mnt/stripe-3mix-3t2/models/davetha/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8 --port 8888 --tensor-parallel-size=1 --gpu-memory-utilization 0.95 --max-model-len 6144 --trust-remote-code --trust-remote-code --language-model-only --quantization compressed-tensors --safetensors-load-strategy eager --compilation-config '{"cudagraph_mode":"FULL_DECODE_ONLY"}'
++ [[ 6 -gt 0 ]]
++ case $1 in
++ port=8888
++ shift 2
++ [[ 4 -gt 0 ]]
++ case $1 in
++ server_log=/home/qiba/ROCm.
+  - inferencex_result.json not found - benchmark may have failed locally
+  - stderr (last 500 chars): -W8A8-gdnint8/20260914T134902Z-244d9455/runs/baseline/0668d71b42d54c559c36634e823a55a5/benchmark_vllm_20260914_155130/server.log ]]
++ [[ -z 22117 ]]
++ wait_for_ready --endpoint http://0.0.0.0:8888/health --log /home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/baseline/0668d71b42d54c559c36634e823a55a5/benchmark_vllm_20260914_155130/server.log --pid 22117 --sleep-interval 5
++ set +x
+Process died before http://0.0.0.0:8888/health became ready.
+
+  - server.log errors: (APIServer pid=22117)     raise RuntimeError(
+(APIServer pid=22117) RuntimeError: Engine core initialization failed. See root cause above. Failed core proc(s): {}
+
+Workspace: /home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/baseline/0668d71b42d54c559c36634e823a55a5/benchmark_vllm_20260914_155130
+Execution time: 58.60s
+============================================================

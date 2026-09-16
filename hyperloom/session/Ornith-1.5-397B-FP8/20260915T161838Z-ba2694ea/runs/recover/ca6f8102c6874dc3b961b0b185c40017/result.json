@@ -1,0 +1,106 @@
+{
+  "force_gpu_cleanup": true,
+  "killed_pids": [],
+  "mid_free_mb_per_gpu": [
+    {
+      "free_mb": 65509.515625,
+      "gpu_id": 0,
+      "vram_total_mb": 65520.0,
+      "vram_used_mb": 10.484375
+    },
+    {
+      "free_mb": 65509.515625,
+      "gpu_id": 1,
+      "vram_total_mb": 65520.0,
+      "vram_used_mb": 10.484375
+    },
+    {
+      "free_mb": 65509.515625,
+      "gpu_id": 2,
+      "vram_total_mb": 65520.0,
+      "vram_used_mb": 10.484375
+    },
+    {
+      "free_mb": 65509.515625,
+      "gpu_id": 3,
+      "vram_total_mb": 65520.0,
+      "vram_used_mb": 10.484375
+    },
+    {
+      "free_mb": 65509.515625,
+      "gpu_id": 4,
+      "vram_total_mb": 65520.0,
+      "vram_used_mb": 10.484375
+    },
+    {
+      "free_mb": 65509.515625,
+      "gpu_id": 5,
+      "vram_total_mb": 65520.0,
+      "vram_used_mb": 10.484375
+    },
+    {
+      "free_mb": 65509.515625,
+      "gpu_id": 6,
+      "vram_total_mb": 65520.0,
+      "vram_used_mb": 10.484375
+    },
+    {
+      "free_mb": 65509.515625,
+      "gpu_id": 7,
+      "vram_total_mb": 65520.0,
+      "vram_used_mb": 10.484375
+    }
+  ],
+  "pre_free_mb_per_gpu": [
+    {
+      "free_mb": 65509.515625,
+      "gpu_id": 0,
+      "vram_total_mb": 65520.0,
+      "vram_used_mb": 10.484375
+    },
+    {
+      "free_mb": 65509.515625,
+      "gpu_id": 1,
+      "vram_total_mb": 65520.0,
+      "vram_used_mb": 10.484375
+    },
+    {
+      "free_mb": 65509.515625,
+      "gpu_id": 2,
+      "vram_total_mb": 65520.0,
+      "vram_used_mb": 10.484375
+    },
+    {
+      "free_mb": 65509.515625,
+      "gpu_id": 3,
+      "vram_total_mb": 65520.0,
+      "vram_used_mb": 10.484375
+    },
+    {
+      "free_mb": 65509.515625,
+      "gpu_id": 4,
+      "vram_total_mb": 65520.0,
+      "vram_used_mb": 10.484375
+    },
+    {
+      "free_mb": 65509.515625,
+      "gpu_id": 5,
+      "vram_total_mb": 65520.0,
+      "vram_used_mb": 10.484375
+    },
+    {
+      "free_mb": 65509.515625,
+      "gpu_id": 6,
+      "vram_total_mb": 65520.0,
+      "vram_used_mb": 10.484375
+    },
+    {
+      "free_mb": 65509.515625,
+      "gpu_id": 7,
+      "vram_total_mb": 65520.0,
+      "vram_used_mb": 10.484375
+    }
+  ],
+  "reason": "local_server_unreachable",
+  "state": "succeeded"
+}

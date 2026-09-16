@@ -1,0 +1,191 @@
+diff --git a/Magpie/modes/benchmark/benchmarker.py b/Magpie/modes/benchmark/benchmarker.py
+index 6b44089..18fd992 100644
+--- a/Magpie/modes/benchmark/benchmarker.py
++++ b/Magpie/modes/benchmark/benchmarker.py
+@@ -15,6 +15,7 @@ import os
+ import signal
+ import shutil
+ import subprocess
++import sys
+ import tempfile
+ import time
+ import uuid
+@@ -56,6 +57,133 @@ MAGPIE_BUILTIN_SCRIPTS = frozenset(
+     }
+ )
+ 
++# Device-selection env vars understood by the ROCm/CUDA stacks.
++_VISIBLE_DEVICE_VARS = ("HIP_VISIBLE_DEVICES", "CUDA_VISIBLE_DEVICES")
++
++
++def align_rocm_visible_devices(env: Dict[str, str]) -> Dict[str, str]:
++    """Make ``HIP``/``CUDA_VISIBLE_DEVICES`` logical indices of the ROCR set.
++
++    ``ROCR_VISIBLE_DEVICES`` filters at the HSA layer and *renumbers* the
++    agents that survive, so the devices that appear as HIP ids ``0..N-1`` are
++    the same physical GPUs that appear as ROCR ids ``0..N-1``. Any
++    ``HIP``/``CUDA`` id taken from a *host-physical* enumeration is therefore
++    meaningless once ``ROCR_VISIBLE_DEVICES`` is set: HIP filters the already
++    remapped ROCR list and, when no id survives, the process ends up with zero
++    usable devices (``torch.cuda.device_count()`` may still report the ROCR
++    count while every allocation fails with "No CUDA GPUs are available").
++
++    A launcher (e.g. a container entrypoint pinning a pod's cards) commonly
++    exports host-physical ``HIP_VISIBLE_DEVICES`` while Magpie's
++    ``gpu_selection`` pins ``ROCR_VISIBLE_DEVICES`` for the benchmark. Merge
++    the two here, at the single choke point every local benchmark/server phase
++    passes through, so the child sees a self-consistent set:
++
++    * ``ROCR_VISIBLE_DEVICES`` selects ``N >= 1`` devices -> the request is
++      satisfiable, so re-pin ``HIP``/``CUDA`` to the logical range ``0..N-1``.
++    * otherwise, or when the HIP set is already a subset of the ROCR logical
++      range -> leave the environment untouched.
++
++    An explicit ``benchmark.envs.HIP_VISIBLE_DEVICES``/
++    ``CUDA_VISIBLE_DEVICES`` in the config counts as a request that the caller
++    resolved themselves and is only rewritten when it cannot be satisfied.
++
++    Args:
++        env: Environment mapping to mutate in place.
++
++    Returns:
++        The same ``env`` mapping (so callers can use either style).
++    """
++    rocr_raw = (env.get("ROCR_VISIBLE_DEVICES") or "").strip()
++    if not rocr_raw:
++        return env
++    rocr_ids = [t.strip() for t in rocr_raw.split(",") if t.strip()]
++    if not rocr_ids:
++        return env
++    rocr_count = len(rocr_ids)
++    logical = {str(i) for i in range(rocr_count)}
++    derived = ",".join(str(i) for i in range(rocr_count))
++
++    for var in _VISIBLE_DEVICE_VARS:
++        current = (env.get(var) or "").strip()
++        if not current:
++            continue
++        parts = [t.strip() for t in current.split(",") if t.strip()]
++        if parts and all(p in logical for p in parts):
++            # Already consistent with the ROCR renumbering — respect it as-is.
++            continue
++        logger.info(
++            "%s=%r is not a logical index set of ROCR_VISIBLE_DEVICES=%r "
++            "(HSA renumbers the visible agents); re-pinning to %r so the "
++            "benchmark child actually sees the selected GPU(s).",
++            var,
++            current,
++            rocr_raw,
++            derived,
++        )
++        env[var] = derived
++
++    return env
++
++
++# CLI each supported framework exposes for serving; used to test whether the
++# child PATH can actually launch the benchmark it was asked to run.
++_FRAMEWORK_SERVE_CLI = {
++    "vllm": "vllm",
++    "sglang": "sglang",
++}
++
++
++def ensure_framework_env_on_path(
++    env: Dict[str, str], framework: Optional[str] = None
++) -> Dict[str, str]:
++    """Guarantee the framework CLI is resolvable in the benchmark child.
++
++    The InferenceX benchmark scripts invoke the framework's own CLI
++    (``vllm serve`` …) and run the serving client with a bare ``python3`` that
++    imports the framework. ``benchmark.envs.PATH`` is applied verbatim on top
++    of the parent environment, so a PATH naming only a *different* interpreter
++    environment than the one the framework is installed into silently shadows
++    both: ``vllm`` becomes "command not found" for the server phase and
++    ``import vllm`` fails in the client phase, even though Magpie itself is
++    running from the correct environment.
++
++    Repair that by prepending the bin directory of the interpreter running
++    Magpie — which is, by construction, the environment the framework under
++    test lives in — but only when the framework CLI is *missing* from the PATH
++    the child would otherwise get. A caller PATH that already resolves the
++    framework is left untouched (and left in front, so an intentionally
++    different environment still wins).
++
++    Args:
++        env: Environment mapping to mutate in place.
++        framework: Framework name from the benchmark config.
++
++    Returns:
++        The same ``env`` mapping.
++    """
++    cli = _FRAMEWORK_SERVE_CLI.get((framework or "").lower())
++    if cli is None:
++        return env
++
++    path = env.get("PATH") or os.defpath
++    if shutil.which(cli, path=path):
++        return env  # already resolvable — respect the caller's environment
++
++    bin_dir = str(Path(sys.executable).parent)
++    if not bin_dir or not shutil.which(cli, path=bin_dir):
++        return env
++
++    logger.info(
++        "benchmark child PATH does not provide '%s'; prepending the "
++        "Magpie-hosting environment bin '%s' so the framework CLI and the "
++        "python3 that imports it resolve inside the InferenceX script.",
++        cli,
++        bin_dir,
++    )
++    env["PATH"] = os.pathsep.join([bin_dir, path])
++    return env
++
+ 
+ class BenchmarkMode:
+     """
+@@ -800,6 +928,9 @@ class BenchmarkMode:
+         for key, value in env_vars.items():
+             env[key] = str(value)
+ 
++        align_rocm_visible_devices(env)
++        ensure_framework_env_on_path(env, self.config.framework)
++
+         return cmd, env
+ 
+     def _execute_local_benchmark_with_reuse(
+diff --git a/Magpie/scripts/benchmark/vllm_mi300x.sh b/Magpie/scripts/benchmark/vllm_mi300x.sh
+index ccfed15..f3a03f8 100644
+--- a/Magpie/scripts/benchmark/vllm_mi300x.sh
++++ b/Magpie/scripts/benchmark/vllm_mi300x.sh
+@@ -61,10 +61,27 @@ if [[ "$version" == "" || $version -lt 177 ]]; then
+ fi
+ 
+ # ROCR_VISIBLE_DEVICES already re-indexes visible GPUs to 0..N-1, so HIP
+-# must use the logical range, not the original physical ids.
+-if [ -n "$ROCR_VISIBLE_DEVICES" ] && [ -z "$HIP_VISIBLE_DEVICES" ]; then
++# must use the logical range, not the original physical ids. A HIP id past the
++# end of that re-indexed range filters out every device (the child then sees
++# 0 usable GPUs), so also repair a HIP/CUDA pin that a launcher exported in
++# host-physical ids.
++if [ -n "${ROCR_VISIBLE_DEVICES:-}" ]; then
+     n=$(echo "$ROCR_VISIBLE_DEVICES" | awk -F, '{print NF}')
+-    export HIP_VISIBLE_DEVICES=$(seq -s, 0 $((n-1)))
++    logical=$(seq -s, 0 $((n-1)))
++    for _var in HIP_VISIBLE_DEVICES CUDA_VISIBLE_DEVICES; do
++        _cur="${!_var:-}"
++        if [ -z "$_cur" ]; then continue; fi
++        case ",$logical," in
++          *",$_cur,"*) : ;;                        # already a logical index
++          *) echo "[$_var=$_cur is not logical to ROCR_VISIBLE_DEVICES=$ROCR_VISIBLE_DEVICES; re-pinning to $logical]"
++             export "$_var=$logical" ;;
++        esac
++    done
++    unset _var _cur
++    if [ -z "${HIP_VISIBLE_DEVICES:-}" ]; then
++        export HIP_VISIBLE_DEVICES=$logical
++    fi
++    unset n logical
+ fi
+ 
+ # vLLM optimizations for MI300X

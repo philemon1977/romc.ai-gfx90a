@@ -1,0 +1,37 @@
+{
+  "task1": {
+    "string": "expected size 2560==4096, stride 4096==1 at dim=0; expected size 4096==2560, stride 1==4096 at dim=1",
+    "locations": [
+      "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/reports/enablement/9d27140cf07749878ef698ad2789b20d/server.log:605 (18 occurrences; also mirrored in runs/integrate_patch/684650cc04404308aed3e22cffc3ed0e/.../server.log and quoted in runs/specialist/{fc07edbd...,c89d4bf4...}/process.log)",
+      "NOT in the old session 20260915T150443Z-6b7d597b (grep -r found nothing there)"
+    ],
+    "raise_site": "torch inductor generated guard, NOT emulation.py and NOT linear.py/compressed_tensors",
+    "traceback_key_frames": [
+      "vllm/v1/executor/multiproc_executor.py:1039 worker_busy_loop",
+      "vllm/v1/worker/gpu_worker.py:519 determine_available_memory -> model_runner.profile_run()",
+      "vllm/v1/worker/gpu_model_runner.py:6618 profile_run -> :6266 _dummy_run -> self.model(...)",
+      "vllm/model_executor/models/qwen3_5.py:573 forward",
+      "vllm/compilation/decorators.py:573, cuda_graph.py:254, piecewise_backend.py:380/198",
+      "torch/_inductor/output_code.py:725 __call__",
+      "/root/.cache/vllm/torch_compile_cache/torch_aot_compile/63eba2e7.../inductor_cache/sz/cszdeqcj...py:2234 in call: assert_size_stride(arg10_1, (4096, 2560), (1, 4096))",
+      "AssertionError at server.log:605"
+    ],
+    "conclusion": "The AssertionError was raised inside the AOT-compiled piecewise forward (inductor's assert_size_stride guard on a weight tensor arg10_1 feeding extern_kernels._scaled_mm). emulation.py appears only as INFO load-time logs (server.log:192+, 'Emulating FP8 w8a8 dense linears ... dequantizing weights at load time'); zero emulation.py frames in any traceback. So the crash is on the vLLM core / compiled-graph side: some layer's FP8 weight reached a compiled torch._scaled_mm as row-major [2560,4096] instead of the column-major [4096,2560] the guard expects (i.e. a dequant/layout path that bypassed or was not covered by the emulation kernel, most plausibly the MoE/shared-expert side which emulation.py explicitly does not handle)."
+  },
+  "task2": {
+    "diff_scope_lines": 156,
+    "function_summary": [
+      "Module docstring reworded; A cites mxfp8+nvfp4 emulation precedent, B cites fp8.py VLLM_BATCH_INVARIANT + mxfp8 and adds TFLOPS numbers (~7-21 vs ~103-133) and ~10GB/1.3GB-per-GPU TP=8 memory estimate. Both state MoE experts keep their own kernels (dense-only path).",
+      "imports: A has extra 'from ...quantization.utils.quant_utils import GroupShape' (unused in remaining identical code).",
+      "can_implement: A adds 'if c.activation_quant_key.scale.group_shape.is_per_group(): return False, cannot implement block/group-wise FP8 activations.' B dropped this activation-side gate.",
+      "_dequant: LOGIC IDENTICAL in both (orientation handling: _as_nk + 'if w_nk.stride(-1) != 1: w_nk = w_nk.contiguous()', then per-N or per-K scale broadcast with identical RuntimeError fallback). Only docstring/cosmetic restructuring of the scalar-scale branch differs.",
+      "input_quant_key: A defines it (returns None to stop manual-fusion from hoisting FP8 act-quant upstream); B REMOVED it.",
+      "process_weights_after_loading: identical core ('replace_parameter(layer, weight, ...)', 'layer.weight.input_dim = 1; layer.weight.output_dim = 0'); A additionally overwrites layer.weight_scale with scalar ones after folding ('drop the reference so the FP8-side bookkeeping cannot be mistaken for a live quantized tensor'). B lacks that cleanup.",
+      "apply_weights and _as_nk: no differences (outside all hunks)."
+    ],
+    "other_differing_py_files": [
+      "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/runs/specialist/9d27140cf07749878ef698ad2789b20d/wt/vllm/model_executor/kernels/linear/__init__.py (vs old wt2/pkg counterpart): only import ordering of FP8W8A8EmulationLinearKernel + reworded registry comment; registration position (ahead of PerTensorTorchFP8ScaledMMLinearKernel in the ROCm FP8 list) is the SAME in both."
+    ],
+    "moe_or_config_patched": "NO. Excluding __pycache__, exactly two .py files differ between the two trees: emulation.py and kernels/linear/__init__.py. Neither session touched MoE files, quantization config, fp8.py, linear.py, or any kernel.py."
+  }
+}

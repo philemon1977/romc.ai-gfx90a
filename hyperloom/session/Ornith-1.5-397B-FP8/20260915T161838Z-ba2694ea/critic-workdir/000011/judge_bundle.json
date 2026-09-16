@@ -1,0 +1,267 @@
+{
+  "kind": "coordinator_inbox",
+  "session_id": "20260915T161838Z-ba2694ea",
+  "decision_id": null,
+  "phase": "PRELUDE",
+  "merged_context": {
+    "model": "Ornith-1.5-397B-FP8",
+    "framework": "vllm",
+    "gpu_type": "mi250x",
+    "model_path": "/mnt/kioxia-cm6-3t8/ai/models/ornith-ai/Ornith-1.5-397B-FP8",
+    "tp": 8,
+    "workload": {
+      "conc": 64,
+      "isl": 1024,
+      "max_model_len": 6144,
+      "osl": 1024,
+      "precision": "fp8"
+    },
+    "precision": "fp8",
+    "phase": "PRELUDE",
+    "macro_cycle": 0
+  },
+  "missing_context": [
+    "model_family",
+    "scale",
+    "objective",
+    "baseline_tput",
+    "baseline_label",
+    "current_best",
+    "session_label"
+  ],
+  "required_context": [],
+  "proposals": [],
+  "messages": [],
+  "decision": {},
+  "kb_priors_by_proposal": {},
+  "kb_priors_for_decision": [],
+  "kb_priors_trace": {
+    "configured": true,
+    "mode": "per_decision",
+    "client_mode": "inmemory",
+    "scope_filter": {
+      "org": "hyperloom",
+      "framework": "vllm",
+      "model": "ornith-1.5-397b-fp8",
+      "workload": "{'conc': 64, 'isl': 1024, 'max_model_len': 6144, 'osl': 1024, 'precision': 'fp8'}",
+      "precision": "fp8"
+    },
+    "limit": 5,
+    "requests": [
+      {
+        "msg_id": null,
+        "topic": "decision-20260915T161838Z-ba2694ea",
+        "cache": "hit",
+        "count": 0
+      }
+    ]
+  },
+  "robustness_priors": [
+    {
+      "symptom_name": "log_error_pattern",
+      "severity": "high",
+      "tick_index": 4,
+      "timestamp_unix": 1789492360.532229,
+      "summary": "log error pattern 'RuntimeError: Engine core initialization failed' matched 1 times",
+      "rca_text": "",
+      "intents": [
+        {
+          "intent_type": "alert",
+          "payload": {
+            "severity": "high",
+            "summary": "log error pattern 'RuntimeError: Engine core initialization failed' matched 1 times",
+            "detail": {
+              "symptom": "log_error_pattern",
+              "severity": "high",
+              "subject": {
+                "pattern": "RuntimeError: Engine core initialization failed"
+              },
+              "source": "local",
+              "evidence": {
+                "pattern": "RuntimeError: Engine core initialization failed",
+                "count": 1,
+                "samples": [
+                  "[server.log] (APIServer pid=25168) RuntimeError: Engine core initialization failed. See root cause above. Failed core proc(s): {'EngineCore': 1}"
+                ]
+              },
+              "suggestion": "delegate(recover, force_gpu_cleanup=True) or escalate strategy"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "symptom_name": "local_server_unreachable",
+      "severity": "high",
+      "tick_index": 8,
+      "timestamp_unix": 1789495821.243085,
+      "summary": "local server probe http://127.0.0.1:8888/health status=error",
+      "rca_text": "The probe to http://127.0.0.1:8888/health returned status=error with status_code=None and error connect: ConnectError, meaning the request failed before an HTTP response was received. server_process_seen=True indicates a server-related process exists, but benchmark_client_seen=False suggests the expected client or serving endpoint is not observable or ready. This points to a hung, misbound, or partially initialized process that is not accepting connections on port 8888. Restart the inference server using the suggested recovery action with forced GPU cleanup to clear stale process state and rebind the health endpoint. If the endpoint remains unreachable after restart, inspect the process’s listening socket and startup logs for bind failures or initialization stalls.",
+      "intents": [
+        {
+          "intent_type": "alert",
+          "payload": {
+            "severity": "high",
+            "summary": "local server probe http://127.0.0.1:8888/health status=error",
+            "detail": {
+              "symptom": "local_server_unreachable",
+              "severity": "high",
+              "subject": {
+                "url": "http://127.0.0.1:8888/health"
+              },
+              "source": "local",
+              "evidence": {
+                "url": "http://127.0.0.1:8888/health",
+                "status": "error",
+                "status_code": null,
+                "error": "connect: ConnectError",
+                "server_process_seen": true,
+                "benchmark_client_seen": false
+              },
+              "suggestion": "delegate(recover, force_gpu_cleanup=True) to restart the inference server"
+            }
+          }
+        },
+        {
+          "intent_type": "delegate",
+          "payload": {
+            "action_name": "recover",
+            "params": {
+              "reason": "local_server_unreachable",
+              "force_gpu_cleanup": true,
+              "evidence": {
+                "url": "http://127.0.0.1:8888/health",
+                "status": "error",
+                "status_code": null,
+                "error": "connect: ConnectError",
+                "server_process_seen": true,
+                "benchmark_client_seen": false
+              }
+            },
+            "idempotency_key": "recover-server-unreachable-tick-8-fbe8ae04"
+          }
+        }
+      ]
+    },
+    {
+      "symptom_name": "deadline_imminent",
+      "severity": "high",
+      "tick_index": 9,
+      "timestamp_unix": 1789499009.4086163,
+      "summary": "wall-clock budget 92% consumed (elapsed=164.8min / budget=180min) and cumulative_gain_validated=0.00% — wind the session down before the deadline cuts it",
+      "rca_text": "The session has consumed 91.6% of its 180.0-minute budget, leaving only 15.2 minutes and exceeding the 85% imminent threshold. Cumulative validated gain is 0.00%, so no accepted improvement exists even though productive_gain_pct is 0.5%. That mismatch indicates work may be in progress or unvalidated, and the remaining time is too short to complete validation safely. Stop initiating new work and finalize a report anchored to the last validated",
+      "intents": [
+        {
+          "intent_type": "alert",
+          "payload": {
+            "severity": "high",
+            "summary": "wall-clock budget 92% consumed (elapsed=164.8min / budget=180min) and cumulative_gain_validated=0.00% — wind the session down before the deadline cuts it",
+            "detail": {
+              "symptom": "deadline_imminent",
+              "severity": "high",
+              "subject": {},
+              "source": "local",
+              "evidence": {
+                "elapsed_minutes": 164.8,
+                "remaining_minutes": 15.2,
+                "budget_minutes": 180.0,
+                "burn_pct": 0.916,
+                "cumulative_gain_validated": 0.0,
+                "imminent_pct": 0.85,
+                "productive_gain_pct": 0.5
+              },
+              "suggestion": "propose report to finalize at the last validated gain"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "symptom_name": "deadline_warning",
+      "severity": "high",
+      "tick_index": 9,
+      "timestamp_unix": 1789499009.4086163,
+      "summary": "only 15.2min remain (<= 30min); validated_gain still 0; wind the session down now",
+      "rca_text": "",
+      "intents": [
+        {
+          "intent_type": "alert",
+          "payload": {
+            "severity": "high",
+            "summary": "only 15.2min remain (<= 30min); validated_gain still 0; wind the session down now",
+            "detail": {
+              "symptom": "deadline_warning",
+              "severity": "high",
+              "subject": {},
+              "source": "local",
+              "evidence": {
+                "elapsed_minutes": 164.8,
+                "remaining_minutes": 15.2,
+                "budget_minutes": 180.0,
+                "deadline_warning_minutes": 30.0,
+                "cumulative_gain_validated": 0.0,
+                "productive_gain_pct": 0.5
+              },
+              "suggestion": "propose report to finalize at the last validated gain"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "symptom_name": "log_error_pattern",
+      "severity": "high",
+      "tick_index": 9,
+      "timestamp_unix": 1789499009.4086163,
+      "summary": "log error pattern 'RuntimeError: Engine core initialization failed' matched 2 times",
+      "rca_text": "",
+      "intents": [
+        {
+          "intent_type": "alert",
+          "payload": {
+            "severity": "high",
+            "summary": "log error pattern 'RuntimeError: Engine core initialization failed' matched 2 times",
+            "detail": {
+              "symptom": "log_error_pattern",
+              "severity": "high",
+              "subject": {
+                "pattern": "RuntimeError: Engine core initialization failed"
+              },
+              "source": "local",
+              "evidence": {
+                "pattern": "RuntimeError: Engine core initialization failed",
+                "count": 2,
+                "samples": [
+                  "[server.log] (APIServer pid=27040) RuntimeError: Engine core initialization failed. See root cause above. Failed core proc(s): {'EngineCore': 1}",
+                  "[server.log] (APIServer pid=25168) RuntimeError: Engine core initialization failed. See root cause above. Failed core proc(s): {'EngineCore': 1}"
+                ]
+              },
+              "suggestion": "delegate(recover, force_gpu_cleanup=True) or escalate strategy"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "kb_read_skipped_reason": null,
+  "review_constraints": {
+    "allowed_verdicts": [
+      "advise",
+      "approve",
+      "needs_review",
+      "redirect",
+      "reject"
+    ],
+    "ceiling_importance": 0.84,
+    "approve_requires": [
+      "comparable_before_after_benchmark",
+      "accuracy_gate_or_waiver",
+      "active_path_proof_when_relevant",
+      "rollback_plan"
+    ]
+  },
+  "notes": [
+    "scope_cache_key=framework=vllm|model=ornith-1.5-397b-fp8|org=hyperloom|precision=fp8|workload={'conc': 64, 'isl': 1024, 'max_model_len': 6144, 'osl': 1024, 'precision': 'fp8'}|limit=10",
+    "robustness_priors_injected count=5 path=/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/agents/robustness/findings/20260915T161838Z-ba2694ea.jsonl"
+  ]
+}

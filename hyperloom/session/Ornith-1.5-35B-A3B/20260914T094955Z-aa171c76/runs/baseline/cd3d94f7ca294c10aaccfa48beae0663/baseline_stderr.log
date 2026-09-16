@@ -1,0 +1,34 @@
+2026-09-14 09:50:55,437 - Magpie.main - INFO - Starting benchmark: vllm / /mnt/stripe-3mix-3t2/models/ornith-ai/Ornith-1.5-35B-A3B
+2026-09-14 09:50:55,438 - Magpie.modes.benchmark.image_selector - INFO - Loaded image mapping from /opt/envs/vllm/lib/python3.12/site-packages/Magpie/benchmark_images.yaml
+2026-09-14 09:50:55,438 - Magpie.modes.benchmark.image_selector - DEBUG - Available frameworks: ['vllm', 'sglang', 'atom']
+2026-09-14 09:50:55,438 - Magpie.modes.benchmark.benchmarker - INFO - Starting benchmark: vllm / /mnt/stripe-3mix-3t2/models/ornith-ai/Ornith-1.5-35B-A3B
+2026-09-14 09:50:55,438 - Magpie.modes.benchmark.inferencex - DEBUG - InferenceX found at: /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966
+2026-09-14 09:50:55,439 - Magpie.modes.benchmark.benchmarker - INFO - Copied Magpie script atom_mi355x.sh to /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966/benchmarks
+2026-09-14 09:50:55,439 - Magpie.modes.benchmark.benchmarker - INFO - Copied Magpie script magpie_bench_remote_compat.sh to /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966/benchmarks
+2026-09-14 09:50:55,439 - Magpie.modes.benchmark.benchmarker - INFO - Copied Magpie script xdit_mi355x.sh to /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966/benchmarks
+2026-09-14 09:50:55,440 - Magpie.modes.benchmark.benchmarker - INFO - Copied Magpie script vllm_mi355x_mm.sh to /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966/benchmarks
+2026-09-14 09:50:55,440 - Magpie.modes.benchmark.benchmarker - INFO - Copied Magpie script server_cleanup.sh to /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966/benchmarks
+2026-09-14 09:50:55,440 - Magpie.modes.benchmark.benchmarker - INFO - Copied Magpie script xdit_mi300x.sh to /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966/benchmarks
+2026-09-14 09:50:55,441 - Magpie.modes.benchmark.benchmarker - INFO - Copied Magpie script sglang_mi355x.sh to /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966/benchmarks
+2026-09-14 09:50:55,441 - Magpie.modes.benchmark.benchmarker - INFO - Copied Magpie script xdit_bench_common.sh to /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966/benchmarks
+2026-09-14 09:50:55,441 - Magpie.modes.benchmark.benchmarker - INFO - Copied Magpie script sglang_mi300x.sh to /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966/benchmarks
+2026-09-14 09:50:55,441 - Magpie.modes.benchmark.benchmarker - INFO - Copied Magpie script atom_mi300x.sh to /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966/benchmarks
+2026-09-14 09:50:55,442 - Magpie.modes.benchmark.benchmarker - INFO - Copied Magpie script vllm_mi300x.sh to /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966/benchmarks
+2026-09-14 09:50:55,442 - Magpie.modes.benchmark.benchmarker - INFO - Copied Magpie script vllm_mi355x.sh to /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966/benchmarks
+2026-09-14 09:50:55,442 - Magpie.modes.benchmark.benchmarker - INFO - Copied Magpie script vllm_mi300x_mm.sh to /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966/benchmarks
+2026-09-14 09:50:55,621 - Magpie.utils.gpu - INFO - Detected AMD GPU: gfx90a
+2026-09-14 09:50:55,621 - Magpie.modes.benchmark.image_selector - WARNING - No runner type found for gfx90a
+2026-09-14 09:50:55,621 - Magpie.main - ERROR - Benchmark failed with error: No runner type found for gfx90a
+Traceback (most recent call last):
+  File "/opt/envs/vllm/lib/python3.12/site-packages/Magpie/main.py", line 1103, in run_benchmark
+    result = benchmarker.run()
+             ^^^^^^^^^^^^^^^^^
+  File "/opt/envs/vllm/lib/python3.12/site-packages/Magpie/modes/benchmark/benchmarker.py", line 154, in run
+    runner_type = self._get_runner_type()
+                  ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/envs/vllm/lib/python3.12/site-packages/Magpie/modes/benchmark/benchmarker.py", line 544, in _get_runner_type
+    return self.image_selector.get_runner_type(self.config.gpu_arch)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/envs/vllm/lib/python3.12/site-packages/Magpie/modes/benchmark/image_selector.py", line 151, in get_runner_type
+    raise ValueError(f"No runner type found for {gpu_arch}")
+ValueError: No runner type found for gfx90a

@@ -1,0 +1,101 @@
+diff --git a/vllm/compilation/caching.py b/vllm/compilation/caching.py
+index 94456fc..a6d52a4 100644
+--- a/vllm/compilation/caching.py
++++ b/vllm/compilation/caching.py
+@@ -2,6 +2,7 @@
+ # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
+ 
+ import contextlib
++import functools
+ import hashlib
+ import inspect
+ import os
+@@ -570,6 +571,76 @@ def reconstruct_serializable_fn_from_mega_artifact(
+     return fn
+ 
+ 
++# Source directories whose *contents* change which ops/aten calls Dynamo
++# traces into the forwarded graph, without appearing in the traced-file set
++# recorded by an AOT artifact: the quantized-linear kernel registry
++# (`kernels/linear/**`), the quant methods' `process_weights_after_loading`
++# layout contracts (`layers/quantization/**`) and the MoE backend oracle
++# (`layers/fused_moe/oracle/**`).
++#
++# Enabling a (model, backend) combo by swapping a kernel implementation --
++# e.g. registering a BF16-dequant FP8 kernel on GPUs without hardware FP8 --
++# edits exactly these files and none of the traced model files. See
++# `_kernel_selection_hash` below for why that poisons the compile cache.
++_KERNEL_SELECTION_DIRS: tuple[str, ...] = (
++    "model_executor/kernels",
++    "model_executor/layers/quantization",
++    "model_executor/layers/fused_moe/oracle",
++)
++
++
++@functools.lru_cache(maxsize=1)
++def _kernel_selection_hash() -> str:
++    """Digest of the kernel/quant-layout sources that shape the traced graph.
++
++    The AOT compile-cache key (`aot_compile_hash_factors`) covers the env,
++    the VllmConfig and the model's forward function, and
++    `_verify_source_unchanged` additionally re-checks the *traced* files
++    recorded inside an existing artifact. Neither covers a very common class
++    of change: a source edit that only alters *which* implementation gets
++    traced, e.g. a kernel-registry / backend-selection patch.
++
++    Concretely, when a patch makes a linear layer dequantize its FP8 weight to
++    BF16 [N, K] at load time, the traced model files are untouched, so the
++    stale artifact (built for an FP8 [K, N] `aten._scaled_mm`) still verifies
++    and is reloaded. It then calls its hard-coded `_scaled_mm` with the wrong
++    tensor layout and dies in `profile_run` with::
++
++        AssertionError: expected size 2560==4096, stride 4096==1 at dim=0 ...
++
++    even though the eager (uncompiled) path would have run fine. Hashing these
++    sources makes any such patch change the cache key, forcing a correct
++    recompile instead of a silent stale-graph replay.
++
++    Returns an empty string (i.e. contributes nothing) if the sources cannot be
++    read, so a failure here can never block startup.
++    """
++    try:
++        root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
++        hasher = hashlib.sha256()
++        paths: list[str] = []
++        for rel_dir in _KERNEL_SELECTION_DIRS:
++            abs_dir = os.path.join(root, rel_dir.replace("/", os.sep))
++            if not os.path.isdir(abs_dir):
++                continue
++            for dirpath, _dirnames, filenames in os.walk(abs_dir):
++                for name in filenames:
++                    if name.endswith(".py"):
++                        paths.append(os.path.join(dirpath, name))
++        for path in sorted(paths):
++            hasher.update(os.path.relpath(path, root).encode())
++            try:
++                with open(path, "rb") as f:
++                    hasher.update(f.read())
++            except OSError as exc:  # pragma: no cover - unreadable file
++                logger.debug("compile-cache: skipping %s: %s", path, exc)
++                hasher.update(b"<unreadable>")
++        return hasher.hexdigest()
++    except Exception as exc:  # pragma: no cover - never block startup
++        logger.warning("compile-cache: kernel-selection hash unavailable: %s", exc)
++        return ""
++
++
+ def aot_compile_hash_factors(vllm_config: VllmConfig) -> list[str]:
+     factors = []
+     # 0. factors come from the env, for example, The values of
+@@ -586,6 +657,11 @@ def aot_compile_hash_factors(vllm_config: VllmConfig) -> list[str]:
+     if envs.VLLM_USE_MEGA_AOT_ARTIFACT:
+         factors.extend(get_inductor_factors())
+ 
++    # 3. which kernel implementations exist / what layout they leave the
++    #    weights in. Not part of the env, the config or the traced files, but
++    #    it fully determines the traced graph -- see the docstring above.
++    factors.append(_kernel_selection_hash())
++
+     return factors
+ 
+ 

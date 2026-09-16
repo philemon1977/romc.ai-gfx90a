@@ -7,7 +7,10 @@
 #   - 模型权重             models/                         (~1 GB, 第三方资产)
 #   - 第三方代码副本       amd-skills/, hyperloom/hyperloom/, kernelforge/,
 #                          hyperloom/bin/, *.dist-info/     (见 DEPENDENCIES.md)
-#   - optimizer 运行现场   hyperloom/session/              (~29 GB, 含 worktree/编译缓存)
+#   - optimizer 重放环境   hyperloom/session/**/{wt*,worktree,scratch,vcache,aot,
+#                          site-packages,__pycache__}  (~28.9 GB of the 29 GB session)
+#     —— session 里的 run 状态与结果（manifest/state/critic 判决/逐候选基准记录）
+#        是入库的，只剔掉每个候选一棵 vLLM worktree 与编译缓存。
 #   - 临时与缓存           .tmp/, hyperloom/.tmp/, hyperloom/.cache/  (~33 GB)
 #   - 重复的库存二进制     hyperloom/patches/*/vllm/**      (与上游 wheel 逐字节相同)
 # 需要保留的二进制（aiter 修复产物、profiler trace）走 Git LFS，见 .gitattributes。
@@ -44,8 +47,7 @@ dist/
 /hyperloom/.cursor/
 /hyperloom/.cache/
 
-# --- Hyperloom optimizer 运行现场（worktree / AOT 编译缓存 / triton dump） ----
-/hyperloom/session/
+# --- 临时与工具现场 ----------------------------------------------------------
 /hyperloom/logs/
 /.tmp/
 /hyperloom/.tmp/
@@ -64,6 +66,30 @@ torch_compile_cache/
 *.amdgcn
 *.best_config
 kernel_perf/
+
+# --- Hyperloom optimizer 运行现场：入库「状态与结果」，剔除「重放环境」 -------
+# 保留：manifest/state/session_breakdown、runs 下每个候选的 request|emit|review|
+#       judge_bundle|specialist_done、benchmark_report 与 samples_gsm8k 逐样本记录、
+#       agent 转录与 process.log、prompt 快照、integrate_patch 的 *.bak（改动前原文件）。
+# 剔除：每个候选一棵 vLLM worktree 及其 site-packages、AOT/inductor/triton 编译缓存
+#       （占 session 29 GB 里的 28.9 GB），以及半一致状态的 sqlite 事件库。
+/hyperloom/session/**/wt3/
+/hyperloom/session/**/vcache/
+/hyperloom/session/**/boot/
+/hyperloom/session/**/aot/
+/hyperloom/session/**/site-packages/
+/hyperloom/session/**/triton_cache/
+/hyperloom/session/**/usersite-shim/
+/hyperloom/session/**/*.so
+/hyperloom/session/**/*.so.*
+/hyperloom/session/**/*.safetensors
+# sqlite 事件库与其 wal/shm 一起排除：只提交 .db 会漏掉未 checkpoint 的 wal，
+# 得到半一致快照。同一批事件的文本形态见 storage/../emit.json 与 state.json。
+# 需要时在本机导出：python3 -c "import sqlite3;print('\n'.join(
+#   sqlite3.connect('file:storage/coordinator.db?mode=ro&uri=True').iterdump()))"
+/hyperloom/session/**/*.db
+/hyperloom/session/**/*.db-wal
+/hyperloom/session/**/*.db-shm
 
 # --- Python 运行垃圾 ---------------------------------------------------------
 __pycache__/

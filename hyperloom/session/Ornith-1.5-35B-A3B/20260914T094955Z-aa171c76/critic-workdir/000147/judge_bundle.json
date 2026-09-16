@@ -1,0 +1,300 @@
+{
+  "kind": "coordinator_inbox",
+  "session_id": "20260914T094955Z-aa171c76",
+  "decision_id": null,
+  "phase": "PRELUDE",
+  "merged_context": {
+    "model": "Ornith-1.5-35B-A3B",
+    "framework": "vllm",
+    "model_path": "/mnt/stripe-3mix-3t2/models/ornith-ai/Ornith-1.5-35B-A3B",
+    "tp": 2,
+    "workload": {
+      "conc": 64,
+      "isl": 1024,
+      "max_model_len": 6144,
+      "osl": 1024,
+      "precision": "bf16"
+    },
+    "precision": "bf16",
+    "phase": "PRELUDE",
+    "macro_cycle": 0
+  },
+  "missing_context": [
+    "model_family",
+    "scale",
+    "objective",
+    "baseline_tput",
+    "baseline_label",
+    "current_best",
+    "session_label"
+  ],
+  "required_context": [],
+  "proposals": [
+    {
+      "msg_id": "e59472666477436e8b080670a823b9c0",
+      "from_agent": "coordinator",
+      "payload": {
+        "action_name": "integrate_patch",
+        "provenance": "specialist",
+        "predicted_gain_pct": 0.0,
+        "params": {
+          "specialist_task_id": "3bbb58e289654e3bb358a8db44343c2f",
+          "provenance": "specialist:enablement_specialist",
+          "patch_name": "",
+          "source_phase": "FRAMEWORK_AGENT",
+          "domain": "enablement_specialist",
+          "gap_canonical_id": "gap.enablement.unknown",
+          "gap_layer": "framework",
+          "lever_kind": "enablement",
+          "framework_agent_authoring": true,
+          "enablement": true,
+          "enablement_before_signature": {
+            "kind": "unknown",
+            "offending_file": "",
+            "offending_symbol": "",
+            "raw_excerpt": "1c76/runs/baseline/3f5caae8b8034e6094faa0c559cdf087/benchmark_vllm_20260914_114944/server.log --pid 47746 --sleep-interval 5\\n+ set +x\\nProcess died before http://0.0.0.0:8888/health became ready.\\n']",
+            "confidence": 0.0,
+            "bridge_layer": "",
+            "secondary_kinds": []
+          },
+          "enablement_base_patches": [
+            "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-35B-A3B/20260914T094955Z-aa171c76/runs/specialist/d00cdedfc173451eaf5b312d08e00da9/patches/003_rocm_visible_devices_logical_repin.patch"
+          ]
+        },
+        "needs_review": true
+      },
+      "seq": 578,
+      "action_name": "integrate_patch",
+      "predicted_gain_pct": 0.0
+    }
+  ],
+  "messages": [],
+  "decision": {},
+  "kb_priors_by_proposal": {
+    "e59472666477436e8b080670a823b9c0": []
+  },
+  "kb_priors_for_decision": [],
+  "kb_priors_trace": {
+    "configured": true,
+    "mode": "per_proposal",
+    "client_mode": "inmemory",
+    "scope_filter": {
+      "org": "hyperloom",
+      "framework": "vllm",
+      "model": "ornith-1.5-35b-a3b",
+      "workload": "{'conc': 64, 'isl': 1024, 'max_model_len': 6144, 'osl': 1024, 'precision': 'bf16'}",
+      "precision": "bf16"
+    },
+    "limit": 5,
+    "requests": [
+      {
+        "msg_id": "e59472666477436e8b080670a823b9c0",
+        "topic": "integrate_patch",
+        "cache": "hit",
+        "count": 0
+      }
+    ]
+  },
+  "robustness_priors": [
+    {
+      "symptom_name": "conversation_no_progress",
+      "severity": "high",
+      "tick_index": 142,
+      "timestamp_unix": 1789383304.8580654,
+      "summary": "orchestration stalled for 140 ticks (threshold=15); last progress at tick 2",
+      "rca_text": "The last progress occurred at tick 2, while 140 ticks have now passed without progress, placing the run far beyond the threshold of 15. That 125-tick excess indicates the orchestration loop is stalled or repeatedly failing to advance state. Operator intervention is needed to inspect the stalled run and, if budget is tight, wind it down via a report.",
+      "intents": [
+        {
+          "intent_type": "alert",
+          "payload": {
+            "severity": "high",
+            "summary": "orchestration stalled for 140 ticks (threshold=15); last progress at tick 2",
+            "detail": {
+              "symptom": "conversation_no_progress",
+              "severity": "high",
+              "subject": {},
+              "source": "shared_state",
+              "evidence": {
+                "ticks_without_progress": 140,
+                "threshold": 15,
+                "last_progress_tick": 2
+              },
+              "suggestion": "operator intervention; wind down via report if the budget is tight"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "symptom_name": "log_error_pattern",
+      "severity": "high",
+      "tick_index": 142,
+      "timestamp_unix": 1789383304.8580654,
+      "summary": "log error pattern 'RuntimeError: Engine core initialization failed' matched 1 times",
+      "rca_text": "",
+      "intents": [
+        {
+          "intent_type": "alert",
+          "payload": {
+            "severity": "high",
+            "summary": "log error pattern 'RuntimeError: Engine core initialization failed' matched 1 times",
+            "detail": {
+              "symptom": "log_error_pattern",
+              "severity": "high",
+              "subject": {
+                "pattern": "RuntimeError: Engine core initialization failed"
+              },
+              "source": "local",
+              "evidence": {
+                "pattern": "RuntimeError: Engine core initialization failed",
+                "count": 1,
+                "samples": [
+                  "[server.log] (APIServer pid=15383) RuntimeError: Engine core initialization failed. See root cause above. Failed core proc(s): {}"
+                ]
+              },
+              "suggestion": "delegate(recover, force_gpu_cleanup=True) or escalate strategy"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "symptom_name": "agent_stall",
+      "severity": "high",
+      "tick_index": 146,
+      "timestamp_unix": 1789386521.337114,
+      "summary": "agent orchestration silent for 3126s (threshold=300s)",
+      "rca_text": "The orchestration agent has been idle for 3126 seconds, far beyond the 300-second threshold, indicating it stopped emitting progress or heartbeats rather than merely running slowly. Its last recorded activity timestamp is 1789383394, so no newer signal has arrived for the entire gap. Because the affected subject is specifically agent=orchestration, the silence points to the orchestration loop itself being blocked, exited, or waiting on an unlogged dependency. A concrete next step is to inspect the orchestration process state and recent stdout/stderr for a stuck wait or missing heartbeat, then restart or resume the agent if no active task is present.",
+      "intents": [
+        {
+          "intent_type": "alert",
+          "payload": {
+            "severity": "high",
+            "summary": "agent orchestration silent for 3126s (threshold=300s)",
+            "detail": {
+              "symptom": "agent_stall",
+              "severity": "high",
+              "subject": {
+                "agent": "orchestration"
+              },
+              "source": "local",
+              "evidence": {
+                "agent": "orchestration",
+                "idle_seconds": 3126,
+                "last_seen_unix": 1789383394,
+                "threshold_s": 300
+              },
+              "suggestion": "escalate strategy if agent remains silent"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "symptom_name": "conversation_no_progress",
+      "severity": "high",
+      "tick_index": 147,
+      "timestamp_unix": 1789386577.535454,
+      "summary": "orchestration stalled for 145 ticks (threshold=15); last progress at tick 2",
+      "rca_text": "The orchestration has gone 145 ticks without progress, far beyond the 15-tick threshold, while the last recorded progress occurred at tick 2. This gap means the loop has been repeatedly advancing time or retries without producing a state change, output, or completed action. Because no additional evidence identifies a specific subsystem, the most defensible cause is a stalled control flow or unhandled no-op cycle in the orchestration loop. Operator intervention should inspect the tick 2 transition and the first tick after it to find where progress detection stopped firing. If budget is tight, wind down by generating a report from the last known state rather than continuing to consume ticks.",
+      "intents": [
+        {
+          "intent_type": "alert",
+          "payload": {
+            "severity": "high",
+            "summary": "orchestration stalled for 145 ticks (threshold=15); last progress at tick 2",
+            "detail": {
+              "symptom": "conversation_no_progress",
+              "severity": "high",
+              "subject": {},
+              "source": "shared_state",
+              "evidence": {
+                "ticks_without_progress": 145,
+                "threshold": 15,
+                "last_progress_tick": 2
+              },
+              "suggestion": "operator intervention; wind down via report if the budget is tight"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "symptom_name": "log_error_pattern",
+      "severity": "high",
+      "tick_index": 147,
+      "timestamp_unix": 1789386577.535454,
+      "summary": "log error pattern 'RuntimeError: Engine core initialization failed' matched 2 times",
+      "rca_text": "",
+      "intents": [
+        {
+          "intent_type": "alert",
+          "payload": {
+            "severity": "high",
+            "summary": "log error pattern 'RuntimeError: Engine core initialization failed' matched 2 times",
+            "detail": {
+              "symptom": "log_error_pattern",
+              "severity": "high",
+              "subject": {
+                "pattern": "RuntimeError: Engine core initialization failed"
+              },
+              "source": "local",
+              "evidence": {
+                "pattern": "RuntimeError: Engine core initialization failed",
+                "count": 2,
+                "samples": [
+                  "[server.log] (APIServer pid=43533) RuntimeError: Engine core initialization failed. See root cause above. Failed core proc(s): {}",
+                  "[server.log] (APIServer pid=15383) RuntimeError: Engine core initialization failed. See root cause above. Failed core proc(s): {}"
+                ]
+              },
+              "suggestion": "delegate(recover, force_gpu_cleanup=True) or escalate strategy"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "kb_read_skipped_reason": null,
+  "review_constraints": {
+    "allowed_verdicts": [
+      "advise",
+      "approve",
+      "needs_review",
+      "redirect",
+      "reject"
+    ],
+    "ceiling_importance": 0.84,
+    "approve_requires": [
+      "specialist_or_default_grid_provenance",
+      "in_phase_allowed_action",
+      "no_contradicting_kb_prior"
+    ],
+    "bundle_action_class": "enablement_landing",
+    "proposal_action_classes": {
+      "e59472666477436e8b080670a823b9c0": "enablement_landing"
+    },
+    "approve_requires_by_class": {
+      "patch_landing": [
+        "comparable_before_after_benchmark",
+        "accuracy_gate_or_waiver",
+        "active_path_proof_when_relevant",
+        "rollback_plan"
+      ],
+      "evidence_producer": [
+        "specialist_or_default_grid_provenance",
+        "in_phase_allowed_action",
+        "no_contradicting_kb_prior"
+      ],
+      "enablement_landing": [
+        "specialist_or_default_grid_provenance",
+        "in_phase_allowed_action",
+        "no_contradicting_kb_prior"
+      ],
+      "framework_op": []
+    }
+  },
+  "notes": [
+    "scope_cache_key=framework=vllm|model=ornith-1.5-35b-a3b|org=hyperloom|precision=bf16|workload={'conc': 64, 'isl': 1024, 'max_model_len': 6144, 'osl': 1024, 'precision': 'bf16'}|limit=10",
+    "robustness_priors_injected count=5 path=/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-35B-A3B/20260914T094955Z-aa171c76/agents/robustness/findings/20260914T094955Z-aa171c76.jsonl"
+  ]
+}

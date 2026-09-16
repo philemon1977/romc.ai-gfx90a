@@ -1,0 +1,76 @@
+{
+  "intent_type": "specialist_done",
+  "payload": {
+    "confidence": 0.82,
+    "domain": "enablement_specialist",
+    "empty": false,
+    "gap_canonical_id": "gap.enablement.unknown",
+    "summary": "Reclassified 'unknown' -> ROCm device-mask index-space contradiction (torch 'No CUDA GPUs are available' at gpu_worker.py:379). Model arch is fine. Prior fix could not hold: HIP/CUDA are scrubbed from every untrusted env path (GPU_MASK_ENV_NAMES subset BLOCKED_EXTERNAL_ENV_NAMES) and the materializer only pins ROCR, so both failing baselines render ROCR=0 with NO HIP/CUDA key while the lease leaks a physical carve. Authored patch 002 in the layer that owns the ROCR pin; proven on the real Magpie+InferenceX path under the exact leak: boots to 'Application startup complete', 0 device errors.",
+    "new_findings": [
+      {
+        "what": "The 'unknown' launch failure is a MISCLASSIFIED, fully-legible crash: `RuntimeError: No CUDA GPUs are available` at vllm/v1/worker/gpu_worker.py:379 -> torch._C._cuda_init(), in the 15:51 gate attempt (runs/baseline/0668d71b.../benchmark_vllm_20260914_155130/server.log). The mechanism is a ROCm device-mask index-space contradiction, NOT model-side: Qwen3_5ForConditionalGeneration resolves fine (server.log line 'Resolved architecture: Qwen3_5ForConditionalGeneration'), weights/graphs are never reached. Two leak shapes, both reproduced in-session against the live serving interpreter /opt/envs/wu1w: (a) ROCR='0' + HIP='2' -> torch parses [2], device_count()==1 but is_available()==False -> 'No CUDA GPUs are available' (the 15:51 failure); (b) ROCR='0' + HIP='0,1,2,3,4,5,6,7' -> torch.cuda._parse_visible_devices() RAISES 'HIP_VISIBLE_DEVICES contains more devices than ROCR_VISIBLE_DEVICES'. Shape (b) is what MY subprocess inherits today (HIP/ROCR both 8-wide), so the harness-wide leak is live and reproducible.",
+        "source": "/opt/envs/wu1w/lib/python3.12/site-packages/torch/cuda/__init__.py:830-861 (_parse_visible_devices); runs/baseline/0668d71b42d54c559c36634e823a55a5/benchmark_vllm_20260914_155130/server.log; in-session torch probes of all four mask combinations",
+        "expected_impact": "Removes the 'unknown' label and pins the fix to exactly one layer; unblocks every downstream round (boot + eval + throughput) which currently cannot start at all.",
+        "accuracy_risk": "none",
+        "domain_tags": [
+          "rocm",
+          "device-visibility",
+          "enablement",
+          "vllm",
+          "gfx90a",
+          "misclassification"
+        ]
+      },
+      {
+        "what": "WHY THE PRIOR ROUND'S FIX DID NOT HOLD \u2014 two independently-verified reasons, and they explain the whole stall_streak. (1) The env pin cannot reach the baseline launch: HIP_VISIBLE_DEVICES / CUDA_VISIBLE_DEVICES are members of GPU_MASK_ENV_NAMES (hyperloom/common/visible_devices.py:96) which is ORed into BLOCKED_EXTERNAL_ENV_NAMES (common/env_safety.py:286-289), so every path that sanitises an untrusted/external env mapping SCRUBS them; and the materializer only writes ROCR_VISIBLE_DEVICES from the lease (executors/_workload_envs.py:1054-1056, 1085-1097) and never touches HIP/CUDA. Decisive artefact: BOTH failing gate attempts' baseline_config.with_envs.yaml (runs/baseline/48e0ae2b.../ 15:14 and 0668d71b.../ 15:51) contain `ROCR_VISIBLE_DEVICES: '0'` and NO HIP/CUDA key at all \u2014 i.e. the accumulated accepted_config env pin was dropped, while the *variant* path (executors/_grid_runner.py:670 `envs[str(k)] = str(v)`, no filter) does honour it. That is exactly why the prior round's own rebench SUCCEEDED (variants honoured extra_envs) while the gate's baseline kept failing. (2) The kept Magpie patch is not permanent: integrate_patch backs up the target (patch_backups/*__0000.bak) and restores on REVERT, so grep -c _reconcile_rocm_device_masks /opt/envs/vllm/.../Magpie/modes/benchmark/benchmarker.py == 0 right now \u2014 the tree is unpatched again.",
+        "source": "/opt/envs/vllm/lib/python3.12/site-packages/hyperloom/common/visible_devices.py:52-96; hyperloom/common/env_safety.py:286-332; executors/_workload_envs.py:1054-1097; executors/_grid_runner.py:664-671; the two baseline_config.with_envs.yaml files; runs/integrate_patch/*/patch_backups/",
+        "expected_impact": "Stops the next round from re-proposing the same scrubbed env pin (a guaranteed no-op on the baseline path) and identifies the one layer that can fix it durably.",
+        "accuracy_risk": "none",
+        "domain_tags": [
+          "hyperloom",
+          "env_safety",
+          "allowlist",
+          "integration",
+          "magpie",
+          "root_cause"
+        ]
+      },
+      {
+        "what": "AUTHORED AND PROVEN: patches/002_reconcile_inherited_device_masks.patch (165 lines, +129/-0, `git apply --check` PASS against the live /opt/envs/vllm/lib/python3.12/site-packages tree). It adds reconcile_rocm_device_masks() to hyperloom/orchestrator/actions/executors/_workload_envs.py \u2014 the single layer that OWNS the ROCR pin and that EVERY launch path (baseline.py:3528, integrate_patch.py:4503, explore/grid) traverses, so unlike a variant extra_envs it cannot be scrubbed \u2014 and calls it (i) immediately after the TP-derived ROCR write, (ii) once more at the final sink before yaml.safe_dump, plus a call in _grid_runner.py after the variant extra_envs merge so an explicit variant pin is honoured and then validated. The key design point: the leak lives in the PARENT os.environ, not in the YAML, so the helper reads `envs` first and falls back to os.environ, and WRITES the corrected logical 0..N-1 mask into benchmark.envs (which Magpie overlays on os.environ.copy() at Magpie/modes/benchmark/benchmarker.py:776,800) so it overrides the inherited carve. It is conservative: inert off ROCm (no /dev/kfd or /sys/module/amdgpu), inert with no effective ROCR mask, inert when the mask already validly indexes the ROCR set (an intentional TP=2 multi-card launch stays 2-wide), it never modifies/removes ROCR, it leaves UUID masks to the runtime, and it is wrapped in a blanket try/except so env hygiene can never itself break a launch.",
+        "source": "patches/002_reconcile_inherited_device_masks.patch (this round); verified with `git apply --check` + `patch --dry-run --fuzz=0` against the live tree",
+        "expected_impact": "Clears the current boot failure durably on the baseline AND variant paths; this is the enabling delta for the whole session (nothing can be measured or evaluated until the server boots).",
+        "accuracy_risk": "none \u2014 it changes only which physical device the child is allowed to see (already the harness's intent via ROCR), no numerics, no kernels, no sampling."
+      },
+      {
+        "what": "END-TO-END PROOF ON THE REAL GATE PATH (not a hand-rolled server). With the patch overlaid via PYTHONPATH and the parent env deliberately re-leaking the exact 15:51 killer (ROCR_VISIBLE_DEVICES=0 HIP_VISIBLE_DEVICES=2 CUDA_VISIBLE_DEVICES=2), running hyperloom.orchestrator.specialists.rebench (i.e. Magpie -> InferenceX vllm_mi300x.sh -> /usr/local/bin/vllm-wu1w, the same chain the Coordinator benches) on my leased card: the materializer logs `materialize: ROCR_VISIBLE_DEVICES='0' re-indexes the visible set to 0..0; reconciled HIP_VISIBLE_DEVICES: '2' -> '0'; CUDA_VISIBLE_DEVICES: '2' -> '0'`; the rendered variant config.yaml carries ROCR='0' HIP='0' CUDA='0'; server.log contains ZERO occurrences of 'No CUDA GPUs are available' / 'HIP_VISIBLE_DEVICES contains more devices' / 'EngineCore failed'; and it reached `init engine (profile, create kv cache, warmup model) took 167.61 s (compilation: 91.93 s)` followed by `Application startup complete` \u2014 strictly past gpu_worker.py:379, the exact line where the sealed baseline died. The control (unpatched) at 15:51 died at that line in 26 s.",
+        "source": "scratch/lp2/variant_00_specialist-rebench/config.yaml + benchmark_vllm_20260914_163507/server.log + scratch/lp2.out (this round)",
+        "expected_impact": "Demonstrates the gap is cleared rather than shifted; the Coordinator's own gate run should now boot.",
+        "accuracy_risk": "none"
+      },
+      {
+        "what": "SECONDARY, NOT-YET-BLOCKING observation (recorded so a future round does not mistake it for the root cause): `Triton cache error: compiled module hip_utils.so could not be loaded` appears twice in the failing 15:51 log but ZERO times in the successful patched boot above, and zero times in the prior round's successful boot. It is a downstream symptom of the same dead device context (Triton's ROCm helper cannot dlopen without a usable agent), not an independent kernel-availability gap \u2014 no AITER/HIP build is needed. Corroborating: /root/.triton/cache/*/hip_utils.cpython-312-x86_64-linux-gnu.so exists on disk and the aiter a8w8 ScaledMM path selects and runs normally in the successful boot.",
+        "source": "grep -c hip_utils over runs/baseline/0668d71b.../server.log (2) vs scratch/lp2/.../server.log (0) and runs/specialist/30ccc757.../scratch/e2e_fixed/.../server.log (0)",
+        "expected_impact": "Prevents a wasted Rung-5 targeted-build request on a phantom kernel gap.",
+        "accuracy_risk": "none",
+        "domain_tags": [
+          "triton",
+          "rocm",
+          "symptom",
+          "misclassification"
+        ]
+      }
+    ],
+    "proposal_set": [],
+    "patches_written": [
+      "patches/002_reconcile_inherited_device_masks.patch"
+    ],
+    "artifacts_written": [],
+    "setup_commands": [],
+    "residual_questions": [
+      "Please bench patch 002 WITHOUT re-adding the accepted env pin as the only mechanism: runs/baseline/48e0ae2b(15:14) and 0668d71b(15:51) both materialized `ROCR_VISIBLE_DEVICES: '0'` with NO HIP/CUDA key, i.e. the accumulated extra_envs {'CUDA_VISIBLE_DEVICES':'0','HIP_VISIBLE_DEVICES':'0'} did not survive into the baseline YAML (GPU_MASK_ENV_NAMES are blocked external names). If 002 is integrated the pin becomes redundant; if 002 is rejected, the pin alone will NOT rescue the baseline path \u2014 it only ever worked on the grid/variant path (_grid_runner.py:670 writes extra_envs unfiltered), which is why the prior round's own rebench passed while the gate kept failing.",
+      "The kept Magpie patch 001 is currently NOT live in /opt/envs/vllm/.../Magpie/modes/benchmark/benchmarker.py (grep -c _reconcile_rocm_device_masks == 0) because integrate_patch restores patch_backups on REVERT. Patch 002 deliberately does NOT depend on 001 and fixes a path 001 cannot reach (001 lives in Magpie's child-env builder; 002 fixes the YAML hyperloom renders, so the correct mask is what gets handed to Magpie in the first place). Are stacked patches meant to be re-applied every attempt, or should I have assumed 001 is gone?",
+      "Confirm the gate's `gpu_selection.auto: false` is intentional: with auto:true, Magpie's _apply_gpu_selection (benchmarker.py:513-523) already writes the CORRECT logical HIP mask and this whole class of failure cannot occur. The session pins ROCR=0 in the YAML but exports an 8-wide HIP/ROCR lease, which is the specific combination that produces the contradiction.",
+      "Unchanged carry-over from the prior round (I did not touch the eval contract): this checkpoint's chat_template.jinja injects a ~1.2k-token operator system prompt plus CoT instructions, and generation_config.json forces temperature=1.0/top_k=20/top_p=0.95 (vLLM logs 'Default vLLM sampling parameters have been overridden'). If the accuracy gate runs /v1/chat/completions against max_model_len=6144 that prefix plus a reasoning tail is a real eval risk once the server boots."
+    ]
+  }
+}

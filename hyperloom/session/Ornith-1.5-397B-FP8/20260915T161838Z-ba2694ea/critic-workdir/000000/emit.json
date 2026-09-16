@@ -1,0 +1,63 @@
+{
+  "kind": "coordinator_inbox",
+  "session_id": "20260915T161838Z-ba2694ea",
+  "decision_id": null,
+  "kb_writes": [],
+  "notes": [],
+  "intent_envelope": {
+    "intents": [
+      {
+        "intent_type": "review_verdict",
+        "payload": {
+          "target_proposal_msg_id": "b4e9885e2f9242ffa41d95be10b276ea",
+          "verdict": "approve",
+          "source": "critic",
+          "reasoning": "PRELUDE target_analysis is archival/framework_op work that transcribes or analyzes existing state; it is not a promotion gate and needs no before/after benchmark. KB priors are silent, which is cold-start default.",
+          "predicted_gain_pct": 0.0,
+          "kb_evidence": [],
+          "packet_evidence": [
+            "review_constraints.proposal_action_classes",
+            "review_constraints.action_verdict_policy.target_analysis",
+            "judge_bundle.phase",
+            "review_constraints.phase_orientation"
+          ],
+          "risks": [],
+          "required_evidence": [],
+          "alternative_action": null,
+          "advice_text": "",
+          "notes": [
+            "Missing context keys are informational only; required_context is empty."
+          ],
+          "failure_reason_code": "",
+          "confidence": "high"
+        }
+      },
+      {
+        "intent_type": "review_verdict",
+        "payload": {
+          "target_proposal_msg_id": "489349cb807845008c64f43e0464adaa",
+          "verdict": "approve",
+          "source": "critic",
+          "reasoning": "PRELUDE baseline is the expected exploration step to generate the missing baseline throughput evidence; the before/after promotion gate does not apply. No KB prior contradicts the proposal.",
+          "predicted_gain_pct": 0.0,
+          "kb_evidence": [],
+          "packet_evidence": [
+            "review_constraints.proposal_action_classes",
+            "review_constraints.action_verdict_policy.baseline",
+            "judge_bundle.phase",
+            "merged_context.missing_context"
+          ],
+          "risks": [],
+          "required_evidence": [],
+          "alternative_action": null,
+          "advice_text": "",
+          "notes": [
+            "Baseline evidence is the output of this action, so absence of prior benchmark is not a blocker."
+          ],
+          "failure_reason_code": "",
+          "confidence": "high"
+        }
+      }
+    ]
+  }
+}

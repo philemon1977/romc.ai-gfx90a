@@ -1,0 +1,170 @@
+{
+  "kind": "coordinator_inbox",
+  "session_id": "20260915T161838Z-ba2694ea",
+  "decision_id": null,
+  "phase": "PRELUDE",
+  "merged_context": {
+    "model": "Ornith-1.5-397B-FP8",
+    "framework": "vllm",
+    "gpu_type": "mi250x",
+    "model_path": "/mnt/kioxia-cm6-3t8/ai/models/ornith-ai/Ornith-1.5-397B-FP8",
+    "tp": 8,
+    "workload": {
+      "conc": 64,
+      "isl": 1024,
+      "max_model_len": 6144,
+      "osl": 1024,
+      "precision": "fp8"
+    },
+    "precision": "fp8",
+    "phase": "PRELUDE",
+    "macro_cycle": 0
+  },
+  "missing_context": [
+    "model_family",
+    "scale",
+    "objective",
+    "baseline_tput",
+    "baseline_label",
+    "current_best",
+    "session_label"
+  ],
+  "required_context": [],
+  "proposals": [
+    {
+      "msg_id": "93d45150ac83445a93f04d340020cc37",
+      "from_agent": "coordinator",
+      "payload": {
+        "action_name": "integrate_patch",
+        "provenance": "specialist",
+        "predicted_gain_pct": 0.0,
+        "params": {
+          "specialist_task_id": "9d27140cf07749878ef698ad2789b20d",
+          "provenance": "specialist:enablement_specialist",
+          "patch_name": "",
+          "source_phase": "FRAMEWORK_AGENT",
+          "domain": "enablement_specialist",
+          "gap_canonical_id": "gap.enablement.unknown",
+          "gap_layer": "framework",
+          "lever_kind": "enablement",
+          "framework_agent_authoring": true,
+          "enablement": true,
+          "enablement_before_signature": {
+            "kind": "unknown",
+            "offending_file": "",
+            "offending_symbol": "",
+            "raw_excerpt": "n: /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966/benchmarks (including subdirectories)\\nPlease ensure the file exists or remove the benchmark_script config.']",
+            "confidence": 0.0,
+            "bridge_layer": "",
+            "secondary_kinds": []
+          }
+        },
+        "needs_review": true
+      },
+      "seq": 19,
+      "action_name": "integrate_patch",
+      "predicted_gain_pct": 0.0
+    }
+  ],
+  "messages": [],
+  "decision": {},
+  "kb_priors_by_proposal": {
+    "93d45150ac83445a93f04d340020cc37": []
+  },
+  "kb_priors_for_decision": [],
+  "kb_priors_trace": {
+    "configured": true,
+    "mode": "per_proposal",
+    "client_mode": "inmemory",
+    "scope_filter": {
+      "org": "hyperloom",
+      "framework": "vllm",
+      "model": "ornith-1.5-397b-fp8",
+      "workload": "{'conc': 64, 'isl': 1024, 'max_model_len': 6144, 'osl': 1024, 'precision': 'fp8'}",
+      "precision": "fp8"
+    },
+    "limit": 5,
+    "requests": [
+      {
+        "msg_id": "93d45150ac83445a93f04d340020cc37",
+        "topic": "integrate_patch",
+        "cache": "miss",
+        "count": 0
+      }
+    ]
+  },
+  "robustness_priors": [
+    {
+      "symptom_name": "ray_head_dead",
+      "severity": "high",
+      "tick_index": 1,
+      "timestamp_unix": 1789489152.819286,
+      "summary": "ray head unreachable: ray status timed out after 5.0s",
+      "rca_text": "The ray status probe timed out after 5.0s, and the returncode is None with empty stderr,",
+      "intents": [
+        {
+          "intent_type": "alert",
+          "payload": {
+            "severity": "high",
+            "summary": "ray head unreachable: ray status timed out after 5.0s",
+            "detail": {
+              "symptom": "ray_head_dead",
+              "severity": "high",
+              "subject": {},
+              "source": "local",
+              "evidence": {
+                "reason": "ray status timed out after 5.0s",
+                "stderr": "",
+                "returncode": null
+              },
+              "suggestion": "prune_branch(kernel_opt); escalate to restart Ray head — GEAK + kernel submissions are pending until ray is back"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "kb_read_skipped_reason": null,
+  "review_constraints": {
+    "allowed_verdicts": [
+      "advise",
+      "approve",
+      "needs_review",
+      "redirect",
+      "reject"
+    ],
+    "ceiling_importance": 0.84,
+    "approve_requires": [
+      "specialist_or_default_grid_provenance",
+      "in_phase_allowed_action",
+      "no_contradicting_kb_prior"
+    ],
+    "bundle_action_class": "enablement_landing",
+    "proposal_action_classes": {
+      "93d45150ac83445a93f04d340020cc37": "enablement_landing"
+    },
+    "approve_requires_by_class": {
+      "patch_landing": [
+        "comparable_before_after_benchmark",
+        "accuracy_gate_or_waiver",
+        "active_path_proof_when_relevant",
+        "rollback_plan"
+      ],
+      "evidence_producer": [
+        "specialist_or_default_grid_provenance",
+        "in_phase_allowed_action",
+        "no_contradicting_kb_prior"
+      ],
+      "enablement_landing": [
+        "specialist_or_default_grid_provenance",
+        "in_phase_allowed_action",
+        "no_contradicting_kb_prior"
+      ],
+      "framework_op": []
+    }
+  },
+  "notes": [
+    "scope_cache_key=framework=vllm|model=ornith-1.5-397b-fp8|org=hyperloom|precision=fp8|workload={'conc': 64, 'isl': 1024, 'max_model_len': 6144, 'osl': 1024, 'precision': 'fp8'}|limit=10",
+    "robustness_priors_injected count=1 path=/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/agents/robustness/findings/20260915T161838Z-ba2694ea.jsonl"
+  ]
+}

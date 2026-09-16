@@ -1,0 +1,114 @@
+{
+  "intent_envelope": {
+    "intents": [
+      {
+        "intent_type": "alert",
+        "payload": {
+          "severity": "high",
+          "summary": "wall-clock budget 98% consumed (elapsed=176.5min / budget=180min) and cumulative_gain_validated=0.00% — wind the session down before the deadline cuts it",
+          "detail": {
+            "symptom": "deadline_imminent",
+            "severity": "high",
+            "subject": {},
+            "source": "local",
+            "evidence": {
+              "elapsed_minutes": 176.5,
+              "remaining_minutes": 3.4,
+              "budget_minutes": 180.0,
+              "burn_pct": 0.981,
+              "cumulative_gain_validated": 0.0,
+              "imminent_pct": 0.85,
+              "productive_gain_pct": 0.5
+            },
+            "suggestion": "propose report to finalize at the last validated gain"
+          }
+        }
+      },
+      {
+        "intent_type": "alert",
+        "payload": {
+          "severity": "high",
+          "summary": "log error pattern 'RuntimeError: Engine core initialization failed' matched 2 times",
+          "detail": {
+            "symptom": "log_error_pattern",
+            "severity": "high",
+            "subject": {
+              "pattern": "RuntimeError: Engine core initialization failed"
+            },
+            "source": "local",
+            "evidence": {
+              "pattern": "RuntimeError: Engine core initialization failed",
+              "count": 2,
+              "samples": [
+                "[server.log] (APIServer pid=27040) RuntimeError: Engine core initialization failed. See root cause above. Failed core proc(s): {'EngineCore': 1}",
+                "[server.log] (APIServer pid=25168) RuntimeError: Engine core initialization failed. See root cause above. Failed core proc(s): {'EngineCore': 1}"
+              ]
+            },
+            "suggestion": "delegate(recover, force_gpu_cleanup=True) or escalate strategy"
+          }
+        }
+      },
+      {
+        "intent_type": "alert",
+        "payload": {
+          "severity": "medium",
+          "summary": "log error pattern 'RuntimeError' matched 8 times",
+          "detail": {
+            "symptom": "log_error_pattern",
+            "severity": "medium",
+            "subject": {
+              "pattern": "RuntimeError"
+            },
+            "source": "local",
+            "evidence": {
+              "pattern": "RuntimeError",
+              "count": 8,
+              "samples": [
+                "[server.log] (EngineCore pid=27111)     raise RuntimeError(",
+                "[server.log] (EngineCore pid=27111) RuntimeError: Worker failed with error 'torch._scaled_mm is only supported on CUDA devices with compute capability >= 9.0 or 8.9, or ROCm MI300+', please check the stack trace above for the root cause",
+                "[server.log] (APIServer pid=27040)     raise RuntimeError("
+              ]
+            },
+            "suggestion": "review log evidence with RCA before further action"
+          }
+        }
+      },
+      {
+        "intent_type": "alert",
+        "payload": {
+          "severity": "medium",
+          "summary": "agent coordinator hit policy_denied 4 times (>= 3); top rule=enablement_round_in_flight",
+          "detail": {
+            "symptom": "repeated_policy_denied",
+            "severity": "medium",
+            "subject": {
+              "agent": "coordinator"
+            },
+            "source": "coordinator_events",
+            "evidence": {
+              "from": "coordinator",
+              "count": 4,
+              "top_rule": "enablement_round_in_flight",
+              "rule_distribution": {
+                "enablement_round_in_flight": 2,
+                "request_target": 1,
+                "execution_order": 1
+              }
+            },
+            "suggestion": "escalate_strategy_change to review the action catalogue / role config"
+          }
+        }
+      }
+    ]
+  },
+  "session_id": "20260915T161838Z-ba2694ea",
+  "tick_index": 1,
+  "parse_warnings": [],
+  "llm_usage": {
+    "input_tokens": 1034,
+    "output_tokens": 600,
+    "calls": 1,
+    "latency_ms": 4421,
+    "model": "qwen3.8-flash-next"
+  }
+}

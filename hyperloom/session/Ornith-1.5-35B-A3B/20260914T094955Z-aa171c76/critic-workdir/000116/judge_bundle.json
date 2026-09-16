@@ -1,0 +1,238 @@
+{
+  "kind": "coordinator_inbox",
+  "session_id": "20260914T094955Z-aa171c76",
+  "decision_id": null,
+  "phase": "PRELUDE",
+  "merged_context": {
+    "model": "Ornith-1.5-35B-A3B",
+    "framework": "vllm",
+    "model_path": "/mnt/stripe-3mix-3t2/models/ornith-ai/Ornith-1.5-35B-A3B",
+    "tp": 2,
+    "workload": {
+      "conc": 64,
+      "isl": 1024,
+      "max_model_len": 6144,
+      "osl": 1024,
+      "precision": "bf16"
+    },
+    "precision": "bf16",
+    "phase": "PRELUDE",
+    "macro_cycle": 0
+  },
+  "missing_context": [
+    "model_family",
+    "scale",
+    "objective",
+    "baseline_tput",
+    "baseline_label",
+    "current_best",
+    "session_label"
+  ],
+  "required_context": [],
+  "proposals": [],
+  "messages": [],
+  "decision": {},
+  "kb_priors_by_proposal": {},
+  "kb_priors_for_decision": [],
+  "kb_priors_trace": {
+    "configured": true,
+    "mode": "per_decision",
+    "client_mode": "inmemory",
+    "scope_filter": {
+      "org": "hyperloom",
+      "framework": "vllm",
+      "model": "ornith-1.5-35b-a3b",
+      "workload": "{'conc': 64, 'isl': 1024, 'max_model_len': 6144, 'osl': 1024, 'precision': 'bf16'}",
+      "precision": "bf16"
+    },
+    "limit": 5,
+    "requests": [
+      {
+        "msg_id": null,
+        "topic": "decision-20260914T094955Z-aa171c76",
+        "cache": "hit",
+        "count": 0
+      }
+    ]
+  },
+  "robustness_priors": [
+    {
+      "symptom_name": "log_error_pattern",
+      "severity": "high",
+      "tick_index": 107,
+      "timestamp_unix": 1789382868.2431395,
+      "summary": "log error pattern 'RuntimeError: Engine core initialization failed' matched 1 times",
+      "rca_text": "The APIServer process pid=15383 logged “RuntimeError: Engine core initialization failed,” indicating the serving engine could not complete startup. The message says “See root cause above,” but the provided evidence contains only this final line, so the underlying initialization failure is not visible here. The reported “Failed core proc(s): {}” is empty, which suggests the failure occurred before or without recording a specific failed core process. Because the error is a single high-severity startup failure, the most likely immediate cause is an unresolved dependency, resource, or GPU/engine initialization problem in the preceding log context. Inspect the server.log lines immediately above the pid=15383 error to identify the actual root exception. If the preceding logs point to GPU or engine startup state, run recovery with forced GPU cleanup.",
+      "intents": [
+        {
+          "intent_type": "alert",
+          "payload": {
+            "severity": "high",
+            "summary": "log error pattern 'RuntimeError: Engine core initialization failed' matched 1 times",
+            "detail": {
+              "symptom": "log_error_pattern",
+              "severity": "high",
+              "subject": {
+                "pattern": "RuntimeError: Engine core initialization failed"
+              },
+              "source": "local",
+              "evidence": {
+                "pattern": "RuntimeError: Engine core initialization failed",
+                "count": 1,
+                "samples": [
+                  "[server.log] (APIServer pid=15383) RuntimeError: Engine core initialization failed. See root cause above. Failed core proc(s): {}"
+                ]
+              },
+              "suggestion": "delegate(recover, force_gpu_cleanup=True) or escalate strategy"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "symptom_name": "conversation_no_progress",
+      "severity": "high",
+      "tick_index": 112,
+      "timestamp_unix": 1789382911.7229595,
+      "summary": "orchestration stalled for 110 ticks (threshold=15); last progress at tick 2",
+      "rca_text": "The orchestration has not advanced since tick 2, while the stall threshold is 15 ticks, so the current 110-tick gap is far beyond the expected progress window. This pattern indicates that the loop is repeatedly consuming ticks without producing a state change or actionable outcome. The absence of any later progress tick suggests the run is blocked on an unresolved condition rather than merely running slowly. Operator intervention is needed to inspect the stalled state and break the no-progress cycle. If the remaining budget is tight, the safest concrete step is to wind down the run by emitting a report instead of continuing to consume ticks.",
+      "intents": [
+        {
+          "intent_type": "alert",
+          "payload": {
+            "severity": "high",
+            "summary": "orchestration stalled for 110 ticks (threshold=15); last progress at tick 2",
+            "detail": {
+              "symptom": "conversation_no_progress",
+              "severity": "high",
+              "subject": {},
+              "source": "shared_state",
+              "evidence": {
+                "ticks_without_progress": 110,
+                "threshold": 15,
+                "last_progress_tick": 2
+              },
+              "suggestion": "operator intervention; wind down via report if the budget is tight"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "symptom_name": "log_error_pattern",
+      "severity": "high",
+      "tick_index": 112,
+      "timestamp_unix": 1789382911.7229595,
+      "summary": "log error pattern 'RuntimeError: Engine core initialization failed' matched 1 times",
+      "rca_text": "",
+      "intents": [
+        {
+          "intent_type": "alert",
+          "payload": {
+            "severity": "high",
+            "summary": "log error pattern 'RuntimeError: Engine core initialization failed' matched 1 times",
+            "detail": {
+              "symptom": "log_error_pattern",
+              "severity": "high",
+              "subject": {
+                "pattern": "RuntimeError: Engine core initialization failed"
+              },
+              "source": "local",
+              "evidence": {
+                "pattern": "RuntimeError: Engine core initialization failed",
+                "count": 1,
+                "samples": [
+                  "[server.log] (APIServer pid=15383) RuntimeError: Engine core initialization failed. See root cause above. Failed core proc(s): {}"
+                ]
+              },
+              "suggestion": "delegate(recover, force_gpu_cleanup=True) or escalate strategy"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "symptom_name": "conversation_no_progress",
+      "severity": "high",
+      "tick_index": 117,
+      "timestamp_unix": 1789382950.6755922,
+      "summary": "orchestration stalled for 115 ticks (threshold=15); last progress at tick 2",
+      "rca_text": "",
+      "intents": [
+        {
+          "intent_type": "alert",
+          "payload": {
+            "severity": "high",
+            "summary": "orchestration stalled for 115 ticks (threshold=15); last progress at tick 2",
+            "detail": {
+              "symptom": "conversation_no_progress",
+              "severity": "high",
+              "subject": {},
+              "source": "shared_state",
+              "evidence": {
+                "ticks_without_progress": 115,
+                "threshold": 15,
+                "last_progress_tick": 2
+              },
+              "suggestion": "operator intervention; wind down via report if the budget is tight"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "symptom_name": "log_error_pattern",
+      "severity": "high",
+      "tick_index": 117,
+      "timestamp_unix": 1789382950.6755922,
+      "summary": "log error pattern 'RuntimeError: Engine core initialization failed' matched 1 times",
+      "rca_text": "The server.log sample shows APIServer pid=15383 raising RuntimeError: Engine core initialization failed, so the failure is in engine startup rather than a later request path. The message also says See root cause above, but the provided evidence contains only this line, leaving the immediate underlying cause unobserved. Failed core proc(s): {} indicates no core process was reported as failed, which can mean the core process never started or its failure was not propagated. This pattern is consistent with an engine or GPU initialization problem that may leave stale process or accelerator state. Inspect the preceding server.log",
+      "intents": [
+        {
+          "intent_type": "alert",
+          "payload": {
+            "severity": "high",
+            "summary": "log error pattern 'RuntimeError: Engine core initialization failed' matched 1 times",
+            "detail": {
+              "symptom": "log_error_pattern",
+              "severity": "high",
+              "subject": {
+                "pattern": "RuntimeError: Engine core initialization failed"
+              },
+              "source": "local",
+              "evidence": {
+                "pattern": "RuntimeError: Engine core initialization failed",
+                "count": 1,
+                "samples": [
+                  "[server.log] (APIServer pid=15383) RuntimeError: Engine core initialization failed. See root cause above. Failed core proc(s): {}"
+                ]
+              },
+              "suggestion": "delegate(recover, force_gpu_cleanup=True) or escalate strategy"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "kb_read_skipped_reason": null,
+  "review_constraints": {
+    "allowed_verdicts": [
+      "advise",
+      "approve",
+      "needs_review",
+      "redirect",
+      "reject"
+    ],
+    "ceiling_importance": 0.84,
+    "approve_requires": [
+      "comparable_before_after_benchmark",
+      "accuracy_gate_or_waiver",
+      "active_path_proof_when_relevant",
+      "rollback_plan"
+    ]
+  },
+  "notes": [
+    "scope_cache_key=framework=vllm|model=ornith-1.5-35b-a3b|org=hyperloom|precision=bf16|workload={'conc': 64, 'isl': 1024, 'max_model_len': 6144, 'osl': 1024, 'precision': 'bf16'}|limit=10",
+    "robustness_priors_injected count=5 path=/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-35B-A3B/20260914T094955Z-aa171c76/agents/robustness/findings/20260914T094955Z-aa171c76.jsonl"
+  ]
+}

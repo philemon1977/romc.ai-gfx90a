@@ -1,0 +1,18 @@
+{
+  "kind": "coordinator_inbox",
+  "session_id": "20260914T094955Z-aa171c76",
+  "decision_id": null,
+  "kb_writes": [],
+  "notes": [],
+  "intent_envelope": {
+    "intents": [
+      {
+        "intent_type": "send_message",
+        "payload": {
+          "topic": "heartbeat",
+          "body_md": "ok (critic)"
+        }
+      }
+    ]
+  }
+}

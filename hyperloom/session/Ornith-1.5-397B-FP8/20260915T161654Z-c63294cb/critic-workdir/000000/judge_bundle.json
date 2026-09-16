@@ -1,0 +1,132 @@
+{
+  "kind": "coordinator_inbox",
+  "session_id": "20260915T161654Z-c63294cb",
+  "decision_id": null,
+  "phase": "PRELUDE",
+  "merged_context": {
+    "model": "Ornith-1.5-397B-FP8",
+    "framework": "vllm",
+    "model_path": "/mnt/kioxia-cm6-3t8/ai/models/ornith-ai/Ornith-1.5-397B-FP8",
+    "tp": 8,
+    "workload": {
+      "conc": 64,
+      "isl": 1024,
+      "max_model_len": 6144,
+      "osl": 1024,
+      "precision": "fp8"
+    },
+    "precision": "fp8",
+    "phase": "PRELUDE",
+    "macro_cycle": 0
+  },
+  "missing_context": [
+    "model_family",
+    "scale",
+    "objective",
+    "baseline_tput",
+    "baseline_label",
+    "current_best",
+    "session_label"
+  ],
+  "required_context": [],
+  "proposals": [
+    {
+      "msg_id": "a80ce26544d041ddbfe2f7abf647ad36",
+      "from_agent": "orchestration",
+      "payload": {
+        "action_name": "target_analysis",
+        "predicted_gain_pct": 0,
+        "needs_review": true
+      },
+      "seq": 2,
+      "action_name": "target_analysis",
+      "predicted_gain_pct": 0.0
+    },
+    {
+      "msg_id": "07c3292d95544407a43c13dc9852a93a",
+      "from_agent": "orchestration",
+      "payload": {
+        "action_name": "baseline",
+        "predicted_gain_pct": 0,
+        "needs_review": true
+      },
+      "seq": 3,
+      "action_name": "baseline",
+      "predicted_gain_pct": 0.0
+    }
+  ],
+  "messages": [],
+  "decision": {},
+  "kb_priors_by_proposal": {
+    "a80ce26544d041ddbfe2f7abf647ad36": [],
+    "07c3292d95544407a43c13dc9852a93a": []
+  },
+  "kb_priors_for_decision": [],
+  "kb_priors_trace": {
+    "configured": true,
+    "mode": "per_proposal",
+    "client_mode": "inmemory",
+    "scope_filter": {
+      "org": "hyperloom",
+      "framework": "vllm",
+      "model": "ornith-1.5-397b-fp8",
+      "workload": "{'conc': 64, 'isl': 1024, 'max_model_len': 6144, 'osl': 1024, 'precision': 'fp8'}",
+      "precision": "fp8"
+    },
+    "limit": 5,
+    "requests": [
+      {
+        "msg_id": "a80ce26544d041ddbfe2f7abf647ad36",
+        "topic": "target_analysis",
+        "cache": "miss",
+        "count": 0
+      },
+      {
+        "msg_id": "07c3292d95544407a43c13dc9852a93a",
+        "topic": "baseline",
+        "cache": "miss",
+        "count": 0
+      }
+    ]
+  },
+  "robustness_priors": [],
+  "kb_read_skipped_reason": null,
+  "review_constraints": {
+    "allowed_verdicts": [
+      "advise",
+      "approve",
+      "needs_review",
+      "redirect",
+      "reject"
+    ],
+    "ceiling_importance": 0.84,
+    "approve_requires": [],
+    "bundle_action_class": "framework_op",
+    "proposal_action_classes": {
+      "a80ce26544d041ddbfe2f7abf647ad36": "framework_op",
+      "07c3292d95544407a43c13dc9852a93a": "framework_op"
+    },
+    "approve_requires_by_class": {
+      "patch_landing": [
+        "comparable_before_after_benchmark",
+        "accuracy_gate_or_waiver",
+        "active_path_proof_when_relevant",
+        "rollback_plan"
+      ],
+      "evidence_producer": [
+        "specialist_or_default_grid_provenance",
+        "in_phase_allowed_action",
+        "no_contradicting_kb_prior"
+      ],
+      "enablement_landing": [
+        "specialist_or_default_grid_provenance",
+        "in_phase_allowed_action",
+        "no_contradicting_kb_prior"
+      ],
+      "framework_op": []
+    }
+  },
+  "notes": [
+    "scope_cache_key=framework=vllm|model=ornith-1.5-397b-fp8|org=hyperloom|precision=fp8|workload={'conc': 64, 'isl': 1024, 'max_model_len': 6144, 'osl': 1024, 'precision': 'fp8'}|limit=10"
+  ]
+}

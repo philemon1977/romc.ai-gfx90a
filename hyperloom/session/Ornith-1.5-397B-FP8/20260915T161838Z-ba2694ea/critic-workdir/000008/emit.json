@@ -1,0 +1,54 @@
+{
+  "kind": "coordinator_inbox",
+  "session_id": "20260915T161838Z-ba2694ea",
+  "decision_id": null,
+  "kb_writes": [],
+  "notes": [],
+  "intent_envelope": {
+    "intents": [
+      {
+        "intent_type": "review_verdict",
+        "payload": {
+          "target_proposal_msg_id": "b254752b394c4ca2854d1008e81fe264",
+          "verdict": "advise",
+          "source": "critic",
+          "reasoning": "This is classified as enablement_landing with specialist provenance and no contradicting KB prior, so the strict promotion gate is not required. However, the current phase is PRELUDE, where target_analysis and baseline are the expected proposals; an integrate_patch from FRAMEWORK_AGENT looks out-of-phase, so advise is the correct non-blocking signal.",
+          "predicted_gain_pct": null,
+          "kb_evidence": [],
+          "packet_evidence": [
+            "review_constraints.phase",
+            "review_constraints.phase_orientation",
+            "review_constraints.action_verdict_policy.integrate_patch",
+            "review_constraints.proposal_action_classes.b254752b394c4ca2854d1008e81fe264",
+            "proposals[0].payload.params.enablement",
+            "proposals[0].payload.params.source_phase"
+          ],
+          "risks": [
+            {
+              "severity": "minor",
+              "summary": "Phase mismatch: integrate_patch is unusual in PRELUDE unless it is an enablement prerequisite to obtain a runnable baseline."
+            }
+          ],
+          "required_evidence": [],
+          "alternative_action": null,
+          "advice_text": "If this enablement patch is required to make the model runnable, route or sequence it from the appropriate FRAMEWORK_AGENT/enablement step; otherwise return PRELUDE to `target_analysis` or `baseline` first. This is a phase-hint advise, not a structural rejection of the enablement landing.",
+          "notes": [
+            "Empty KB priors are not a blocker for enablement_landing.",
+            "No throughput before/after benchmark or restated rollback gate is required for this class.",
+            "The proposal's top-level predicted_gain_pct was ignored as self-reported proposal metadata."
+          ],
+          "failure_reason_code": "",
+          "confidence": "medium"
+        }
+      },
+      {
+        "intent_type": "send_message",
+        "payload": {
+          "topic": "advice",
+          "body_md": "If this enablement patch is required to make the model runnable, route or sequence it from the appropriate FRAMEWORK_AGENT/enablement step; otherwise return PRELUDE to `target_analysis` or `baseline` first. This is a phase-hint advise, not a structural rejection of the enablement landing.",
+          "about_proposal_msg_id": "b254752b394c4ca2854d1008e81fe264"
+        }
+      }
+    ]
+  }
+}

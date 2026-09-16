@@ -1,0 +1,134 @@
+MAGPIE_PYTHON=/opt/venv/bin/python cannot import Magpie; ignoring it and auto-detecting an interpreter that can. (A stale value is often baked into kernel-agent.env.sh when install.sh resolved it before Magpie was pip-installed.)
+MAGPIE_PYTHON=/opt/venv/bin/python cannot import Magpie; ignoring it and auto-detecting an interpreter that can. (A stale value is often baked into kernel-agent.env.sh when install.sh resolved it before Magpie was pip-installed.)
+Preflight: WARNING — ignoring unsupported .env key MODEL_PATH from /home/qiba/ROCm.AI/hyperloom/.env
+Preflight: WARNING — ignoring unsupported .env key PYTHON from /home/qiba/ROCm.AI/hyperloom/.env
+Preflight: WARNING — ignoring unsupported .env key MAGPIE_PATH from /home/qiba/ROCm.AI/hyperloom/.env
+Preflight: WARNING — ignoring unsupported .env key MAGPIE_PYTHON from /home/qiba/ROCm.AI/hyperloom/.env
+Preflight: WARNING — ignoring unsupported .env key PYTHONPATH from /home/qiba/ROCm.AI/hyperloom/.env
+Preflight: WARNING — ignoring unsupported .env key INFERENCEX_PATH from /home/qiba/ROCm.AI/hyperloom/.env
+Preflight: WARNING — ignoring unsupported .env key TRACELENS_ROOT from /home/qiba/ROCm.AI/hyperloom/.env
+Preflight: WARNING — ignoring unsupported kernel-agent env key PYTHONPATH from /home/qiba/ROCm.AI/hyperloom/session/runtime/kernel-agent.env.sh
+2026-09-14 10:21:28,945 hyperloom.orchestrator.actions.executors._grid_runner [WARNING] MAGPIE_PYTHON=/opt/venv/bin/python cannot import Magpie; ignoring it and auto-detecting an interpreter that can. (A stale value is often baked into kernel-agent.env.sh when install.sh resolved it before Magpie was pip-installed.)
+Preflight: claude_agent_sdk OK
+Preflight: openai_codex OK
+Preflight: openai OK
+Preflight: httpx OK
+Preflight: ~/.claude/config.json already points at upstream
+Preflight: platform [amd-server] — SMT off, NPS1 (2 NUMA nodes / 2 sockets), governor schedutil
+Preflight: WARNING — cpufreq governor is 'schedutil', not 'performance'; clock ramp can distort latency percentiles and roofline measurements
+Preflight: ray OK
+Preflight: benchmark_serving client deps OK
+Preflight: vllm importable (/opt/envs/vllm/bin/python3); the vllm platform confirms a ROCm build
+Preflight: WARNING — CLI(s) not on PATH: ['codex']. ClaudeBackend / CodexBackend may fall back to direct HTTP. Run src/hyperloom/agents/kernel/scripts/install.sh to bring them in.
+Preflight diagnostics:
+  asset_root          = /home/qiba/ROCm.AI/hyperloom/hyperloom/inference_optimizer
+  session_dir         = /home/qiba/ROCm.AI/hyperloom/session  (USER_DATA_PATH=/home/qiba/ROCm.AI/hyperloom/session, default=/workspace/hyperloom)
+  magpie_python       = /opt/envs/vllm/bin/python3
+  INFERENCEX_PATH     = /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966
+  aiter jit cache     = 125 .so / 2198 MB (WARM) at /opt/envs/vllm/lib/python3.12/site-packages/aiter/jit
+  cold_start_timeout  = 9000s
+  warm_timeout        = 7800s
+  ANTHROPIC_BASE_URL  = http://127.0.0.1:9100
+  kb_status           = OK
+  pr_monitor_status   = DEGRADED (ir3_auto)
+  kb_degraded_reason  = -
+  pr_degraded_reason  = ir3_auto
+  recipe_kb_queue     = pending=0 dead_letter=0 flushed=0 (root=/home/qiba/ROCm.AI/hyperloom/session/runtime/recipe_kb)
+Preflight: catalog probe got HTTP 405 for http://127.0.0.1:9100/models; endpoint exposes no /models route
+Preflight: WARNING — gateway has no /models route (HTTP 404/405); cannot verify --claude-model='qwen3.8-flash-next'. Proceeding.
+Resuming session: /home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-35B-A3B/20260914T094955Z-aa171c76
+  manifest.session_id    : Ornith-1.5-35B-A3B_20260914T094955Z_a8127778
+  prior baseline_tput   : 0.0
+  prior cumul_gain      : 0.00%
+  prior current_best    : None/None
+  prior stop_reason     : (none)
+  re-exported MODEL_PATH: /mnt/stripe-3mix-3t2/models/ornith-ai/Ornith-1.5-35B-A3B
+  re-exported FRAMEWORK : vllm
+  re-exported TP            : 2
+  re-exported EP            : 2
+  re-exported CONC          : 64
+  re-exported ISL           : 1024
+  re-exported OSL           : 1024
+  re-exported MAX_MODEL_LEN : 6144
+  re-exported PRECISION     : bf16
+  re-exported FRAMEWORK_VERSION: 0.28.0
+  re-exported server_args   : --distributed-executor-backend mp
+2026-09-14 10:21:42,751 hyperloom.common.gpu_partition [WARNING] GPU 0 reports compute-partition mode 'N/A', which this build does not know
+  Kernel-agent          : DISABLED (persisted from original run)
+  → start_ts kept at 2026-09-14T09:49:55.896192+00:00 (clean stop, no stop_reason): the persisted deadline is kept
+  → budget: 0.53h elapsed, 2.47h left on the persisted stamp
+  → this invocation's --max-hours 2.00 does not extend or shrink that stamp
+Recipe KB        : resumed session_id=20260914T094955Z-aa171c76
+PR Monitor       : DISABLED (ir3_auto)
+Objective       : kind=time_only time_only (no target)
+Optimize phase  : ENABLED
+Research scout  : ENABLED at PRELUDE (re-dispatch every 3 explore rounds)
+Target advisory : ENABLED (External target gap injected into prompts; advisory-only)
+Recipe sediment : ENABLED (KEEP/REVERT provenance written to persistent recipe)
+2026-09-14 10:21:43,850 hyperloom.orchestrator.framework.paths [WARNING] ignoring non-absolute framework source root: 'lib/python3/dist-packages/'
+2026-09-14 10:21:43,850 hyperloom.orchestrator.framework.paths [WARNING] ignoring non-absolute framework source root: 'lib/python2.7/dist-packages/'
+2026-09-14 10:21:43,892 hyperloom.orchestrator.framework.paths [WARNING] ignoring non-absolute framework source root: 'lib/python3/dist-packages/'
+2026-09-14 10:21:43,892 hyperloom.orchestrator.framework.paths [WARNING] ignoring non-absolute framework source root: 'lib/python2.7/dist-packages/'
+Backends        : orchestration=Claude(qwen3.8-flash-next), kernel=DISABLED, critic=critic-agent(kb=inmemory, protocol=anthropic, model=qwen3.8-flash-next, root=/home/qiba/ROCm.AI/hyperloom/hyperloom/agents/critic), robustness=robustness-agent(root=/home/qiba/ROCm.AI/hyperloom/hyperloom/agents/robustness)
+Max ticks       : unlimited (budget = 2.0h)
+Tick interval   : 0.0s
+
+[target_analysis] no --compare-against-gpu set; will write a marker JSON at $SESSION_DIR/target_analysis/target_baseline.json (reason=no_target_gpu_configured) — set --compare-against-gpu to fetch real InferenceX reference data.
+2026-09-14 10:23:38,205 hyperloom.orchestrator.loop.writeback [WARNING] PolicyGate denied intent: source=orchestration type=request rule=request_target reason=role='orchestration' cannot request target_agent='robustness' (allowed: ['kernel_agent'])
+2026-09-14 10:27:51,729 hyperloom.orchestrator.loop.writeback [WARNING] PolicyGate denied intent: source=orchestration type=propose_action rule=enablement_round_in_flight reason=baseline: an enablement authoring round is in flight (task=78b25f2832ff45ff949ad9c0e9634cf3)
+2026-09-14 10:29:38,974 hyperloom.orchestrator.loop.writeback [WARNING] PolicyGate denied intent: source=orchestration type=delegate rule=delegate_action_source reason=role='orchestration' cannot delegate action='recover' (allowed: ['robustness'])
+2026-09-14 10:35:11,099 hyperloom.orchestrator.loop.writeback [WARNING] PolicyGate denied intent: source=orchestration type=propose_action rule=enablement_round_in_flight reason=baseline: an enablement authoring round is in flight (task=78b25f2832ff45ff949ad9c0e9634cf3)
+2026-09-14 10:51:35,843 hyperloom.orchestrator.loop.dispatcher [WARNING] dispatcher: reclaimed 1 expired-running task(s): 78b25f2832ff
+2026-09-14 10:51:36,042 hyperloom.orchestrator.framework.paths [WARNING] ignoring non-absolute framework source root: 'lib/python3/dist-packages/'
+2026-09-14 10:51:36,042 hyperloom.orchestrator.framework.paths [WARNING] ignoring non-absolute framework source root: 'lib/python2.7/dist-packages/'
+2026-09-14 10:51:36,106 hyperloom.orchestrator.framework.paths [WARNING] ignoring non-absolute framework source root: 'lib/python3/dist-packages/'
+2026-09-14 10:51:36,106 hyperloom.orchestrator.framework.paths [WARNING] ignoring non-absolute framework source root: 'lib/python2.7/dist-packages/'
+2026-09-14 10:51:58,185 hyperloom.orchestrator.loop.writeback [WARNING] PolicyGate denied intent: source=orchestration type=propose_action rule=enablement_round_in_flight reason=baseline: an enablement authoring round is in flight (task=d00cdedfc173451eaf5b312d08e00da9)
+2026-09-14 10:52:20,555 hyperloom.orchestrator.loop.writeback [WARNING] PolicyGate denied intent: source=orchestration type=propose_action rule=enablement_round_in_flight reason=baseline: an enablement authoring round is in flight (task=d00cdedfc173451eaf5b312d08e00da9)
+2026-09-14 10:52:52,735 hyperloom.orchestrator.loop.writeback [WARNING] PolicyGate denied intent: source=orchestration type=propose_action rule=enablement_round_in_flight reason=baseline: an enablement authoring round is in flight (task=d00cdedfc173451eaf5b312d08e00da9)
+2026-09-14 10:53:41,682 hyperloom.orchestrator.loop.writeback [WARNING] PolicyGate denied intent: source=orchestration type=propose_action rule=enablement_round_in_flight reason=baseline: an enablement authoring round is in flight (task=d00cdedfc173451eaf5b312d08e00da9)
+2026-09-14 10:54:10,849 hyperloom.orchestrator.loop.writeback [WARNING] PolicyGate denied intent: source=orchestration type=propose_action rule=enablement_round_in_flight reason=baseline: an enablement authoring round is in flight (task=d00cdedfc173451eaf5b312d08e00da9)
+2026-09-14 10:55:15,907 hyperloom.orchestrator.loop.writeback [WARNING] PolicyGate denied intent: source=orchestration type=propose_action rule=enablement_round_in_flight reason=baseline: an enablement authoring round is in flight (task=d00cdedfc173451eaf5b312d08e00da9)
+2026-09-14 10:56:37,367 hyperloom.orchestrator.framework.paths [WARNING] ignoring non-absolute framework source root: 'lib/python3/dist-packages/'
+2026-09-14 10:56:37,367 hyperloom.orchestrator.framework.paths [WARNING] ignoring non-absolute framework source root: 'lib/python2.7/dist-packages/'
+2026-09-14 11:47:23,659 hyperloom.orchestrator.loop.writeback [WARNING] PolicyGate denied intent: source=orchestration type=propose_action rule=enablement_round_in_flight reason=baseline: an enablement authoring round is in flight (task=d00cdedfc173451eaf5b312d08e00da9)
+2026-09-14 11:48:59,135 hyperloom.orchestrator.framework.paths [WARNING] ignoring non-absolute framework source root: 'lib/python3/dist-packages/'
+2026-09-14 11:48:59,135 hyperloom.orchestrator.framework.paths [WARNING] ignoring non-absolute framework source root: 'lib/python2.7/dist-packages/'
+2026-09-14 11:48:59,229 hyperloom.orchestrator.actions.executors._grid_runner [WARNING] MAGPIE_PYTHON=/opt/venv/bin/python cannot import Magpie; ignoring it and auto-detecting an interpreter that can. (A stale value is often baked into kernel-agent.env.sh when install.sh resolved it before Magpie was pip-installed.)
+2026-09-14 11:48:59,271 hyperloom.orchestrator.actions.executors._grid_runner [WARNING] grid_runner: 3537s left cannot fit this variant's 2 remaining round(s) of 7800s (spent on: the variants before this one); skipping 1 remaining variant(s) rather than launching a pass whose measured round cannot follow it
+2026-09-14 11:49:46,958 hyperloom.orchestrator.framework.paths [WARNING] ignoring non-absolute framework source root: 'lib/python3/dist-packages/'
+2026-09-14 11:49:46,959 hyperloom.orchestrator.framework.paths [WARNING] ignoring non-absolute framework source root: 'lib/python2.7/dist-packages/'
+2026-09-14 11:50:29,070 hyperloom.orchestrator.loop.writeback [WARNING] PolicyGate denied intent: source=orchestration type=propose_action rule=enablement_round_in_flight reason=baseline: an enablement authoring round is in flight (task=3bbb58e289654e3bb358a8db44343c2f)
+2026-09-14 11:50:31,455 hyperloom.orchestrator.framework.paths [WARNING] ignoring non-absolute framework source root: 'lib/python3/dist-packages/'
+2026-09-14 11:50:31,455 hyperloom.orchestrator.framework.paths [WARNING] ignoring non-absolute framework source root: 'lib/python2.7/dist-packages/'
+2026-09-14 12:42:59,628 hyperloom.orchestrator.loop.writeback [WARNING] PolicyGate denied intent: source=orchestration type=propose_action rule=enablement_round_in_flight reason=baseline: an enablement authoring round is in flight (task=3bbb58e289654e3bb358a8db44343c2f)
+2026-09-14 12:44:04,136 hyperloom.orchestrator.loop.dispatcher [WARNING] dispatcher: dropped queued task=313e6341c3ee46b1800154be733cacfc kind=integrate_patch before dispatch: action='integrate_patch' denied: needs ~10 min but only 4 min of the session budget is left
+2026-09-14 12:44:04,317 hyperloom.orchestrator.framework.paths [WARNING] ignoring non-absolute framework source root: 'lib/python3/dist-packages/'
+2026-09-14 12:44:04,317 hyperloom.orchestrator.framework.paths [WARNING] ignoring non-absolute framework source root: 'lib/python2.7/dist-packages/'
+2026-09-14 12:44:15,671 hyperloom.orchestrator.loop.writeback [WARNING] PolicyGate denied intent: source=orchestration type=propose_action rule=execution_order reason=action='report' denied: baseline must run first
+2026-09-14 12:44:18,177 hyperloom.orchestrator.loop.dispatcher [WARNING] dispatcher: dropped queued task=b925fa3349d94dccb155ed5ece03837d kind=specialist before dispatch: action='specialist' denied: needs ~6 min but only 4 min of the session budget is left
+2026-09-14 12:44:18,293 hyperloom.orchestrator.framework.paths [WARNING] ignoring non-absolute framework source root: 'lib/python3/dist-packages/'
+2026-09-14 12:44:18,293 hyperloom.orchestrator.framework.paths [WARNING] ignoring non-absolute framework source root: 'lib/python2.7/dist-packages/'
+2026-09-14 12:44:32,991 hyperloom.orchestrator.loop.dispatcher [WARNING] dispatcher: dropped queued task=a4c7f8f1e8e849d3be4c97a36135fb8e kind=specialist before dispatch: action='specialist' denied: needs ~6 min but only 3 min of the session budget is left
+2026-09-14 12:44:33,171 hyperloom.orchestrator.framework.paths [WARNING] ignoring non-absolute framework source root: 'lib/python3/dist-packages/'
+2026-09-14 12:44:33,171 hyperloom.orchestrator.framework.paths [WARNING] ignoring non-absolute framework source root: 'lib/python2.7/dist-packages/'
+2026-09-14 12:44:44,496 hyperloom.orchestrator.loop.dispatcher [WARNING] dispatcher: dropped queued task=305873cb9d92407eb504b756ca0f9954 kind=specialist before dispatch: action='specialist' denied: needs ~6 min but only 3 min of the session budget is left
+2026-09-14 12:44:44,677 hyperloom.orchestrator.framework.paths [WARNING] ignoring non-absolute framework source root: 'lib/python3/dist-packages/'
+2026-09-14 12:44:44,677 hyperloom.orchestrator.framework.paths [WARNING] ignoring non-absolute framework source root: 'lib/python2.7/dist-packages/'
+2026-09-14 12:44:52,691 hyperloom.orchestrator.loop.dispatcher [WARNING] dispatcher: dropped queued task=9ac7ce6baa914a088d195f590f225a68 kind=specialist before dispatch: action='specialist' denied: needs ~6 min but only 3 min of the session budget is left
+2026-09-14 12:45:04,333 hyperloom.orchestrator.framework.paths [WARNING] ignoring non-absolute framework source root: 'lib/python3/dist-packages/'
+2026-09-14 12:45:04,334 hyperloom.orchestrator.framework.paths [WARNING] ignoring non-absolute framework source root: 'lib/python2.7/dist-packages/'
+Final summary     : /home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-35B-A3B/20260914T094955Z-aa171c76/reports/final.json
+Session breakdown : (already written by CLOSE phase sequencer; skipping cli.finally safety-net write)
+Artifact package  : /workspace/hyperloom-session-packages/Ornith-1.5-35B-A3B_20260914T094955Z_a8127778.zip
+
+================ Final summary ================
+  stop_reason          : enablement_stalled
+  session_id           : Ornith-1.5-35B-A3B_20260914T094955Z_a8127778
+  model                : Ornith-1.5-35B-A3B
+  baseline             : 0.0 tok/s/GPU
+  cumulative_gain_val  : 0.00% ⚠ never validated — no `explore` KEEP has landed yet
+  current_best         : {}
+  pruned_families      : []
+  crash_count          : 0
+===============================================

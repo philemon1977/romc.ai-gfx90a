@@ -1,0 +1,152 @@
+{
+ "intent_type": "specialist_done",
+ "payload": {
+  "confidence": 0.7,
+  "domain": "framework_rewrite_specialist",
+  "empty": false,
+  "gap_canonical_id": "inference:ornith-1.5-397b-fp8:mi250x:vllm:qwen3_5_moe:qwen3_5moeforconditionalgeneration:0.28.0:fp8#fail:baseline:subprocess_nonzero",
+  "summary": "Baseline is still dead for TWO stacked reasons, and I shipped a default-OFF rewrite for the first and a co-required env for the second. (1) gfx90a selects ChannelWiseTorchFP8ScaledMMLinearKernel (capability spoofed as (9,0) defeats its >=89 gate) and torch._scaled_mm aborts; new FP8W8A8EmulationLinearKernel dequantizes FP8->BF16 once at load and runs F.linear, gated on VLLM_GFX90A_FP8_EMULATION=1. (2) vLLM replays a hash-keyed AOT graph that a selection-only patch cannot invalidate - the patched",
+  "patches_written": [
+   "patches/001_gfx90a_fp8_emulation_defaultoff.patch"
+  ],
+  "framework_switches": [
+   {
+    "switch": "VLLM_GFX90A_FP8_EMULATION",
+    "category": "(e) swap an operator implementation for a vendor kernel + (f) keep a tensor resident on the device (dequant once at load, keep BF16 weight resident instead of re-casting per call)",
+    "target": "vllm/model_executor/kernels/linear/scaled_mm/emulation.py: FP8W8A8EmulationLinearKernel.is_supported / process_weights_after_loading / apply_weights; registered in vllm/model_executor/kernels/linear/__init__.py: _POSSIBLE_FP8_KERNELS[ROCM] (ahead of the three Torch kernels), _LINEAR_BACKEND_KERNEL_MAP['emulation'], __all__",
+    "evidence": "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/runs/baseline/614857fe763a4e2a821ef61850b1e81e/benchmark_vllm_20260915_171250/server.log:52 'Selected ChannelWiseTorchFP8ScaledMMLinearKernel for CompressedTensorsW8A8Fp8' -> :229+ RuntimeError 'torch._scaled_mm is only supported on CUDA devices with compute capability >= 9.0 or 8.9, or ROCm MI300+' in all 8 TP workers inside gpu_model_runner.profile_run",
+    "default": "off; unset -> is_supported() returns False and kernel selection is byte-for-byte the original (parity leg must reproduce the baseline failure exactly)",
+    "depends_on": [],
+    "enables": [
+     "VLLM_DISABLE_COMPILE_CACHE"
+    ],
+    "notes": "Declaring the relationship: this switch measured ALONE still does not boot, because the AOT graph replayed from /root/.cache/vllm was compiled for the FP8 layout. Declared as the enabler of VLLM_DISABLE_COMPILE_CACHE so the pair is benchmarked jointly instead of this leg being rejected on its standalone number."
+   },
+   {
+    "switch": "VLLM_DISABLE_COMPILE_CACHE",
+    "category": "(c) eliminate a host round-trip / stale-state dependency: skip the hash-keyed AOT artifact load path",
+    "target": "vllm/envs.py:158,354,1404 (vllm_config.compilation_config.compile_cache_enabled) -> vllm/compilation/decorators.py:523-563 AOT dir + :295-311 'Directly load AOT compilation'",
+    "evidence": "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/reports/enablement/9d27140cf07749878ef698ad2789b20d/server.log:362-381 'Directly load AOT compilation from path /root/.cache/vllm/torch_compile_cache/torch_aot_compile/63eba2e7.../rank_*_0/model' followed by :589,:1844 AssertionError 'expected size 2560==4096, stride 4096==1 at dim=0' at inductor guard assert_size_stride(arg10_1,(4096,2560),(1,4096)) inside that cached artifact",
+    "default": "off (cache used) - setting it to 1 only costs compile time, it cannot change numerics",
+    "depends_on": [
+     "VLLM_GFX90A_FP8_EMULATION"
+    ],
+    "enables": [],
+    "notes": "On its own (with the emulation switch unset) it just re-compiles the same aborting FP8 graph, i.e. it reproduces the baseline error. Only pays armed together with VLLM_GFX90A_FP8_EMULATION=1. Alternative if the compile cost (~4 min, 17:05->17:09 in the log) is unacceptable: point VLLM_CACHE_ROOT at a per-run directory instead."
+   }
+  ],
+  "proposal_set": [
+   {
+    "name": "gfx90a-fp8-emulation+fresh-compile",
+    "args_mode": "append",
+    "atomic": true,
+    "extra_args": "",
+    "extra_envs": {
+     "VLLM_GFX90A_FP8_EMULATION": "1",
+     "VLLM_DISABLE_COMPILE_CACHE": "1"
+    },
+    "reason": "Coupled pair, bench as one variant. (1) New default-OFF FP8 w8a8 dense-linear kernel dequantizes the FP8 weight to BF16 ONCE at load time and runs plain F.linear, replacing the ChannelWiseTorchFP8ScaledMMLinearKernel that vLLM selects on gfx90a and that dies in torch._scaled_mm: CDNA2 has no FP8 MMA yet reports capability (9,0), so the Torch kernels' own >=89 arch gate never fires, and the aiter kernels above them are correctly gated off. No config-only route exists - 'emulation' maps only to MXFP4/6/8+NVFP4, 'torch' maps exactly to the three aborting kernels, 'triton' has no ROCm bucket in _LINEAR_BACKEND_KERNEL_MAP so it warns and falls back. (2) VLLM_DISABLE_COMPILE_CACHE=1 is co-required: the AOT artifact hash covers config factors + _model_hash_key(forward) only, and _verify_source_unchanged re-checks just the files the OLD artifact traced, so a registry-only patch never invalidates it - the 17:05 patched boot logged 'Directly load AOT compilation from .../63eba2e7...' and then died on that stale graph's guard assert_size_stride(arg10_1,(4096,2560),(1,4096)) against the now-BF16 [2560,4096] weight. Split them and each half fails: the switch alone hits the stale graph; a fresh compile without the switch reproduces the baseline scaled_mm abort. Blast radius is small and bounded - the dense FP8 volume rewritten is only ~0.29->0.59 GiB per TP rank, the 397B expert weights stay on their own TRITON Fp8 MoE backend.",
+    "kb_evidence": [],
+    "pr_evidence": [],
+    "source_evidence": [
+     "/opt/envs/vllm/lib/python3.12/site-packages/vllm/model_executor/kernels/linear/__init__.py:407-415 (_POSSIBLE_FP8_KERNELS[ROCM] priority list; patched kernel inserted ahead of the three Torch kernels) and :576-660 (is_supported+can_implement first-fit selection)",
+     "/opt/envs/vllm/lib/python3.12/site-packages/vllm/model_executor/kernels/linear/scaled_mm/pytorch.py:227 (the hard PyTorch gate)",
+     "/opt/envs/vllm/lib/python3.12/site-packages/vllm/compilation/decorators.py:295-311,523-563 (AOT hash dir + 'Directly load AOT compilation' + _verify_source_unchanged)",
+     "/opt/envs/vllm/lib/python3.12/site-packages/vllm/envs.py:158,354,1404 (VLLM_DISABLE_COMPILE_CACHE)",
+     "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/runs/baseline/614857fe763a4e2a821ef61850b1e81e/benchmark_vllm_20260915_171250/server.log:52,229-300",
+     "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/reports/enablement/9d27140cf07749878ef698ad2789b20d/server.log:53,192-211,362-381,589,1844",
+     "patches/001_gfx90a_fp8_emulation_defaultoff.patch"
+    ],
+    "remove_args": [],
+    "unset_envs": []
+   },
+   {
+    "name": "gfx90a-fp8-emulation-forced-via-linear-backend-emulation",
+    "args_mode": "append",
+    "atomic": true,
+    "extra_args": "--linear-backend emulation",
+    "extra_envs": {
+     "VLLM_GFX90A_FP8_EMULATION": "1",
+     "VLLM_DISABLE_COMPILE_CACHE": "1"
+    },
+    "reason": "Same enablement as P1 plus a deterministic-selection probe, kept atomic because the flag only means something with the patch armed. --linear-backend filters the scaled-MM registry through _resolve_backend_kernels, which falls back to normal selection WITH A WARNING for any layer type the named backend has no kernel for, so it cannot strand MoE (fp8.py:411 picks the TRITON Fp8 MoE backend independently) and cannot strand block-wise dense layers either. Because the patch also registers FP8W8A8EmulationLinearKernel in the emulation bucket, this makes the emulation kernel win by construction instead of by list order - it is the leg to run if P1 boots but P1 s regress, or if a future rebase reshuffles _POSSIBLE_FP8_KERNELS and silently re-selects a Torch kernel. It is NOT expected to beat P1 on throughput: the two differ only in how the winner is chosen, so measure it as a selection-robustness check, not as a gain.",
+    "kb_evidence": [],
+    "pr_evidence": [],
+    "source_evidence": [
+     "/opt/envs/vllm/lib/python3.12/site-packages/vllm/model_executor/kernels/linear/__init__.py:596-628 (_resolve_backend_kernels: empty-bucket fallback), :296-340 (_LINEAR_BACKEND_KERNEL_MAP keys)",
+     "/opt/envs/vllm/lib/python3.12/site-packages/vllm/config/kernel.py:142-237 (LinearBackend literals, incl. 'emulation' = 'dequantizing weights and running bf16/fp16 GEMM')",
+     "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/runs/baseline/614857fe763a4e2a821ef61850b1e81e/benchmark_vllm_20260915_171250/server.log:52-54 (dense=ChannelWiseTorch..., MoE=TRITON selected independently in fp8.py:411)"
+    ],
+    "remove_args": [],
+    "unset_envs": []
+   },
+   {
+    "name": "no-patch-fresh-compile-probe",
+    "args_mode": "append",
+    "atomic": false,
+    "extra_args": "",
+    "extra_envs": {
+     "VLLM_DISABLE_COMPILE_CACHE": "1"
+    },
+    "reason": "Cheapest discriminator and the only variant needing no source change: re-benches the ALREADY-INTEGRATED (status=advanced, task 684650cc) gfx90a emulation patch with the stale AOT artifact ruled out. If the engine boots, the patch was never the problem and the 17:10 'expected size 2560==4096' assert is confirmed as cache replay; if it still dies, the new traceback is the genuine second gap and is what the next round needs. Cannot perturb the sealed baseline (with the emulation switch unset, selection is unchanged), and it also tests the open question of whether the patch reaches the interpreter that actually serves - /opt/venv/bin/vllm resolves to /opt/venv/lib/python3.12/site-packages/vllm, a DIFFERENT tree from the read-only /opt/envs/... one, whose baseline log shows no emulation.py lines at all.",
+    "kb_evidence": [],
+    "pr_evidence": [],
+    "source_evidence": [
+     "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/reports/enablement/9d27140cf07749878ef698ad2789b20d/server.log:53 (patched tree does log 'Selected FP8W8A8EmulationLinearKernel for CompressedTensorsW8A8Fp8')",
+     "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/reports/enablement/9d27140cf07749878ef698ad2789b20d/server.log:362-381,:589,:1844 (stale artifact loaded, then its guard asserts)",
+     "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/runs/baseline/614857fe763a4e2a821ef61850b1e81e/benchmark_vllm_20260915_171250/server.log (grep -c Emulat = 0 -> baseline leg never ran the patch)"
+    ],
+    "remove_args": [],
+    "unset_envs": []
+   }
+  ],
+  "new_findings": [
+   {
+    "what": "vLLM 0.28's AOT compile cache does NOT invalidate on kernel-SELECTION changes, so any enablement patch touching the scaled_mm registry is unreproducible on a host with a warm /root/.cache/vllm. The AOT dir hash covers config factors + _model_hash_key(forward) only (decorators.py:537-546) and _verify_source_unchanged re-checks only the traced files recorded by the EXISTING artifact. A patch that edits just the registry __init__ and adds a new kernel module changes neither set, so the pre-patch graph (which hard-codes extern_kernels._scaled_mm on an FP8 [K,N] column-major weight) is replayed against the new BF16 [N,K] row-major weight and dies on inductor's arg guard - the artifact, not the patch, is incompatible. Correct probe: VLLM_DISABLE_COMPILE_CACHE=1, or better a per-run VLLM_CACHE_ROOT (decorators.py:543-545 reads it).",
+    "source": "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/reports/enablement/9d27140cf07749878ef698ad2789b20d/server.log:362-381,:589,:1844; /opt/envs/vllm/lib/python3.12/site-packages/vllm/compilation/decorators.py:295-311,523-563; /opt/envs/vllm/lib/python3.12/site-packages/vllm/envs.py:34,697",
+    "expected_impact": "Turns the dead baseline into a booting server and de-confounds every future kernel-selection variant on this host.",
+    "accuracy_risk": "none (build-cache correctness)",
+    "domain_tags": [
+     "vllm",
+     "torch.compile",
+     "aot-cache",
+     "enablement",
+     "mi250x"
+    ]
+   },
+   {
+    "what": "On gfx90a the FP8 registry deterministically selects ChannelWiseTorchFP8ScaledMMLinearKernel and aborts, because gfx90a reports capability (9,0) and the Torch scaled_mm kernels gate on '>= 89'. The aiter FP8 kernels ranked above it are correctly arch-gated off, so the first kernel that passes is one that cannot execute. Engine-level, independent of TP/concurrency/params, and NOT avoidable by any existing --quantization or --linear-backend value ('emulation' maps only to MXFP4/6/8+NVFP4, 'torch' maps exactly to the three aborting kernels, 'triton' has no ROCm bucket so _resolve_backend_kernels warns and falls back) - a source patch is mandatory to close this gap.",
+    "source": "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/runs/baseline/614857fe763a4e2a821ef61850b1e81e/benchmark_vllm_20260915_171250/server.log:52,:229-300; /opt/envs/vllm/lib/python3.12/site-packages/vllm/model_executor/kernels/linear/__init__.py:296-340,407-415,596-628; /opt/envs/vllm/lib/python3.12/site-packages/vllm/model_executor/kernels/linear/scaled_mm/pytorch.py:227; get_cdna_version()==2 for gfx90a (/opt/envs/vllm/lib/python3.12/site-packages/vllm/platforms/rocm.py:362-371)",
+    "expected_impact": "Explains why 0 variants of the baseline config can boot and scopes the fix to exactly one registry insertion point.",
+    "accuracy_risk": "none",
+    "domain_tags": [
+     "vllm",
+     "rocm",
+     "gfx90a",
+     "fp8",
+     "kernel-selection"
+    ]
+   },
+   {
+    "what": "The gfx90a dequant blast radius is tiny: the dense FP8 volume rewritten per TP rank is ~0.29 GiB -> ~0.59 GiB BF16 (log 'So far 0.29 GiB of FP8 weights -> 0.59 GiB'), because the 397B model's expert weights never take this path - fp8.py:411 selects TRITON Fp8 MoE independently. The dequant happens inside process_weights_after_loading, so it is a load-time event, not per-step work, and it also removes the activation FP8 requant entirely (input_quant_key() returns None so no manual-fusion pass hoists act-quant upstream of it).",
+    "source": "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/reports/enablement/9d27140cf07749878ef698ad2789b20d/server.log:192-211,:54; /opt/envs/vllm/lib/python3.12/site-packages/vllm/model_executor/kernels/linear/scaled_mm/ScaledMMLinearKernel.py:108-170 (base apply_weights quantizes the activation, this override does not)",
+    "expected_impact": "Bounds P1's memory/perf downside and predicts the MoE side, not the dense side, as the next thing to break.",
+    "accuracy_risk": "low - E4M3->BF16 is an exact cast (3+1 mantissa / 4-bit exponent fit BF16) and dropping the activation FP8 requant removes one error term versus a true w8a8 scaled GEMM, so this path is expected to be at or slightly ABOVE the FP8 reference in accuracy.",
+    "domain_tags": [
+     "vllm",
+     "memory",
+     "moe",
+     "fp8",
+     "numerics"
+    ]
+   }
+  ],
+  "residual_questions": [
+   "Does integrate_patch install into /opt/venv/lib/python3.12/site-packages/vllm (which is where /opt/venv/bin/vllm resolves) or into the read-only /opt/envs/vllm/lib/python3.12/site-packages/vllm? The two trees are distinct and /opt/envs/... still has no scaled_mm/emulation.py. The current baseline leg logs ZERO 'Emulating FP8 w8a8' lines, so either the advanced patch never reached the serving interpreter or that log predates the install. If it is not landing, P1/P2 must be re-targeted before benchmarking or they will be measured as plain diffs.",
+   "Is /root/.cache/vllm/torch_compile_cache persistent across Hyperloom sessions on this host? If it is, every kernel-selection variant measured this session is confounded by a pre-patch artifact, and a per-run VLLM_CACHE_ROOT is preferable to VLLM_DISABLE_COMPILE_CACHE=1 (which costs a full compile - roughly the 17:05->17:09 gap in the enablement log).",
+   "Both observed failures died inside profile_run, i.e. no expert GEMM has ever executed on this stack. Confirm from a fresh boot whether the MoE side (TRITON Fp8, block-wise scales) actually runs on CDNA2 - it is the predicted next blocker and no amount of dense-linear work will surface it.",
+   "KB/RecipeKB question for a future round: is there a known-good gfx90a/MI250X FP8 checkpoint recipe at all (this stack has no hardware FP8), or should the session consider a BF16 or compressed-tensors-INT8 weight route (the session lesson says 8114 proved w8a8-INT8 runs here) as the primary arm rather than FP8 emulation?"
+  ],
+  "artifacts_written": []
+ }
+}

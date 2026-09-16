@@ -1,0 +1,39 @@
+{
+  "kind": "coordinator_inbox",
+  "session_id": "20260915T161838Z-ba2694ea",
+  "decision_id": null,
+  "kb_writes": [],
+  "notes": [],
+  "intent_envelope": {
+    "intents": [
+      {
+        "intent_type": "review_verdict",
+        "payload": {
+          "target_proposal_msg_id": "be6e4b7fd7874328ab36cfc2c543ed0b",
+          "verdict": "approve",
+          "source": "critic",
+          "reasoning": "Classified as enablement_landing with specialist provenance, no contradicting KB priors, and no packet-local structural defect. The strict before/after benchmark bar does not apply; the downstream runnable-decision gate will revert a failed enablement patch.",
+          "predicted_gain_pct": 0.0,
+          "kb_evidence": [],
+          "packet_evidence": [
+            "proposals[0].payload.params.enablement",
+            "proposals[0].payload.params.framework_agent_authoring",
+            "proposals[0].payload.params.provenance",
+            "proposals[0].payload.provenance",
+            "kb_priors_by_proposal.be6e4b7fd7874328ab36cfc2c543ed0b"
+          ],
+          "risks": [],
+          "required_evidence": [],
+          "alternative_action": null,
+          "advice_text": "",
+          "notes": [
+            "KB recall returned no priors; silence is the default cold-start state for enablement patches.",
+            "PRELUDE normally favors target_analysis/baseline, but this patch is enablement-only and does not claim throughput promotion."
+          ],
+          "failure_reason_code": "",
+          "confidence": "high"
+        }
+      }
+    ]
+  }
+}

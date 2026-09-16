@@ -1,0 +1,45 @@
+{
+  "success": false,
+  "framework": "vllm",
+  "model": "/mnt/stripe-3mix-3t2/models/davetha/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8",
+  "throughput": null,
+  "latency": null,
+  "kernel_summary": [],
+  "top_bottlenecks": [],
+  "tracelens_analysis": null,
+  "gap_analysis": null,
+  "gpu_monitor": {
+    "sample_count": 6,
+    "duration_sec": 10.82,
+    "temperature_c": {
+      "min": 46.0,
+      "max": 46.0,
+      "avg": 46.0
+    },
+    "gpu_clock_mhz": {
+      "min": 800,
+      "max": 800,
+      "avg": 800.0
+    },
+    "mem_clock_mhz": {
+      "min": 1600,
+      "max": 1600,
+      "avg": 1600.0
+    },
+    "power_watts": {
+      "min": 96.0,
+      "max": 97.0,
+      "avg": 96.8
+    }
+  },
+  "workspace_dir": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/baseline/2fc18296cb5e4f75846d0f0dbf143c2b/benchmark_vllm_20260914_135014",
+  "execution_time": 13.32089614868164,
+  "profiling_enabled": false,
+  "errors": [
+    "Benchmark process failed with code 1",
+    "stderr: + [[ all == \\s\\e\\r\\v\\e\\r ]]\n+ [[ all == \\a\\l\\l ]]\n+ SERVER_PID=11051\n+ [[ all == \\a\\l\\l ]]\n+ trap 'magpie_stop_benchmark_server_stack \"$SERVER_PID\"' EXIT INT TERM\n+ wait_for_server_ready --port 8888 --server-log /home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/baseline/2fc18296cb5e4f75846d0f0dbf143c2b/benchmark_vllm_20260914_135014/server.log --server-pid 11051\n+ local port=\n+ local server_log=\n+ local server_pid=\n+ local sleep_interval=5\n+ [[ 6 -gt 0 ]]\n+ case $1 in\n+ port=8888\n+ shift 2\n+ [[ 4 -gt 0 ]]\n+ case $1 in\n+ server_log=/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/baseline/2fc18296cb5e4f75846d0f0dbf143c2b/benchmark_vllm_20260914_135014/server.log\n+ shift 2\n+ [[ 2 -gt 0 ]]\n+ case $1 in\n+ server_pid=11051\n+ shift 2\n+ [[ 0 -gt 0 ]]\n+ [[ -z 8888 ]]\n+ [[ -z /home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/baseli",
+    "inferencex_result.json not found - benchmark may have failed locally",
+    "stderr (last 500 chars): er.log --pid 11051 --sleep-interval 5\n+ set +x\n+ setsid /usr/local/bin/vllm-wu1w serve /mnt/stripe-3mix-3t2/models/davetha/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8 --port 8888 --tensor-parallel-size=1 --gpu-memory-utilization 0.95 --max-model-len 6144 --trust-remote-code --trust-remote-code --language-model-only --quantization compressed-tensors --safetensors-load-strategy eager --compilation-config '{\"cudagraph_mode\":\"FULL_DECODE_ONLY\"}'\nProcess died before http://0.0.0.0:8888/health became ready.\n",
+    "server.log errors: Traceback (most recent call last):\n    raise RuntimeError(\nRuntimeError: HIP_VISIBLE_DEVICES contains more devices than ROCR_VISIBLE_DEVICES"
+  ]
+}

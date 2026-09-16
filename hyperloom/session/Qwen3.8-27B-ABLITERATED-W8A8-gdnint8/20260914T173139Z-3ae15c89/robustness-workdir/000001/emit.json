@@ -1,0 +1,32 @@
+{
+  "intent_envelope": {
+    "intents": [
+      {
+        "intent_type": "alert",
+        "payload": {
+          "severity": "medium",
+          "summary": "wall-clock budget 67% consumed with cumulative_gain_validated=0.00% — early strategy hint: cheap actions are not paying off",
+          "detail": {
+            "symptom": "budget_strategy_drift",
+            "severity": "medium",
+            "subject": {},
+            "source": "local",
+            "evidence": {
+              "elapsed_minutes": 80.9,
+              "remaining_minutes": 39.0,
+              "budget_minutes": 120.0,
+              "burn_pct": 0.674,
+              "cumulative_gain_validated": 0.0,
+              "strategy_drift_pct": 0.5,
+              "warn_pct": 0.7
+            },
+            "suggestion": "alert orchestration: consider shrinking scope to params/sweep before crossing the warn threshold"
+          }
+        }
+      }
+    ]
+  },
+  "session_id": "20260914T173139Z-3ae15c89",
+  "tick_index": 1,
+  "parse_warnings": []
+}

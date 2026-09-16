@@ -1,0 +1,55 @@
+{
+  "kind": "coordinator_inbox",
+  "session_id": "20260915T161838Z-ba2694ea",
+  "decision_id": null,
+  "kb_writes": [],
+  "notes": [],
+  "intent_envelope": {
+    "intents": [
+      {
+        "intent_type": "review_verdict",
+        "payload": {
+          "target_proposal_msg_id": "93d45150ac83445a93f04d340020cc37",
+          "verdict": "advise",
+          "source": "critic",
+          "reasoning": "Enablement integrate_patch has specialist provenance and no contradicting KB prior, but PRELUDE sequencing should first produce baseline/target evidence. Treat as an out-of-phase strategy signal rather than a safety rejection.",
+          "predicted_gain_pct": null,
+          "kb_evidence": [],
+          "packet_evidence": [
+            "merged_context.phase",
+            "review_constraints.action_verdict_policy.integrate_patch",
+            "review_constraints.phase_orientation",
+            "review_constraints.proposal_action_classes",
+            "proposals[0].payload.params.provenance",
+            "proposals[0].payload.params.enablement",
+            "kb_priors_by_proposal.93d45150ac83445a93f04d340020cc37"
+          ],
+          "risks": [
+            {
+              "severity": "minor",
+              "summary": "Integrating enablement before baseline/target evidence may skip orchestration sequencing and make later evidence attribution harder."
+            }
+          ],
+          "required_evidence": [],
+          "alternative_action": null,
+          "advice_text": "Prefer `baseline` or `target_analysis` in PRELUDE. Do not integrate an enablement patch unless it is necessary to make boot or accuracy evaluation possible; otherwise defer until after the needed evidence is produced.",
+          "notes": [
+            "predicted_gain_pct=0.0 is ignored as non-decisional bookkeeping.",
+            "Empty KB priors are treated as cold-start silence, not contradiction.",
+            "If this patch is blocking boot or accuracy evaluation, it may proceed after appropriate sequencing; otherwise defer integration."
+          ],
+          "failure_reason_code": "",
+          "confidence": "medium"
+        }
+      },
+      {
+        "intent_type": "send_message",
+        "payload": {
+          "topic": "advice",
+          "body_md": "Prefer `baseline` or `target_analysis` in PRELUDE. Do not integrate an enablement patch unless it is necessary to make boot or accuracy evaluation possible; otherwise defer until after the needed evidence is produced.",
+          "about_proposal_msg_id": "93d45150ac83445a93f04d340020cc37"
+        }
+      }
+    ]
+  }
+}

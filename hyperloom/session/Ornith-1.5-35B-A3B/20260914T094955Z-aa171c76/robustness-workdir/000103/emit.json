@@ -1,0 +1,29 @@
+{
+  "intent_envelope": {
+    "intents": [
+      {
+        "intent_type": "alert",
+        "payload": {
+          "severity": "medium",
+          "summary": "aiter jit build_count=6 unchanged for 105 consecutive ticks; a prior hipcc invocation likely crashed mid-build",
+          "detail": {
+            "symptom": "aiter_jit_build_stuck",
+            "severity": "medium",
+            "subject": {},
+            "source": "local",
+            "evidence": {
+              "build_count": 6,
+              "stale_ticks": 105,
+              "stale_build_threshold": 1,
+              "jit_dir": "/opt/envs/vllm/lib/python3.12/site-packages/aiter/jit"
+            },
+            "suggestion": "observe; if it persists, suggest cleaning <jit_dir>/build/ manually between runs"
+          }
+        }
+      }
+    ]
+  },
+  "session_id": "20260914T094955Z-aa171c76",
+  "tick_index": 1,
+  "parse_warnings": []
+}

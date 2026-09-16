@@ -1,0 +1,42 @@
+============================================================
+Benchmark Result: VLLM
+============================================================
+Model: /mnt/stripe-3mix-3t2/models/davetha/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8
+Status: SUCCESS
+
+Throughput:
+  Request throughput: 0.11 req/s
+  Output throughput: 110.19 tok/s
+  Total throughput: 220.38 tok/s
+  Completed requests: 8
+  Duration: 74.34s
+
+Latency:
+  TTFT (mean/p99): 1437.26ms / 1920.35ms
+  TPOT (mean/p99): 34.91ms / 35.99ms
+  ITL (mean/p99): 34.91ms / 36.26ms
+  E2EL (mean/p99): 37149.20ms / 37442.58ms
+
+GPU Hardware Monitoring:
+  Samples: 144 (308.3s)
+  Temperature: 47.0°C - 51.0°C (avg: 48.7°C)
+  GPU Clock: 800 - 800 MHz (avg: 800)
+  Power: 96.0 - 98.0 W (avg: 97.3)
+
+Workspace: /home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/specialist/30ccc757c22d476390bae0873bfa153b/scratch/e2e_fixed/variant_00_specialist-rebench/benchmark_vllm_20260914_153258
+Execution time: 310.79s
+============================================================
+{
+  "error": "",
+  "gpu_ids": "0",
+  "itl_ms": 34.90903106207379,
+  "ok": true,
+  "output_throughput": 110.19091731518483,
+  "port": 8931,
+  "status": "succeeded",
+  "ttft_ms": 1437.26492524911,
+  "warnings": [
+    "raw_inferencex_result_used"
+  ],
+  "workspace": "/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260914T134902Z-244d9455/runs/specialist/30ccc757c22d476390bae0873bfa153b/scratch/e2e_fixed/variant_00_specialist-rebench/benchmark_vllm_20260914_153258"
+}

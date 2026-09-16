@@ -1,0 +1,106 @@
+{
+  "intent_envelope": {
+    "intents": [
+      {
+        "intent_type": "alert",
+        "payload": {
+          "severity": "high",
+          "summary": "log error pattern 'RuntimeError: Engine core initialization failed' matched 1 times",
+          "detail": {
+            "symptom": "log_error_pattern",
+            "severity": "high",
+            "subject": {
+              "pattern": "RuntimeError: Engine core initialization failed"
+            },
+            "source": "local",
+            "evidence": {
+              "pattern": "RuntimeError: Engine core initialization failed",
+              "count": 1,
+              "samples": [
+                "[server.log] (APIServer pid=5815) RuntimeError: Engine core initialization failed. See root cause above. Failed core proc(s): {'EngineCore': 1}"
+              ]
+            },
+            "suggestion": "delegate(recover, force_gpu_cleanup=True) or escalate strategy"
+          }
+        }
+      },
+      {
+        "intent_type": "alert",
+        "payload": {
+          "severity": "medium",
+          "summary": "agent orchestration silent for 794s (threshold=300s)",
+          "detail": {
+            "symptom": "agent_stall",
+            "severity": "medium",
+            "subject": {
+              "agent": "orchestration"
+            },
+            "source": "local",
+            "evidence": {
+              "agent": "orchestration",
+              "idle_seconds": 794,
+              "last_seen_unix": 1789484696,
+              "threshold_s": 300
+            },
+            "suggestion": "escalate strategy if agent remains silent"
+          }
+        }
+      },
+      {
+        "intent_type": "alert",
+        "payload": {
+          "severity": "medium",
+          "summary": "log error pattern 'RuntimeError' matched 12 times",
+          "detail": {
+            "symptom": "log_error_pattern",
+            "severity": "medium",
+            "subject": {
+              "pattern": "RuntimeError"
+            },
+            "source": "local",
+            "evidence": {
+              "pattern": "RuntimeError",
+              "count": 12,
+              "samples": [
+                "[server.log] (Worker_TP2 pid=6551) (Worker_TP3 pid=6552) (Worker_TP7 pid=6556) (Worker_TP6 pid=6555) (Worker_TP1 pid=6550) (Worker_TP5 pid=6554) (Worker_TP0 pid=6549) ERROR 09-15 15:14:49 [multiproc_executor.py:1047] RuntimeError: torch._sc",
+                "[server.log] ERROR 09-15 15:14:49 [multiproc_executor.py:1047] RuntimeError: torch._scaled_mm is only supported on CUDA devices with compute capability >= 9.0 or 8.9, or ROCm MI300+",
+                "[server.log] ERROR 09-15 15:14:49 [multiproc_executor.py:1047] RuntimeError: torch._scaled_mm is only supported on CUDA devices with compute capability >= 9.0 or 8.9, or ROCm MI300+"
+              ]
+            },
+            "suggestion": "review log evidence with RCA before further action"
+          }
+        }
+      },
+      {
+        "intent_type": "alert",
+        "payload": {
+          "severity": "medium",
+          "summary": "PRELUDE phase budget 248% consumed (804s of 324s cap)",
+          "detail": {
+            "symptom": "phase_budget_nearly_exhausted",
+            "severity": "medium",
+            "subject": {},
+            "source": "shared_state",
+            "evidence": {
+              "phase": "PRELUDE",
+              "elapsed_sec": 804,
+              "cap_sec": 324,
+              "used_pct": 248.0
+            },
+            "suggestion": "wind down this phase or escalate a phase change"
+          }
+        }
+      }
+    ]
+  },
+  "session_id": "20260915T150443Z-6b7d597b",
+  "tick_index": 1,
+  "parse_warnings": [],
+  "llm_usage": {
+    "input_tokens": 1010,
+    "output_tokens": 535,
+    "calls": 1,
+    "latency_ms": 4520,
+    "model": "qwen3.8-flash-next"
+  }
+}

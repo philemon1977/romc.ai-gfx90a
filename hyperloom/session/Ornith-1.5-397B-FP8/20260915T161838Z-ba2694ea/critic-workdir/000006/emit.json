@@ -1,0 +1,36 @@
+{
+  "kind": "coordinator_inbox",
+  "session_id": "20260915T161838Z-ba2694ea",
+  "decision_id": null,
+  "kb_writes": [],
+  "notes": [],
+  "intent_envelope": {
+    "intents": [
+      {
+        "intent_type": "review_verdict",
+        "payload": {
+          "target_proposal_msg_id": "271e82e66336448a9a55dac99ff4fc0c",
+          "verdict": "approve",
+          "source": "critic",
+          "reasoning": "Baseline is an expected PRELUDE framework_op/exploration action; the promotion before/after and accuracy gates do not apply. Required context is present, KB silence is cold-start default, and no packet-local defect or contradiction is visible.",
+          "predicted_gain_pct": 0.0,
+          "kb_evidence": [],
+          "packet_evidence": [
+            "review_constraints.proposal_action_classes.271e82e66336448a9a55dac99ff4fc0c",
+            "review_constraints.action_verdict_policy.baseline",
+            "review_constraints.phase_orientation"
+          ],
+          "risks": [],
+          "required_evidence": [],
+          "alternative_action": null,
+          "advice_text": "",
+          "notes": [
+            "Self-reported proposal fields do not change the structural verdict for this framework_op baseline."
+          ],
+          "failure_reason_code": "",
+          "confidence": "high"
+        }
+      }
+    ]
+  }
+}

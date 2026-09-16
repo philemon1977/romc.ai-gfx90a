@@ -1,0 +1,99 @@
+{
+  "_specialist_notes": [
+    "worktree_setup_failed:no_git_framework_source_root"
+  ],
+  "allocated_gpu_ids": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7
+  ],
+  "artifacts_written": [],
+  "confidence": 0.82,
+  "domain": "enablement_specialist",
+  "empty": false,
+  "gap_canonical_id": "gap.enablement.unknown",
+  "new_findings": [
+    {
+      "accuracy_risk": "none (pure build-cache correctness; the recompiled graph is semantically identical to the correct eager path)",
+      "domain_tags": [
+        "vllm",
+        "torch.compile",
+        "aot-cache-invalidation",
+        "fp8-emulation",
+        "enablement",
+        "gfx90a"
+      ],
+      "expected_impact": "Unblocks the full enablement ladder for FP8-emulation combos on pre-MI300 ROCm: with the key invalidated the graph is re-traced against the dequantized BF16 weights, profile_run completes, CUDA graphs capture, and the server serves.",
+      "source": "/opt/envs/vllm/lib/python3.12/site-packages/vllm/compilation/caching.py:573-620 (aot_compile_hash_factors/_verify_source_unchanged), decorators.py:560-575 (load path), /root/.cache/vllm/torch_compile_cache/torch_aot_compile/63eba2e.../rank_0_0/model (mtime 15:13, pre-17:03 patched run), integrate_patch server.log assert_size_stride arg10_1",
+      "what": "vLLM 0.28 AOT compile-cache invalidation gap: envs.compile_factors() + VllmConfig.compute_hash() + _model_hash_key(forward) form the artifact dir key, and caching._verify_source_unchanged only re-checks the TRACED files recorded inside the EXISTING artifact. A kernel-selection patch (swap which linear/MoE kernel is chosen, changing weight layout/dtype) touches files that were NEVER in the traced set, so the stale artifact still verifies and is silently replayed -> wrong-shape assert_size_stride in profile_run even though the eager path is correct. Kernel-enablement patches therefore REQUIRE a cold compile."
+    },
+    {
+      "accuracy_risk": "low; dense FP8 linears dequantize exactly (E4M3->BF16) and activations stay BF16, so quality is >= true w8a8. 4% VRAM headroom is tight at concurrency 64 / 6144 ctx.",
+      "domain_tags": [
+        "vllm",
+        "mi250x",
+        "qwen3_5_moe",
+        "enablement",
+        "runnability"
+      ],
+      "expected_impact": "Confirms the gap closes to a runnable, graph-captured server (not just one boot step). Coordinator's E2E gate should now pass runnability.",
+      "source": "verify_server.log (this dispatch: patched worktree + fresh VLLM_CACHE_ROOT, TP8, gpu_mem_util 0.95, max_model_len 6144)",
+      "what": "End-to-end runnability evidence for Ornith-1.5-397B-FP8 (Qwen3_5MoeForConditionalGeneration, 60-layer hybrid GDN+full-attn, 512-expert MoE, compressed-tensors FP8 w8a8 channel/token) on 8xMI250X TP8: model load 48.3 GiB/GPU (~4% VRAM headroom after ~0.59 GiB BF16 dense dequant), cold torch.compile ~127 s, KV cache 3.48 GiB / 154,624 tokens, both PIECEWISE(51) and FULL(35) CUDA graph capture complete, Application startup, and coherent greedy generations. MoE FP8 path runs with VLLM_ROCM_USE_AITER=0 (triton/emulated experts) without error."
+    }
+  ],
+  "patch_grounding": {
+    "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/runs/specialist/fc07edbde4c9489682f2cafa5a7d253a/patches/002_kernel_selection_invalidates_aot_cache.patch": "applies"
+  },
+  "patches_written": [
+    "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/runs/specialist/fc07edbde4c9489682f2cafa5a7d253a/patches/002_kernel_selection_invalidates_aot_cache.patch"
+  ],
+  "proposal_set": [
+    {
+      "args_mode": "append",
+      "atomic": false,
+      "extra_args": "",
+      "extra_envs": {
+        "VLLM_DISABLE_COMPILE_CACHE": "1"
+      },
+      "kb_evidence": [],
+      "name": "cold-compile-fallback-no-cache",
+      "pr_evidence": [],
+      "reason": "Patch-free fallback that independently clears the CURRENT (stale-AOT-cache) failure: forcing a cold compile guarantees the pre-patch FP8-layout graph (built before patch 001) is never reloaded, so the dequantized BF16 weights are traced correctly. Use if patch 002 cannot be applied or a poisoned artifact would otherwise share the new key. Cost: ~127 s extra cold compile on warm start (irrelevant here since the baseline never booted, so no valid throughput baseline exists yet).",
+      "scope": "domain",
+      "source_evidence": [
+        "vllm/compilation/decorators.py:564 (load skipped when VLLM_DISABLE_COMPILE_CACHE=1)",
+        "vllm/compilation/decorators.py:689 (save skipped when VLLM_DISABLE_COMPILE_CACHE=1)",
+        "verify_server.log: fresh-cache boot of the 001-patched tree cleared profile_run, captured CUDA graphs, served coherent tokens"
+      ]
+    },
+    {
+      "args_mode": "append",
+      "atomic": false,
+      "extra_args": "",
+      "extra_envs": {
+        "VLLM_CACHE_ROOT": "/home/qiba/ROCm.AI/hyperloom/.cache/vllm_ornith397b_enable"
+      },
+      "kb_evidence": [],
+      "name": "patched-tree-fresh-cache-root",
+      "pr_evidence": [],
+      "reason": "Second patch-free fallback: points VLLM's cache root at a fresh, writable directory that does not contain the stale torch_aot_compile/63eba2e... artifact, so the engine cold-compiles against the dequantized weights. Safer than disabling the cache entirely (a correct artifact IS saved for later warm starts). Applies on top of patch 001 (+ optional 002).",
+      "scope": "domain",
+      "source_evidence": [
+        "vllm/envs.py:2229 (VLLM_CACHE_ROOT is in compile_factors() ignored_factors, i.e. relocating the root does NOT change the AOT hash -> guarantees the existing poisoned 63eba2e... artifact is bypassed)",
+        "vllm/compilation/decorators.py:544-563 (aot_compilation_path derived from envs.VLLM_CACHE_ROOT)"
+      ]
+    }
+  ],
+  "residual_questions": [
+    "If the Coordinator benches patch 002 but a stale artifact under an OLD key still exists, confirm the E2E gate is launched with the patched vllm tree importable (integrate_patch applies against /opt/envs/vllm/lib/python3.12/site-packages) so the new cache key takes effect; otherwise prefer proposal cold-compile-fallback-no-cache.",
+    "VRAM headroom at gpu_memory_utilization 0.95 is ~4% after the dense FP8->BF16 dequant (+~0.59 GiB/GPU). If concurrency-64 / 6144-ctx eval OOMs at KV allocation, the next rung is lowering a non-expert dense budget or --gpu-memory-utilization, not a code gap."
+  ],
+  "setup_commands": [],
+  "summary": "Diagnosed the CURRENT (deeper) boot failure as a stale vLLM torch.compile AOT cache, NOT a new code gap. The kept FP8-emulation patch (001) edits only UNTRACED files (kernel registry __init__.py + new scaled_mm/emulation.py), so vllm/compilation/caching.py keeps the same cache key and reloads the pre-patch artifact (torch_aot_compile/63eba2e.../rank_*_0/model, mtime 15:13, built for FP8 [K,N] aten._scaled_mm). Replaying that graph against the now-BF16 [N,K] dequantized weight dies in profile_run: assert_size_stride arg10_1 (4096,2560)/(1,4096) vs actual (2560,4096)/(4096,1). VERIFIED ON MY CARDS: booting the 001-patched tree with a fresh compile cache clears profile_run, allocates KV cache, captures CUDA graphs, and serves coherent tokens (17*23->391; correct 'sky is blue' reasoning). Authored patch 002 to make this structural: it folds a digest of model_executor/kernels + layers/quantization + layers/fused_moe/oracle into aot_compile_hash_factors so any kernel-selection patch invalidates the cache and forces a correct recompile. This is expected to clear the gap to FULL runnability for Ornith-1.5-397B-FP8 / vllm / MI250X.",
+  "ts": "2026-09-15T18:02:54.242108+00:00"
+}

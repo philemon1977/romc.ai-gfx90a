@@ -1,0 +1,310 @@
+MAGPIE_PYTHON=/opt/venv/bin/python cannot import Magpie; ignoring it and auto-detecting an interpreter that can. (A stale value is often baked into kernel-agent.env.sh when install.sh resolved it before Magpie was pip-installed.)
+MAGPIE_PYTHON=/opt/venv/bin/python cannot import Magpie; ignoring it and auto-detecting an interpreter that can. (A stale value is often baked into kernel-agent.env.sh when install.sh resolved it before Magpie was pip-installed.)
+Preflight: WARNING — ignoring unsupported kernel-agent env key PYTHONPATH from /home/qiba/ROCm.AI/hyperloom/session/runtime/kernel-agent.env.sh
+2026-09-15 16:18:22,132 hyperloom.orchestrator.actions.executors._grid_runner [WARNING] MAGPIE_PYTHON=/opt/venv/bin/python cannot import Magpie; ignoring it and auto-detecting an interpreter that can. (A stale value is often baked into kernel-agent.env.sh when install.sh resolved it before Magpie was pip-installed.)
+Preflight: claude_agent_sdk OK
+Preflight: openai_codex OK
+Preflight: openai OK
+Preflight: httpx OK
+Preflight: ~/.claude/config.json already points at upstream
+Preflight: platform [amd-server] — SMT off, NPS1 (2 NUMA nodes / 2 sockets), governor schedutil
+Preflight: WARNING — cpufreq governor is 'schedutil', not 'performance'; clock ramp can distort latency percentiles and roofline measurements
+Preflight: ray OK
+Preflight: benchmark_serving client deps OK
+Preflight: vllm importable (/opt/envs/vllm/bin/python3); the vllm platform confirms a ROCm build
+Preflight: WARNING — CLI(s) not on PATH: ['codex']. ClaudeBackend / CodexBackend may fall back to direct HTTP. Run src/hyperloom/agents/kernel/scripts/install.sh to bring them in.
+Preflight diagnostics:
+  asset_root          = /home/qiba/ROCm.AI/hyperloom/hyperloom/inference_optimizer
+  session_dir         = /home/qiba/ROCm.AI/hyperloom/session  (USER_DATA_PATH=/home/qiba/ROCm.AI/hyperloom/session, default=/workspace/hyperloom)
+  magpie_python       = /opt/envs/vllm/bin/python3
+  INFERENCEX_PATH     = /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966
+  aiter jit cache     = 124 .so / 1879 MB (WARM) at /opt/envs/vllm/lib/python3.12/site-packages/aiter/jit
+  cold_start_timeout  = 9000s
+  warm_timeout        = 7800s
+  ANTHROPIC_BASE_URL  = http://127.0.0.1:9100
+  kb_status           = OK
+  pr_monitor_status   = DEGRADED (ir3_auto)
+  kb_degraded_reason  = -
+  pr_degraded_reason  = ir3_auto
+  recipe_kb_queue     = pending=0 dead_letter=0 flushed=0 (root=/home/qiba/ROCm.AI/hyperloom/session/runtime/recipe_kb)
+2026-09-15 16:18:34,873 httpx [INFO] HTTP Request: GET http://127.0.0.1:9100/models "HTTP/1.1 405 Method Not Allowed"
+Preflight: catalog probe got HTTP 405 for http://127.0.0.1:9100/models; endpoint exposes no /models route
+Preflight: WARNING — gateway has no /models route (HTTP 404/405); cannot verify --claude-model='qwen3.8-flash-next'. Proceeding.
+Framework       : vllm
+GPU type        : mi250x (auto-detected)
+GPU type        : mi250x
+Magpie runner   : mi250x (will inject runner_type into Magpie YAML)
+WARN: --precision='fp8' but checkpoint dtype is 'compressed-tensors'; using --precision flag as specified.
+Workload        : ISL=1024 OSL=1024 MAX_MODEL_LEN=6144 (auto) PRECISION=fp8 FRAMEWORK_VERSION=0.28.0
+Session dir     : /home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea
+Session id      : Ornith-1.5-397B-FP8_20260915T161838Z_8e79dc43  (manifest label only)
+Session layout under /home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea:
+  [ok] storage/
+  [ok] personas/
+  [ok] checkpoints/
+  [ok] kb/
+  [ok] findings/
+  [ok] reports/
+  [ok] agents/orchestration/
+  [ok] agents/critic/
+  [ok] agents/robustness/
+  [ok] runs/baseline/
+  [ok] runs/profile/
+  [ok] runs/backends/
+  [ok] runs/params/
+  [ok] runs/integrate/
+  [ok] runs/kernel_opt/
+  [ok] kernel-agent-workspace/
+  [ok] kernel-agent/
+  [ok] patches/
+  [ok] optimizer_runs/
+  [ok] manifest.json (written first)
+HYPERLOOM_LAUNCH event=launch pid=14973 session_dir=/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea session_id=Ornith-1.5-397B-FP8_20260915T161838Z_8e79dc43 run_log='' manifest=/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/manifest.json gpu_type=mi250x framework=vllm model=/mnt/kioxia-cm6-3t8/ai/models/ornith-ai/Ornith-1.5-397B-FP8
+Launch info file: /home/qiba/ROCm.AI/hyperloom/session/optimizer_runs/launch_Ornith-1.5-397B-FP8-20260915_161821.json
+2026-09-15 16:18:38,944 hyperloom.common.gpu_partition [WARNING] GPU 0 reports compute-partition mode 'N/A', which this build does not know
+WARNING: DEGRADED MODE: model 'Ornith-1.5-397B-FP8' carries a multimodal signal (multimodal config key 'vision_config'; architecture 'Qwen3_5MoeForConditionalGeneration', model_type 'qwen3_5_moe') but exposes a text-generation path. Hyperloom is running it on the TEXT path only — any image/audio inputs are ignored, so benchmark numbers reflect the text decoder alone. Pass --no-allow-mm-text-fallback to fail-fast instead.
+2026-09-15 16:18:38,947 hyperloom.inference_optimizer.cli.model_gate [WARNING] DEGRADED MODE: model 'Ornith-1.5-397B-FP8' carries a multimodal signal (multimodal config key 'vision_config'; architecture 'Qwen3_5MoeForConditionalGeneration', model_type 'qwen3_5_moe') but exposes a text-generation path. Hyperloom is running it on the TEXT path only — any image/audio inputs are ignored, so benchmark numbers reflect the text decoder alone. Pass --no-allow-mm-text-fallback to fail-fast instead.
+Recipe KB        : session_id=20260915T161838Z-ba2694ea workload=inference:ornith-1.5-397b-fp8:mi250x:vllm:qwen3_5_moe:qwen3_5moeforconditionalgeneration:0.28.0:fp8 (warm=hit:exact@1.00, pitfalls=2, lessons=1)
+PR Monitor       : DISABLED (ir3_auto)
+Objective       : kind=gain_pct target_gain_pct=30.0
+Optimize phase  : ENABLED
+Research scout  : ENABLED at PRELUDE (re-dispatch every 3 explore rounds)
+Target advisory : ENABLED (External target gap injected into prompts; advisory-only)
+Recipe sediment : ENABLED (KEEP/REVERT provenance written to persistent recipe)
+2026-09-15 16:18:39,971 hyperloom.orchestrator.roles.critic_agent [INFO] critic_agent_backend static_context source=manifest keys=['framework', 'gpu_type', 'model', 'model_path', 'precision', 'tp', 'workload']
+2026-09-15 16:18:40,807 hyperloom.orchestrator.specialists.mcp_config [INFO] specialist_mcp_config: no MCP servers to wire (pr_monitor disabled?); skipping config file generation
+Backends        : orchestration=Claude(qwen3.8-flash-next), kernel=DISABLED, critic=critic-agent(kb=inmemory, protocol=anthropic, model=qwen3.8-flash-next, root=/home/qiba/ROCm.AI/hyperloom/hyperloom/agents/critic), robustness=robustness-agent(root=/home/qiba/ROCm.AI/hyperloom/hyperloom/agents/robustness)
+Max ticks       : unlimited (budget = 3.0h)
+Tick interval   : 30.0s
+
+[target_analysis] no --compare-against-gpu set; will write a marker JSON at $SESSION_DIR/target_analysis/target_baseline.json (reason=no_target_gpu_configured) — set --compare-against-gpu to fetch real InferenceX reference data.
+2026-09-15 16:18:40,808 hyperloom.orchestrator.loop.coordinator [INFO] Coordinator.run: SIGINT/SIGTERM handlers installed
+2026-09-15 16:18:40,817 hyperloom.orchestrator.loop.conversation [INFO] orchestration prompt mode=SEED seeded=False tick=1
+2026-09-15 16:18:40,825 claude_agent_sdk._internal.transport.subprocess_cli [INFO] Using bundled Claude Code CLI: /opt/envs/vllm/lib/python3.12/site-packages/claude_agent_sdk/_bundled/claude
+2026-09-15 16:18:43,504 hyperloom.orchestrator.roles.claude [INFO] claude tool_use validation failed: intents[0].payload must be object, got str
+2026-09-15 16:18:43,784 hyperloom.orchestrator.roles.claude [INFO] claude tool_use validation failed: intents[0].payload must be object, got str
+2026-09-15 16:18:49,519 hyperloom.orchestrator.roles.claude [INFO] claude[conv] turn: resumed=False prev_session= new_session=b406c0de211c tool_blocks=4 intents=2 prompt_chars=4138
+2026-09-15 16:19:12,637 hyperloom.orchestrator.roles.critic_agent [INFO] critic_agent_backend turn=0 session=20260915T161838Z-ba2694ea proposals=2 verdicts=[('approve', 'critic'), ('approve', 'critic')] kb_skipped=None required_context=[] finish=end_turn kb_priors=0
+2026-09-15 16:19:25,120 hyperloom.orchestrator.roles.robustness_agent [INFO] robustness_agent_backend turn=0 session=20260915T161838Z-ba2694ea tick_index=1 intents=[('alert', 'high')] parse_warnings=0
+2026-09-15 16:19:25,128 hyperloom.orchestrator.actions.executors.target_analysis [INFO] target_analysis_executor: no compare_against_gpu set; writing skipped summary and returning
+2026-09-15 16:19:25,129 hyperloom.orchestrator.actions.executors.target_analysis [INFO] target_analysis_executor: status=skipped reason=model_mapping_miss rows=0 (model name mapping miss for '/mnt/kioxia-cm6-3t8/ai/models/ornith-ai/Ornith-1.5-397B-FP8'; no InferenceX name found)
+2026-09-15 16:19:25,297 hyperloom.orchestrator.actions.executors.baseline [INFO] baseline_executor: WARM start — aiter jit/build/ at /opt/envs/vllm/lib/python3.12/site-packages/aiter/jit has 124 .so, 1879 MB. Using default timeout=7800s.
+2026-09-15 16:19:25,325 hyperloom.orchestrator.actions.executors.baseline [INFO] baseline_executor: cold-start double-run not eligible (benchmark_script='vllm_mi250x.sh' is not a Magpie built-in (['atom_mi300x.sh', 'atom_mi355x.sh', 'sglang_mi300x.sh', 'sglang_mi355x.sh', 'vllm_mi300x.sh', 'vllm_mi355x.sh'])); running single round.
+2026-09-15 16:19:25,325 hyperloom.orchestrator.loop.sub_agent_runner [INFO] task_progress: task=f9f5f7ae4c424c41a09527ad7d95993c unit=baseline_round label=single status=started agent=orchestration
+2026-09-15 16:19:25,330 hyperloom.orchestrator.actions.executors.baseline [INFO] baseline_executor: launching Magpie cmd=['/opt/envs/vllm/bin/python3', '-m', 'Magpie', '-v', 'benchmark', '--benchmark-config', '/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/runs/baseline/f9f5f7ae4c424c41a09527ad7d95993c/baseline_config.with_envs.yaml', '--output-dir', '/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/runs/baseline/f9f5f7ae4c424c41a09527ad7d95993c', '--run-mode', 'local'] output_dir=/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/runs/baseline/f9f5f7ae4c424c41a09527ad7d95993c
+2026-09-15 16:19:39,145 framework_agent.hyperloom.agents.framework.sources [INFO] enumerate_candidates: github returned 0 candidate(s)
+2026-09-15 16:19:39,145 framework_agent.hyperloom.agents.framework.sources [INFO] enumerate_candidates: total=0 after dedup (explicit=0, searched=0)
+2026-09-15 16:19:39,186 hyperloom.orchestrator.enablement.lane [INFO] ENABLEMENT: dispatched authoring specialist kind=unknown attempt=1 task=9d27140cf07749878ef698ad2789b20d
+2026-09-15 16:20:09,208 hyperloom.orchestrator.loop.conversation [INFO] orchestration prompt mode=DELTA seeded=True tick=2
+2026-09-15 16:20:09,210 claude_agent_sdk._internal.transport.subprocess_cli [INFO] Using bundled Claude Code CLI: /opt/envs/vllm/lib/python3.12/site-packages/claude_agent_sdk/_bundled/claude
+2026-09-15 16:20:13,185 hyperloom.orchestrator.roles.mcp_context_tools [INFO] context_tool pull: recent_outcomes args={'top_k': 5} -> 1121 chars
+2026-09-15 16:24:05,374 hyperloom.orchestrator.roles.claude [INFO] claude[conv] turn: resumed=True prev_session=b406c0de211c new_session=b406c0de211c tool_blocks=1 intents=1 prompt_chars=5359
+2026-09-15 16:24:05,380 hyperloom.orchestrator.loop.writeback [WARNING] PolicyGate denied intent: source=orchestration type=delegate rule=enablement_round_in_flight reason=baseline: an enablement authoring round is in flight (task=9d27140cf07749878ef698ad2789b20d)
+2026-09-15 16:24:05,814 hyperloom.orchestrator.roles.critic_agent [INFO] critic_agent_backend turn=1 session=20260915T161838Z-ba2694ea proposals=0 verdicts=[] kb_skipped=None required_context=[] finish=skipped kb_priors=0
+2026-09-15 16:24:07,843 hyperloom.orchestrator.roles.robustness_agent [INFO] robustness_agent_backend turn=1 session=20260915T161838Z-ba2694ea tick_index=1 intents=[('alert', 'medium'), ('alert', 'medium')] parse_warnings=0
+2026-09-15 16:53:32,120 hyperloom.orchestrator.specialists.subprocess_ [INFO] _read_done: unwrapped specialist_done intent envelope at /home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/runs/specialist/9d27140cf07749878ef698ad2789b20d/specialist_done.partial.json (proposal_set_len=0, empty=False)
+2026-09-15 17:01:28,010 hyperloom.orchestrator.specialists.subprocess_ [INFO] _read_done: unwrapped specialist_done intent envelope at /home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/runs/specialist/9d27140cf07749878ef698ad2789b20d/specialist_done.partial.json (proposal_set_len=0, empty=False)
+2026-09-15 17:01:58,370 hyperloom.orchestrator.loop.conversation [INFO] orchestration prompt mode=DELTA seeded=True tick=3
+2026-09-15 17:01:58,410 claude_agent_sdk._internal.transport.subprocess_cli [INFO] Using bundled Claude Code CLI: /opt/envs/vllm/lib/python3.12/site-packages/claude_agent_sdk/_bundled/claude
+2026-09-15 17:02:21,105 hyperloom.orchestrator.roles.mcp_context_tools [INFO] context_tool pull: running_tasks args={} -> 20 chars
+2026-09-15 17:02:41,180 hyperloom.orchestrator.roles.claude [INFO] claude[conv] turn: resumed=True prev_session=b406c0de211c new_session=b406c0de211c tool_blocks=1 intents=1 prompt_chars=7030
+2026-09-15 17:03:07,302 hyperloom.orchestrator.roles.critic_agent [INFO] critic_agent_backend turn=2 session=20260915T161838Z-ba2694ea proposals=1 verdicts=[('advise', 'critic')] kb_skipped=None required_context=[] finish=end_turn kb_priors=0
+2026-09-15 17:03:14,808 hyperloom.orchestrator.roles.robustness_agent [INFO] robustness_agent_backend turn=2 session=20260915T161838Z-ba2694ea tick_index=1 intents=[('alert', 'high'), ('delegate', None)] parse_warnings=0
+2026-09-15 17:03:14,823 claude_agent_sdk._internal.transport.subprocess_cli [INFO] Using bundled Claude Code CLI: /opt/envs/vllm/lib/python3.12/site-packages/claude_agent_sdk/_bundled/claude
+2026-09-15 17:03:24,080 hyperloom.orchestrator.roles.claude [INFO] claude[conv] turn: resumed=True prev_session=b406c0de211c new_session=b406c0de211c tool_blocks=0 intents=0 prompt_chars=2379
+2026-09-15 17:03:24,332 hyperloom.orchestrator.actions.executors._grid_runner [WARNING] MAGPIE_PYTHON=/opt/venv/bin/python cannot import Magpie; ignoring it and auto-detecting an interpreter that can. (A stale value is often baked into kernel-agent.env.sh when install.sh resolved it before Magpie was pip-installed.)
+2026-09-15 17:03:24,397 hyperloom.orchestrator.loop.sub_agent_runner [INFO] task_progress: task=684650cc04404308aed3e22cffc3ed0e unit=variant_step label=integrate-patch-9d27140c:variant status=started agent=orchestration progress=1/1
+2026-09-15 17:03:24,408 hyperloom.orchestrator.actions.executors._grid_runner [INFO] grid_runner: warmup-before-measure not eligible (benchmark_script='vllm_mi250x.sh' is not a Magpie built-in (['atom_mi300x.sh', 'atom_mi355x.sh', 'sglang_mi300x.sh', 'sglang_mi355x.sh', 'vllm_mi300x.sh', 'vllm_mi355x.sh'])); running single measured round.
+2026-09-15 17:03:24,408 hyperloom.orchestrator.actions.executors._grid_runner [INFO] grid_runner: variant 1/1 name=integrate-patch-9d27140c args=
+2026-09-15 17:03:24,409 hyperloom.orchestrator.loop.sub_agent_runner [INFO] task_progress: task=684650cc04404308aed3e22cffc3ed0e unit=variant_step label=integrate-patch-9d27140c:benchmark status=started agent=orchestration progress=1/1
+2026-09-15 17:11:36,782 hyperloom.orchestrator.actions.executors._grid_runner [WARNING] grid_runner: variant 1/1 name=integrate-patch-9d27140c aborted: magpie_nonzero_invalid_measurement (rc=1): (Worker_TP2 pid=25273) (Worker_TP6 pid=25277) ERROR 09-15 17:10:45 [multiproc_executor.py:1047] 
+ERROR 09-15 17:10:45 [multiproc_executor.py:1047] 
+(EngineCore pid=25227) ERROR 09-15 17:10:45 [core.py
+2026-09-15 17:11:36,799 hyperloom.orchestrator.loop.sub_agent_runner [INFO] task_progress: task=684650cc04404308aed3e22cffc3ed0e unit=variant label=integrate-patch-9d27140c status=failed agent=orchestration progress=1/1
+2026-09-15 17:11:37,028 hyperloom.orchestrator.phases.framework [INFO] FRAMEWORK: stamped terminal progress candidate=9d27140cf07749878ef698ad2789b20d batch= status=advanced
+2026-09-15 17:11:37,028 hyperloom.orchestrator.phases.framework [INFO] FRAMEWORK: authored patch outcome candidate=9d27140cf07749878ef698ad2789b20d batch= status=advanced gain=0.00%
+2026-09-15 17:11:37,089 hyperloom.orchestrator.enablement.lane [INFO] ENABLEMENT: rearm from integrate status=advanced succeeded=False advanced=True stacked=1 stall_streak=0 next_attempt=1
+2026-09-15 17:11:37,137 hyperloom.orchestrator.actions.executors.recover [INFO] recover_executor: start reason='local_server_unreachable' force=True
+2026-09-15 17:11:38,266 hyperloom.orchestrator.actions.executors.recover [INFO] recover_executor: succeeded killed=0 healthy_gpus=8/8
+2026-09-15 17:12:08,326 hyperloom.orchestrator.loop.conversation [INFO] orchestration prompt mode=SEED seeded=False tick=4
+2026-09-15 17:12:08,371 claude_agent_sdk._internal.transport.subprocess_cli [INFO] Using bundled Claude Code CLI: /opt/envs/vllm/lib/python3.12/site-packages/claude_agent_sdk/_bundled/claude
+2026-09-15 17:12:23,435 hyperloom.orchestrator.roles.claude [INFO] claude[conv] turn: resumed=False prev_session= new_session=d9ab9a4fc1d6 tool_blocks=2 intents=2 prompt_chars=11343
+2026-09-15 17:12:40,332 hyperloom.orchestrator.roles.critic_agent [INFO] critic_agent_backend turn=3 session=20260915T161838Z-ba2694ea proposals=1 verdicts=[('approve', 'critic')] kb_skipped=None required_context=[] finish=end_turn kb_priors=0
+2026-09-15 17:12:48,489 hyperloom.orchestrator.roles.robustness_agent [INFO] robustness_agent_backend turn=3 session=20260915T161838Z-ba2694ea tick_index=1 intents=[('alert', 'high'), ('alert', 'medium')] parse_warnings=0
+2026-09-15 17:12:48,673 hyperloom.orchestrator.actions.executors.baseline [INFO] baseline_executor: WARM start — aiter jit/build/ at /opt/envs/vllm/lib/python3.12/site-packages/aiter/jit has 124 .so, 1879 MB. Using default timeout=7800s.
+2026-09-15 17:12:48,732 hyperloom.orchestrator.actions.executors.baseline [INFO] baseline_executor: cold-start double-run not eligible (benchmark_script='vllm_mi250x.sh' is not a Magpie built-in (['atom_mi300x.sh', 'atom_mi355x.sh', 'sglang_mi300x.sh', 'sglang_mi355x.sh', 'vllm_mi300x.sh', 'vllm_mi355x.sh'])); running single round.
+2026-09-15 17:12:48,732 hyperloom.orchestrator.loop.sub_agent_runner [INFO] task_progress: task=614857fe763a4e2a821ef61850b1e81e unit=baseline_round label=single status=started agent=orchestration
+2026-09-15 17:12:48,737 hyperloom.orchestrator.actions.executors.baseline [INFO] baseline_executor: timeout clamped 7800s -> 7445s by the session budget (round=614857fe763a4e2a821ef61850b1e81e)
+2026-09-15 17:12:48,738 hyperloom.orchestrator.actions.executors.baseline [INFO] baseline_executor: launching Magpie cmd=['/opt/envs/vllm/bin/python3', '-m', 'Magpie', '-v', 'benchmark', '--benchmark-config', '/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/runs/baseline/614857fe763a4e2a821ef61850b1e81e/baseline_config.with_envs.yaml', '--output-dir', '/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/runs/baseline/614857fe763a4e2a821ef61850b1e81e', '--run-mode', 'local'] output_dir=/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/runs/baseline/614857fe763a4e2a821ef61850b1e81e
+2026-09-15 17:20:00,683 framework_agent.hyperloom.agents.framework.sources [INFO] enumerate_candidates: github returned 0 candidate(s)
+2026-09-15 17:20:00,689 framework_agent.hyperloom.agents.framework.sources [INFO] enumerate_candidates: total=0 after dedup (explicit=0, searched=0)
+2026-09-15 17:20:00,814 hyperloom.orchestrator.enablement.lane [INFO] ENABLEMENT: dispatched authoring specialist kind=unknown attempt=2 task=fc07edbde4c9489682f2cafa5a7d253a
+2026-09-15 17:20:30,855 hyperloom.orchestrator.loop.conversation [INFO] orchestration prompt mode=DELTA seeded=True tick=5
+2026-09-15 17:20:30,890 claude_agent_sdk._internal.transport.subprocess_cli [INFO] Using bundled Claude Code CLI: /opt/envs/vllm/lib/python3.12/site-packages/claude_agent_sdk/_bundled/claude
+2026-09-15 17:20:42,236 hyperloom.orchestrator.roles.mcp_context_tools [INFO] context_tool pull: recent_outcomes args={'top_k': 3} -> 804 chars
+2026-09-15 17:20:48,119 hyperloom.orchestrator.roles.mcp_context_tools [INFO] context_tool pull: get_variant_failures args={'task_id': '614857fe763a4e2a821ef61850b1e81e'} -> 20 chars
+2026-09-15 17:21:44,758 hyperloom.orchestrator.roles.claude [INFO] claude[conv] turn: resumed=True prev_session=d9ab9a4fc1d6 new_session=d9ab9a4fc1d6 tool_blocks=2 intents=2 prompt_chars=6166
+2026-09-15 17:21:45,328 hyperloom.orchestrator.roles.critic_agent [INFO] critic_agent_backend turn=4 session=20260915T161838Z-ba2694ea proposals=0 verdicts=[] kb_skipped=None required_context=[] finish=skipped kb_priors=0
+2026-09-15 17:21:49,098 hyperloom.orchestrator.roles.robustness_agent [INFO] robustness_agent_backend turn=4 session=20260915T161838Z-ba2694ea tick_index=1 intents=[('send_message', 'heartbeat')] parse_warnings=0
+2026-09-15 17:31:50,094 hyperloom.orchestrator.phases.explore [INFO] specialist auto-retry: task=c89d4bf43b6f46d2b23c41a68257ef0e failure=timeout attempt=1/2 re-enqueued as ec5730efd22047e8956388cbed26e736
+2026-09-15 17:36:32,103 hyperloom.orchestrator.specialists.subprocess_ [INFO] _read_done: unwrapped specialist_done intent envelope at /home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/runs/specialist/fc07edbde4c9489682f2cafa5a7d253a/specialist_done.partial.json (proposal_set_len=0, empty=False)
+2026-09-15 17:39:02,248 hyperloom.orchestrator.specialists.subprocess_ [INFO] _read_done: unwrapped specialist_done intent envelope at /home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/runs/specialist/fc07edbde4c9489682f2cafa5a7d253a/specialist_done.partial.json (proposal_set_len=0, empty=False)
+2026-09-15 17:41:51,084 hyperloom.orchestrator.phases.explore [INFO] specialist auto-retry: task=ec5730efd22047e8956388cbed26e736 failure=timeout attempt=2/2 re-enqueued as f008270e09ad48e7afc9b262b3aacada
+2026-09-15 17:49:16,369 hyperloom.orchestrator.specialists.subprocess_ [INFO] _read_done: unwrapped specialist_done intent envelope at /home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/runs/specialist/f008270e09ad48e7afc9b262b3aacada/specialist_done.partial.json (proposal_set_len=0, empty=False)
+2026-09-15 17:49:52,996 hyperloom.orchestrator.specialists.subprocess_ [INFO] _read_done: unwrapped specialist_done intent envelope at /home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/runs/specialist/f008270e09ad48e7afc9b262b3aacada/specialist_done.partial.json (proposal_set_len=3, empty=False)
+2026-09-15 17:51:43,728 hyperloom.orchestrator.specialists.subprocess_ [INFO] _read_done: unwrapped specialist_done intent envelope at /home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/runs/specialist/f008270e09ad48e7afc9b262b3aacada/specialist_done.json (proposal_set_len=3, empty=False)
+2026-09-15 18:02:54,171 hyperloom.orchestrator.specialists.subprocess_ [INFO] _read_done: unwrapped specialist_done intent envelope at /home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/runs/specialist/fc07edbde4c9489682f2cafa5a7d253a/specialist_done.json (proposal_set_len=2, empty=False)
+2026-09-15 18:03:24,321 hyperloom.orchestrator.loop.conversation [INFO] orchestration prompt mode=DELTA seeded=True tick=6
+2026-09-15 18:03:24,358 claude_agent_sdk._internal.transport.subprocess_cli [INFO] Using bundled Claude Code CLI: /opt/envs/vllm/lib/python3.12/site-packages/claude_agent_sdk/_bundled/claude
+2026-09-15 18:03:58,583 hyperloom.orchestrator.roles.claude [INFO] claude[conv] turn: resumed=True prev_session=d9ab9a4fc1d6 new_session=d9ab9a4fc1d6 tool_blocks=1 intents=1 prompt_chars=12700
+2026-09-15 18:04:53,645 hyperloom.orchestrator.roles.critic_agent [INFO] critic_agent_backend turn=5 session=20260915T161838Z-ba2694ea proposals=1 verdicts=[('approve', 'critic')] kb_skipped=None required_context=[] finish=end_turn kb_priors=0
+2026-09-15 18:04:56,326 hyperloom.orchestrator.roles.robustness_agent [INFO] robustness_agent_backend turn=5 session=20260915T161838Z-ba2694ea tick_index=1 intents=[('alert', 'medium'), ('alert', 'medium')] parse_warnings=0
+2026-09-15 18:04:56,336 claude_agent_sdk._internal.transport.subprocess_cli [INFO] Using bundled Claude Code CLI: /opt/envs/vllm/lib/python3.12/site-packages/claude_agent_sdk/_bundled/claude
+2026-09-15 18:05:06,122 hyperloom.orchestrator.roles.claude [INFO] claude[conv] turn: resumed=True prev_session=d9ab9a4fc1d6 new_session=d9ab9a4fc1d6 tool_blocks=0 intents=0 prompt_chars=2379
+2026-09-15 18:05:06,142 hyperloom.orchestrator.actions.executors.integrate_patch [INFO] integrate_patch: enablement stacking 1 base patch(es) before this round's patch
+2026-09-15 18:05:06,319 hyperloom.orchestrator.actions.executors._grid_runner [WARNING] MAGPIE_PYTHON=/opt/venv/bin/python cannot import Magpie; ignoring it and auto-detecting an interpreter that can. (A stale value is often baked into kernel-agent.env.sh when install.sh resolved it before Magpie was pip-installed.)
+2026-09-15 18:05:06,370 hyperloom.orchestrator.actions.executors._grid_runner [WARNING] grid_runner: 4293s left cannot fit this variant's 2 remaining round(s) of 7800s (spent on: the variants before this one); skipping 1 remaining variant(s) rather than launching a pass whose measured round cannot follow it
+2026-09-15 18:05:06,392 hyperloom.orchestrator.phases.framework [INFO] FRAMEWORK: stamped terminal progress candidate=fc07edbde4c9489682f2cafa5a7d253a batch= status=advanced
+2026-09-15 18:05:06,392 hyperloom.orchestrator.phases.framework [INFO] FRAMEWORK: authored patch outcome candidate=fc07edbde4c9489682f2cafa5a7d253a batch= status=advanced gain=0.00%
+2026-09-15 18:05:06,401 hyperloom.orchestrator.enablement.lane [INFO] ENABLEMENT: rearm from integrate status=advanced succeeded=False advanced=True stacked=2 stall_streak=0 next_attempt=2
+2026-09-15 18:05:36,448 hyperloom.orchestrator.loop.conversation [INFO] orchestration prompt mode=SEED seeded=False tick=7
+2026-09-15 18:05:36,456 claude_agent_sdk._internal.transport.subprocess_cli [INFO] Using bundled Claude Code CLI: /opt/envs/vllm/lib/python3.12/site-packages/claude_agent_sdk/_bundled/claude
+2026-09-15 18:05:39,930 hyperloom.orchestrator.roles.mcp_context_tools [INFO] context_tool pull: recent_outcomes args={'top_k': 3} -> 684 chars
+2026-09-15 18:05:52,803 hyperloom.orchestrator.roles.claude [INFO] claude[conv] turn: resumed=False prev_session= new_session=9bf482504c67 tool_blocks=1 intents=1 prompt_chars=14424
+2026-09-15 18:06:16,032 hyperloom.orchestrator.roles.critic_agent [INFO] critic_agent_backend turn=6 session=20260915T161838Z-ba2694ea proposals=1 verdicts=[('approve', 'critic')] kb_skipped=None required_context=[] finish=end_turn kb_priors=0
+2026-09-15 18:06:18,181 hyperloom.orchestrator.roles.robustness_agent [INFO] robustness_agent_backend turn=6 session=20260915T161838Z-ba2694ea tick_index=1 intents=[('alert', 'medium')] parse_warnings=0
+2026-09-15 18:06:18,382 hyperloom.orchestrator.actions.executors.baseline [INFO] baseline_executor: WARM start — aiter jit/build/ at /opt/envs/vllm/lib/python3.12/site-packages/aiter/jit has 124 .so, 1879 MB. Using default timeout=7800s.
+2026-09-15 18:06:18,419 hyperloom.orchestrator.actions.executors.baseline [INFO] baseline_executor: cold-start double-run not eligible (benchmark_script='vllm_mi250x.sh' is not a Magpie built-in (['atom_mi300x.sh', 'atom_mi355x.sh', 'sglang_mi300x.sh', 'sglang_mi355x.sh', 'vllm_mi300x.sh', 'vllm_mi355x.sh'])); running single round.
+2026-09-15 18:06:18,420 hyperloom.orchestrator.loop.sub_agent_runner [INFO] task_progress: task=9d87461af4dc4507ad5113521d67e7e8 unit=baseline_round label=single status=started agent=orchestration
+2026-09-15 18:06:18,423 hyperloom.orchestrator.actions.executors.baseline [INFO] baseline_executor: timeout clamped 7800s -> 4235s by the session budget (round=9d87461af4dc4507ad5113521d67e7e8)
+2026-09-15 18:06:18,425 hyperloom.orchestrator.actions.executors.baseline [INFO] baseline_executor: launching Magpie cmd=['/opt/envs/vllm/bin/python3', '-m', 'Magpie', '-v', 'benchmark', '--benchmark-config', '/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/runs/baseline/9d87461af4dc4507ad5113521d67e7e8/baseline_config.with_envs.yaml', '--output-dir', '/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/runs/baseline/9d87461af4dc4507ad5113521d67e7e8', '--run-mode', 'local'] output_dir=/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/runs/baseline/9d87461af4dc4507ad5113521d67e7e8
+2026-09-15 18:08:25,372 framework_agent.hyperloom.agents.framework.sources [INFO] enumerate_candidates: github returned 0 candidate(s)
+2026-09-15 18:08:25,372 framework_agent.hyperloom.agents.framework.sources [INFO] enumerate_candidates: total=0 after dedup (explicit=0, searched=0)
+2026-09-15 18:08:25,455 hyperloom.orchestrator.enablement.lane [INFO] ENABLEMENT: dispatched authoring specialist kind=unknown attempt=3 task=8628519056b24176b3fa5c9a0e106dd6
+2026-09-15 18:08:55,485 hyperloom.orchestrator.loop.conversation [INFO] orchestration prompt mode=DELTA seeded=True tick=8
+2026-09-15 18:08:55,487 claude_agent_sdk._internal.transport.subprocess_cli [INFO] Using bundled Claude Code CLI: /opt/envs/vllm/lib/python3.12/site-packages/claude_agent_sdk/_bundled/claude
+2026-09-15 18:08:58,886 hyperloom.orchestrator.roles.mcp_context_tools [INFO] context_tool pull: gaps args={} -> 1148 chars
+2026-09-15 18:09:00,948 hyperloom.orchestrator.roles.mcp_context_tools [INFO] context_tool pull: get_variant_failures args={'task_id': '9d87461af4dc4507ad5113521d67e7e8'} -> 20 chars
+2026-09-15 18:09:03,371 hyperloom.orchestrator.roles.mcp_context_tools [INFO] context_tool pull: get_failure args={'failure_id': '9d87461af4dc4507ad5113521d67e7e8'} -> 137 chars
+2026-09-15 18:09:21,574 hyperloom.orchestrator.roles.mcp_context_tools [INFO] context_tool pull: running_tasks args={} -> 20 chars
+2026-09-15 18:10:20,464 hyperloom.orchestrator.roles.claude [INFO] claude[conv] turn: resumed=True prev_session=9bf482504c67 new_session=9bf482504c67 tool_blocks=1 intents=1 prompt_chars=4427
+2026-09-15 18:10:20,472 hyperloom.orchestrator.loop.writeback [WARNING] PolicyGate denied intent: source=orchestration type=request rule=request_target reason=role='orchestration' cannot request target_agent='robustness' (allowed: ['kernel_agent'])
+2026-09-15 18:10:21,034 hyperloom.orchestrator.roles.critic_agent [INFO] critic_agent_backend turn=7 session=20260915T161838Z-ba2694ea proposals=0 verdicts=[] kb_skipped=None required_context=[] finish=skipped kb_priors=0
+2026-09-15 18:10:33,248 hyperloom.orchestrator.roles.robustness_agent [INFO] robustness_agent_backend turn=7 session=20260915T161838Z-ba2694ea tick_index=1 intents=[('alert', 'high'), ('delegate', None)] parse_warnings=0
+2026-09-15 18:47:34,423 hyperloom.orchestrator.specialists.subprocess_ [INFO] _read_done: unwrapped specialist_done intent envelope at /home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/runs/specialist/8628519056b24176b3fa5c9a0e106dd6/specialist_done.partial.json (proposal_set_len=0, empty=False)
+2026-09-15 19:00:59,391 hyperloom.orchestrator.specialists.subprocess_ [INFO] _read_done: unwrapped specialist_done intent envelope at /home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/runs/specialist/8628519056b24176b3fa5c9a0e106dd6/specialist_done.json (proposal_set_len=1, empty=False)
+2026-09-15 19:00:59,639 hyperloom.orchestrator.phases.explore [INFO] FRAMEWORK: config-lever deliverable routed to integrate_patch candidate=8628519056b24176b3fa5c9a0e106dd6 args=--language-model-only env_keys=[]
+2026-09-15 19:00:59,669 hyperloom.orchestrator.actions.executors.recover [INFO] recover_executor: start reason='local_server_unreachable' force=True
+2026-09-15 19:01:04,799 hyperloom.orchestrator.actions.executors.recover [INFO] recover_executor: succeeded killed=0 healthy_gpus=8/8
+2026-09-15 19:01:34,862 hyperloom.orchestrator.loop.conversation [INFO] orchestration prompt mode=DELTA seeded=True tick=9
+2026-09-15 19:01:34,904 claude_agent_sdk._internal.transport.subprocess_cli [INFO] Using bundled Claude Code CLI: /opt/envs/vllm/lib/python3.12/site-packages/claude_agent_sdk/_bundled/claude
+2026-09-15 19:02:16,061 hyperloom.orchestrator.roles.claude [INFO] claude[conv] turn: resumed=True prev_session=9bf482504c67 new_session=9bf482504c67 tool_blocks=2 intents=2 prompt_chars=8015
+2026-09-15 19:02:16,069 hyperloom.orchestrator.loop.writeback [WARNING] PolicyGate denied intent: source=orchestration type=propose_action rule=enablement_round_in_flight reason=baseline: an enablement authoring round is in flight (task=8628519056b24176b3fa5c9a0e106dd6)
+2026-09-15 19:03:29,202 hyperloom.orchestrator.roles.critic_agent [INFO] critic_agent_backend turn=8 session=20260915T161838Z-ba2694ea proposals=1 verdicts=[('advise', 'critic')] kb_skipped=None required_context=[] finish=end_turn kb_priors=0
+2026-09-15 19:03:36,765 hyperloom.orchestrator.roles.robustness_agent [INFO] robustness_agent_backend turn=8 session=20260915T161838Z-ba2694ea tick_index=1 intents=[('alert', 'high'), ('alert', 'high'), ('alert', 'high'), ('alert', 'medium'), ('alert', 'medium')] parse_warnings=0
+2026-09-15 19:03:36,780 claude_agent_sdk._internal.transport.subprocess_cli [INFO] Using bundled Claude Code CLI: /opt/envs/vllm/lib/python3.12/site-packages/claude_agent_sdk/_bundled/claude
+2026-09-15 19:03:46,480 hyperloom.orchestrator.roles.claude [INFO] claude[conv] turn: resumed=True prev_session=9bf482504c67 new_session=9bf482504c67 tool_blocks=0 intents=0 prompt_chars=2379
+2026-09-15 19:03:46,504 hyperloom.orchestrator.actions.executors.integrate_patch [INFO] integrate_patch: enablement stacking 2 base patch(es) before this round's patch
+2026-09-15 19:03:46,711 hyperloom.orchestrator.actions.executors._grid_runner [WARNING] MAGPIE_PYTHON=/opt/venv/bin/python cannot import Magpie; ignoring it and auto-detecting an interpreter that can. (A stale value is often baked into kernel-agent.env.sh when install.sh resolved it before Magpie was pip-installed.)
+2026-09-15 19:03:46,784 hyperloom.orchestrator.actions.executors._grid_runner [WARNING] grid_runner: 772s left cannot fit this variant's 2 remaining round(s) of 7800s (spent on: the variants before this one); skipping 1 remaining variant(s) rather than launching a pass whose measured round cannot follow it
+2026-09-15 19:03:46,803 hyperloom.orchestrator.phases.framework [INFO] FRAMEWORK: stamped terminal progress candidate=8628519056b24176b3fa5c9a0e106dd6 batch= status=advanced
+2026-09-15 19:03:46,803 hyperloom.orchestrator.phases.framework [INFO] FRAMEWORK: authored patch outcome candidate=8628519056b24176b3fa5c9a0e106dd6 batch= status=advanced gain=0.00%
+2026-09-15 19:03:46,816 hyperloom.orchestrator.enablement.lane [INFO] ENABLEMENT: rearm from integrate status=advanced succeeded=False advanced=True stacked=2 stall_streak=0 next_attempt=3
+2026-09-15 19:04:16,865 hyperloom.orchestrator.loop.conversation [INFO] orchestration prompt mode=SEED seeded=False tick=10
+2026-09-15 19:04:16,871 claude_agent_sdk._internal.transport.subprocess_cli [INFO] Using bundled Claude Code CLI: /opt/envs/vllm/lib/python3.12/site-packages/claude_agent_sdk/_bundled/claude
+2026-09-15 19:04:30,559 hyperloom.orchestrator.roles.mcp_context_tools [INFO] context_tool pull: recent_outcomes args={'top_k': 5} -> 1339 chars
+2026-09-15 19:04:30,589 hyperloom.orchestrator.roles.mcp_context_tools [INFO] context_tool pull: running_tasks args={} -> 20 chars
+2026-09-15 19:04:39,800 hyperloom.orchestrator.roles.claude [INFO] claude[conv] turn: resumed=False prev_session= new_session=0e2caeb8782e tool_blocks=2 intents=2 prompt_chars=18576
+2026-09-15 19:05:20,435 hyperloom.orchestrator.roles.critic_agent [INFO] critic_agent_backend turn=9 session=20260915T161838Z-ba2694ea proposals=1 verdicts=[('approve', 'critic')] kb_skipped=None required_context=[] finish=end_turn kb_priors=0
+2026-09-15 19:05:22,544 hyperloom.orchestrator.roles.robustness_agent [INFO] robustness_agent_backend turn=9 session=20260915T161838Z-ba2694ea tick_index=1 intents=[('send_message', 'heartbeat')] parse_warnings=0
+2026-09-15 19:05:22,755 hyperloom.orchestrator.actions.executors.baseline [INFO] baseline_executor: WARM start — aiter jit/build/ at /opt/envs/vllm/lib/python3.12/site-packages/aiter/jit has 124 .so, 1879 MB. Using default timeout=7800s.
+2026-09-15 19:05:22,797 hyperloom.orchestrator.actions.executors.baseline [INFO] baseline_executor: cold-start double-run not eligible (benchmark_script='vllm_mi250x.sh' is not a Magpie built-in (['atom_mi300x.sh', 'atom_mi355x.sh', 'sglang_mi300x.sh', 'sglang_mi355x.sh', 'vllm_mi300x.sh', 'vllm_mi355x.sh'])); running single round.
+2026-09-15 19:05:22,798 hyperloom.orchestrator.loop.sub_agent_runner [INFO] task_progress: task=1d343fd9cc0643eda773d9a19a1f7ac2 unit=baseline_round label=single status=started agent=orchestration
+2026-09-15 19:05:22,802 hyperloom.orchestrator.actions.executors.baseline [INFO] baseline_executor: timeout clamped 7800s -> 691s by the session budget (round=1d343fd9cc0643eda773d9a19a1f7ac2)
+2026-09-15 19:05:22,803 hyperloom.orchestrator.actions.executors.baseline [INFO] baseline_executor: launching Magpie cmd=['/opt/envs/vllm/bin/python3', '-m', 'Magpie', '-v', 'benchmark', '--benchmark-config', '/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/runs/baseline/1d343fd9cc0643eda773d9a19a1f7ac2/baseline_config.with_envs.yaml', '--output-dir', '/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/runs/baseline/1d343fd9cc0643eda773d9a19a1f7ac2', '--run-mode', 'local'] output_dir=/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/runs/baseline/1d343fd9cc0643eda773d9a19a1f7ac2
+2026-09-15 19:12:24,424 framework_agent.hyperloom.agents.framework.sources [INFO] enumerate_candidates: github returned 0 candidate(s)
+2026-09-15 19:12:24,430 framework_agent.hyperloom.agents.framework.sources [INFO] enumerate_candidates: total=0 after dedup (explicit=0, searched=0)
+2026-09-15 19:12:24,540 hyperloom.orchestrator.enablement.lane [INFO] ENABLEMENT: dispatched authoring specialist kind=unknown attempt=4 task=3ac5f7c6b1f04bf083324ff9963191a0
+2026-09-15 19:12:54,576 hyperloom.orchestrator.loop.conversation [INFO] orchestration prompt mode=DELTA seeded=True tick=11
+2026-09-15 19:12:54,602 claude_agent_sdk._internal.transport.subprocess_cli [INFO] Using bundled Claude Code CLI: /opt/envs/vllm/lib/python3.12/site-packages/claude_agent_sdk/_bundled/claude
+2026-09-15 19:13:04,946 hyperloom.orchestrator.roles.claude [INFO] claude[conv] turn: resumed=True prev_session=0e2caeb8782e new_session=0e2caeb8782e tool_blocks=2 intents=2 prompt_chars=4971
+2026-09-15 19:13:04,955 hyperloom.orchestrator.loop.writeback [WARNING] PolicyGate denied intent: source=orchestration type=propose_action rule=execution_order reason=action='report' denied: baseline must run first
+2026-09-15 19:13:05,479 hyperloom.orchestrator.roles.critic_agent [INFO] critic_agent_backend turn=10 session=20260915T161838Z-ba2694ea proposals=0 verdicts=[] kb_skipped=None required_context=[] finish=skipped kb_priors=0
+2026-09-15 19:13:08,445 hyperloom.orchestrator.roles.robustness_agent [INFO] robustness_agent_backend turn=10 session=20260915T161838Z-ba2694ea tick_index=1 intents=[('alert', 'medium')] parse_warnings=0
+2026-09-15 19:13:08,467 hyperloom.orchestrator.loop.dispatcher [WARNING] dispatcher: dropped queued task=3ac5f7c6b1f04bf083324ff9963191a0 kind=specialist before dispatch: action='specialist' denied: needs ~6 min but only 4 min of the session budget is left
+2026-09-15 19:13:08,483 hyperloom.orchestrator.enablement.lane [INFO] ENABLEMENT: rearm from integrate status=reverted succeeded=False advanced=False stacked=2 stall_streak=1 next_attempt=4
+2026-09-15 19:13:08,644 framework_agent.hyperloom.agents.framework.sources [INFO] enumerate_candidates: github returned 0 candidate(s)
+2026-09-15 19:13:08,644 framework_agent.hyperloom.agents.framework.sources [INFO] enumerate_candidates: total=0 after dedup (explicit=0, searched=0)
+2026-09-15 19:13:08,748 hyperloom.orchestrator.enablement.lane [INFO] ENABLEMENT: dispatched authoring specialist kind=unknown attempt=5 task=3ce90296d8f64e7981d0e5e04596207e
+2026-09-15 19:13:38,771 hyperloom.orchestrator.loop.conversation [INFO] orchestration prompt mode=DELTA seeded=True tick=12
+2026-09-15 19:13:38,775 claude_agent_sdk._internal.transport.subprocess_cli [INFO] Using bundled Claude Code CLI: /opt/envs/vllm/lib/python3.12/site-packages/claude_agent_sdk/_bundled/claude
+2026-09-15 19:13:47,060 hyperloom.orchestrator.roles.claude [INFO] claude[conv] turn: resumed=True prev_session=0e2caeb8782e new_session=0e2caeb8782e tool_blocks=1 intents=1 prompt_chars=5505
+2026-09-15 19:13:47,506 hyperloom.orchestrator.roles.critic_agent [INFO] critic_agent_backend turn=11 session=20260915T161838Z-ba2694ea proposals=0 verdicts=[] kb_skipped=None required_context=[] finish=skipped kb_priors=0
+2026-09-15 19:13:53,208 hyperloom.orchestrator.roles.robustness_agent [INFO] robustness_agent_backend turn=11 session=20260915T161838Z-ba2694ea tick_index=1 intents=[('alert', 'high'), ('alert', 'medium')] parse_warnings=0
+2026-09-15 19:13:53,225 hyperloom.orchestrator.loop.dispatcher [WARNING] dispatcher: dropped queued task=3ce90296d8f64e7981d0e5e04596207e kind=specialist before dispatch: action='specialist' denied: needs ~6 min but only 3 min of the session budget is left
+2026-09-15 19:13:53,237 hyperloom.orchestrator.enablement.lane [INFO] ENABLEMENT: rearm from integrate status=reverted succeeded=False advanced=False stacked=2 stall_streak=2 next_attempt=5
+2026-09-15 19:13:53,396 framework_agent.hyperloom.agents.framework.sources [INFO] enumerate_candidates: github returned 0 candidate(s)
+2026-09-15 19:13:53,396 framework_agent.hyperloom.agents.framework.sources [INFO] enumerate_candidates: total=0 after dedup (explicit=0, searched=0)
+2026-09-15 19:13:53,499 hyperloom.orchestrator.enablement.lane [INFO] ENABLEMENT: dispatched authoring specialist kind=unknown attempt=6 task=ee19de579f194de19e4ebbbd2b8e8742
+2026-09-15 19:14:23,519 hyperloom.orchestrator.loop.conversation [INFO] orchestration prompt mode=DELTA seeded=True tick=13
+2026-09-15 19:14:23,522 claude_agent_sdk._internal.transport.subprocess_cli [INFO] Using bundled Claude Code CLI: /opt/envs/vllm/lib/python3.12/site-packages/claude_agent_sdk/_bundled/claude
+2026-09-15 19:14:32,918 hyperloom.orchestrator.roles.claude [INFO] claude[conv] turn: resumed=True prev_session=0e2caeb8782e new_session=0e2caeb8782e tool_blocks=1 intents=1 prompt_chars=5386
+2026-09-15 19:14:32,928 hyperloom.orchestrator.loop.intent_router [INFO] escalate_strategy_change: dropping premature skip_to_close from orchestration (pre-enablement: baseline not established; enablement loop still active)
+2026-09-15 19:14:33,362 hyperloom.orchestrator.roles.critic_agent [INFO] critic_agent_backend turn=12 session=20260915T161838Z-ba2694ea proposals=0 verdicts=[] kb_skipped=None required_context=[] finish=skipped kb_priors=0
+2026-09-15 19:14:35,434 hyperloom.orchestrator.roles.robustness_agent [INFO] robustness_agent_backend turn=12 session=20260915T161838Z-ba2694ea tick_index=1 intents=[('send_message', 'heartbeat')] parse_warnings=0
+2026-09-15 19:14:35,447 hyperloom.orchestrator.loop.dispatcher [WARNING] dispatcher: dropped queued task=ee19de579f194de19e4ebbbd2b8e8742 kind=specialist before dispatch: action='specialist' denied: needs ~6 min but only 2 min of the session budget is left
+2026-09-15 19:14:35,459 hyperloom.orchestrator.enablement.lane [INFO] ENABLEMENT: rearm from integrate status=reverted succeeded=False advanced=False stacked=2 stall_streak=3 next_attempt=6
+2026-09-15 19:14:35,555 framework_agent.hyperloom.agents.framework.sources [INFO] enumerate_candidates: github returned 0 candidate(s)
+2026-09-15 19:14:35,555 framework_agent.hyperloom.agents.framework.sources [INFO] enumerate_candidates: total=0 after dedup (explicit=0, searched=0)
+2026-09-15 19:14:35,629 hyperloom.orchestrator.enablement.lane [INFO] ENABLEMENT: dispatched authoring specialist kind=unknown attempt=7 task=20ee1882848548dca2bbfe17833ee7b0
+2026-09-15 19:15:05,656 hyperloom.orchestrator.loop.conversation [INFO] orchestration prompt mode=DELTA seeded=True tick=14
+2026-09-15 19:15:05,658 claude_agent_sdk._internal.transport.subprocess_cli [INFO] Using bundled Claude Code CLI: /opt/envs/vllm/lib/python3.12/site-packages/claude_agent_sdk/_bundled/claude
+2026-09-15 19:15:13,288 hyperloom.orchestrator.roles.claude [INFO] claude[conv] turn: resumed=True prev_session=0e2caeb8782e new_session=0e2caeb8782e tool_blocks=1 intents=1 prompt_chars=4434
+2026-09-15 19:15:13,726 hyperloom.orchestrator.roles.critic_agent [INFO] critic_agent_backend turn=13 session=20260915T161838Z-ba2694ea proposals=0 verdicts=[] kb_skipped=None required_context=[] finish=skipped kb_priors=0
+2026-09-15 19:15:20,206 hyperloom.orchestrator.roles.robustness_agent [INFO] robustness_agent_backend turn=13 session=20260915T161838Z-ba2694ea tick_index=1 intents=[('alert', 'high'), ('alert', 'high'), ('alert', 'medium'), ('alert', 'medium')] parse_warnings=0
+2026-09-15 19:15:20,224 hyperloom.orchestrator.loop.dispatcher [WARNING] dispatcher: dropped queued task=20ee1882848548dca2bbfe17833ee7b0 kind=specialist before dispatch: action='specialist' denied: needs ~6 min but only 1 min of the session budget is left
+2026-09-15 19:15:20,237 hyperloom.orchestrator.enablement.lane [INFO] ENABLEMENT: rearm from integrate status=reverted succeeded=False advanced=False stacked=2 stall_streak=4 next_attempt=7
+2026-09-15 19:15:20,398 framework_agent.hyperloom.agents.framework.sources [INFO] enumerate_candidates: github returned 0 candidate(s)
+2026-09-15 19:15:20,398 framework_agent.hyperloom.agents.framework.sources [INFO] enumerate_candidates: total=0 after dedup (explicit=0, searched=0)
+2026-09-15 19:15:20,504 hyperloom.orchestrator.enablement.lane [INFO] ENABLEMENT: dispatched authoring specialist kind=unknown attempt=8 task=812814cae01443fcb9ca4b579423c4c9
+2026-09-15 19:15:50,535 hyperloom.orchestrator.loop.conversation [INFO] orchestration prompt mode=DELTA seeded=True tick=15
+2026-09-15 19:15:50,539 claude_agent_sdk._internal.transport.subprocess_cli [INFO] Using bundled Claude Code CLI: /opt/envs/vllm/lib/python3.12/site-packages/claude_agent_sdk/_bundled/claude
+2026-09-15 19:15:56,606 hyperloom.orchestrator.roles.claude [INFO] claude[conv] turn: resumed=True prev_session=0e2caeb8782e new_session=0e2caeb8782e tool_blocks=1 intents=1 prompt_chars=6669
+2026-09-15 19:15:57,046 hyperloom.orchestrator.roles.critic_agent [INFO] critic_agent_backend turn=14 session=20260915T161838Z-ba2694ea proposals=0 verdicts=[] kb_skipped=None required_context=[] finish=skipped kb_priors=0
+2026-09-15 19:15:59,110 hyperloom.orchestrator.roles.robustness_agent [INFO] robustness_agent_backend turn=14 session=20260915T161838Z-ba2694ea tick_index=1 intents=[('send_message', 'heartbeat')] parse_warnings=0
+2026-09-15 19:15:59,125 hyperloom.orchestrator.loop.dispatcher [WARNING] dispatcher: dropped queued task=812814cae01443fcb9ca4b579423c4c9 kind=specialist before dispatch: action='specialist' denied: needs ~6 min but only 1 min of the session budget is left
+2026-09-15 19:15:59,143 hyperloom.orchestrator.enablement.lane [INFO] ENABLEMENT: rearm from integrate status=reverted succeeded=False advanced=False stacked=2 stall_streak=5 next_attempt=8 stop_reason=enablement_stalled
+2026-09-15 19:15:59,152 hyperloom.orchestrator.phases.machine [INFO] Coordinator.phase: PRELUDE → CLOSE (reason=enablement_stalled)
+2026-09-15 19:15:59,154 claude_agent_sdk._internal.transport.subprocess_cli [INFO] Using bundled Claude Code CLI: /opt/envs/vllm/lib/python3.12/site-packages/claude_agent_sdk/_bundled/claude
+2026-09-15 19:16:06,573 hyperloom.orchestrator.roles.claude [INFO] claude[conv] turn: resumed=True prev_session=0e2caeb8782e new_session=0e2caeb8782e tool_blocks=0 intents=0 prompt_chars=2379
+2026-09-15 19:16:06,627 hyperloom.orchestrator.phases.machine [INFO] orchestration prompt re-scoped for phase=CLOSE
+2026-09-15 19:16:06,639 hyperloom.orchestrator.phases.close [INFO] CLOSE entered (from=PRELUDE); starting 7-step close sequence
+2026-09-15 19:16:06,686 hyperloom.orchestrator.phases.close [INFO] CLOSE step 1 (report): task_id=d591e8d9fde64a71a0c38142e14e2af7 starting; waiting up to 120s for it
+2026-09-15 19:16:06,902 hyperloom.orchestrator.actions.executors.report [INFO] report_executor: wrote /home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/reports/final.md and /home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/reports/final.json (cumulative_gain_validated=0.00%)
+2026-09-15 19:16:06,914 hyperloom.orchestrator.phases.close [INFO] CLOSE step 2 (session_breakdown): task_id=4b234cba2d4d4d528fd2ecabe456ecb2 starting; waiting up to 60s for it
+2026-09-15 19:16:12,749 hyperloom.inference_optimizer.breakdown.exporter [INFO] session_breakdown: wrote /home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/session_breakdown.json (196582 bytes)
+2026-09-15 19:16:18,399 hyperloom.orchestrator.actions.executors.session_breakdown [INFO] session_breakdown_executor: wrote /home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/session_breakdown.json (1 warnings)
+2026-09-15 19:16:18,416 hyperloom.inference_optimizer.breakdown.exporter [INFO] session_breakdown: refreshed langfuse section in /home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/session_breakdown.json
+2026-09-15 19:16:41,281 hyperloom.inference_optimizer.breakdown.session_package [INFO] session package: wrote /workspace/hyperloom-session-packages/Ornith-1.5-397B-FP8_20260915T161838Z_8e79dc43.zip (56 files, 2302387 bytes pre-zip, complete=True)
+2026-09-15 19:16:41,298 hyperloom.inference_optimizer.breakdown.session_package [INFO] session package: copied 56 loose files into /workspace
+2026-09-15 19:16:41,335 hyperloom.inference_optimizer.breakdown.exporter [INFO] session_breakdown: refreshed close section in /home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/session_breakdown.json
+2026-09-15 19:17:01,916 hyperloom.inference_optimizer.breakdown.session_package [INFO] session package: wrote /workspace/hyperloom-session-packages/Ornith-1.5-397B-FP8_20260915T161838Z_8e79dc43.zip (56 files, 2303826 bytes pre-zip, complete=True)
+2026-09-15 19:17:01,930 hyperloom.inference_optimizer.breakdown.session_package [INFO] session package: copied 56 loose files into /workspace
+2026-09-15 19:17:01,932 hyperloom.orchestrator.phases.close [INFO] CLOSE 7-step sequencer complete
+2026-09-15 19:17:01,935 hyperloom.orchestrator.loop.coordinator [INFO] Coordinator.run: stopped tick=15 reason=enablement_stalled baseline_tput=0.0 cumulative_gain_validated=0.00% max_minutes=180
+Final summary     : /home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/reports/final.json
+Session breakdown : (already written by CLOSE phase sequencer; skipping cli.finally safety-net write)
+2026-09-15 19:17:23,293 hyperloom.inference_optimizer.breakdown.session_package [INFO] session package: wrote /workspace/hyperloom-session-packages/Ornith-1.5-397B-FP8_20260915T161838Z_8e79dc43.zip (56 files, 2373505 bytes pre-zip, complete=True)
+2026-09-15 19:17:23,308 hyperloom.inference_optimizer.breakdown.session_package [INFO] session package: copied 56 loose files into /workspace
+Artifact package  : /workspace/hyperloom-session-packages/Ornith-1.5-397B-FP8_20260915T161838Z_8e79dc43.zip
+
+================ Final summary ================
+  stop_reason          : enablement_stalled
+  session_id           : Ornith-1.5-397B-FP8_20260915T161838Z_8e79dc43
+  model                : Ornith-1.5-397B-FP8
+  baseline             : 0.0 tok/s/GPU
+  cumulative_gain_val  : 0.00% ⚠ never validated — no `explore` KEEP has landed yet
+  current_best         : {}
+  pruned_families      : []
+  crash_count          : 0
+===============================================

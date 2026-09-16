@@ -1,0 +1,53 @@
+{
+  "by_kernel": [],
+  "cumulative_gain_validated_pct": 0.0,
+  "failure_reason_breakdown": {
+    "agent_error": 0,
+    "compile_failed": 0,
+    "correctness_failed": 0,
+    "ladder_all_failed": 0,
+    "ladder_partial_no_artifact": 0,
+    "ladder_unavailable": 0,
+    "other": 0,
+    "preprocess_failed": 0,
+    "speedup_below_threshold": 0,
+    "timeout": 0
+  },
+  "field_glossary": {
+    "backend_ladder": "Per-backend outcome of the kernel-agent dispatch. ``produced_artifact=false`` across all rows is the dominant signal that the entire ladder failed for this kernel.",
+    "bandwidth": "Per-case ``bytes`` / ``algbw_gbps`` / ``busbw_gbps`` from the final bench. Latency alone cannot separate a faster transfer from a cheaper barrier; bus bandwidth against the fabric peak says which one a kept kernel bought, and which regime still has headroom.",
+    "bound_type": "Whether the kernel is limited by memory bandwidth (memory-bound) or compute (compute-bound).",
+    "collective_attempt_id": "Stable identity for one collective campaign, used to deduplicate resumed or salvaged attempts across a session.",
+    "collective_op": "The collective primitive that was optimized: ``all_reduce``, ``reduce_scatter`` or ``all_gather``.",
+    "compile_passed": "True only if at least one backend in the ladder produced a usable patch. False means the whole backend ladder failed to produce any compiled artifact.",
+    "e2e_gain_pct": "End-to-end throughput delta measured by the integrate gate. This, not micro_speedup, decides whether a collective KEEP is adopted.",
+    "efficiency_pct": "Achieved throughput as a percentage of the kernel's roofline peak for its bound_type. Lower = more headroom to gain.",
+    "gpu_pct": "Share of total GPU time spent in this kernel (kernel_duration / total_gpu_duration). Higher = more impactful to optimize.",
+    "lane": "Which optimization lane produced the row. ``collective`` rows come from the multi-GPU comm lane and carry no roofline geometry, so efficiency_pct / bound_type / arithmetic_intensity stay null.",
+    "salvaged": "True when the validated best was recovered from the campaign sidecar after the wrapper timed out, rather than returned by a clean exit.",
+    "speedup_basis": "Whether the row's headline number was validated end to end (``e2e``) or is a microbenchmark ratio only. A collective's microbenchmark routinely overstates its end-to-end worth, so treat ``microbenchmark`` rows as unproven.",
+    "world_size": "Rank count the collective was measured across; the lane requires it to match the run's TP width."
+  },
+  "kernel_opt_outcome": "skip",
+  "model_name": "Ornith-1.5-397B-FP8",
+  "rejection_breakdown": {
+    "max_failures_without_keep": 0,
+    "max_partial_attempts_without_keep": 0,
+    "other": 0,
+    "revert_decision": 0,
+    "unresolved_source": 0
+  },
+  "schema_version": 1,
+  "session_id": "Ornith-1.5-397B-FP8_20260915T161838Z_8e79dc43",
+  "top_takeaways": [
+    "No kernels were attempted through the lanes recorded here."
+  ],
+  "totals": {
+    "attempted": 0,
+    "in_flight": 0,
+    "integrated": 0,
+    "keep_pending": 0,
+    "rejected": 0,
+    "top_candidates": 0
+  }
+}

@@ -1,0 +1,63 @@
+{
+ "intent_type": "specialist_done",
+ "payload": {
+  "confidence": 0.9,
+  "domain": "enablement_specialist",
+  "empty": false,
+  "gap_canonical_id": "gap.enablement.unknown",
+  "new_findings": [
+   {
+    "accuracy_risk": "none (child-env plumbing + failure-mode classification only; no numerical path change)",
+    "domain_tags": [
+     "enablement",
+     "magpie",
+     "inferencex",
+     "path",
+     "rocm"
+    ],
+    "expected_impact": "Makes the runnable delta independent of the parent-harness environment: the patched benchmark script self-heals its child env even when Magpie-side patch 003 is absent or when the host exports a framework-less PATH.",
+    "source": "runs/baseline/3f5caae8.../benchmark_vllm_20260914_114944/{server.log,benchmark_stderr.log} (died 'setsid: failed to execute vllm' at 11:49 WITH 003 reverted) + integrate_patch op record (patches_applied then patches_reverted, verdict DISCARDED, reason 'session wall-clock budget exhausted before this round ran') + Magpie/modes/benchmark/benchmarker.py mtime 09:13 == 77457-byte backup (003 not in tree)",
+    "what": "The 11:49 baseline failure was patch-003 REVERTED, not patch-003 broken: the previous enablement session hit its wall-clock at 11:47, the coordinator applied 003 at 11:48, its verification bench never ran ('session wall-clock budget exhausted before this round ran'), so the patch was reverted and the 11:49 baseline re-ran the unpatched tree and re-hit the SAME B3 failure (client/server PATH=/opt/venv/bin:... has no vllm CLI; and note a /usr/local/bin/vllm symlink appeared at 11:56, plus a TraceLens .pth makes /opt/venv/bin/python3 see vllm/transformers now -- the host is healthier than at failure time but the injected benchmark.envs.PATH still has no guaranteed framework env)."
+   },
+   {
+    "accuracy_risk": "none for throughput; converts a wholesale run-kill into an accuracy=None record only when the eval DEPENDENCY is missing; a real eval failure (lm_eval importable but scoring fails) still exits non-zero",
+    "domain_tags": [
+     "eval",
+     "lm-eval",
+     "magpie",
+     "enablement",
+     "gfx90a"
+    ],
+    "expected_impact": "Removes the last stage that could discard an otherwise-successful benchmark run: run_eval failure == whole-run failure under RUN_EVAL=true.",
+    "source": "Magpie/scripts/benchmark/vllm_mi300x.sh eval block ('run_eval --framework lm-eval --port $PORT || exit $?' after the throughput stage) + InferenceX benchmark_lib.sh:870-887 (_install_lm_eval_deps pip-with-default-retries against a link that dies mid-transfer: 'Connection broken: BrokenPipeError') + integrate_patch.py:2995-3005 (boot-origin gate: accuracy None -> correctness_ok None -> provisional KEEP, but only if run status succeeded; _execute_local_benchmark sets success=False on ANY non-zero script rc)",
+    "what": "Deepest remaining failure in the full chain (server + throughput verified OK by patch 003 in the prior round and re-verified by me this round) is the EVAL stage: with RUN_EVAL=true the script '|| exit $?' on run_eval, and lm_eval is not shipped in the image; InferenceX lazy-installs it with pip default retries which this host's lossy link reliably breaks (I reproduced: ~350KB/s with repeated mid-download BrokenPipe; my retry-wrapped install succeeded only on an attempt with --retries 30 --timeout 120). Patch 004 makes the eval-stage failure mode-aware (missing dependency -> warn + continue so the throughput result survives; real eval failure -> stays fatal)."
+   },
+   {
+    "accuracy_risk": "none",
+    "domain_tags": [
+     "enablement",
+     "e2e-validation",
+     "vllm",
+     "rocm",
+     "gsm8k"
+    ],
+    "expected_impact": "Raises confidence that the coordinator's next gated bench of this combo will produce BOTH throughput and an accuracy score (floor 0.5) in one run.",
+    "source": "scratch/e2e004/{out.log,server.log} (guard lines + 'Capturing CUDA graphs' + 'Starting vLLM server on http://0.0.0.0:8899', /health 200, completions returns 'Paris') and scratch/evalsmoke/out/.../results_2026-09-14T12-34-19.json (gsm8k exact_match strict+flexible = 0.8, n=5 smoke slice)",
+    "what": "End-to-end validation of patch 004 on my leased cards under the EXACT hostile baseline env (PATH=/opt/venv/bin:/usr/local/sbin:... , HIP_VISIBLE_DEVICES=2,3 host-physical, ROCR_VISIBLE_DEVICES=0,1, TP2/EP vllm serve with the baseline's --distributed-executor-backend mp --enable-expert-parallel): guards fired ('prepending /opt/envs/vllm/bin to PATH', 're-pinning HIP 2,3 -> 0,1'), server booted with CUDA-graph capture, /health 200, correct greedy generation, and a REAL gsm8k lm-eval run against it completed and scored (limit=5 smoke slice, exact_match 0.8 on that 5-sample slice -- advisory only, the full-dataset floor check belongs to the coordinator). lm-eval 0.4.13 is now installed into /opt/envs/vllm site-packages on this host, so the eval stage will lazy-skip its pip install and run directly."
+   }
+  ],
+  "patches_written": [
+   "patches/004_mi300x_child_env_selfalign_and_eval_dep_guard.patch"
+  ],
+  "proposal_set": [],
+  "residual_questions": [
+   "Patch 004 modifies Magpie/scripts/benchmark/vllm_mi300x.sh, which _prepare_benchmark_scripts() re-copies into the InferenceX cache before every run -- so the patch only needs to land in the Magpie package (it does; same funnel as patch 003). Confirm integrate_patch applies against /opt/envs/vllm/lib/python3.12/site-packages with the same -p1/-p2 auto-level it used for 003 (I verified 'git apply --check -p1' passes from the framework root, standalone AND stacked on 003).",
+   "Host note: the container now also has /usr/local/bin/vllm -> /opt/envs/vllm/bin/vllm and lm-eval 0.4.13 installed (by prior-session residue + my retry-wrapped install). If the gate runs in a FRESH container these may be absent -- setup_commands replays the lm-eval install; the PATH repair is what patch 004 covers.",
+   "The eval-stage warn-and-continue branch is only reachable when the throughput stage already succeeded; verify the orchestrator treats a status=succeeded run with accuracy=None as provisional-KEEP (boot-origin) rather than hard-fail for THIS session's contract (integrate_patch.py:2995-3005 says provisional-KEEP, but enablement_mode='all' with an accuracy floor of 0.5 should be double-checked against the eventual KEEP rule)."
+  ],
+  "setup_commands": [
+   "/opt/envs/vllm/bin/python3 -m pip install --no-cache-dir --retries 30 --timeout 120 --break-system-packages \"lm-eval[api]\""
+  ],
+  "summary": "Round goal: land the durable runnable+eval delta for Ornith-1.5-35B-A3B under vLLM. Localized why the 11:49 baseline still died at 'setsid: failed to execute vllm': patch 003 had been REVERTED by the prior session's wall-clock timeout (its bench never ran), so the baseline re-hit B3 unpatched -- 003 itself is sound and is re-applied as base. Authored patch 004 on the Magpie benchmark script (the point-of-use layer, so it works with OR without 003): (1) self-heals the child framework env (verify 'vllm' CLI AND the bare-python3 client's transformers/huggingface_hub imports, else prepend a discovered framework bin, idempotent when healthy), (2) ROCr/HIP logical re-pin before the first device consumer (same repair as 003 at a different layer, idempotent), (3) eval-stage failure-mode guard: a failed run_eval with lm_eval still unimportable (this host's lossy PyPI) is reported as a missing eval dependency instead of discarding the completed throughput run; a real eval failure stays fatal. Verified patch applies cleanly standalone, stacked on 003, and via git apply -p1 against the live framework root. Cleared (my cards, exact hostile baseline env): server boots + CUDA graphs + /health 200 + correct generation; installed lm-eval 0.4.13 (retry-hardened pip) and ran a real gsm8k lm-eval smoke (limit=5) against the live server producing exact_match scores -- so the next deeper failure, if any, is only the full eval budget. Next: coordinator benches gate-comparable throughput + full accuracy (floor 0.5; advisory smoke consistent with a capable model)."
+ }
+}

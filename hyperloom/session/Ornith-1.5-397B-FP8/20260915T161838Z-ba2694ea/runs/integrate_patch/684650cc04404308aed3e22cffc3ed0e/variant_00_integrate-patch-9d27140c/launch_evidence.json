@@ -1,0 +1,35 @@
+{
+  "actual_server_log_path": "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/runs/integrate_patch/684650cc04404308aed3e22cffc3ed0e/variant_00_integrate-patch-9d27140c/benchmark_vllm_20260915_170328/server.log",
+  "framework": "vllm",
+  "materialized_config_path": "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/runs/integrate_patch/684650cc04404308aed3e22cffc3ed0e/variant_00_integrate-patch-9d27140c/config.yaml",
+  "model_path": "/mnt/kioxia-cm6-3t8/ai/models/ornith-ai/Ornith-1.5-397B-FP8",
+  "observed_server_identity": {},
+  "observed_server_launch_flags": "",
+  "recipe_digest": "sha256:82fb41f485b0d175d2bd0cbee519b603dea652313d6293cdd2d20ea2db5c8852",
+  "requested_server_args": "",
+  "requested_server_env": {
+    "AITER_LOG_TUNED_CONFIG": "1",
+    "BENCH_TRUST_REMOTE_CODE": "1",
+    "CONC": "64",
+    "HF_HUB_TRUST_REMOTE_CODE": "1",
+    "ISL": "1024",
+    "MAGPIE_TRUST_REMOTE_CODE": "1",
+    "MAX_MODEL_LEN": "6144",
+    "NUM_PROMPTS": "320",
+    "NUM_WARMUPS": "8",
+    "OSL": "1024",
+    "PATH": "/opt/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+    "RANDOM_RANGE_RATIO": "1",
+    "ROCR_VISIBLE_DEVICES": "0,1,2,3,4,5,6,7",
+    "RUN_EVAL": "true",
+    "TP": "8",
+    "VLLM_EXECUTE_MODEL_TIMEOUT_SECONDS": "1200"
+  },
+  "requested_server_flags": "",
+  "schema_version": 1,
+  "warm_reuse": {
+    "provenance": "fresh_or_unobserved",
+    "reused_ready_server": false,
+    "source_server_log_path": "/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/runs/integrate_patch/684650cc04404308aed3e22cffc3ed0e/variant_00_integrate-patch-9d27140c/benchmark_vllm_20260915_170328/server.log"
+  }
+}

@@ -1,0 +1,64 @@
+{
+  "intent_envelope": {
+    "intents": [
+      {
+        "intent_type": "alert",
+        "payload": {
+          "severity": "high",
+          "summary": "log error pattern 'RuntimeError: Engine core initialization failed' matched 1 times",
+          "detail": {
+            "symptom": "log_error_pattern",
+            "severity": "high",
+            "subject": {
+              "pattern": "RuntimeError: Engine core initialization failed"
+            },
+            "source": "local",
+            "evidence": {
+              "pattern": "RuntimeError: Engine core initialization failed",
+              "count": 1,
+              "samples": [
+                "[server.log] (APIServer pid=25168) RuntimeError: Engine core initialization failed. See root cause above. Failed core proc(s): {'EngineCore': 1}"
+              ]
+            },
+            "suggestion": "delegate(recover, force_gpu_cleanup=True) or escalate strategy"
+          }
+        }
+      },
+      {
+        "intent_type": "alert",
+        "payload": {
+          "severity": "medium",
+          "summary": "log error pattern 'RuntimeError' matched 5 times",
+          "detail": {
+            "symptom": "log_error_pattern",
+            "severity": "medium",
+            "subject": {
+              "pattern": "RuntimeError"
+            },
+            "source": "local",
+            "evidence": {
+              "pattern": "RuntimeError",
+              "count": 5,
+              "samples": [
+                "[server.log] (EngineCore pid=25227) ERROR 09-15 17:10:45 [core.py:1346]     raise RuntimeError(",
+                "[server.log] (EngineCore pid=25227) ERROR 09-15 17:10:45 [core.py:1346] RuntimeError: Worker failed with error 'expected size 2560==4096, stride 4096==1 at dim=0; expected size 4096==2560, stride 1==4096 at dim=1",
+                "[server.log] (EngineCore pid=25227)     raise RuntimeError("
+              ]
+            },
+            "suggestion": "review log evidence with RCA before further action"
+          }
+        }
+      }
+    ]
+  },
+  "session_id": "20260915T161838Z-ba2694ea",
+  "tick_index": 1,
+  "parse_warnings": [],
+  "llm_usage": {
+    "input_tokens": 1011,
+    "output_tokens": 600,
+    "calls": 1,
+    "latency_ms": 5041,
+    "model": "qwen3.8-flash-next"
+  }
+}

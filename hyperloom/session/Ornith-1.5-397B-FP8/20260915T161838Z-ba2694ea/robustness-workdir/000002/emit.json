@@ -1,0 +1,59 @@
+{
+  "intent_envelope": {
+    "intents": [
+      {
+        "intent_type": "alert",
+        "payload": {
+          "severity": "high",
+          "summary": "local server probe http://127.0.0.1:8888/health status=error",
+          "detail": {
+            "symptom": "local_server_unreachable",
+            "severity": "high",
+            "subject": {
+              "url": "http://127.0.0.1:8888/health"
+            },
+            "source": "local",
+            "evidence": {
+              "url": "http://127.0.0.1:8888/health",
+              "status": "error",
+              "status_code": null,
+              "error": "connect: ConnectError",
+              "server_process_seen": true,
+              "benchmark_client_seen": false
+            },
+            "suggestion": "delegate(recover, force_gpu_cleanup=True) to restart the inference server"
+          }
+        }
+      },
+      {
+        "intent_type": "delegate",
+        "payload": {
+          "action_name": "recover",
+          "params": {
+            "reason": "local_server_unreachable",
+            "force_gpu_cleanup": true,
+            "evidence": {
+              "url": "http://127.0.0.1:8888/health",
+              "status": "error",
+              "status_code": null,
+              "error": "connect: ConnectError",
+              "server_process_seen": true,
+              "benchmark_client_seen": false
+            }
+          },
+          "idempotency_key": "recover-server-unreachable-tick-3-fbe8ae04"
+        }
+      }
+    ]
+  },
+  "session_id": "20260915T161838Z-ba2694ea",
+  "tick_index": 1,
+  "parse_warnings": [],
+  "llm_usage": {
+    "input_tokens": 1024,
+    "output_tokens": 600,
+    "calls": 1,
+    "latency_ms": 4842,
+    "model": "qwen3.8-flash-next"
+  }
+}

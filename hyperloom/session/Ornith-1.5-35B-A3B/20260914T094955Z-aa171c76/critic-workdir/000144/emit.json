@@ -1,0 +1,52 @@
+{
+  "kind": "coordinator_inbox",
+  "session_id": "20260914T094955Z-aa171c76",
+  "decision_id": null,
+  "kb_writes": [],
+  "notes": [],
+  "intent_envelope": {
+    "intents": [
+      {
+        "intent_type": "review_verdict",
+        "payload": {
+          "target_proposal_msg_id": "8dabc4e8e3fe41d58e55ef7b7c911bcb",
+          "verdict": "approve",
+          "source": "critic",
+          "reasoning": "This is an enablement landing with specialist provenance and no recalled KB contradiction. The strict promotion gate is not applicable; the downstream runnable/accuracy gate and enablement revert path provide the primary evidence filter.",
+          "predicted_gain_pct": 0.0,
+          "kb_evidence": [],
+          "packet_evidence": [
+            "review_constraints.proposal_action_classes.8dabc4e8e3fe41d58e55ef7b7c911bcb",
+            "review_constraints.action_verdict_policy.integrate_patch",
+            "proposals[0].payload.params.provenance",
+            "proposals[0].payload.params.enablement",
+            "proposals[0].payload.params.enablement_before_signature.raw_excerpt"
+          ],
+          "risks": [
+            {
+              "severity": "minor",
+              "summary": "PRELUDE normally prioritizes target_analysis/baseline; approve depends on this patch being required to obtain a runnable baseline."
+            }
+          ],
+          "required_evidence": [],
+          "alternative_action": null,
+          "advice_text": "If the gfx90a runner error does not actually block baseline execution, prefer keeping PRELUDE focused on target_analysis and baseline before landing framework patches.",
+          "notes": [
+            "Empty KB priors are cold-start for enablement_landing and are not a blocker.",
+            "The zero-valued predicted_gain_pct was treated as scheduler bookkeeping, not a supported performance claim."
+          ],
+          "failure_reason_code": "",
+          "confidence": "medium"
+        }
+      },
+      {
+        "intent_type": "send_message",
+        "payload": {
+          "topic": "advice",
+          "body_md": "If the gfx90a runner error does not actually block baseline execution, prefer keeping PRELUDE focused on target_analysis and baseline before landing framework patches.",
+          "about_proposal_msg_id": "8dabc4e8e3fe41d58e55ef7b7c911bcb"
+        }
+      }
+    ]
+  }
+}

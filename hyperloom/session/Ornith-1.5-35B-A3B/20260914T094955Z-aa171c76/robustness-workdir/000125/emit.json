@@ -1,0 +1,81 @@
+{
+  "intent_envelope": {
+    "intents": [
+      {
+        "intent_type": "alert",
+        "payload": {
+          "severity": "high",
+          "summary": "orchestration stalled for 125 ticks (threshold=15); last progress at tick 2",
+          "detail": {
+            "symptom": "conversation_no_progress",
+            "severity": "high",
+            "subject": {},
+            "source": "shared_state",
+            "evidence": {
+              "ticks_without_progress": 125,
+              "threshold": 15,
+              "last_progress_tick": 2
+            },
+            "suggestion": "operator intervention; wind down via report if the budget is tight"
+          }
+        }
+      },
+      {
+        "intent_type": "alert",
+        "payload": {
+          "severity": "high",
+          "summary": "log error pattern 'RuntimeError: Engine core initialization failed' matched 1 times",
+          "detail": {
+            "symptom": "log_error_pattern",
+            "severity": "high",
+            "subject": {
+              "pattern": "RuntimeError: Engine core initialization failed"
+            },
+            "source": "local",
+            "evidence": {
+              "pattern": "RuntimeError: Engine core initialization failed",
+              "count": 1,
+              "samples": [
+                "[server.log] (APIServer pid=15383) RuntimeError: Engine core initialization failed. See root cause above. Failed core proc(s): {}"
+              ]
+            },
+            "suggestion": "delegate(recover, force_gpu_cleanup=True) or escalate strategy"
+          }
+        }
+      },
+      {
+        "intent_type": "alert",
+        "payload": {
+          "severity": "medium",
+          "summary": "log error pattern 'RuntimeError' matched 1 times",
+          "detail": {
+            "symptom": "log_error_pattern",
+            "severity": "medium",
+            "subject": {
+              "pattern": "RuntimeError"
+            },
+            "source": "local",
+            "evidence": {
+              "pattern": "RuntimeError",
+              "count": 1,
+              "samples": [
+                "[server.log] (APIServer pid=15383)     raise RuntimeError("
+              ]
+            },
+            "suggestion": "review log evidence with RCA before further action"
+          }
+        }
+      }
+    ]
+  },
+  "session_id": "20260914T094955Z-aa171c76",
+  "tick_index": 1,
+  "parse_warnings": [],
+  "llm_usage": {
+    "input_tokens": 964,
+    "output_tokens": 406,
+    "calls": 1,
+    "latency_ms": 2957,
+    "model": "qwen3.8-flash-next"
+  }
+}

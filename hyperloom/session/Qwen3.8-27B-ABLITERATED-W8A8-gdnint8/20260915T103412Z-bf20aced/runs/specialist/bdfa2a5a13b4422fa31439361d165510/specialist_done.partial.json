@@ -1,0 +1,193 @@
+{
+  "intent_type": "specialist_done",
+  "payload": {
+    "confidence": 0.68,
+    "domain": "candidate_discovery_specialist",
+    "empty": false,
+    "gap_canonical_id": "gap.framework.candidate_discovery.vllm",
+    "summary": "pr_monitor off; discovery used installed source + baseline artifacts. 6 ranked candidates vs the bottleneck (512.5 tok/s = 729 steady decode vs 27-278 in prefill windows; ~29% of wall clock yields no tokens). Untried top 3: --async-scheduling is OFF (VLLM_COMPILE + FULL_DECODE_ONLY hit vllm.py:1180/1209 auto-disable); --attention-backend TRITON_ATTN escapes the logged ROCM_ATTN Triton fallback; --mamba-ssm-cache-dtype bf16 halves the largest decode HBM stream (recurrence stays fp32).",
+    "new_findings": [
+      {
+        "what": "PLATFORM LAWS 11 AND 8 ARE STALE for the vllm install actually used at runtime. The launcher is /usr/local/bin/vllm-wu1w -> PYTHONPATH shim + /opt/envs/wu1w/bin/python -m vllm.entrypoints.cli.main, i.e. the serving process runs the wu1w fork, not /opt/envs/vllm that prior rounds inspected. The fork's log proves the correction: (a) 'Disabled mm_prefix attention mode ... Attention backends without mm_prefix support may now be selected', '(2) Attention backend: TRITON_ATTN', 'Using AITER TRITON unrolled rocm attn kernel for CUDNN', and the 'piecewise-decode' CUDA-graph capture string are all absent from /opt/envs/vllm - the fork adds a TRITON_ATTN decoder path and the flash-decode-style unrolled AITER Triton kernel (upstream vllm-project/vllm PR #30687, which also adds --mamba-ssm-cache-dtype bfloat16). So a TRITON_ATTN bench is a real differential, not a no-op. (b) fused_gdn_hip is present at fork qwen_gdn_linear_attn.py:13/538/1819 but 'import fused_gdn_hip' is not in the env's sys.path, so the fork's GDN decode fast path is one pip-installable module away. (c) spec decode does not force the vllm-0.11.x ASM path in the fork.",
+        "source": "/usr/local/bin/vllm-wu1w; /opt/envs/wu1w/lib/python3.12/site-packages/vllm/{model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py:13,538,1819, v1/attention/backends/rocm_attn.py, config/vllm.py}; runs/baseline/716b5f5083234c42b7990f59f346ec0e/server.log:24,28,35,63; github.com/vllm-project/vllm/pull/30687",
+        "expected_impact": "process/correctness of the prior set: unblocks two source-backed candidates (TRITON_ATTN bench, fused_gdn_hip build) that platform law currently tells specialists to skip; changes how any future vllm round should read its own server log.",
+        "accuracy_risk": "none (analysis only)",
+        "domain_tags": [
+          "process",
+          "kb-correction",
+          "stack-fingerprint",
+          "vllm"
+        ]
+      },
+      {
+        "what": "Async scheduling is NOT active in the baseline, and the reason is version-specific. The fork logs 'VLLM_COMPILE mode is set to VLLM_COMPILE' and 'Cudagraph mode FULL_DECODE_ONLY' - the exact two options that make config/vllm.py:1180 and :1209 explicitly set async_scheduling=False (v0.28 only auto-disables async for pooling models, non-EAGLE spec decode, unsupported executors or DeepEP-HT DBO; VLLM_COMPILE is no longer on that list). A baseline with async ON would log 'DP rank 0 is running full cudagraph for prefill steps and cannot be properly interleaved with the async scheduling pipeline ... setting PIECEWISE prefill cudagraph mode' from the SAME file at :554 - that line is absent. Consequence: EngineCore does schedule->execute->update->schedule serially, so between the last scheduled batch and the next there is no CPU work overlapped with the GPU. On this workload decode is already at ~65% of wall clock, so this is a decode-side lever orthogonal to every prior attempt.",
+        "source": "/opt/envs/vllm/lib/python3.12/site-packages/vllm/config/vllm.py:550-560,1147-1240; runs/baseline/51ac28ff8aed4ad59746fdb889fae7bb/benchmark_vllm_20260915_103510/server.log:19,32,34 vs runs/baseline/716b5f5083234c42b7990f59f346ec0e/server.log:31-34",
+        "expected_impact": "2-6% output tok/s; risk is a startup assertion error (fail-fast, zero bench cost) rather than a slowdown",
+        "accuracy_risk": "none - async scheduling pipelines the schedule for step N+1 against the GPU execution of step N; it changes no sampling math. If it trips the 'FakeAsyncSecuredSchedulerOutput' assert the run dies at startup instead of being measured.",
+        "domain_tags": [
+          "scheduling",
+          "cpu-overhead",
+          "decode",
+          "config-search"
+        ]
+      },
+      {
+        "what": "GDN state dtype: the fp32 is declarative, not required, and narrowing the store does not change the recurrence arithmetic. Verified in the Triton decode kernels actually used ('GDN decode kernel: triton'): the accumulator is created fp32 (b_h = tl.zeros([BV,BK], dtype=tl.float32)), the state is upcast on load (tl.load(p_h0).to(tl.float32)) and requantized on store (tl.store(p_ht, b_h.to(p_ht.dtype.element_ty))). There is no separate internal fp32 state buffer, so --mamba-ssm-cache-dtype bfloat16 changes exactly one bf16 round-trip of S per decoded token and nothing else. Per-step HBM traffic for the state is ~0.52 MB vs ~1.05 MB per token per layer (HV_local=8, K=V=128) across the 48 linear-attn layers - the single largest decode-side stream at conc=64. Kernel grid/tiling is head-driven and block-size independent, so no grid regression. The 784-token attention block size is inflated purely to match the fp32 mamba page size, so halving it also relieves the block-size mismatch on the 16 full-attn layers.",
+        "source": "/opt/envs/vllm/lib/python3.12/site-packages/vllm/third_party/flash_linear_attention/ops/{fused_recurrent.py:102,120,161,340, fused_sigmoid_gating.py:102,120,144-153,166,208-210}; vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py:492-533,1528-1547,1632-1684; vllm/v1/kv_cache_interface.py:677-685; runs/baseline/.../server.log:31,42",
+        "expected_impact": "3-8% output tok/s on a bandwidth-bound decode phase (65% of wall clock), plus a 2x state-cache capacity side-effect (capacity is not binding here, so do not expect gains from that part)",
+        "accuracy_risk": "moderate: deviates from the vendor-declared mamba_ssm_dtype='float32' on a W8A8 checkpoint with thin accuracy headroom (baseline 0.9674). Mitigated by the verification above - the delta-rule recurrence stays fp32 in registers, so the loss is one sub-1-ulp bf16 requantization of S per decoded token. MTP would compound this through draft/verify state divergence (fork: 'ssm state dtype float32 is not compatible with MTP... cast to bf16'), so never combine the two in one variant.",
+        "domain_tags": [
+          "memory_bandwidth",
+          "gdn",
+          "mamba",
+          "decode",
+          "quantization"
+        ]
+      },
+      {
+        "what": "Decode-phase attention on ROCM_ATTN is running a Triton fallback: 'Cannot use ROCm custom paged attention kernel, falling back to Triton implementation.' (chunked_prefill_paged_decode.py:463), emitted from inside the ROCM_ATTN path the selector picked only by elimination after rejecting TURBOQUANT for AttentionType.DECODER. head_dim=256 is inside ROCM_ATTN's supported set [32,64,80,96,128,160,192,224,256], so this is a kernel-selection artifact, not a capability limit - TRITON_ATTN is the other backend the same selector deemed compatible, and the fork adds an unrolled AITER Triton 'rocm attn' variant behind it. All three prior candidate rounds proposed --attention-backend ROCM_AITER_FA, which is a vllm 0.11.x-era symbol and never appears as the selected decoder backend in either baseline.",
+        "source": "runs/baseline/51ac28ff8aed4ad59746fdb889fae7bb/benchmark_vllm_20260915_103510/server.log:32,61; runs/baseline/716b5f5083234c42b7990f59f346ec0e/server.log:24,28,35; /opt/envs/vllm/lib/python3.12/site-packages/vllm/v1/attention/backends/rocm_attn.py:193",
+        "expected_impact": "1-5% output tok/s, prefill-side and decode-side (the fallback kernel is on the 16 full-attn layers' decode path)",
+        "accuracy_risk": "none - same attention math, different kernel",
+        "domain_tags": [
+          "attention",
+          "backend_selection",
+          "prefill",
+          "decode"
+        ]
+      },
+      {
+        "what": "MTP remains framework-supported but unbenchable, and the verdict is now doubly justified. The fork auto-derives Qwen3_5MTP and would run it (mtp_num_hidden_layers=1, 15 'mtp.*' bf16 weights in quantization_config.ignore), but it hard-blocks mamba state dtype float32 for MTP and the sealed corpus is random-token (RANDOM_RANGE_RATIO=1), which collapses draft acceptance. So --no-async-scheduling plus --num-speculative-steps is not a lever here, and any measured MTP number cannot credit or discredit it.",
+        "source": "/opt/envs/wu1w/lib/python3.12/site-packages/vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py (MTP ssm-dtype gate); config/speculative.py:551-572; runs/baseline/.../config.yaml RANDOM_RANGE_RATIO: 1",
+        "expected_impact": "0 measurable on this benchmark; potentially large on natural prose",
+        "accuracy_risk": "none if acceptance-correct sampling",
+        "domain_tags": [
+          "speculative_decoding",
+          "mtp",
+          "anti-pattern"
+        ]
+      }
+    ],
+    "proposal_set": [
+      {
+        "name": "async_scheduling_on",
+        "args_mode": "append",
+        "atomic": false,
+        "extra_args": "--async-scheduling",
+        "reason": "New, zero-accuracy-risk, and aimed straight at the live bottleneck: async_scheduling is off in the baseline (proven by the absence of the vllm.py:554 full-cudagraph/prefill warning that an async run must print), because this version explicitly disables it under VLLM_COMPILE and cudagraph_mode=FULL_DECODE_ONLY - both of which the base launch pins. The CPU is idle while the GPU waits for the next schedule, and decode is ~65% of wall clock at 729 tok/s steady state, so pipelining the schedule against GPU execution is the only remaining lever that does not change any math or any kernel. Stack evidence says it should already be on, so the upside is the gap between what v0.28 assumes and what this image pins. Failure mode is fail-fast at startup, not a measured slowdown.",
+        "kb_evidence": [
+          "KB: baseline 512.5 tok/s = ~729 tok/s steady-state decode vs ~27-278 during prefill windows; ~29% of wall clock buys zero output tokens",
+          "research scout prior 1 (prefill/decode almost fully serialized) and prior 2 (KV capacity at 57.3% peak, Waiting: 0 - capacity levers are dead ends, so CPU-gap levers are the remaining axis)"
+        ],
+        "pr_evidence": [],
+        "source_evidence": [
+          "/opt/envs/vllm/lib/python3.12/site-packages/vllm/config/vllm.py:550-560 (:554 logs 'DP rank 0 is running full cudagraph for prefill steps and cannot be properly interleaved with the async scheduling pipeline' only when async_scheduling is true) and :1180,:1209 (explicit async_scheduling=False for VLLM_COMPILE / cudagraph_mode FULL_DECODE_ONLY)",
+          "runs/baseline/51ac28ff8aed4ad59746fdb889fae7bb/benchmark_vllm_20260915_103510/server.log:19,32,34 - VLLM_COMPILE + FULL_DECODE_ONLY present, :554 warning absent => async off",
+          "engine/arg_utils.py:1563 - '--async-scheduling' is a first-class CLI flag in this install (verified in the runtime wu1w tree too)"
+        ]
+      },
+      {
+        "name": "attn_backend_triton",
+        "args_mode": "append",
+        "atomic": false,
+        "extra_args": "--attention-backend TRITON_ATTN",
+        "reason": "The decoder backend was chosen by elimination, not merit: ROCM_ATTN was only used because TURBOQUANT was rejected for AttentionType.DECODER, and ROCM_ATTN then logged 'Cannot use ROCm custom paged attention kernel, falling back to Triton implementation'. TRITON_ATTN is the other backend the same selector deemed compatible, and it reaches a better-maintained path on this stack - the fork logs 'Using AITER TRITON unrolled rocm attn kernel for CUDNN' (a flash-decode-style unrolled Triton kernel, upstream PR #30687). head_dim=256 is within ROCM_ATTN's supported sizes, so the fallback is a selection artifact worth paying for. Same math, so the accuracy gate is unaffected; the only risk is launch failure (fail-fast) or a slower kernel, which the bench settles.",
+        "kb_evidence": [
+          "research scout prior 4: decoder backend selected by elimination; ROCM_ATTN fell back to Triton chunked_prefill_paged_decode; TRITON_ATTN is the other compatible candidate",
+          "round 20260915T115135Z-37d175d3 ranked 'TRITON_ATTN as primary attention backend for hd=256' as a residual question - this proposal is that answer"
+        ],
+        "pr_evidence": [
+          "github.com/vllm-project/vllm/pull/30687 '[ROCm] Add AITER Triton unroll kernel (flash-decode-style) for Triton Attention' - Merged 2026-07-14 by PhoenixNNX; the same PR adds the bf16 mamba ssm cache dtype"
+        ],
+        "source_evidence": [
+          "runs/baseline/51ac28ff8aed4ad59746fdb889fae7bb/benchmark_vllm_20260915_103510/server.log:32 (rocm.py:703 override list ['ROCM_ATTN','TRITON_ATTN']) and :61 (chunked_prefill_paged_decode.py:463 fallback warning)",
+          "runs/baseline/716b5f5083234c42b7990f59f346ec0e/server.log:24,28,35 (fork: 'Disabled mm_prefix attention mode ... Attention backends without mm_prefix support may now be selected', '(2) Attention backend: TRITON_ATTN', 'Using AITER TRITON unrolled rocm attn kernel for CUDNN' - strings that do NOT exist in /opt/envs/vllm, so the runtime tree is a fork and this is a live differential)",
+          "engine/arg_utils.py:965 - '--attention-backend' CLI flag present"
+        ]
+      },
+      {
+        "name": "mamba_ssm_cache_bf16",
+        "args_mode": "append",
+        "atomic": false,
+        "extra_args": "--mamba-ssm-cache-dtype bfloat16",
+        "reason": "The GDN recurrent state is fp32 only because the checkpoint declares mamba_ssm_dtype='float32' and vLLM auto-adopts it - not because a kernel needs it. The state cache is the largest per-step HBM stream at conc=64 (~0.52 vs ~1.05 MB per token per layer over 48 linear-attn layers), and decode is bandwidth-bound at ~729 tok/s, so halving it is the biggest bandwidth lever left. I verified in the exact Triton decode kernels this run uses that the accumulator is created fp32, the state is upcast on load and requantized on store, and there is no internal fp32 state buffer - so bf16 narrows only the per-token store->load round-trip and cannot change the recurrence arithmetic. Side benefit: the 784-token attention block size exists only to match the fp32 mamba page size, so this also relieves that inflation on the 16 full-attn layers.",
+        "kb_evidence": [
+          "research scout prior 3: state cache is the single largest per-step HBM traffic source; --mamba-ssm-cache-dtype is a first-class flag accepting bfloat16 in this install",
+          "round 20260915T120627Z-1e858d65 ranked this SECOND behind --mamba-cache-mode none (which REVERTED at 0.9514 vs 0.9674 accuracy, -1.60%); that round's own note was that it tested cache COVERAGE, not S dtype, and that dtype is the complementary lever - this proposal is exactly that complement, still untried",
+          "capacity is not binding (57.3% peak KV usage, Waiting: 0), so the expected gain is bandwidth, not the 2x capacity this also yields - do not attribute any delta to capacity"
+        ],
+        "pr_evidence": [
+          "github.com/vllm-project/vllm/pull/30687 - the PR that introduced the bf16 mamba ssm cache dtype, already present in this image"
+        ],
+        "source_evidence": [
+          "/opt/envs/vllm/lib/python3.12/site-packages/vllm/third_party/flash_linear_attention/ops/fused_recurrent.py:102,120,161,340 and fused_sigmoid_gating.py:102,120,144-153,166 - b_h = tl.zeros([BV,BK], dtype=tl.float32); tl.load(p_h0).to(tl.float32); tl.store(p_ht, b_h.to(p_ht.dtype.element_ty))",
+          "vllm/model_executor/models/config.py:781-805 (mamba_ssm_dtype auto-adopted from the checkpoint); config/cache.py:38 MambaDType = Literal['auto','float32','float16','bfloat16'] and :133; engine/arg_utils.py:1237 '--mamba-ssm-cache-dtype' (verified in the runtime wu1w tree as well)",
+          "v1/kv_cache_interface.py:677-685 page_size_bytes; qwen_gdn_linear_attn.py:492-533,1528-1547 (Triton decode path selected, 'cuda' op not built)",
+          "runs/baseline/.../server.log:31 'GDN decode kernel: triton', :42 'Setting attention block size to 784 tokens to ensure that attention page size is >= mamba page size'"
+        ]
+      },
+      {
+        "name": "mamba_cache_mode_all_ssm_bf16",
+        "args_mode": "append",
+        "atomic": true,
+        "extra_args": "--mamba-cache-mode all --mamba-ssm-cache-dtype bfloat16",
+        "reason": "Atomic: --mamba-cache-mode all on its own OOMed the KV cache profile at 35.92 GiB against 32.12 GiB available (round 20260915T115135Z-37d175d3), but this flag pair fixes that exact cause. 'align' allocates one GDN state page per 784-token block (8x the states needed and ~87% of the block bytes wasted); 'all' allocates one state per sliding window, which is what lets --mamba-ssm-cache-dtype bfloat16 collapse the page size to a single 16B fp16 vector. The combination is the documented pairing in config/cache.py:130-134, it shrinks rather than grows the footprint, and the two flags only make sense together - splitting them reproduces the two prior failures. Kept 4th because the prior 'all' attempt cost 49% prefill throughput.",
+        "kb_evidence": [
+          "round 20260915T115135Z-37d175d3: --mamba-cache-mode all -> ValueError 'To use MambaCacheMode.all, please use mamba_ssm_cache_dtype float16/bfloat16'; --mamba-cache-mode all --mamba-ssm-cache-dtype float16 -> OOM 35.92 GiB vs 32.12 GiB",
+          "round 20260915T120627Z-1e858d65: --mamba-cache-mode none REVERTED (accuracy 0.9514 vs baseline 0.9674, -1.60%) - full state persistence is the safe coverage choice, do not retry it",
+          "research scout prior 2: do not spend slots on capacity for its own sake; this is justified by page-size/bandwidth, not capacity"
+        ],
+        "pr_evidence": [
+          "github.com/vllm-project/vllm/pull/30687"
+        ],
+        "source_evidence": [
+          "/opt/envs/vllm/lib/python3.12/site-packages/vllm/config/cache.py:130-134 - 'When enable_prefix_caching is True, we use one state per sliding window when SSM cache dtype is fp16/bf16, and one state per block_size otherwise' (mamba_cache_mode='all' and mamba_ssm_cache_dtype float16/bfloat16 are the documented pair)",
+          "runs/baseline/.../server.log:14 (mode 'align' chosen by default because prefix caching is on), :42-43 (784-token block + 0.13% page padding), :68 (32.12 GiB available for KV)"
+        ]
+      },
+      {
+        "name": "num_speculative_steps_1",
+        "args_mode": "append",
+        "atomic": false,
+        "extra_args": "--num-speculative-steps 1",
+        "reason": "Cheap, accuracy-neutral A/B against the single most contested lever on this stack, and worth one slot purely because the round-1 verdict is provably not reproducible. The earlier session's '--speculative-config {method:mtp...}' failed with 'model must have mtp_num_hidden_layers and num_speculative_tokens to use MTP', so the engine never started and never measured anything; the standalone flag routes through get_num_speculative_tokens() instead and is exactly the path that session's own suggestion asked for. On this stack --num-speculative-steps only starts with mamba_cache_mode='align', which is already the baseline, so the config is valid as-is. If it launches and does not move the needle, that closes MTP for this benchmark with a real number instead of a startup crash; it will most likely fail fast (no draft weight loaded, or the fork's 'ssm state dtype float32 is not compatible with MTP' gate).",
+        "kb_evidence": [
+          "research scout prior 5: MTP is framework-supported in this tree (contradicting model_arch.json 'mtp: not built into 0.28.0+rocm723 here'), but unjudgeable because the sealed corpus is random-token (RANDOM_RANGE_RATIO=1) and collapses draft acceptance",
+          "session 20260915T084553Z-0c19d8d3 explicitly requested this variant be tried ('worth trying')",
+          "round 20260915T115135Z-37d175d3: MTP method 'qwen3_5_mtp' failed to start - the engine never measured it, so there is no evidence either way"
+        ],
+        "pr_evidence": [],
+        "source_evidence": [
+          "/opt/envs/vllm/lib/python3.12/site-packages/vllm/config/speculative.py:551-572 (auto-derives n_predict from text_config.mtp_num_hidden_layers=1, architecture Qwen3_5MTP) and :334-343 (get_num_speculative_tokens path)",
+          "model_executor/models/qwen3_5_mtp.py exists and 'qwen3_5_mtp' is a registered MTPModelTypes value",
+          "config/cache.py:140-144 - spec decode requires mamba_cache_mode='align', which the baseline already uses (server.log:14)",
+          "runs/baseline/.../config.yaml RANDOM_RANGE_RATIO: 1 - the acceptance-collapse caveat that caps expected gain at ~0 here"
+        ]
+      },
+      {
+        "name": "prefix_caching_off",
+        "args_mode": "append",
+        "atomic": false,
+        "extra_args": "--no-enable-prefix-caching",
+        "reason": "Exploratory, last, and gated on the accuracy margin - but the mechanism is not the usual 'no shared prefixes' argument, which does not apply here. The run REPORTS a 38-76% prefix cache hit rate on 320 random-token prompts, i.e. real reuse exists, and prefix caching is precisely what forces mamba_cache_mode='align' and the 784-token attention block (server.log:14,42). Dropping it frees the per-step block-hash / free-match machinery on the EngineCore critical path and lets the block size be chosen by the attention layers alone; it also removes the state-page churn on eviction, which is the known pathological case for 'align' and which no proposal addresses today. Two risks the bench must watch: a hit-rate loss can raise TTFT enough to cut mean TTFT from 3.8s to ~1.0s, and the 604320:169248 input:output ratio means an unshared prompt token costs more compute than an output token earns.",
+        "kb_evidence": [
+          "KB fact (practices.vllm.md:293, verified): 'enable_prefix_caching=False: -5-8% on conc=16, 512-in/128-out; do NOT enable for pure random or fully unique input tokens' - the 512:128 input ratio there is the same order as this workload's 1024:1024, so read that as a plausible regression",
+          "research scout prior 2: 'the engine reports Prefix cache hit rate 38-76%' and capacity is not binding - so the cost of prefix caching here is bookkeeping and mamba coupling, not capacity",
+          "round 20260915T120627Z-1e858d65: --mamba-cache-mode none REVERTED at accuracy 0.9514 vs 0.9674, so the accuracy margin above the 0.94 floor is ~0.027 - narrow, and this proposal must be dropped if the gate moves at all"
+        ],
+        "pr_evidence": [],
+        "source_evidence": [
+          "/opt/envs/vllm/lib/python3.12/site-packages/vllm/config/cache.py:102-104 - 'When enable_prefix_caching is True, we use one state per sliding window...' (the prefix-caching -> mamba mode -> 784 block coupling)",
+          "runs/baseline/51ac28ff8aed4ad59746fdb889fae7bb/benchmark_vllm_20260915_103510/server.log:14,42,43 and loggers.py:310 status lines (hit-rate and Waiting: 0 evidence)"
+        ]
+      }
+    ],
+    "residual_questions": [
+      "Does --async-scheduling actually engage on this fork, or is it silently downgraded? Ask for the vllm.py:554 'running full cudagraph for prefill steps' line and any AsyncScheduler mention in the variant's server log; if the flag is ignored the variant is a null test and the stack is pinning sync scheduling for a reason worth recording as a pitfall.",
+      "Is fused_gdn_hip buildable on gfx90a in this image? The wu1w fork already imports it at qwen_gdn_linear_attn.py:13 and gates the fast GDN decode path on it at :538/:1819, but 'import fused_gdn_hip' is not on the env's sys.path. If a kernel/patch-capable specialist can compile that HIP module, the GDN decode path (48 of 64 layers, the whole steady-state 729 tok/s) stops being Triton-bound. This is the highest-ceiling item found this round and it is out of my read-only scope.",
+      "Coordinator should confirm which vllm tree the serving process imports: /usr/local/bin/vllm-wu1w uses a usersite PYTHONPATH shim over /opt/envs/wu1w. Every stack-derived rule (notably 'head_dim=256 forces the vllm 0.11.x ASM path' and 'MTP is not built into this version') was asserted against /opt/envs/vllm and both are contradicted by the fork's own log lines. Recommend re-deriving those laws against wu1w before the next round spends a slot on them.",
+      "If mamba_ssm_cache_bf16 benches well, does the accuracy gate stay above 0.94? The Triton kernels keep the recurrence fp32 in registers so the theory says the delta is one bf16 requantization of S per token, but 1024 sequential decode steps compound it and no measurement exists here. Request the gate at the tightened floor before KEEP rather than the default.",
+      "Was the prior 'align' -> 'all' OOM computed before or after the bfloat16 page collapse? The fork's own log says 'Try reducing mamba_block_size if mamba_cache_dtype is not float16/bfloat16', implying that OOM was measured with the fp32 page size still in force. If so, the atomic pair may not reproduce it."
+    ]
+  }
+}

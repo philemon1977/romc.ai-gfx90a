@@ -1,0 +1,61 @@
+{
+  "intent_envelope": {
+    "intents": [
+      {
+        "intent_type": "alert",
+        "payload": {
+          "severity": "high",
+          "summary": "wall-clock budget 118% consumed (elapsed=142.0min / budget=120min) and cumulative_gain_validated=0.00% — wind the session down before the deadline cuts it",
+          "detail": {
+            "symptom": "deadline_imminent",
+            "severity": "high",
+            "subject": {},
+            "source": "local",
+            "evidence": {
+              "elapsed_minutes": 142.0,
+              "remaining_minutes": 6.2,
+              "budget_minutes": 120.0,
+              "burn_pct": 1.183,
+              "cumulative_gain_validated": 0.0,
+              "imminent_pct": 0.85,
+              "productive_gain_pct": 0.5
+            },
+            "suggestion": "propose report to finalize at the last validated gain"
+          }
+        }
+      },
+      {
+        "intent_type": "alert",
+        "payload": {
+          "severity": "high",
+          "summary": "only 6.2min remain (<= 30min); validated_gain still 0; wind the session down now",
+          "detail": {
+            "symptom": "deadline_warning",
+            "severity": "high",
+            "subject": {},
+            "source": "local",
+            "evidence": {
+              "elapsed_minutes": 142.0,
+              "remaining_minutes": 6.2,
+              "budget_minutes": 120.0,
+              "deadline_warning_minutes": 30.0,
+              "cumulative_gain_validated": 0.0,
+              "productive_gain_pct": 0.5
+            },
+            "suggestion": "propose report to finalize at the last validated gain"
+          }
+        }
+      }
+    ]
+  },
+  "session_id": "20260914T094955Z-aa171c76",
+  "tick_index": 1,
+  "parse_warnings": [],
+  "llm_usage": {
+    "input_tokens": 1035,
+    "output_tokens": 600,
+    "calls": 1,
+    "latency_ms": 4881,
+    "model": "qwen3.8-flash-next"
+  }
+}
