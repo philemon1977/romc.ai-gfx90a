@@ -97,16 +97,24 @@ docker build -f docker/Dockerfile.vllm-local -t rocm-ai/vllm:0.28.0-rocm7.2.4 .
 
 ## 仓库范围：91 GB 工作区 vs 仓库内容
 
-工作区总占用约 **91 GB**，其中绝大部分是**可再生或纯重复**的资产，全部排除在 git 之外：
+工作区总占用约 **91 GB**，其中绝大部分是**可再生或纯重复**的资产，排除在 git 之外：
 
 | 排除项 | 体积 | 原因 |
 |---|---|---|
 | `envs/`、`hyperloom/envs/` | ~26 GB | Python 虚拟环境，`bootstrap.sh` 重建 |
-| `hyperloom/session/` | ~29 GB | optimizer 运行现场：每个候选一棵 vLLM worktree + AOT 编译缓存 |
+| `hyperloom/session/**` 的 worktree 与编译缓存 | ~28.9 GB | 每个候选一棵 vLLM worktree + AOT/inductor/triton 缓存；**run 状态与结果已入库**（见下） |
 | `hyperloom/.tmp/`、`.tmp/`、`hyperloom/.cache/` | ~34 GB | 临时实验目录与上游仓库缓存 |
 | `hyperloom/patches/*/vllm/**` | ~1.4 GB | 已构建 overlay 树；其中 `.so` 经 **sha256 与上游 wheel 逐字节相同**，Python 改动全在 `.patch` 里 |
 | `models/` | ~1 GB | 第三方模型权重，`fetch_models.sh` 拉取 |
 | `hyperloom/hyperloom/` 等 | ~40 MB | 第三方代码副本，见 `DEPENDENCIES.md` |
+
+**`hyperloom/session/` 入库了什么**（923 文件 / 49.9 MB，全文本，不进 LFS）：每个 run 的
+`critic-workdir/`、`robustness-workdir/`（`request`/`emit`/`review`/`judge_bundle` 完整往返）、
+`runs/{baseline,specialist,integrate_patch}/` 下每候选的 `config.yaml`、
+`benchmark_report.json`、`samples_gsm8k_*.jsonl`（逐样本精度明细）、
+`baseline_config.with_envs.yaml`（实际生效的 env 与旋钮）、`patch_backups/*.bak`（改动前原文件）、
+`reports/`、`agents/*/system_prompt*.md`、`target_analysis/`、`launch/`、`optimizer_runs/`。
+这样报告里每个数字都能落到仓库内的原始记录上。
 
 **入库的二进制**走 Git LFS（合计 ~797 MB，只收"不可再生"的实测证据）：
 `a8w8-fix/module_gemm_a8w8.gfx90a-{fixed,orig}.so`（AITER `M<=64` 边界修复产物 + 修复前基线）

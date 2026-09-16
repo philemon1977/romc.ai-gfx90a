@@ -81,8 +81,9 @@ scripts/build_fp8_emulation_overlay.sh   # 从 site-packages 复制 + 打补丁
 | `…/profiling/benchmark_vllm_20260915_051456/torch_trace/*.pt.trace.json.gz` | 642 MB + 145 MB | decode 归因（60% 时间在 INT8 GEMM）的唯一原始测量数据，只能在该机该模型上重跑 |
 
 不进 LFS 的（体积无信息量或可再生）：`models/*.safetensors`、`envs/**` 与
-`hyperloom/envs/**` 的全部 `.so`、`hyperloom/session/**`、`hyperloom/.tmp/**` 的 AOT 缓存、
-以及上面第 5 节里重复的 vLLM `.so`。
+`hyperloom/envs/**` 的全部 `.so`、`hyperloom/session/**` 里的 worktree 与编译缓存、
+`hyperloom/.tmp/**` 的 AOT 缓存、以及上面第 5 节里重复的 vLLM `.so`。
+session 中的 run 状态与结果是**文本**，直接进 git 对象库（压缩后仅几 MB），不需要 LFS。
 
 克隆时若想跳过下载：`GIT_LFS_SKIP_SMUDGE=1 git clone --depth 1 <url>`。
 
@@ -98,3 +99,30 @@ export PATH="$PWD/.tools/bin:$PATH"   # 之后 git add / commit / push 才会触
 `scripts/bootstrap.sh lfs` 会在缺失时自动下载安装（git-lfs v3.8.0），并对当前克隆执行
 `git lfs install --local`。**这一步不能省**：`.tools/` 不入库，全新克隆既没有 git-lfs
 也没有 `filter.lfs.*` 配置，直接 checkout 只会得到 133 字节的指针文件。
+
+## 8. hyperloom/session/：入库部分与遗留部分
+
+session 是 optimizer 的运行现场，29 GB 里 28.9 GB 是"重放环境"
+（每个候选一棵 vLLM worktree + `site-packages` + `boot/vcache` + `aot` +
+`torch_compile_cache` + `triton_cache`），已用 `.gitignore` 的 session 专属规则剔除。
+其余**状态与结果**（923 文件 / 49.9 MB）已入库，用于让 `hyperloom/reports/`
+里每个数字都能落到原始记录上：critic/robustness 的 `request|emit|review|judge_bundle`
+往返、每候选的 `config.yaml` 与 `benchmark_report.json`、`samples_gsm8k_*.jsonl`
+逐样本精度明细、`baseline_config.with_envs.yaml` 实际生效的环境变量、
+`patch_backups/*.bak` 改动前原文件、`reports/` 与 `agents/*/system_prompt*.md`。
+
+sqlite `storage/coordinator.db` 与其 `-wal`/`-shm` **一并排除**：只提交 `.db` 会丢掉尚未
+checkpoint 进主库的 wal 内容，得到一个半一致快照；同一批事件的文本形态已在
+`*/emit.json`、`state.json` 里。需要时在本机只读导出：
+
+```bash
+python3 -c "import sqlite3;print('\n'.join(sqlite3.connect(
+  'file:hyperloom/session/<模型>/<run>/storage/coordinator.db?mode=ro&uri=True').iterdump()))"
+```
+
+**遗留 305 个文件（18.2 MB）读不到**：它们是 `root:root` 的 `0600`（hyperloom 在容器里以
+root 身份写入本工作区），当前用户无读权限，git 无法取哈希。其中包括**全部**
+`manifest.json`(8)、`state.json`(16)、`session_breakdown.json`(5)、`reports/final.json`(5)、
+`optimization_journal.json`(7)，以及各 specialist 的 `prompt.md`/`system_prompt.md`/
+`process.log`/`specialist_done.json` 与 3 个 `runtime/` 目录（`0700`）。
+放开读权限后即可补一次提交，命令见 `scripts/fix_session_perms.sh`。

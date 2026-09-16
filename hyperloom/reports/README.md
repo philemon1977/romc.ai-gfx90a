@@ -30,7 +30,7 @@
 
 | 报告里出现的路径 | 在仓库里的对应物 |
 |---|---|
-| `session/<模型>/<run>/…` | **不入库**（每个候选一棵 vLLM worktree + AOT 编译缓存，约 29 GB）。结论已整理进本目录；run 的 `manifest.json` / `session_breakdown.json` 关键内容在报告正文有摘录 |
+| `session/<模型>/<run>/…` | **状态与结果已入库**：`critic-workdir/`、`robustness-workdir/`、`runs/{baseline,specialist,integrate_patch}/` 下每候选的 `config.yaml`、`benchmark_report.json`、`samples_gsm8k_*.jsonl`、`baseline_config.with_envs.yaml`，以及 `reports/`、`agents/*/system_prompt*.md`。**不入库**的是重放环境——每个候选一棵 vLLM worktree + `site-packages` + AOT/inductor/triton 编译缓存（29 GB 里的 28.9 GB）。遗留：`manifest.json`/`state.json`/`session_breakdown.json` 等 267 个 root `0600` 文件本机读不到，放开方式见 `scripts/fix_session_perms.sh` |
 | `envs/vllm/…`、`/home/qiba/ai/envs/wu1w*/…` | **不入库**的 Python 环境（12 GB 级）。重建见 `scripts/bootstrap.sh envs` 与 `docker/Dockerfile.vllm-local`，版本锁定见 `DEPENDENCIES.md` |
 | `hyperloom/envs/vllm-fa/`、`hyperloom/logs/`、`hyperloom/.tmp/` | 同上：工具现场，不入库 |
 | `hyperloom/patches/*/vllm/**` | 不入库的已构建 overlay（其 `.so` 与上游 wheel 逐字节相同）。改动本体是 `hyperloom/patches/*/*.patch`，重建用 `scripts/build_fp8_emulation_overlay.sh` |
