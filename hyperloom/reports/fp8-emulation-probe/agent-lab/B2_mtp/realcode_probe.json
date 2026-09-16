@@ -1,0 +1,101 @@
+{
+ "content": "real repo python source, temperature 0, no ignore_eos",
+ "requests": 8,
+ "prompt_tokens_median": 2851.5,
+ "completion_tokens_median": 1.0,
+ "decode_tps_median": 36.42,
+ "ttft_ms_median": 2359.4,
+ "speculative_acceptance": {
+  "windows": 0
+ },
+ "per_request": [
+  {
+   "chunks_seen": 0,
+   "tag": "real_cli.py",
+   "prompt_tokens": 3703,
+   "completion_tokens": 1,
+   "ttft_ms": null,
+   "decode_tps": null,
+   "chunk_rate_cps": null,
+   "tokens_per_chunk": null,
+   "e2e_s": 8.2
+  },
+  {
+   "chunks_seen": 0,
+   "tag": "real_metrics.py",
+   "prompt_tokens": 1273,
+   "completion_tokens": 1,
+   "ttft_ms": null,
+   "decode_tps": null,
+   "chunk_rate_cps": null,
+   "tokens_per_chunk": null,
+   "e2e_s": 1.88
+  },
+  {
+   "chunks_seen": 97,
+   "tag": "real_explorer.py",
+   "prompt_tokens": 4092,
+   "completion_tokens": 256,
+   "ttft_ms": 2342.7,
+   "decode_tps": 36.94,
+   "chunk_rate_cps": 13.91,
+   "tokens_per_chunk": 2.64,
+   "e2e_s": 9.25
+  },
+  {
+   "chunks_seen": 0,
+   "tag": "real_tools_api.py",
+   "prompt_tokens": 1840,
+   "completion_tokens": 1,
+   "ttft_ms": null,
+   "decode_tps": null,
+   "chunk_rate_cps": null,
+   "tokens_per_chunk": null,
+   "e2e_s": 2.0
+  },
+  {
+   "chunks_seen": 0,
+   "tag": "real__bypass_fusion.py",
+   "prompt_tokens": 1602,
+   "completion_tokens": 1,
+   "ttft_ms": null,
+   "decode_tps": null,
+   "chunk_rate_cps": null,
+   "tokens_per_chunk": null,
+   "e2e_s": 1.93
+  },
+  {
+   "chunks_seen": 0,
+   "tag": "real__io_utils.py",
+   "prompt_tokens": 2000,
+   "completion_tokens": 1,
+   "ttft_ms": null,
+   "decode_tps": null,
+   "chunk_rate_cps": null,
+   "tokens_per_chunk": null,
+   "e2e_s": 2.01
+  },
+  {
+   "chunks_seen": 100,
+   "tag": "real_forge_submit.py",
+   "prompt_tokens": 4166,
+   "completion_tokens": 256,
+   "ttft_ms": 2376.2,
+   "decode_tps": 35.91,
+   "chunk_rate_cps": 13.94,
+   "tokens_per_chunk": 2.56,
+   "e2e_s": 9.48
+  },
+  {
+   "chunks_seen": 0,
+   "tag": "real_forge_fusion.py",
+   "prompt_tokens": 4123,
+   "completion_tokens": 1,
+   "ttft_ms": null,
+   "decode_tps": null,
+   "chunk_rate_cps": null,
+   "tokens_per_chunk": null,
+   "e2e_s": 2.29
+  }
+ ]
+}

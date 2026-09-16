@@ -1,0 +1,83 @@
+benchmark_script: null
+docker_image: null
+envs:
+  AITER_LOG_TUNED_CONFIG: '1'
+  BENCH_TRUST_REMOTE_CODE: '1'
+  CONC: 64
+  EXTRA_VLLM_ARGS: --trust-remote-code --language-model-only --quantization compressed-tensors
+    --safetensors-load-strategy eager --compilation-config {"cudagraph_mode":"FULL_DECODE_ONLY"}
+  HF_HUB_TRUST_REMOTE_CODE: '1'
+  ISL: 1024
+  MAGPIE_TRUST_REMOTE_CODE: '1'
+  MAX_MODEL_LEN: 6144
+  NUM_PROMPTS: 64
+  NUM_WARMUPS: 8
+  OSL: 1024
+  PATH: /opt/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+  RANDOM_RANGE_RATIO: 1
+  ROCR_VISIBLE_DEVICES: '0'
+  RUN_EVAL: 'false'
+  TP: 1
+  VLLM_BIN: /usr/local/bin/vllm-wu1w
+  VLLM_CACHE_ROOT: /tmp/vllm-cache-hl
+  VLLM_EXECUTE_MODEL_TIMEOUT_SECONDS: '1200'
+  VLLM_ROCM_USE_AITER: '1'
+  VLLM_ROCM_USE_AITER_LINEAR: '1'
+framework: vllm
+gap_analysis:
+  auto_clone_repos: true
+  categories:
+  - kernel
+  - gpu
+  enabled: false
+  find_kernel_sources: false
+  ignore_categories:
+  - gpu_user_annotation
+  - user_annotation
+  kernel_source_repos: null
+  min_duration_us: 0.0
+  repos_base_dir: null
+  top_k: 20
+  trace_end_pct: 100.0
+  trace_start_pct: 0.0
+gpu_arch: null
+gpu_selection:
+  auto: false
+  candidates: null
+  count: null
+  min_free_memory_gb: 8.0
+hf_cache_path: null
+inferencex_path: /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966
+model: /mnt/stripe-3mix-3t2/models/davetha/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8
+precision: bf16
+profiler:
+  gpu_monitor:
+    device_id: null
+    enabled: true
+    interval_sec: 2.0
+  system_profiler:
+    enabled: false
+    profile_args: []
+  torch_profiler:
+    enabled: true
+  tracelens:
+    analysis_mode: inference
+    analysis_stages:
+    - prefilldecode
+    - decode
+    - prefill
+    auto_patch_runtime: false
+    cli_timeout_seconds: 1800
+    enabled: false
+    export_format: csv
+    gpu_arch_config: null
+    multi_rank_report_enabled: true
+    num_steps: 32
+    perf_report_enabled: true
+    restore_patches: true
+    runtime_patch_force_rebuild: false
+    runtime_patch_image_tag: null
+    tracelens_repo_path: null
+run_mode: local
+runner_type: null
+timeout_seconds: 7200

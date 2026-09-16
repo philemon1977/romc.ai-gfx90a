@@ -1,0 +1,122 @@
+2026-09-16T01:02:47Z sweep armed (waiting for official run1 driver to exit)
+2026-09-16T01:04:17Z run1 driver gone; draining VRAM
+2026-09-16T01:04:17Z [A_nospec] booting pid=55651 port=8899 max-len=65536 max-seqs=16 extra=''
+2026-09-16T01:14:33Z [A_nospec] READY
+(Worker_TP7 pid=56248) INFO 09-16 01:13:53 [gpu_worker.py:593] CUDA graph memory profiling is enabled (default since v0.21.0). The current --gpu-memory-utilization=0.9500 is equivalent to --gpu-memory-utilization=0.9362 without CUDA graph memory profiling. To maintain the same effective KV cache size as before, increase --gpu-memory-utilization to 0.9638. To disable, set VLLM_MEMORY_PROFILER_ESTIMATE_CUDAGRAPHS=0.
+(Worker_TP3 pid=56244) INFO 09-16 01:13:53 [gpu_worker.py:593] CUDA graph memory profiling is enabled (default since v0.21.0). The current --gpu-memory-utilization=0.9500 is equivalent to --gpu-memory-utilization=0.9362 without CUDA graph memory profiling. To maintain the same effective KV cache size as before, increase --gpu-memory-utilization to 0.9638. To disable, set VLLM_MEMORY_PROFILER_ESTIMATE_CUDAGRAPHS=0.
+(Worker_TP4 pid=56245) INFO 09-16 01:13:53 [gpu_worker.py:593] CUDA graph memory profiling is enabled (default since v0.21.0). The current --gpu-memory-utilization=0.9500 is equivalent to --gpu-memory-utilization=0.9362 without CUDA graph memory profiling. To maintain the same effective KV cache size as before, increase --gpu-memory-utilization to 0.9638. To disable, set VLLM_MEMORY_PROFILER_ESTIMATE_CUDAGRAPHS=0.
+(Worker_TP0 pid=56241) INFO 09-16 01:13:53 [gpu_worker.py:593] CUDA graph memory profiling is enabled (default since v0.21.0). The current --gpu-memory-utilization=0.9500 is equivalent to --gpu-memory-utilization=0.9362 without CUDA graph memory profiling. To maintain the same effective KV cache size as before, increase --gpu-memory-utilization to 0.9638. To disable, set VLLM_MEMORY_PROFILER_ESTIMATE_CUDAGRAPHS=0.
+(Worker_TP2 pid=56243) INFO 09-16 01:13:53 [gpu_worker.py:593] CUDA graph memory profiling is enabled (default since v0.21.0). The current --gpu-memory-utilization=0.9500 is equivalent to --gpu-memory-utilization=0.9362 without CUDA graph memory profiling. To maintain the same effective KV cache size as before, increase --gpu-memory-utilization to 0.9638. To disable, set VLLM_MEMORY_PROFILER_ESTIMATE_CUDAGRAPHS=0.
+(EngineCore pid=56079) INFO 09-16 01:13:53 [kv_cache_utils.py:1869] GPU KV cache size: 452,748 tokens, Maximum concurrency for 65,536 tokens per request: 6.91x
+2026-09-16T01:15:39Z [C] armed (waiting for sweep.sh A/B to finish)
+2026-09-16T01:20:30Z [A_nospec] point c1 i1024/o1024 n5 rc=0 -> A_nospec_c1_i1024_o1024_base.json
+2026-09-16T01:28:33Z [A_nospec] point c1 i32768/o512 n3 rc=0 -> A_nospec_c1_i32768_o512_long.json
+2026-09-16T01:28:53Z [A_nospec] point c1 i65536/o512 n1 rc=1 -> A_nospec_c1_i65536_o512_huge.json
+2026-09-16T01:32:55Z [A_nospec] point c16 i1024/o512 n32 rc=0 -> A_nospec_c16_i1024_o512_env16.json
+2026-09-16T01:36:25Z [A_nospec] prefix probe rc=0 -> prefix_probe.json
+(EngineCore pid=56079) INFO 09-16 01:04:58 [core.py:122] Initializing a V1 LLM engine (v0.28.0) with config: model='/mnt/kioxia-cm6-3t8/ai/models/ornith-ai/Ornith-1.5-397B-FP8', speculative_config=None, tokenizer='/mnt/kioxia-cm6-3t8/ai/models/ornith-ai/Ornith-1.5-397B-FP8', skip_tokenizer_init=False, tokenizer_mode=auto, revision=None, tokenizer_revision=None, trust_remote_code=True, dtype=torch.bfloat16, max_seq_len=65536, download_dir=None, load_format=auto, tensor_parallel_size=8, pipeline_parallel_size=1, data_parallel_size=1, decode_context_parallel_size=1, dcp_comm_backend=ag_rs, disable_custom_all_reduce=True, quantization=compressed-tensors, quantization_config=None, enforce_eager=False, enable_return_routed_experts=False, kv_cache_dtype=auto, device_config=cuda, structured_outputs_config=StructuredOutputsConfig(backend='auto', disable_any_whitespace=False, disable_additional_properties=False, reasoning_parser='', reasoning_parser_plugin='', enable_in_reasoning=False), observability_config=ObservabilityConfig(show_hidden_metrics_for_version=None, otlp_traces_endpoint=None, collect_detailed_traces=None, kv_cache_metrics=False, kv_cache_metrics_sample=0.01, cudagraph_metrics=False, enable_layerwise_nvtx_tracing=False, enable_mfu_metrics=False, enable_mm_processor_stats=False, enable_logging_iteration_details=False, jit_monitor_mode='warn', jit_monitor_verbose=False), seed=0, served_model_name=/mnt/kioxia-cm6-3t8/ai/models/ornith-ai/Ornith-1.5-397B-FP8, enable_prefix_caching=True, enable_chunked_prefill=True, pooler_config=None, compilation_config={'mode': <CompilationMode.VLLM_COMPILE: 3>, 'debug_dump_path': None, 'cache_dir': '', 'compile_cache_save_format': 'binary', 'backend': 'inductor', 'custom_ops': ['+sparse_attn_indexer', 'none'], 'ir_enable_torch_wrap': True, 'splitting_ops': ['vllm::unified_attention_with_output', 'vllm::unified_mla_attention_with_output', 'vllm::mamba_mixer2', 'vllm::mamba_mixer', 'vllm::short_conv', 'vllm::linear_attention', 'vllm::qwen_gdn_attention_core', 'vllm::qwen_gdn_attention_core_fused_norm_packed', 'vllm::gdn_attention_core_xpu', 'vllm::olmo_hybrid_gdn_full_forward', 'vllm::sparse_attn_indexer', 'vllm::rocm_aiter_sparse_attn_indexer', 'vllm::deepseek_v4_attention', 'vllm::hpc_rope_norm_forward', 'vllm::unified_kv_cache_update', 'vllm::unified_mla_kv_cache_update'], 'compile_mm_encoder': False, 'cudagraph_mm_encoder': False, 'encoder_cudagraph_token_budgets': [], 'encoder_cudagraph_max_vision_items_per_batch': 0, 'encoder_cudagraph_max_frames_per_batch': None, 'compile_sizes': [], 'compile_ranges_endpoints': [16384], 'inductor_compile_config': {'enable_auto_functionalized_v2': False, 'combo_kernels': True, 'benchmark_combo_kernel': True}, 'inductor_passes': {}, 'cudagraph_mode': <CUDAGraphMode.FULL_AND_PIECEWISE: (2, 1)>, 'cudagraph_num_of_warmups': 1, 'cudagraph_capture_sizes': [1, 2, 4, 8, 16, 24, 32], 'cudagraph_copy_inputs': False, 'cudagraph_specialize_lora': True, 'use_inductor_graph_partition': False, 'pass_config': {'fuse_norm_quant': False, 'fuse_act_quant': False, 'fuse_attn_quant': False, 'enable_sp': False, 'fuse_gemm_comms': False, 'enable_qk_norm_rope_fusion': False, 'fuse_rope_kvcache_cat_mla': False, 'fuse_act_padding': False, 'fuse_qk_norm_rope_kvcache': False}, 'max_cudagraph_capture_size': 32, 'dynamic_shapes_config': {'type': <DynamicShapesType.BACKED: 'backed'>, 'evaluate_guards': False, 'assume_32_bit_indexing': False}, 'local_cache_dir': None, 'fast_moe_cold_start': False, 'static_all_moe_layers': []}, kernel_config=KernelConfig(ir_op_priority=IrOpPriorityConfig(rms_norm=['native'], fused_add_rms_norm=['native']), enable_flashinfer_autotune=True, enable_cutedsl_warmup=True, enable_jit_warmup=True, enable_bf16x3_router_gemm=False, moe_backend='auto', linear_backend='auto')
+2026-09-16T01:36:30Z [A_nospec] stopped, VRAM released
+2026-09-16T01:36:30Z [B_mtp] booting pid=59635 port=8900 max-len=65536 max-seqs=16 extra='--speculative-config {"method":"qwen3_5_mtp","num_speculative_tokens":2}'
+2026-09-16T01:48:31Z [B_mtp] READY
+(Worker_TP2 pid=60303) INFO 09-16 01:47:13 [gpu_worker.py:593] CUDA graph memory profiling is enabled (default since v0.21.0). The current --gpu-memory-utilization=0.9500 is equivalent to --gpu-memory-utilization=0.9192 without CUDA graph memory profiling. To maintain the same effective KV cache size as before, increase --gpu-memory-utilization to 0.9808. To disable, set VLLM_MEMORY_PROFILER_ESTIMATE_CUDAGRAPHS=0.
+(Worker_TP6 pid=60307) INFO 09-16 01:47:13 [gpu_worker.py:593] CUDA graph memory profiling is enabled (default since v0.21.0). The current --gpu-memory-utilization=0.9500 is equivalent to --gpu-memory-utilization=0.9192 without CUDA graph memory profiling. To maintain the same effective KV cache size as before, increase --gpu-memory-utilization to 0.9808. To disable, set VLLM_MEMORY_PROFILER_ESTIMATE_CUDAGRAPHS=0.
+(Worker_TP3 pid=60304) INFO 09-16 01:47:13 [gpu_worker.py:593] CUDA graph memory profiling is enabled (default since v0.21.0). The current --gpu-memory-utilization=0.9500 is equivalent to --gpu-memory-utilization=0.9192 without CUDA graph memory profiling. To maintain the same effective KV cache size as before, increase --gpu-memory-utilization to 0.9808. To disable, set VLLM_MEMORY_PROFILER_ESTIMATE_CUDAGRAPHS=0.
+(Worker_TP4 pid=60305) INFO 09-16 01:47:13 [gpu_worker.py:593] CUDA graph memory profiling is enabled (default since v0.21.0). The current --gpu-memory-utilization=0.9500 is equivalent to --gpu-memory-utilization=0.9192 without CUDA graph memory profiling. To maintain the same effective KV cache size as before, increase --gpu-memory-utilization to 0.9808. To disable, set VLLM_MEMORY_PROFILER_ESTIMATE_CUDAGRAPHS=0.
+(Worker_TP0 pid=60301) INFO 09-16 01:47:13 [gpu_worker.py:593] CUDA graph memory profiling is enabled (default since v0.21.0). The current --gpu-memory-utilization=0.9500 is equivalent to --gpu-memory-utilization=0.9192 without CUDA graph memory profiling. To maintain the same effective KV cache size as before, increase --gpu-memory-utilization to 0.9808. To disable, set VLLM_MEMORY_PROFILER_ESTIMATE_CUDAGRAPHS=0.
+(EngineCore pid=60137) INFO 09-16 01:47:13 [kv_cache_utils.py:1869] GPU KV cache size: 231,050 tokens, Maximum concurrency for 65,536 tokens per request: 3.53x
+2026-09-16T01:51:39Z [B_mtp] point c1 i1024/o1024 n5 rc=0 -> B_mtp_c1_i1024_o1024_base.json
+2026-09-16T01:54:55Z [B_mtp] point c1 i32768/o512 n3 rc=0 -> B_mtp_c1_i32768_o512_long.json
+2026-09-16T01:55:16Z [B_mtp] point c1 i65536/o512 n1 rc=1 -> B_mtp_c1_i65536_o512_huge.json
+2026-09-16T01:59:26Z [B_mtp] point c16 i1024/o512 n32 rc=0 -> B_mtp_c16_i1024_o512_env16.json
+2026-09-16T02:00:04Z [D] armed (waiting for the C_256k round to finish)
+2026-09-16T02:00:52Z [B_mtp] prefix probe rc=0 -> prefix_probe.json
+(APIServer pid=59635) INFO 09-16 02:00:29 [metrics.py:120] SpecDecoding metrics: Mean acceptance length: 2.14, Accepted throughput: 6.40 tokens/s, Drafted throughput: 11.20 tokens/s, Accepted: 64 tokens, Drafted: 112 tokens, Per-position acceptance rate: 0.732, 0.411, Avg Draft acceptance rate: 57.1%
+(APIServer pid=59635) INFO 09-16 02:00:39 [metrics.py:120] SpecDecoding metrics: Mean acceptance length: 2.22, Accepted throughput: 6.20 tokens/s, Drafted throughput: 10.20 tokens/s, Accepted: 62 tokens, Drafted: 102 tokens, Per-position acceptance rate: 0.725, 0.490, Avg Draft acceptance rate: 60.8%
+(APIServer pid=59635) INFO 09-16 02:00:49 [metrics.py:120] SpecDecoding metrics: Mean acceptance length: 3.00, Accepted throughput: 11.20 tokens/s, Drafted throughput: 11.20 tokens/s, Accepted: 112 tokens, Drafted: 112 tokens, Per-position acceptance rate: 1.000, 1.000, Avg Draft acceptance rate: 100.0%
+2026-09-16T02:00:57Z [B_mtp] stopped, VRAM released
+2026-09-16T02:00:57Z sweep done
+2026-09-16T03:01:07Z [D] GPUs free, booting no-prefix-cache config
+2026-09-16T03:01:07Z [D] booting pid=64781
+(Worker_TP0 pid=65288) INFO 09-16 03:10:40 [gpu_worker.py:578] Available KV cache memory: 8.66 GiB
+(EngineCore pid=65109) INFO 09-16 03:10:40 [kv_cache_utils.py:1869] GPU KV cache size: 582,656 tokens, Maximum concurrency for 65,536 tokens per request: 8.89x
+2026-09-16T03:11:23Z [D] READY
+2026-09-16T03:17:18Z [D] point c1 i1024/o1024 n5 rc=0
+2026-09-16T03:25:45Z [D] point c1 i32768/o512 n3 rc=0
+2026-09-16T03:29:54Z [D] point c16 i1024/o512 n32 rc=0
+2026-09-16T03:30:00Z [D] done, server stopped
+2026-09-16T03:30:24Z chain: cache flags -> --enable-prefix-caching
+2026-09-16T03:30:24Z [C3_nospec] booting pid=67670 flags='--enable-prefix-caching '
+(APIServer pid=67670) INFO 09-16 03:30:49 [config.py:605] Mamba cache mode is set to 'align' for Qwen3_5MoeForConditionalGeneration by default when prefix caching is enabled
+(Worker_TP0 pid=68163) INFO 09-16 03:40:14 [gpu_worker.py:578] Available KV cache memory: 8.66 GiB
+(EngineCore pid=67998) INFO 09-16 03:40:15 [kv_cache_utils.py:1869] GPU KV cache size: 592,560 tokens, Maximum concurrency for 262,144 tokens per request: 2.26x
+2026-09-16T03:40:54Z [C3_nospec] READY
+2026-09-16T03:46:54Z [C3_nospec] point c1 i1024/o1024 n5 rc=0
+2026-09-16T03:55:05Z [C3_nospec] point c1 i32768/o512 n3 rc=0
+2026-09-16T03:55:06Z [C3_nospec] realcode probe rc=1 -> realcode_probe.json
+2026-09-16T04:06:31Z [C3_nospec] point c1 i131072/o256 n2 rc=0
+2026-09-16T04:06:57Z [C3_nospec] point c1 i262144/o256 n2 rc=1
+2026-09-16T04:06:58Z [C3_nospec] done
+2026-09-16T04:06:58Z [B2_mtp] booting pid=70487 flags='--enable-prefix-caching --speculative-config {"method":"qwen3_5_mtp","num_speculative_tokens":2}'
+(APIServer pid=70487) INFO 09-16 04:07:34 [config.py:605] Mamba cache mode is set to 'align' for Qwen3_5MoeForConditionalGeneration by default when prefix caching is enabled
+(Worker_TP0 pid=71138) INFO 09-16 04:18:02 [gpu_worker.py:578] Available KV cache memory: 5.81 GiB
+(EngineCore pid=70973) INFO 09-16 04:18:02 [kv_cache_utils.py:1869] GPU KV cache size: 366,692 tokens, Maximum concurrency for 262,144 tokens per request: 1.40x
+2026-09-16T04:19:29Z [B2_mtp] READY
+2026-09-16T04:22:35Z [B2_mtp] point c1 i1024/o1024 n5 rc=0
+2026-09-16T04:22:55Z [F_240k] armed (waiting for the B2_mtp completion marker)
+2026-09-16T04:25:55Z [B2_mtp] point c1 i32768/o512 n3 rc=0
+2026-09-16T04:26:32Z [B2_mtp] realcode probe rc=0 -> realcode_probe.json
+2026-09-16T04:31:56Z [B2_mtp] point c1 i131072/o256 n2 rc=0
+2026-09-16T04:32:23Z [B2_mtp] point c1 i262144/o256 n2 rc=1
+2026-09-16T04:32:23Z [B2_mtp] done
+2026-09-16T04:32:23Z chain complete
+2026-09-16T04:32:25Z [F_240k] GPUs free, booting 240k-capable config
+2026-09-16T04:32:25Z [F_240k] booting pid=73504 max-len=270336
+2026-09-16T04:32:55Z [F_240k] DEAD during boot
+2026-09-16T04:32:55Z [F_240k] FAILED to boot
+(APIServer pid=73504)     await run_server_worker(listen_address, sock, args, **uvicorn_kwargs)
+(APIServer pid=73504)   File "/home/qiba/ROCm.AI/hyperloom/patches/fp8-w8a8-emulation-gfx90a/vllm/entrypoints/openai/api_server.py", line 753, in run_server_worker
+(APIServer pid=73504)     async with build_async_engine_client(
+(APIServer pid=73504)                ^^^^^^^^^^^^^^^^^^^^^^^^^^
+(APIServer pid=73504)   File "/opt/envs/vllm/lib/python3.12/contextlib.py", line 210, in __aenter__
+(APIServer pid=73504)     return await anext(self.gen)
+(APIServer pid=73504)            ^^^^^^^^^^^^^^^^^^^^^
+(APIServer pid=73504)   File "/home/qiba/ROCm.AI/hyperloom/patches/fp8-w8a8-emulation-gfx90a/vllm/entrypoints/openai/api_server.py", line 127, in build_async_engine_client
+(APIServer pid=73504)     async with build_async_engine_client_from_engine_args(
+(APIServer pid=73504)                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(APIServer pid=73504)   File "/opt/envs/vllm/lib/python3.12/contextlib.py", line 210, in __aenter__
+(APIServer pid=73504)     return await anext(self.gen)
+(APIServer pid=73504)            ^^^^^^^^^^^^^^^^^^^^^
+(APIServer pid=73504)   File "/home/qiba/ROCm.AI/hyperloom/patches/fp8-w8a8-emulation-gfx90a/vllm/entrypoints/openai/api_server.py", line 151, in build_async_engine_client_from_engine_args
+(APIServer pid=73504)     vllm_config = engine_args.create_engine_config(usage_context=usage_context)
+(APIServer pid=73504)                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(APIServer pid=73504)   File "/home/qiba/ROCm.AI/hyperloom/patches/fp8-w8a8-emulation-gfx90a/vllm/engine/arg_utils.py", line 1969, in create_engine_config
+(APIServer pid=73504)     model_config = self.create_model_config()
+(APIServer pid=73504)                    ^^^^^^^^^^^^^^^^^^^^^^^^^^
+(APIServer pid=73504)   File "/opt/envs/vllm/lib/python3.12/site-packages/quark/online_quantization/vllm/plugin.py", line 193, in patched_create_model_config
+(APIServer pid=73504)     return orig_create_model_config(self, *args, **kwargs)
+(APIServer pid=73504)            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(APIServer pid=73504)   File "/home/qiba/ROCm.AI/hyperloom/patches/fp8-w8a8-emulation-gfx90a/vllm/engine/arg_utils.py", line 1727, in create_model_config
+(APIServer pid=73504)     return ModelConfig(
+(APIServer pid=73504)            ^^^^^^^^^^^^
+(APIServer pid=73504)   File "/opt/envs/vllm/lib/python3.12/site-packages/pydantic/_internal/_dataclasses.py", line 121, in __init__
+(APIServer pid=73504)     s.__pydantic_validator__.validate_python(ArgsKwargs(args, kwargs), self_instance=s)
+(APIServer pid=73504) pydantic_core._pydantic_core.ValidationError: 1 validation error for ModelConfig
+(APIServer pid=73504)   Value error, User-specified max_model_len (270336) is greater than the derived max_model_len (max_position_embeddings=262144.0 or model_max_length=None in model's config.json). To allow overriding this maximum, set the env var VLLM_ALLOW_LONG_MAX_MODEL_LEN=1. VLLM_ALLOW_LONG_MAX_MODEL_LEN must be used with extreme caution. If the model uses relative position encoding (RoPE), positions exceeding derived_max_model_len lead to nan. If the model uses absolute position encoding, positions exceeding derived_max_model_len will cause a CUDA array out-of-bounds error. [type=value_error, input_value=ArgsKwargs((), {'model': ...nderer_num_workers': 1}), input_type=ArgsKwargs]
+(APIServer pid=73504)     For further information visit https://errors.pydantic.dev/2.13/v/value_error
+2026-09-16T04:34:45Z [F2_nospec] booting pid=73879 extra=''
+(Worker_TP0 pid=74377) INFO 09-16 04:44:34 [gpu_worker.py:578] Available KV cache memory: 8.66 GiB
+(EngineCore pid=74212) INFO 09-16 04:44:34 [kv_cache_utils.py:1869] GPU KV cache size: 592,560 tokens, Maximum concurrency for 262,144 tokens per request: 2.26x
+2026-09-16T04:45:16Z [F2_nospec] READY
+2026-09-16T04:51:25Z [F2_nospec] realcode(chat) probe rc=0 -> realcode_probe.json
+2026-09-16T04:55:48Z [F2_nospec] point c1 i1024/o1024 n3 rc=0
+2026-09-16T05:08:56Z [F2_nospec] point c1 i237568/o128 n2 rc=0
+2026-09-16T05:08:56Z [F2_nospec] done
+2026-09-16T05:08:56Z [G_mtp] booting pid=76161 extra='--speculative-config {"method":"qwen3_5_mtp","num_speculative_tokens":2}'
+(Worker_TP0 pid=76859) INFO 09-16 05:20:19 [gpu_worker.py:578] Available KV cache memory: 5.81 GiB
+(EngineCore pid=76694) INFO 09-16 05:20:19 [kv_cache_utils.py:1869] GPU KV cache size: 366,692 tokens, Maximum concurrency for 262,144 tokens per request: 1.40x
+2026-09-16T05:21:27Z [G_mtp] READY
+2026-09-16T05:24:56Z [G_mtp] realcode(chat) probe rc=0 -> realcode_probe.json
+2026-09-16T05:27:14Z [G_mtp] point c1 i1024/o1024 n3 rc=0
+2026-09-16T05:35:06Z [G_mtp] point c1 i237568/o128 n2 rc=0
+2026-09-16T05:35:07Z [G_mtp] done
+2026-09-16T05:35:07Z FG chain complete

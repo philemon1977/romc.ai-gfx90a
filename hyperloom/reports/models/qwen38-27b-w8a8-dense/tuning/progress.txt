@@ -1,0 +1,15 @@
+[14:07:22Z] build=56M cc=38 winners=0/40
+[14:12:22Z] build=137M cc=33 winners=0/40
+[14:17:22Z] build=179M cc=6 winners=0/40
+[14:22:22Z] build=191M cc=4 winners=0/40
+[14:27:22Z] build=204M cc=3 winners=0/40
+[14:32:22Z] build=204M cc=3 winners=0/40
+[14:37:22Z] build=223M cc=1 winners=0/40
+[14:42:22Z] build=223M cc=1 winners=0/40
+[14:47:22Z] build=442M cc=0 winners=0/40
+[14:57:46Z] TUNER EXITED
+--- 胜者行数: 0/40
+  warnings.warn('resource_tracker: There appear to be %d '
+== 调优结束 rc=137 2026-09-15T14:57:46Z ==
+/home/qiba/ROCm.AI/hyperloom/scripts-local/run_a8w8_tuner.sh: line 36: /home/qiba/ROCm.AI/hyperloom/reports/models/qwen38-27b-w8a8-dense/tuning/a8w8_tuned_gfx90a.csv: No such file or directory
+--- 胜者行数: 0 ---

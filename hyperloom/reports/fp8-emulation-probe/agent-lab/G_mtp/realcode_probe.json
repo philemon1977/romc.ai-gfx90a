@@ -1,0 +1,145 @@
+{
+ "content": "real repo python source via /v1/chat/completions agent turn, temperature 0, natural stop",
+ "requests": 12,
+ "prompt_tokens_median": 3108.0,
+ "completion_tokens_median": 512.0,
+ "decode_tps_median": 35.86,
+ "ttft_ms_median": 2274.1,
+ "speculative_acceptance": {
+  "windows": 0
+ },
+ "per_request": [
+  {
+   "chunks_seen": 222,
+   "tag": "real_cli.py",
+   "prompt_tokens": 3737,
+   "completion_tokens": 512,
+   "ttft_ms": 9373.2,
+   "decode_tps": 31.27,
+   "chunk_rate_cps": 13.52,
+   "tokens_per_chunk": 2.31,
+   "e2e_s": 25.72
+  },
+  {
+   "chunks_seen": 215,
+   "tag": "real_intent_envelope.py",
+   "prompt_tokens": 2590,
+   "completion_tokens": 512,
+   "ttft_ms": 2290.9,
+   "decode_tps": 35.74,
+   "chunk_rate_cps": 14.97,
+   "tokens_per_chunk": 2.38,
+   "e2e_s": 16.59
+  },
+  {
+   "chunks_seen": 185,
+   "tag": "real_scope_builder.py",
+   "prompt_tokens": 1882,
+   "completion_tokens": 512,
+   "ttft_ms": 2058.5,
+   "decode_tps": 42.83,
+   "chunk_rate_cps": 15.42,
+   "tokens_per_chunk": 2.77,
+   "e2e_s": 13.99
+  },
+  {
+   "chunks_seen": 184,
+   "tag": "real_enablement_ops.py",
+   "prompt_tokens": 7167,
+   "completion_tokens": 512,
+   "ttft_ms": 3227.7,
+   "decode_tps": 34.58,
+   "chunk_rate_cps": 12.38,
+   "tokens_per_chunk": 2.78,
+   "e2e_s": 18.0
+  },
+  {
+   "chunks_seen": 203,
+   "tag": "real_keywords.py",
+   "prompt_tokens": 2886,
+   "completion_tokens": 512,
+   "ttft_ms": 2240.2,
+   "decode_tps": 37.28,
+   "chunk_rate_cps": 14.74,
+   "tokens_per_chunk": 2.52,
+   "e2e_s": 15.95
+  },
+  {
+   "chunks_seen": 206,
+   "tag": "real___init__.py",
+   "prompt_tokens": 3330,
+   "completion_tokens": 512,
+   "ttft_ms": 2257.3,
+   "decode_tps": 35.97,
+   "chunk_rate_cps": 14.43,
+   "tokens_per_chunk": 2.49,
+   "e2e_s": 16.46
+  },
+  {
+   "chunks_seen": 225,
+   "tag": "real__bypass_benchmark_resolver.py",
+   "prompt_tokens": 1203,
+   "completion_tokens": 512,
+   "ttft_ms": 1854.7,
+   "decode_tps": 36.17,
+   "chunk_rate_cps": 15.85,
+   "tokens_per_chunk": 2.28,
+   "e2e_s": 15.98
+  },
+  {
+   "chunks_seen": 198,
+   "tag": "real__bypass_source_resolver.py",
+   "prompt_tokens": 4465,
+   "completion_tokens": 512,
+   "ttft_ms": 2414.6,
+   "decode_tps": 35.63,
+   "chunk_rate_cps": 13.74,
+   "tokens_per_chunk": 2.59,
+   "e2e_s": 16.76
+  },
+  {
+   "chunks_seen": 210,
+   "tag": "real__io_utils.py",
+   "prompt_tokens": 2034,
+   "completion_tokens": 512,
+   "ttft_ms": 2040.6,
+   "decode_tps": 37.43,
+   "chunk_rate_cps": 15.31,
+   "tokens_per_chunk": 2.44,
+   "e2e_s": 15.69
+  },
+  {
+   "chunks_seen": 197,
+   "tag": "real__vendor_operator_playbooks.py",
+   "prompt_tokens": 2467,
+   "completion_tokens": 512,
+   "ttft_ms": 2036.8,
+   "decode_tps": 39.12,
+   "chunk_rate_cps": 15.01,
+   "tokens_per_chunk": 2.6,
+   "e2e_s": 15.1
+  },
+  {
+   "chunks_seen": 219,
+   "tag": "real_ray_runtime.py",
+   "prompt_tokens": 5083,
+   "completion_tokens": 512,
+   "ttft_ms": 2551.9,
+   "decode_tps": 31.35,
+   "chunk_rate_cps": 13.38,
+   "tokens_per_chunk": 2.34,
+   "e2e_s": 18.85
+  },
+  {
+   "chunks_seen": 200,
+   "tag": "real_forge_collective.py",
+   "prompt_tokens": 7865,
+   "completion_tokens": 512,
+   "ttft_ms": 3111.6,
+   "decode_tps": 30.75,
+   "chunk_rate_cps": 11.97,
+   "tokens_per_chunk": 2.56,
+   "e2e_s": 19.73
+  }
+ ]
+}

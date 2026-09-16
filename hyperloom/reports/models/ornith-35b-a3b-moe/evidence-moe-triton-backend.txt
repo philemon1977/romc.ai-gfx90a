@@ -1,0 +1,3 @@
+(Worker_TP0 pid=564) INFO 09-15 04:13:05 [qwen_gdn_linear_attn.py:505] GDN decode kernel: triton
+(Worker_TP0 pid=564) INFO 09-15 04:13:05 [unquantized.py:319] Using TRITON Unquantized MoE backend out of potential backends: ['TRITON', 'BATCHED_TRITON'].
+(APIServer pid=66) INFO:     Application startup complete.

@@ -1,0 +1,144 @@
+2026-09-15T18:41:24Z === autoprobe armed (run pid 433163, port 8891) ===
+2026-09-15T18:41:24Z run deadline_unix=1789499918
+2026-09-15T18:45:56Z waiting for close (poll 10, pid alive, 32 min to deadline)
+2026-09-15T18:50:58Z waiting for close (poll 20, pid alive, 27 min to deadline)
+2026-09-15T18:55:59Z waiting for close (poll 30, pid alive, 22 min to deadline)
+2026-09-15T19:01:01Z waiting for close (poll 40, pid alive, 17 min to deadline)
+2026-09-15T19:06:03Z waiting for close (poll 50, pid alive, 12 min to deadline)
+2026-09-15T19:11:05Z waiting for close (poll 60, pid alive, 7 min to deadline)
+2026-09-15T19:16:07Z run closed: stop_reason=enablement_stalled (pid alive=yes)
+2026-09-15T19:16:32Z VRAM after cleanup: GPU[0]		: GPU Memory Allocated (VRAM%): 0 GPU[1]		: GPU Memory Allocated (VRAM%): 0 
+2026-09-15T19:16:35Z default compile cache: 8.8G
+2026-09-15T19:16:35Z launching patched server (worktree=/home/qiba/ROCm.AI/hyperloom/session/Ornith-1.5-397B-FP8/20260915T161838Z-ba2694ea/runs/specialist/8628519056b24176b3fa5c9a0e106dd6/wt)
+pid=47798 pgid=47798 started=2026-09-15T19:16:35Z
+2026-09-15T19:18:15Z boot poll 6: http=000 | (Worker_TP0 pid=48130) Loading safetensors checkpoint shards:  10% Completed | 12/123 [00:24<04:01,  2.17s/it]
+2026-09-15T19:20:15Z boot poll 12: http=000 | (Worker_TP0 pid=48130) Loading safetensors checkpoint shards:  54% Completed | 66/123 [02:25<02:03,  2.16s/it]
+2026-09-15T19:22:15Z boot poll 18: http=000 | (Worker_TP0 pid=48130) Loading safetensors checkpoint shards:  97% Completed | 119/123 [04:25<00:09,  2.37s/it]
+2026-09-15T19:24:16Z boot poll 24: http=000 | (EngineCore pid=47968) INFO 09-15 19:24:12 [core.py:347] init engine (profile, create kv cache, warmup model) took 104.66 s (compilation: 2.
+2026-09-15T19:25:16Z server ready after 540s
+2026-09-15T19:25:16Z running probe.py (warmup + single x3 + conc 8/32)
+{
+  "measured_at": "2026-09-15T19:26:27Z",
+  "model": "/mnt/kioxia-cm6-3t8/ai/models/ornith-ai/Ornith-1.5-397B-FP8",
+  "base_url": "http://127.0.0.1:8891",
+  "prompt_tokens": 776,
+  "warmup": {
+    "tag": "warmup",
+    "prompt_tokens": 2,
+    "completion_tokens": 8,
+    "ttft_ms": 2344.168156996602,
+    "decode_tps": 17.62357425486423,
+    "tpot_ms": 56.74217871689637,
+    "e2e_s": 2.741736194002442,
+    "e2e_tps": 2.91785913520784
+  },
+  "single_stream": [
+    {
+      "tag": "single_1",
+      "prompt_tokens": 776,
+      "completion_tokens": 256,
+      "ttft_ms": 1175.644723000005,
+      "decode_tps": 23.449947682703584,
+      "tpot_ms": 42.64401838037313,
+      "e2e_s": 12.050165523978649,
+      "e2e_tps": 21.244521454131487
+    },
+    {
+      "tag": "single_2",
+      "prompt_tokens": 776,
+      "completion_tokens": 256,
+      "ttft_ms": 376.6576219932176,
+      "decode_tps": 23.472856994064788,
+      "tpot_ms": 42.602398176449256,
+      "e2e_s": 11.24054488199181,
+      "e2e_tps": 22.774696661736662
+    },
+    {
+      "tag": "single_3",
+      "prompt_tokens": 776,
+      "completion_tokens": 256,
+      "ttft_ms": 376.62873198860325,
+      "decode_tps": 23.44282648814399,
+      "tpot_ms": 42.65697229409353,
+      "e2e_s": 11.254487275989959,
+      "e2e_tps": 22.746482689277546
+    }
+  ],
+  "single_stream_median": {
+    "ttft_ms": 376.6576219932176,
+    "decode_tps": 23.449947682703584,
+    "tpot_ms": 42.64401838037313
+  },
+  "concurrency": {
+    "8": {
+      "requests": 8,
+      "osl_target": 128,
+      "wall_s": 16.850480233988492,
+      "total_output_tokens": 1024,
+      "aggregate_output_tps": 60.76978138192921,
+      "mean_ttft_ms": 5313.812696131208,
+      "p50_ttft_ms": 6018.467639514711,
+      "max_ttft_ms": 6019.498648005538,
+      "mean_tpot_ms": 90.65136480610703,
+      "per_request_tps": [
+        7.792792703172494,
+        11.727650742943473,
+        11.727022894887664,
+        11.727920665455898,
+        11.72760498854068,
+        11.727739171755584,
+        11.727679865298201,
+        11.726942211637876
+      ]
+    },
+    "32": {
+      "requests": 32,
+      "osl_target": 128,
+      "wall_s": 17.30141855898546,
+      "total_output_tokens": 4096,
+      "aggregate_output_tps": 236.74359336695832,
+      "mean_ttft_ms": 2793.279637188789,
+      "p50_ttft_ms": 2700.4713090136647,
+      "max_ttft_ms": 3514.8235769884195,
+      "mean_tpot_ms": 112.99666659572644,
+      "per_request_tps": [
+        7.741067827071306,
+        8.407801752603643,
+        8.409201373249601,
+        8.408943541555821,
+        8.408475881077305,
+        9.218645426677893,
+        8.407954935277862,
+        8.40953806260533,
+        9.217364233390374,
+        9.218737180909805,
+        8.802677029432118,
+        8.802635908372446,
+        8.408876308253378,
+        8.802728578812705,
+        8.802770109536713,
+        8.802989373431686,
+        8.802762554095237,
+        8.409905525899864,
+        9.218710002478014,
+        9.21586277335206,
+        8.80284944410676,
+        8.8670552862207,
+        9.218264921403465,
+        9.217091852946355,
+        9.219106562429676,
+        9.21872757360163,
+        9.216124608469164,
+        9.216704973749001,
+        9.215853547851856,
+        9.216851313439484,
+        9.217146861161563,
+        9.216301758949726
+      ]
+    }
+  }
+}
+2026-09-15T19:26:27Z probe exit=0
+2026-09-15T19:26:40Z server stopped (pgid=47798); VRAM now: GPU[0]		: GPU Memory Allocated (VRAM%): 78 GPU[1]		: GPU Memory Allocated (VRAM%): 78 
+2026-09-15T19:26:40Z summary written
+2026-09-15T19:26:40Z === autoprobe done ===

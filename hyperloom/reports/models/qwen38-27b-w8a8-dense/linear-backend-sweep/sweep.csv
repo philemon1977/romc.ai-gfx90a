@@ -1,0 +1,5 @@
+linear_backend,status,output_tput,mean_tpot_ms,mean_ttft_ms,duration_s
+auto,ok,439.48,134.58,10891.6,298.2
+aiter,ok,437.24,134.33,11911.87,299.8
+triton,ok,341.15,172.11,14706.06,384.2
+torch,ok,437.26,134.3,11937.94,299.8
