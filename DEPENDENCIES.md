@@ -95,4 +95,6 @@ scripts/build_fp8_emulation_overlay.sh   # 从 site-packages 复制 + 打补丁
 export PATH="$PWD/.tools/bin:$PATH"   # 之后 git add / commit / push 才会触发 LFS 过滤器
 ```
 
-`scripts/bootstrap.sh` 会在缺失时自动重新下载安装（git-lfs v3.8.0）。
+`scripts/bootstrap.sh lfs` 会在缺失时自动下载安装（git-lfs v3.8.0），并对当前克隆执行
+`git lfs install --local`。**这一步不能省**：`.tools/` 不入库，全新克隆既没有 git-lfs
+也没有 `filter.lfs.*` 配置，直接 checkout 只会得到 133 字节的指针文件。

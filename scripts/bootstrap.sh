@@ -40,28 +40,31 @@ confirm() {
 # ---------------------------------------------------------------- lfs --------
 step_lfs() {
   say "git-lfs → ./.tools/bin（本机无 sudo，装在工作区内）"
-  if command -v git-lfs >/dev/null 2>&1; then
-    echo "   PATH 中已有 git-lfs：$(git-lfs version)"
-    return 0
+  # .tools/ 是 gitignore 的，全新克隆后并不存在；PATH 必须先于任何 git-lfs 调用设好。
+  if ! command -v git-lfs >/dev/null 2>&1 && [[ -x "$ROOT/.tools/bin/git-lfs" ]]; then
+    export PATH="$ROOT/.tools/bin:$PATH"; hash -r
   fi
-  if [[ -x ".tools/bin/git-lfs" ]]; then
-    export PATH="$ROOT/.tools/bin:$PATH"
-    echo "   使用工作区副本：$(./.tools/bin/git-lfs version)"
-    return 0
+  if ! command -v git-lfs >/dev/null 2>&1; then
+    confirm "下载 git-lfs v${GIT_LFS_VERSION} 静态二进制到 .tools/bin？" || \
+      { warn "跳过；提交/取回二进制前必须装好"; return 0; }
+    local tmp; tmp="$(mktemp -d)"
+    curl -fsSL -o "$tmp/lfs.tgz" \
+      "https://github.com/git-lfs/git-lfs/releases/download/v${GIT_LFS_VERSION}/git-lfs-linux-amd64-v${GIT_LFS_VERSION}.tar.gz" \
+      || die "git-lfs 下载失败（网络受限时可手动放到 .tools/bin/git-lfs）"
+    tar -C "$tmp" -xzf "$tmp/lfs.tgz"
+    mkdir -p "$ROOT/.tools/bin"
+    install -m 0755 "$tmp/git-lfs-${GIT_LFS_VERSION}/git-lfs" "$ROOT/.tools/bin/git-lfs"
+    rm -rf "$tmp"
+    export PATH="$ROOT/.tools/bin:$PATH"; hash -r
   fi
-
-  confirm "下载 git-lfs v${GIT_LFS_VERSION} 静态二进制？" || { warn "跳过；提交二进制前必须装好"; return 0; }
-  local tmp; tmp="$(mktemp -d)"
-  curl -fsSL -o "$tmp/lfs.tgz" \
-    "https://github.com/git-lfs/git-lfs/releases/download/v${GIT_LFS_VERSION}/git-lfs-linux-amd64-v${GIT_LFS_VERSION}.tar.gz" \
-    || die "git-lfs 下载失败（网络受限时可手动放到 .tools/bin/git-lfs）"
-  tar -C "$tmp" -xzf "$tmp/lfs.tgz"
-  mkdir -p .tools/bin
-  install -m 0755 "$tmp/git-lfs-${GIT_LFS_VERSION}/git-lfs" .tools/bin/git-lfs
-  rm -rf "$tmp"
-  export PATH="$ROOT/.tools/bin:$PATH"
-  echo "   已安装：$(git-lfs version)"
-  warn "后续 git 命令需要 PATH 含 $ROOT/.tools/bin，例如：export PATH=\"\$PWD/.tools/bin:\$PATH\""
+  echo "   git-lfs: $(git-lfs version)"
+  # 全新克隆没有 filter.lfs.* 配置；缺了它 checkout 只会拿到 133 字节的指针文件。
+  if git lfs install --local >/dev/null 2>&1; then
+    echo "   本克隆已启用 LFS 过滤器：$(git config --local filter.lfs.process)"
+  else
+    warn "git lfs install --local 失败，手动执行一次"
+  fi
+  warn "新开的 shell 里需要：export PATH=\"\$PWD/.tools/bin:\$PATH\""
 }
 
 # -------------------------------------------------------------- skills -------

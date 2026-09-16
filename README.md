@@ -116,18 +116,26 @@ docker build -f docker/Dockerfile.vllm-local -t rocm-ai/vllm:0.28.0-rocm7.2.4 .
 ## 克隆与还原
 
 ```bash
-# 轻量克隆（推荐）：跳过 797 MB LFS 下载
-GIT_LFS_SKIP_SMUDGE=1 git clone --depth 1 https://github.com/philemon1977/romc.ai-gfx90a.git ROCm.AI
+# 轻量克隆（推荐）：跳过 797 MB 的 LFS 下载，只取文档/代码/脚本/补丁
+GIT_LFS_SKIP_SMUDGE=1 git clone --depth 1 \
+  https://github.com/philemon1977/romc.ai-gfx90a.git ROCm.AI
 cd ROCm.AI
 
-# 需要实测数据/修复产物时再拉 LFS
-export PATH="$PWD/.tools/bin:$PATH"    # git-lfs 由 bootstrap 装到工作区（本机无 sudo）
-scripts/bootstrap.sh lfs && git lfs pull
+# 需要实测数据 / 修复产物时，再启用并拉取 LFS：
+# （本机无 sudo，git-lfs 由 bootstrap 装进工作区 .tools/bin/，并为本克隆写入 filter.lfs.*）
+scripts/bootstrap.sh lfs
+export PATH="$PWD/.tools/bin:$PATH"
+git lfs pull                       # 全量 797 MB；只想要某一部分用 --include=…
 
-scripts/bootstrap.sh                   # 交互式还原第三方代码 / 依赖 / 模型
-cp .env.example .env                   # 本机镜像 tag 配置
-./scripts/smoke.sh pytorch             # 验证 GPU 计算通路
+# 还原其余不入库的第三方代码 / 依赖 / 模型
+scripts/bootstrap.sh
+cp .env.example .env               # 本机镜像 tag 配置（.env 不入库）
+./scripts/smoke.sh pytorch         # 验证 GPU 计算通路
 ```
+
+> 直接 `git clone`（不带 `GIT_LFS_SKIP_SMUDGE`）会连带下载 797 MB LFS 内容；
+> 若机器上没有 git-lfs，检出到的 `.so` / `.gz` 会是 133 字节的指针文件——
+> 按上面三步启用即可复原。
 
 `hyperloom/reports/models/qwen38-27b-w8a8-dense/profiling/` 下的 trace 可用
 [Magpie TraceLens](https://github.com/AMD-AGI/Magpie) 后处理成 prefill/decode 与 roofline 报告。
