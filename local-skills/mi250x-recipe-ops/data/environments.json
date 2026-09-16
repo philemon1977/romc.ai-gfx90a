@@ -1,0 +1,611 @@
+{
+  "environments": [
+    {
+      "apply_verify_revert": {
+        "apply": "",
+        "revert": "",
+        "verify": ""
+      },
+      "consumers": [
+        "8112-deepseek-v4.1-flash-748b-q4km-llamacpp"
+      ],
+      "id": "llama.cpp_dsv41-gfx90a-2026.9.12",
+      "kind": "environment",
+      "path_or_target": "envs/llama.cpp_dsv41-gfx90a-2026.9.12",
+      "rebuild": [
+        "cd /home/qiba/ai/envs/llama.cpp-src-dsv41",
+        "cmake -S . -B build-hip -DAMDGPU_TARGETS=gfx90a -DGGML_HIP=ON -DGGML_CUDA=OFF -DGGML_HIP_MMQ_MFMA=ON -DGGML_HIP_GRAPHS=ON -DGGML_HIP_NO_VMM=ON -DLLAMA_CURL=OFF -DCMAKE_HIP_COMPILER=/opt/rocm-7.2.4/lib/llvm/bin/clang++   # 逐字复刻 2026.9.8 配方",
+        "cmake --build build-hip -j\"$(nproc)\"",
+        "cmake --install build-hip --prefix /home/qiba/ai/envs/llama.cpp_dsv41-gfx90a-2026.9.12"
+      ],
+      "red_lines": [
+        "🛑 RUNPATH 四格里没有裸 /opt/rocm/lib——不碰 alternatives（红线 2）；这是其余前缀的样板写法",
+        "RUNPATH 第 4 格是死格（09-12 rocm724 归位遗留），属并发会话路线 ⇒ 只报告不擅自改；要修就按 tools/build_llamacpp_gfx90a.sh 的 ROCM_LOCAL 口径重建",
+        "红线 5：deepseek41 的 engram 表 103 GiB 不进显存（host 侧惰性读）⇒ --fit off --load-mode dio 是可用前提",
+        "投机（--spec-type / MTP / ngram）对本 arch 不支持，加了是白烧",
+        "ctx > 16384 属两档 candidate mask 未实现区，256k 档实测可跑（口径见 serving/8112 §7/§8）"
+      ],
+      "selfcheck": [
+        "envs/llama.cpp_dsv41-gfx90a-2026.9.12/bin/llama-server --version   # 期望 version: 0.4.0-dev (build 1, commit f37da57)",
+        "cd /home/qiba/ai && env -u LD_LIBRARY_PATH /tmp/../home/qiba/ai/envs/llama.cpp_dsv41-gfx90a-2026.9.12/bin/llama-server --version && echo 自足   # 不依赖 LD_LIBRARY_PATH、不依赖 cwd",
+        "for r in $(readelf -d envs/llama.cpp_dsv41-gfx90a-2026.9.12/bin/llama-server | sed -n 's/.*R.*\\[\\(.*\\)\\]/\\1/p' | tr ':' '\\n'); do case \"$r\" in '$ORIGIN'*) echo \"  self $r\";; *) [ -d \"$r\" ] && echo \"  ✔ $r\" || echo \"  ✘ 死格 $r\";; esac; done   # 第 4 格死格属已知",
+        "ldd envs/llama.cpp_dsv41-gfx90a-2026.9.12/bin/llama-server | grep -c 'not found'   # 必须 0",
+        "envs/.../bin/llama-server --list-devices   # 期望 8×65520 MiB",
+        "tiny 冒烟：make_tiny_deepseek41.py 小权重 + -ngl 0，确认 graph 无 NaN",
+        "装完必做四步：RUNPATH 自检 → --list-devices → tiny 冒烟 → 再打 DSML 补丁"
+      ],
+      "sources": [
+        "docs/DeepSeek-V4.1-Flash-gfx90a-准入调研-2026-09-12.md §6（建前缀全过程）",
+        "docs/envs-盘点与整改-2026-09-12.md §1 第 10 行、§4 表（RUNPATH 第 4 格死格）",
+        "实测 --version 与 readelf -d（2026-09-15）"
+      ],
+      "stack": {
+        "framework": "llama.cpp 0.4.0-dev（build 1, commit f37da57，vcruz305 fork runtime/deepseek41）",
+        "notes": "结构 bin/+lib/+include/，cmake --install 自 envs/llama.cpp-src-dsv41/build-hip；107 MB；arch 注册：deepseek41✔ deepseek4✔ qwen4exp✔，glm5next✘（别拿它替 8108）；use_jinja 默认 false 且分支无 --parser",
+        "rocm": "7.2.4（RUNPATH 第 3 格 /opt/rocm-7.2.4/lib；第 4 格 ai/rocm724 旧路径为死格，只靠第 3 格正常工作）"
+      },
+      "status": "active",
+      "status_note": [
+        "active：全机唯一认 deepseek41 的构建（本机三个 vLLM env 与另两个 llama.cpp 前缀都不注册它）",
+        "漂移史：09-12 那次 ai/rocm724/ → envs/rocm724/ 归位把 RUNPATH 第 4 格留在旧路径上（死格），今天只靠第 3 格工作正常",
+        "配套资产：patches/llama.cpp-dsv41/port_v41_dsml_tags.py（8112 launcher 起服前 fail-closed 调用）、models/vcruz305/launcher/templates/dsv41_chat_template.jinja、tools/dsv41_fix_engram_kv.sh / dsv41_verify_engram.py / dsv41_tpl_check.py（跑在 unsloth env 解释器上）"
+      ],
+      "title_or_why": "DeepSeek-V4.1-Flash 专用 llama.cpp 前缀（8112 的运行时，全机唯一认 deepseek41 的构建）——arch deepseek41 只存在于 vcruz305 私有分支，没有这个前缀 V4.1 在本机无路可走。",
+      "verified": "2026-09-15"
+    },
+    {
+      "apply_verify_revert": {
+        "apply": "",
+        "revert": "",
+        "verify": ""
+      },
+      "consumers": [],
+      "id": "wu1w-fresh",
+      "kind": "environment",
+      "path_or_target": "envs/wu1w-fresh",
+      "rebuild": [
+        "envs/pytorch_2.14_rocm7.2/bin/python -m venv envs/wu1w-fresh   # 系统未装 python3.12-venv",
+        "envs/wu1w-fresh/bin/pip install --no-deps vllm==0.28.0+rocm723",
+        "# torch/triton 不要 pip 重装（会顶掉本机 slim torch → ABI 漂移，CLAUDE.md §6）；需要与现役同 commit 的 torch 时，从 envs/vllm_0.28.0_rocm72 复制 site-packages 的 torch/ 与 triton/ 三件套"
+      ],
+      "red_lines": [
+        "🛑 别拿它当 wu1w-int8-028 的对照：后者 = 本裸件 + 基线补丁 + 7 处 int8 增量，中间隔了一层",
+        "🛑 torch/triton 不许 pip 重装（顶掉本机 slim torch → ABI 漂移）",
+        "母本坏了可当临时起服底座，但 P1 +19.8%、QR、split-KV 全没有 ⇒ 数字不可与定稿基线混表"
+      ],
+      "selfcheck": [
+        "cd /home/qiba/ai; A=envs/wu1w-fresh/lib/python3.12/site-packages; B=envs/vllm_0.28.0_rocm72/lib/python3.12/site-packages; diff -rq $A/vllm $B/vllm | head -20   # 差异清单应≈三件补丁的落点（P1 / C2C3 / split-KV）",
+        "md5sum $A/vllm/distributed/device_communicators/quick_all_reduce.py   # 与 B 同文件对比，判差异属官方 wheel 还是本机手改"
+      ],
+      "sources": [
+        "docs/envs-盘点与整改-2026-09-12.md §1（判定：撤回删的建议，改留）、§3",
+        "config/env-lock/wu1w-fresh.txt"
+      ],
+      "stack": {
+        "framework": "vLLM 0.28.0+rocm723（裸轮，零手改）",
+        "notes": "python3.12 venv；1.5 G 全独占；lockfile config/env-lock/wu1w-fresh.txt 只有 1 行（vllm==0.28.0+rocm723）= 手工搭的对照件，别指望 pip install -r 复原",
+        "rocm": "配方未单列 ROCm 树；wheel 标签 +rocm723，需要 torch 时从 envs/vllm_0.28.0_rocm72 复制同 commit 件"
+      },
+      "status": "archived",
+      "status_note": [
+        "archived（留档）：09-12 盘点撤回『删』的建议、改留——它不跑服务，专职补丁 diff 基线（判『差异是官方 wheel 自带还是本机手工补丁造成』）",
+        "命名史：名字来自 src/mi210-vllm（davetha，MIT）作者的 GitHub handle（wu1w）；同批还有 wu1w-int8-028；命名里的 028 = vLLM 0.28，与 ROCm 版本无关",
+        "RUNPATH 相关（配方正文残缺行）：写着 /opt/rocm-7.2.3/lib（不存在）⇒ 实际全靠裸 /opt/rocm/lib 兜住，是全机最脆的一处，动 alternatives 前必须知道它存在"
+      ],
+      "title_or_why": "裸轮 vLLM 0.28.0+rocm723 对照 env（全机唯一未打补丁）——不是用来跑服务的，是用来回答『这个差异是不是补丁带来的』：envs/ 在 gitignore 里、补丁以改 site-packages 形式存在，没有裸件就没有 diff 基线。",
+      "verified": "2026-09-15"
+    },
+    {
+      "apply_verify_revert": {
+        "apply": "",
+        "revert": "",
+        "verify": ""
+      },
+      "consumers": [
+        "vllm_0.28.0_rocm72",
+        "vllm_master_rocm724",
+        "wu1w-int8-028",
+        "llama.cpp_gfx90a-2026.9.8",
+        "llama.cpp_dsv41-gfx90a-2026.9.12",
+        "hipais-shim"
+      ],
+      "id": "rocm724",
+      "kind": "environment",
+      "path_or_target": "envs/rocm724",
+      "rebuild": [
+        "apt-get download rocrand7.2.4 rocrand-dev7.2.4 hiprand7.2.4 hiprand-dev7.2.4 miopen-hip7.2.4 miopen-hip-dev7.2.4",
+        "for d in *.deb; do dpkg -x \"$d\" /home/qiba/ai/cache/rocm724-dev-stage; done",
+        "# 主体本身只能靠重新解包（11 G 级，配方未给解包命令）"
+      ],
+      "red_lines": [
+        "🛑 红线 2：不要把裸 /opt/rocm/lib 写进任何 RUNPATH / LD_LIBRARY_PATH 配方；要写就写 /opt/rocm-7.2.4/lib 或本盘 envs/rocm724/opt/rocm-7.2.4/lib（两代 libamdhip64 同名 .so.7，软链被换 = 静默换库）",
+        "🛑 绝不 apt install rocrand-dev / miopen-hip-dev：dpkg -c 核对过前者覆盖 21 个现有文件（含核心 .so），后者 Depends 连带 hip-runtime-amd/rocblas/hipblaslt/hsa-rocr/comgr 共 15 包；/opt/rocm-7.2.4 是软链 ⇒ apt 会透过软链覆盖解包树，直接打挂在用的 vLLM。dpkg -x 无视 Depends",
+        "⚠️ 本机 vLLM env 的 libtorch_hip.so RUNPATH 里写着不存在的 /opt/rocm-7.2.3/lib ⇒ 实际全靠裸 /opt/rocm/lib 兜住：全机最脆的一处，动 alternatives 前必须知道",
+        "换代流程：先读 ROCm-10 移除记录判据（零收益），再按 tools/rocm10_pin_legacy.sh 的 pin 逻辑保护软链，用 ROCM_PREFIX=<前缀> 走单臂 A/B（8107/8109 launcher 已参数化），绝不碰 alternatives"
+      ],
+      "selfcheck": [
+        "readlink -f /opt/rocm-7.2.4   # 必须是 …/envs/rocm724/opt/rocm-7.2.4",
+        "cat /opt/rocm-7.2.4/.info/version-dev 2>/dev/null || ls /opt/rocm-7.2.4",
+        "tools/rocm10_pin_legacy.sh status | sed -n '1,14p'   # 确认没有第二代 ROCm 在抢软链",
+        "for f in libamdhip64.so.7 libhsa-runtime64.so.1 librocblas.so.5 libhipblaslt.so.1 librccl.so.1; do [ -e /opt/rocm-7.2.4/lib/$f ] && echo \"  ✔ $f\" || echo \"  ✘ 缺 $f\"; done"
+      ],
+      "sources": [
+        "CLAUDE.md §2（ROCm 行）、红线 2",
+        "docs/存储-2026-09-12-rocm724归位到-envs.md",
+        "docs/MI250X-vLLM源码构建-ROCm724解包树缺件-2026-09-05.md",
+        "docs/ROCm-10.0.0-本机移除记录-2026-09-12.md"
+      ],
+      "stack": {
+        "framework": "ROCm 7.2.4 GPU 用户态（非框架环境）",
+        "notes": "核心库：libamdhip64.so.7 / libhsa-runtime64.so.1 / librocblas.so.5 / libhipblaslt.so.1 / librccl.so.1；解包树缺口：rocrand 有 librocrand.so.1.1.70204 但缺 lib/cmake/rocrand 与 dev 符号链、miopen 整棵树连 .so 都没有、libhipcxx 缺（可忽略，ROCm 8.0 起才转 REQUIRED）",
+        "rocm": "7.2.4（真身 /home/qiba/ai/envs/rocm724/opt/rocm-7.2.4，root 软链 /opt/rocm-7.2.4 指向它；/opt/rocm 本体 = deb 遗留空壳，7 个子项都是 alternatives 链接）"
+      },
+      "status": "active",
+      "status_note": [
+        "09-12 由 ai/rocm724/ 归位进 envs/，旧路径不留软链（llama.cpp_dsv41 前缀的 RUNPATH 第 4 格因此成死格）",
+        "负结果存档：ROCm 10.0.0 本机移除记录——零收益（vLLM TP8 −60%、RCCL 小消息地板 113→294 µs、llama.cpp 持平/略差、AITER 仍翻不动、hipFile 缺 hipAmdFileRead），所以绝不让第二代 ROCm 抢软链",
+        "单点风险：envs/（含此树）、/swapfile、docker/containerd 两个存储根都在同一块系统盘 nvme3n1p2；备份优先级 ①patches/native-env+config/env-lock（已 git）②src/vllm-master 的 backup remote 与 bundle ③这棵树只能重新解包（11 G 级）",
+        "dev 缺口在构建期才暴露：rocrand 缺 CMake config ⇒ torch LoadHIP.cmake:199 find_package(rocrand REQUIRED) 直接失败；miopen 缺本体 ⇒ LoadHIP.cmake:203 无条件 REQUIRED 失败；正解都是 dpkg -x 解到 cache/rocm724-dev-stage 经 CMAKE_PREFIX_PATH 喂 CMake"
+      ],
+      "title_or_why": "ROCm 7.2.4 解包树（/opt/rocm-7.2.4 的真身）——全机 GPU 用户态的单点：四个 vLLM env 的运行期、所有 llama.cpp 前缀的 RUNPATH 第 3/4 格、hipais shim 的链接目标都落到这棵树；它是解包树（非 apt 安装），dev 组件有缺口、/opt/rocm 是 alternatives 可切点。",
+      "verified": "2026-09-15"
+    },
+    {
+      "apply_verify_revert": {
+        "apply": "",
+        "revert": "",
+        "verify": ""
+      },
+      "consumers": [
+        "wu1w-fresh",
+        "unsloth_2026.9.2_rocm7.2"
+      ],
+      "id": "pytorch_2.14_rocm7.2",
+      "kind": "environment",
+      "path_or_target": "envs/pytorch_2.14_rocm7.2",
+      "rebuild": [
+        "# 配方未给本 env 自身的构建命令（lockfile 见 config/env-lock/pytorch_2.14_rocm7.2.txt）；它对外提供的构建能力是造 venv：",
+        "cd /home/qiba/ai && envs/pytorch_2.14_rocm7.2/bin/python -m venv <新 env 目录>   # 系统 python3.12 缺 ensurepip：/usr/bin/python3.12 -m venv 会报 ensurepip is not available；另一条路 sudo -n apt-get install -y python3.12-venv（本项目没走）"
+      ],
+      "red_lines": [
+        "🛑 绝不可删：15 G 全独占，删掉 = 真空出盘但同时废掉『造 venv』与『内核实验靶机』两条路（envs-盘点 §1）",
+        "🛑 不要在这里 pip install 任何声明 triton>= 的包（ROCm 侧发行名是 triton-rocm）⇒ pip 会拽进 CUDA 版 triton 并连带 17 个 nvidia-*/cuda-* + CUDA torch；必须 --no-deps 逐层装（做法见 tools/install_unsloth.sh）",
+        "不要与 vLLM 两个 env 的 slim torch（2.12.0+git6bbd260，靠 /opt/rocm 库树）混进同一进程（两棵树不同代，ABI 漂移雷区 CLAUDE.md §6）",
+        "🛑 launcher/beta/** 是红线 3 的不可再生区，只读",
+        "⚠️ 迁盘会打掉 venv 里烧死的绝对路径（六处，最阴是 site-packages/studio 软链断）⇒ 修具 tools/fix_venv_prefix.sh"
+      ],
+      "selfcheck": [
+        "envs/pytorch_2.14_rocm7.2/bin/python -c \"import torch;print(torch.__version__, torch.version.hip, torch.cuda.get_device_name(0))\"   # 期望 2.14.0+rocm7.2 / 7.2.x / AMD Instinct MI250X",
+        "报 No CUDA GPUs available ⇒ 沙箱是 workspace-write（Landlock 开不了 /dev/kfd），不是环境坏（CLAUDE.md §0.1）",
+        "torch.cuda.device_count() 在受限沙箱下照样返回 8（PCI 枚举）⇒ 判据必须用 torch._C._cuda_init()"
+      ],
+      "sources": [
+        "CLAUDE.md §6（亦是建 venv 的宿主解释器、自带全套运行时）",
+        "docs/envs-盘点与整改-2026-09-12.md §1（15 G / 独占 15 G / 绝不可删）",
+        "config/env-lock/pytorch_2.14_rocm7.2.txt"
+      ],
+      "stack": {
+        "framework": "PyTorch 2.14.0+rocm7.2",
+        "notes": "python 3.12.14 · torchvision 0.29.0+rocm7.2 · torchaudio 2.11.0+rocm7.2 · triton-rocm 3.8 · numpy 2.5.2 · modelscope 1.39.1；15 G 全部独占（find -links 1）；lockfile config/env-lock/pytorch_2.14_rocm7.2.txt",
+        "rocm": "7.2（torch wheel 自带全套 ROCm 运行时 = 自足；rocm7.x wheel 自带 7.2.1 系库，与 /opt/rocm-7.2.4 解包树不能混进同一进程 = ABI 漂移 → Bus error/segfault）"
+      },
+      "status": "active",
+      "status_note": [
+        "两个用途：① 造 venv 的宿主解释器（本仓当前采用）② 内核/数值实验靶机——launcher/beta/aiter-gfx90a/tests/*、launcher/beta/gfx90a-aiter-cdna2/benchmarks/* 都 source 本 env",
+        "它是 tools/install_unsloth.sh 的 BASE_PY 默认值 ⇒ 换掉它 unsloth 环境就造不出来",
+        "⚠️ 已知雷：import unsloth 在没有可用 HIP accelerator 时会直接抛 NotImplementedError（它主动检查）⇒ 受限沙箱里连『环境能不能 import』都测不出来"
+      ],
+      "title_or_why": "PyTorch 2.14+rocm7.2 自足栈（兼本机所有 venv 的宿主解释器）——系统没装 python3.12-venv，/usr/bin/python3.12 -m venv 直接失败 ⇒ 本环境是造其它环境的工具；同时它自带全套 ROCm 运行时，做内核实验不必碰 /opt/rocm。",
+      "verified": "2026-09-15"
+    },
+    {
+      "apply_verify_revert": {
+        "apply": "",
+        "revert": "",
+        "verify": ""
+      },
+      "consumers": [
+        "8114-qwen38-27b-int8-w8a8-vllm-tp1-dflash12"
+      ],
+      "id": "wu1w-int8-028",
+      "kind": "environment",
+      "path_or_target": "envs/wu1w-int8-028",
+      "rebuild": [
+        "cp -a envs/vllm_0.28.0_rocm72 envs/wu1w-int8-028   # 母本必须含 P1/QR 基线补丁",
+        "tools/fix_venv_prefix.sh   # 修 shebang（否则历史事故复现，见 red_lines）",
+        "envs/wu1w-int8-028/bin/python src/vllm-mi210/scripts/apply_gfx90a.py --apply",
+        "# 若母本不是补丁态：先干跑再重放 patches/native-env/wu1w-int8-on-top-of-base.patch"
+      ],
+      "red_lines": [
+        "🛑 对照组永远是 envs/wu1w-fresh（裸轮）；别用 envs/vllm_0.28.0_rocm72 当对照——它带着基线补丁，diff 会把两批改动混在一起",
+        "🛑 历史最危险一处（已修但要知道）：bin/ 下 71 个脚本的 shebang 曾指向母本 env——路径存在不报错，但 bin/vllm serve 静默加载未打 wu1w 补丁的 vLLM、bin/pip install 直接污染现役主力 env；09-12 已逐文件 sed 修正（原件备份 cache/trash/env-fix-2026-09-12/wu1w-int8-028-bin.before-shebang/）",
+        "🛑 W8A16 用不上、FP8 计算/FP8-MoE 不可用（CDNA2 无 FP8/FP4 矩阵单元，CLAUDE.md §2 精度行）",
+        "🛑 AITER MoE 仍然不可用（三层卡点未解：arch 门 / 无 gfx90a 码对象 / JIT 后 CK 静默算错）⇒ 别把 a8w8 线性层的成功外推到 MoE（CLAUDE.md §10）",
+        "7 处手改的 md5 基线在 patches/native-env/wu1w-int8-028.hand-patched.md5，别丢"
+      ],
+      "selfcheck": [
+        "tools/verify_env_patches.sh   # 19 个手改文件按 env 分基线校验，全绿 exit 0",
+        "envs/wu1w-int8-028/bin/python src/vllm-mi210/scripts/apply_gfx90a.py --check   # 上游打补丁器自己的幂等自检，exit 0",
+        "shebang 交叉指向复扫：for e in envs/*/; do e=${e%/}; grep -rh '^#!/home/qiba/ai/envs/' $e/bin 2>/dev/null | sed 's|^#!/home/qiba/ai/envs/||; s|/bin/.*||' | sort -u | grep -v \"^$(basename $e)$\" | sed \"s|^|  ✘ $(basename $e) 指向 |\"; done   # 无输出 = 自洽",
+        "判『真上场』：起服日志出现 AiterInt8ScaledMMLinearKernel",
+        "fused GDN HIP 核判据：qwen_gdn_linear_attn.py:13 要 import（核体唯一副本 patches/wu1w/fused_gdn_hip.hip，10.6 KB；另在 src/vllm-mi210 自己仓 commit c5bdf49）"
+      ],
+      "sources": [
+        "docs/davetha-wu1w-gfx90a-落地施工单-2026-09-10.md",
+        "docs/MI250X-PR41-Qwen38-27B-INT8-dflash-本机复现-2026-09-14.md",
+        "docs/envs-盘点与整改-2026-09-12.md §1/§2/§3",
+        "patches/native-env/wu1w-int8-028.hand-patched.md5",
+        "CLAUDE.md §2（精度行）、§6"
+      ],
+      "stack": {
+        "framework": "vLLM 0.28.0+rocm723（AITER-INT8 试验体）",
+        "notes": "torch 2.12.0+git6bbd260、amd-aiter 0.1.19（与母本同）；构成 = 母本（含 P1/QR/split-KV 基线补丁）+ 7 处 aiter/int8 手改（md5 实测谱系）；lockfile config/env-lock/wu1w-int8-028.txt",
+        "rocm": "配方未单列；由 envs/vllm_0.28.0_rocm72 整份 cp -a 而来，运行期同母本（slim torch 靠 /opt/rocm-7.2.4/lib）"
+      },
+      "status": "active",
+      "status_note": [
+        "active：只有 8114 一条臂用它，且只占单 die（TP=1）⇒ 与别的臂不互斥",
+        "手改清单（7 件）：aiter/jit/utils/{cpp_extension,build_targets}.py、aiter/ops/communication.py、vllm/_aiter_ops.py、vllm/_custom_ops.py、vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py、sitecustomize.py",
+        "命名：028 = vLLM 0.28，与 ROCm 版本无关；与 wu1w-fresh 同批（davetha 的 GitHub handle）"
+      ],
+      "title_or_why": "vLLM 0.28 + wu1w 的 gfx90a AITER-INT8 试验体（8114 的底座）——全机唯一能让 AITER CK gemm_a8w8 在 gfx90a 上 JIT 出码对象的 vLLM 环境（实测 2.9× Triton INT8）；官方 wheel 与另两个 vLLM env 都没有这条路。",
+      "verified": "2026-09-15"
+    },
+    {
+      "apply_verify_revert": {
+        "apply": "",
+        "revert": "",
+        "verify": ""
+      },
+      "consumers": [
+        "llama.cpp_dsv41-gfx90a-2026.9.12"
+      ],
+      "id": "llama.cpp-src-dsv41",
+      "kind": "environment",
+      "path_or_target": "envs/llama.cpp-src-dsv41",
+      "rebuild": [
+        "cd /home/qiba/ai/envs/llama.cpp-src-dsv41",
+        "cmake -S . -B build-hip -DAMDGPU_TARGETS=gfx90a -DGGML_HIP=ON -DGGML_CUDA=OFF -DGGML_HIP_MMQ_MFMA=ON -DGGML_HIP_GRAPHS=ON -DGGML_HIP_NO_VMM=ON -DLLAMA_CURL=OFF -DCMAKE_HIP_COMPILER=/opt/rocm-7.2.4/lib/llvm/bin/clang++",
+        "cmake --build build-hip -j\"$(nproc)\"",
+        "cmake --install build-hip --prefix /home/qiba/ai/envs/llama.cpp_dsv41-gfx90a-2026.9.12"
+      ],
+      "red_lines": [
+        "🛑 别把它和 llama.cpp_886/llama.cpp-glm5* 的 worktree 混用（那是 deepseek4/glm5next 世代基座，准入调研明确写过）",
+        "🛑 不要用 LD_LIBRARY_PATH 兜住构建产物：装完的前缀必须自带 RUNPATH",
+        "开关逐字复刻 2026.9.8 那族——差异会同时改掉 MMQ/graph/VMM 行为，A/B 数就不可比",
+        "更新上游处置顺序：fetch 看清 delta → 新目录构建 build-hip-<date>，不要原地覆盖现役前缀 → 前缀装到新名字（例 envs/llama.cpp_dsv41-gfx90a-2026.9.xx），只改 8112 launcher 的 LLAMA_DIR 默认值 ⇒ 回滚 = 去掉那一行改动",
+        "换完必重放 patches/llama.cpp-dsv41/port_v41_dsml_tags.py（锚点会漂）并与 --chat-template-file 对拍"
+      ],
+      "selfcheck": [
+        "身份实测：git -C envs/llama.cpp-src-dsv41 remote -v / 分支 / HEAD（应为 vcruz305/llama.cpp、runtime/deepseek41、f37da57）",
+        "冒烟（CPU，不占卡）：python tools/make_tiny_deepseek41.py 之类的小权重 + -ngl 0，确认 graph 无 NaN 再上 8 die",
+        "装完的前缀必须自带 RUNPATH，判据与自检见 environments/llama.cpp_dsv41-gfx90a-2026.9.12.md §2"
+      ],
+      "sources": [
+        "docs/DeepSeek-V4.1-Flash-gfx90a-准入调研-2026-09-12.md §1（能不能在 gfx90a 上编出来）、§6 第 1 步",
+        "docs/envs-盘点与整改-2026-09-12.md §1 第 11 行",
+        "实测 git remote / 分支 / HEAD（2026-09-15）"
+      ],
+      "stack": {
+        "framework": "llama.cpp 源树：remote https://github.com/vcruz305/llama.cpp · 分支 runtime/deepseek41 · HEAD f37da57（llama : keep the DeepSeek V4.1 engram gate scales out of quantization）",
+        "notes": "体量 642 MB（build-hip 约 307 MB）；与 envs/llama.cpp_gfx90a-2026.9.8（源树在 envs/llama.cpp_886/）不同基座，属 deepseek41 世代；移植量：相对上游全量 diff = 19 文件 / 2429 行全部在 runtime/，ggml/ 零改动 ⇒ HIP 后端一行 kernel 不用动",
+        "rocm": "7.2.4（构建用 CMAKE_HIP_COMPILER=/opt/rocm-7.2.4/lib/llvm/bin/clang++）"
+      },
+      "status": "active",
+      "status_note": [
+        "active：8112 运行时唯一上游；『能编出来』是结论不是运气（ggml/ 零改动 ⇒ 直接用现役 gfx90a 配方构建）"
+      ],
+      "title_or_why": "DeepSeek-V4.1 的 llama.cpp 源树（vcruz305 fork @ runtime/deepseek41，不是可执行环境）——deepseek41 这个 arch 只在这个私有分支里（ggml/ 零改动，改的全在 runtime/deepseek41，19 文件 / 2429 行），它是 llama.cpp_dsv41-gfx90a-2026.9.12 前缀的唯一上游，删了就没法重建 8112 的运行时。",
+      "verified": "2026-09-15"
+    },
+    {
+      "apply_verify_revert": {
+        "apply": "",
+        "revert": "",
+        "verify": ""
+      },
+      "consumers": [
+        "8101-qwen38-27b-fable-distill-bf16-vllm-tp2",
+        "8107-qwen38-flash-next-176b-bf16-vllm-tp8",
+        "8109-qwen38-flash-next-176b-bf16-vllm-splitkv"
+      ],
+      "id": "vllm_master_rocm724",
+      "kind": "environment",
+      "path_or_target": "envs/vllm_master_rocm724（editable，真实源码在 src/vllm-master/vllm）",
+      "rebuild": [
+        "bash tools/build_vllm_master_gfx90a.sh build   # 另有 check / deps 两个子命令",
+        "# 前置（缺一条就 configure 失败，逐条实测过）：env 由 envs/vllm_0.28.0_rocm72 整份 cp -a 而来（复用同 commit torch/triton）",
+        "export LD_LIBRARY_PATH=/opt/rocm-7.2.4; export VLLM_TARGET_DEVICE=rocm; export PYTORCH_ROCM_ARCH=gfx90a; export MAX_JOBS=24",
+        "ls cache/rocm724-dev-stage/opt/rocm-7.2.4/lib/cmake/rocrand   # dev 缺口预检：缺 staged 目录脚本只 WARN 并继续（configure 大概率失败）；staged 重建见 environments/rocm724.md §3（dpkg -x，绝不 apt install *-dev）",
+        "# 建完重放手工改动清单（P1/QR、DSA、AIS/PLE 补丁），再跑 --require 准入断言"
+      ],
+      "red_lines": [
+        "🛑 改行为 = 改 src/vllm-master 并在那边 commit；改 envs/ 里的东西无效（那里只有 finder）",
+        "🛑 构建脚本绝不让 pip 重装 torch（--no-deps --no-build-isolation）：官方 index 的 torch 顶掉本机 slim torch = ABI 漂移（CLAUDE.md §6 混库雷区）",
+        "🛑 绝对不要 apt install *-dev：rocrand-dev 覆盖 21 个现有文件、miopen-hip-dev 的 Depends 连带 15 个核心包，/opt/rocm-7.2.4 是软链 ⇒ apt 会透过软链覆盖解包树，直接打挂在用的 vLLM（红线 2）",
+        "两个推不出去的本地 commit（9349d08 DSA、af49926 QR，ahead 2，origin=上游无处可推）：已建 backup remote = /mnt/kioxia-cm6-3t8/ai/git-backups/vllm-master.git（另一块盘）+ cache/backups/vllm-master-local-commits-2026-09-12.bundle；规矩（CLAUDE.md §13）：nested 仓改完 git -C src/vllm-master push --all backup；主仓 git push gitee master；bundle 每轮刷新",
+        "⚠️ cp -al 硬链接克隆造的 env 与本树共享 inode ⇒ 原地写共享文件会同时改两个 env",
+        "⚠️ 迁移后先核对 vllm-*.dist-info/direct_url.json 指 /home/qiba/ai/src/vllm-master（09-12 已改），否则 pip list 与 editable finder 口径不一致",
+        "⚠️ src/vllm-master 是独立 nested 仓：主仓 git status 只有一行 M src/vllm-master（gitlink），真实改动要去那边看"
+      ],
+      "selfcheck": [
+        "envs/vllm_master_rocm724/bin/python patches/gfx90a/port_p1_c2_c3.py --env vllm_master_rocm724 --require   # 准入断言，exit 0 = 在位",
+        "git -C src/vllm-master status --porcelain   # 在飞改动",
+        "tools/verify_env_patches.sh   # 只管 envs/ 里的手改（本树是 editable，靠 git）",
+        "grep -c Qwen4Exp src/vllm-master/vllm/model_executor/models/registry.py   # = 5"
+      ],
+      "sources": [
+        "CLAUDE.md §6、§13",
+        "docs/envs-盘点与整改-2026-09-12.md §1/§3",
+        "docs/MI250X-vLLM源码构建-ROCm724解包树缺件-2026-09-05.md",
+        "docs/DeepSeek-V4.1-Flash-gfx90a-准入调研-2026-09-12.md（arch 未注册的判定链）",
+        "config/env-lock/vllm_master_rocm724.txt"
+      ],
+      "stack": {
+        "framework": "vLLM 0.1.dev1+g8a728663c.rocm724（editable 安装，__editable___...finder.py）",
+        "notes": "torch 2.12.0+git6bbd260 与母本同 commit（= master docker/Dockerfile.rocm_base 所钉）⇒ 复用，绝不让 pip 重装；Qwen4Exp 在 registry.py grep -c = 5（0.28 env = 0）",
+        "rocm": "7.2.4（解包树；构建前需 export LD_LIBRARY_PATH=/opt/rocm-7.2.4——slim torch 缺它是 core dump 不是报错；dev 缺口靠 cache/rocm724-dev-stage）"
+      },
+      "status": "active",
+      "status_note": [
+        "在树改动清单：P1+C2/C3/C3b QuickReduce 架构门（cuda_communicator.py:33 _MI250_QR_WANTED 等）、DSA 稀疏索引器捕获安全化（fp32 参考版在役，fp16+精排已回退）、gfx90a QR 独立初始化、AIS nogds 硬门（weight_utils.py:1066）+ PLE fp8 驻留（ple_layer.py）",
+        "推论（已登记但不可用）：DeepSeek-V4.1 原版 FP8/FP4 权重在任何本机 vLLM env 上都起不来——三个 env 的注册表都没有 DeepseekV41ForCausalLM，要跑得新建前缀并重编 _C",
+        "单点风险：树在系统盘；备份优先级见 environments/rocm724.md §4"
+      ],
+      "title_or_why": "vLLM master（editable → src/vllm-master）· gfx90a 本机编译 · 唯一有 Qwen4Exp arch 的树——8107/8109 的 Flash-Next 与 8101 的 Fable-Distill 只能跑在这棵树上（上游 0.28 裸轮的注册表没有 qwen4_exp），且本机所有 vLLM 侧自研改动（P1+QR 架构门、DSA 索引器、AIS nogds/PLE-fp8）都落在这棵树。",
+      "verified": "2026-09-15"
+    },
+    {
+      "apply_verify_revert": {
+        "apply": "",
+        "revert": "",
+        "verify": ""
+      },
+      "consumers": [],
+      "id": "llama.cpp_886",
+      "kind": "environment",
+      "path_or_target": "envs/llama.cpp_886",
+      "rebuild": [
+        "# 不要重建这个前缀本身；从这里重建一个能用的前缀（正确姿势）——用这里的源树喂入库构建器，勿用旧 build-rocm90a* 产物（6.4.4 世代）：",
+        "cd /home/qiba/ai && tools/build_llamacpp_gfx90a.sh  llama.cpp-glm5-0904:glm5next-rp",
+        "# 构建完必验：readelf -d 的四格 RUNPATH 全部存在 + ldd 0 条 not found（细节判据见 environments/llama.cpp_gfx90a-2026.9.8.md §3）"
+      ],
+      "red_lines": [
+        "🛑 别用它跑服务；CLAUDE.md §6 口径：旧树未删，可考古，别再用",
+        "🛑 不要用 envs/llama.cpp_886/ 里的旧 build-rocm90a* 产物（6.4.4 世代）构建",
+        "🛑 别直接 rm 腾盘：先确认 4 个源树 HEAD 已另有凭据（git bundle / 远端可重取）；判定是『留』（源树所在地 + GLM 官方回滚档）",
+        "🛑 别把 envs/llama.cpp-src-dsv41 和这里的 llama.cpp-glm5* worktree 混用（不同世代基座）"
+      ],
+      "selfcheck": [
+        "ldd envs/llama.cpp_886/bin/llama-server | grep 'not found'   # 有命中 = 报废状态确认（勿用其跑服务）",
+        "cd /home/qiba/ai/envs/llama.cpp_886/llama.cpp-glm5-0904 && git log --oneline -1   # 能读出 = worktree 修复仍然有效",
+        "四棵树旁各有旧 build-rocm90a* 目录；现役构建目录是 envs/llama.cpp_gfx90a-2026.9.8/build-*，不是这些"
+      ],
+      "sources": [
+        "CLAUDE.md §6（仅可考古）",
+        "docs/envs-盘点与整改-2026-09-12.md §1 第 12 行、§2.2（worktree 断链修复）",
+        "实测 git HEAD 与 ldd（2026-09-15）"
+      ],
+      "stack": {
+        "framework": "llama.cpp 归档 conda 前缀 + 4 棵源树（见 notes；4.0 G 全独占）",
+        "notes": "源树与 HEAD（实测）：llama.cpp-glm5-0904 @629b50552（= 文档记的 b223，unslothai/llama.cpp，→ glm5next-rp/8108）；llama.cpp-qwen4exp-mtp @a9e9c3c5f（unslothai，→ qwen4exp-mtp-rp/8103/8107/8110）；llama.cpp-glm5 @949f7efb0（2026-08-31，旧一代 glm5next 来源：strings 有 glm5next 但权威构建没有）；llama.cpp-src @d222767c7（ggml-org/llama.cpp，上游基线 + build-rocm90a{,-rccl} 考古）",
+        "rocm": "6.4.4（绑已摘除的 /opt/rocm-6.4.4 ⇒ libamdhip64.so.6 / librocblas.so.4 / libhipblas.so.2 均 not found，前缀本体不可启动）"
+      },
+      "status": "archived",
+      "status_note": [
+        "归档原因：绑 /opt/rocm-6.4.4（已不存在）⇒ bin/llama-server 起不来，仅可考古；保留价值 ① 现役前缀的源树所在地 ② GLM（8108）的官方回滚档",
+        "漂移史：09-12 发现 llama.cpp-glm5-0904 / llama.cpp-qwen4exp-mtp 两个 git worktree 的 .git 文件指向 /mnt/kioxia-cm6-3t8/ai/… ⇒ 不再是合法仓库，『8108 的回滚档连自己是什么 commit 都读不出来』；git worktree repair 后首次可读（HEAD 与文档记载吻合）",
+        "4.0 G 全独占"
+      ],
+      "title_or_why": "llama.cpp 归档 conda 前缀（4 源树 + 4 构建目录；bin/llama-server 已不可启动）——它是现役前缀的源树所在地与 GLM 的官方回滚档，但自身已报废：绑 /opt/rocm-6.4.4（该目录已不存在）⇒ ldd 有 not found、起不来；删它 = 失去源树与回滚位。",
+      "verified": "2026-09-15"
+    },
+    {
+      "apply_verify_revert": {
+        "apply": "",
+        "revert": "",
+        "verify": ""
+      },
+      "consumers": [
+        "hf-weight-download",
+        "unsloth-studio-8888"
+      ],
+      "id": "unsloth_2026.9.2_rocm7.2",
+      "kind": "environment",
+      "path_or_target": "envs/unsloth_2026.9.2_rocm7.2",
+      "rebuild": [
+        "tools/install_unsloth.sh   # 全程 --no-deps 逐层装；宿主解释器 BASE_PY=envs/pytorch_2.14_rocm7.2/bin/python"
+      ],
+      "red_lines": [
+        "🛑 必须照抄安装配方，别『顺手 pip install unsloth』：unsloth/unsloth_zoo 声明 triton>=3.0.0 而 ROCm 侧发行包名是 triton-rocm（旧称 pytorch-triton-rocm）⇒ 名字不匹配 ⇒ pip 拽入 CUDA 版 triton 顶掉它，并连带拉 17 个 nvidia-*/cuda-* + CUDA torch/xformers",
+        "🛑 Studio（systemd 托管、开机自启，config/unsloth-studio.env MODEL=none 只起 UI）一旦 load 模型就把 die 钉满，与 launcher 抢显存 ⇒ 跑大模型前先在 UI 里 Unload",
+        "Studio 本体跑 cache/unsloth-studio/unsloth_studio（1.2 G），不是本 env ⇒ 改本 env 不会改 Studio",
+        "两条 CLI 路径不等价：studio run 的 --model 必填（漏给 ⇒ exit 2，外部症状＝8888 打不开）；不加载模型必须走 plain path unsloth studio（父选项不转发给子命令）",
+        "Studio 按 GGUF 声明发 -c 1034240(1M)，本机必炸；且有 auto-switch 表里的 mmap+mlock 地雷（414 G > RAM，见 模型-脚本-环境对照表-2026-09-12 的 studio 条目与 commit 03e04c8）",
+        "⚠️ 删这个 env = hf_xet_download / ms_parallel_download 依赖链一起断（tools/hf4.py shebang 硬绑本 env 的 python）"
+      ],
+      "selfcheck": [
+        "envs/unsloth_2026.9.2_rocm7.2/bin/python -c \"import torch,triton;print(torch.__version__,triton.__version__)\"",
+        "envs/unsloth_2026.9.2_rocm7.2/bin/python -c \"import unsloth;print(unsloth.__version__)\"   # ⚠️ 受限沙箱（workspace-write）里 import unsloth 抛 NotImplementedError 是它的主动 accelerator 检查，不是环境坏了（CLAUDE.md §0.1）",
+        "事后判据（防 CUDA triton 混入）：envs/unsloth_2026.9.2_rocm7.2/bin/pip list | grep -Ei 'nvidia|cuda|triton'   # 只允许出现 triton-rocm",
+        "迁盘后：tools/fix_venv_prefix.sh（修 shebang / activate / RECORD / 软链）"
+      ],
+      "sources": [
+        "docs/MI250X-unsloth-安装-2026-09-04.md（§13–§14 全记录）",
+        "CLAUDE.md §6、§7（Studio 抢显存那条）",
+        "docs/envs-盘点与整改-2026-09-12.md §1 第 8 行（16 G / 真用途）",
+        "config/env-lock/unsloth_2026.9.2_rocm7.2.txt"
+      ],
+      "stack": {
+        "framework": "Unsloth 2026.9.2（unsloth_zoo 2026.9.1）",
+        "notes": "python 3.12.14 · torch 2.11.0+rocm7.2（自足）· triton-rocm 3.6.0 · transformers 5.5.0 · torchao 0.18.0 · gguf 0.19.0；16 G（envs-盘点 §1 第 8 行，判定：真用途）；lockfile config/env-lock/unsloth_2026.9.2_rocm7.2.txt；载有 patches/envs-patches/sitecustomize.py",
+        "rocm": "7.2（torch 2.11.0+rocm7.2 自足，自带运行时）"
+      },
+      "status": "active",
+      "status_note": [
+        "现职三条：① HF 下载主干（hf4.py 强制 IPv4 包装器）② DSV4.1 GGUF 的 engram KV 修复（dsv41_fix_engram_kv.sh / dsv41_verify_engram.py，8112 权重预处理）③ 微调/Studio 后端",
+        "迁盘后遗症（有过、还会再来）：venv 里六处烧死的绝对路径，最阴的是 site-packages/studio 软链断 ⇒ ImportError: Could not find studio/backend/run.py，而 python / --help 全正常（看起来『环境是好的』）⇒ 修具 tools/fix_venv_prefix.sh"
+      ],
+      "title_or_why": "Unsloth 微调环境（ROCm 侧 torch 2.11 + triton-rocm 3.6）· 现职是 HF 下载主干的解释器——名义上是微调环境，实际每天在用的是 tools/hf4.py 的 shebang 硬绑（HF 大权重下载主干）与 tools/dsv41_fix_engram_kv.sh；Studio 不在这个 env 里，在 cache/unsloth-studio/。",
+      "verified": "2026-09-15"
+    },
+    {
+      "apply_verify_revert": {
+        "apply": "",
+        "revert": "",
+        "verify": ""
+      },
+      "consumers": [
+        "8111-ornith-1.5-35b-a3b-bf16-vllm-tp4",
+        "8113-qwen38-27b-bf16-vllm-tp2",
+        "8203-qwen2.5-1.5b-bf16-vllm-smoke",
+        "8301-qwen38-27b-fable-distill-bf16-vllm-splitkv-ab",
+        "8302-qwen38-27b-fable-distill-bf16-vllm-dflash2"
+      ],
+      "id": "vllm_0.28.0_rocm72",
+      "kind": "environment",
+      "path_or_target": "envs/vllm_0.28.0_rocm72",
+      "rebuild": [
+        "envs/pytorch_2.14_rocm7.2/bin/python -m venv envs/vllm_0.28.0_rocm72   # 系统未装 python3.12-venv ⇒ 借宿主解释器",
+        "envs/vllm_0.28.0_rocm72/bin/pip install --no-deps vllm==0.28.0+rocm723   # torch/triton 由 base 镜像式复制",
+        "cd envs/vllm_0.28.0_rocm72/lib/python3.12/site-packages",
+        "patch -p1 < $AI/patches/native-env/vllm028-base-p1-qr.patch",
+        "cp $AI/patches/native-env/NEW-rocm_splitkv_pa.py vllm/v1/attention/ops/",
+        "cp $AI/patches/native-env/NEW-mi250_kernels.py   vllm/model_executor/layers/",
+        "tools/verify_env_patches.sh"
+      ],
+      "red_lines": [
+        "🛑 slim torch 不自带 ROCm 运行时：手工起 python 必须自己带 LD_LIBRARY_PATH=/opt/rocm-7.2.4/lib，否则 import torch core dump（走 launcher 不会缺：config/vllm.conf → config/ais.env 无条件补）",
+        "🛑 RUNPATH 兜底全靠裸 /opt/rocm/lib：ROCm 10 的 deb postinst 会抢走 /opt/rocm/{lib,bin}，两代 libamdhip64 同名 .so.7 ⇒ 静默换库——这是 CLAUDE.md 红线 2 与本仓移除 ROCm 10 的直接原因",
+        "config/vllm.conf 里 VLLM_ROCM_USE_AITER 默认 0 且显式置 1 会 WARN：RMSNorm 优先级门（vllm/platforms/rocm.py:1109-1116）只看 env 不查 arch，而 AITER 没有 gfx90a 码对象",
+        "envs/ 在 .gitignore 内 ⇒ git 永远看不见手改；唯一可复现副本在 patches/native-env/（见 native-env-drift-baseline 配方）"
+      ],
+      "selfcheck": [
+        "tools/verify_env_patches.sh   # 按 patches/native-env/<env>.hand-patched.md5 逐件 md5；全绿 exit 0",
+        "envs/vllm_0.28.0_rocm72/bin/python patches/gfx90a/port_p1_c2_c3.py --env vllm_0.28.0_rocm72 --require   # 一条命令查 P1/C2/C3 三件在位",
+        "envs/vllm_0.28.0_rocm72/bin/python patches/gfx90a/port_splitkv_pa.py --env vllm_0.28.0_rocm72 --check   # sha 由 rocm_splitkv_pa.py 字节比对定唯一真值",
+        "envs/vllm_0.28.0_rocm72/bin/python -c \"import torch,vllm;print(torch.__version__,vllm.__version__)\"",
+        "判『能不能跑某模型』：grep -c Qwen4Exp envs/vllm_0.28.0_rocm72/lib/python3.12/site-packages/vllm/model_executor/models/registry.py   # = 0 ⇒ Flash-Next 必须换 envs/vllm_master_rocm724（那里是 5 处）"
+      ],
+      "sources": [
+        "docs/envs-盘点与整改-2026-09-12.md §1 表（12 G / 独占 12 G / 判定『单点，先备份』）",
+        "CLAUDE.md §6 环境矩阵",
+        "config/env-lock/vllm_0.28.0_rocm72.txt",
+        "patches/native-env/vllm028-base-p1-qr.patch、patches/native-env/MANIFEST.md5"
+      ],
+      "stack": {
+        "framework": "vLLM 0.28.0+rocm723（官方 ROCm wheel 装进 venv + 三件 gfx90a 手工改动）",
+        "notes": "python 3.12.14 · torch 2.12.0+git6bbd260（slim，不自带 ROCm 运行时：缺 LD_LIBRARY_PATH 时 import torch 直接 core dump，N13）· triton 3.7.1+gitf0b55c07 · amd-aiter 0.1.19（完整安装 ⇒ IS_AITER_FOUND=True，但没有 gfx90a 码对象，预编只有 gfx942/950/1250）· transformers 5.16.1 · fastsafetensors 0.3.3；12 G / 独占 12 G；lockfile config/env-lock/vllm_0.28.0_rocm72.txt",
+        "rocm": "7.2 代（wheel 标签 rocm723）；运行期靠 LD_LIBRARY_PATH=/opt/rocm-7.2.4/lib；🛑 RUNPATH 里写死的 /opt/rocm-7.2.3/lib 本机不存在 ⇒ 全靠裸 /opt/rocm/lib 解析（红线 2 的最脆一处）"
+      },
+      "status": "active",
+      "status_note": [
+        "补丁谱系（md5 实测）：wu1w-fresh（裸轮，唯一未打补丁）→ 本 env（+P1 / +C2C3 / +split-KV）→ wu1w-int8-028（再 +7 处 aiter/int8 增量，cp -a 复制非硬链）；vllm_master_rocm724 = 由本 env 整份 cp -a 后 editable 指向 src/vllm-master",
+        "第四件在位手工改动：aiter/jit/utils/cpp_extension.py（pybind11 internals 修法）——AITER MoE 终案 ❌，此件留作证据（见 aiter-pybind11-internals）",
+        "envs-盘点 §1 判定：单点，先备份；DeepSeek-V4.1 原版（DeepseekV41ForCausalLM）本机三个 vLLM env 都没有，脚本预检直接 exit 3"
+      ],
+      "title_or_why": "vLLM 0.28.0+rocm723 主力底座与 P1/QR/split-KV 补丁载体——9 条实体臂里 5 条的解释器（8111/8113/8203/8301/8302），且是 vllm_master_rocm724 与 wu1w-int8-028 的复制母本：它坏了三条路线一起断；它是『补丁在位』的环境，不是裸轮。",
+      "verified": "2026-09-15"
+    },
+    {
+      "apply_verify_revert": {
+        "apply": "",
+        "revert": "",
+        "verify": ""
+      },
+      "consumers": [],
+      "id": "litellm_1_88",
+      "kind": "environment",
+      "path_or_target": "envs/litellm_1_88",
+      "rebuild": [],
+      "red_lines": [
+        "🛑 只绑 127.0.0.1:4000：下游 vLLM/llama.cpp 本身无鉴权且听 0.0.0.0，网关再暴露到 LAN 等于放大攻击面",
+        "🛑 口令不入库：EnvironmentFile=-/home/qiba/.secrets/litellm.env；master_key: os.environ/LITELLM_MASTER_KEY",
+        "🛑 同名不同端口 = 不同底座/不同实验臂 ⇒ 次臂一律加后缀单独立条目，绝不能共名（共名 = 轮询负载均衡，会把请求打到实验臂上）；改 launcher 后必须同步 config/litellm_config.yaml 别名",
+        "单元要点：KillMode=control-group；不用 RequiresMountsFor/WorkingDirectory 指向数据盘（红线 6 的教训）"
+      ],
+      "selfcheck": [
+        "envs/litellm_1_88/bin/python -c \"import importlib.metadata as m;print(m.version('litellm'))\"   # 实测 1.100.1（以 pip 读数为准，不信目录名）",
+        "systemctl is-active litellm ; ss -ltn | grep ':4000 '",
+        "sudo -n systemctl {start|stop|restart} litellm ; journalctl -u litellm -n 50 --no-pager"
+      ],
+      "sources": [
+        "config/litellm_config.yaml（09-12 重写注释：逐条从 launcher 抓真实 served-model-name / --alias）",
+        "systemd/litellm.service",
+        "docs/envs-盘点与整改-2026-09-12.md §1"
+      ],
+      "stack": {
+        "framework": "LiteLLM Proxy（实测 importlib.metadata 读数 1.100.1；目录名里的 1_88 是建环境时的版本，已漂移 ⇒ 以 pip 读数为准）",
+        "notes": "没有 vllm/torch，只是 proxy；port_p1_c2_c3.py --list-targets 把它列为『既无 vllm/ 包也无 editable finder』属正常",
+        "rocm": "无 GPU 依赖（不是推理环境）"
+      },
+      "status": "active",
+      "status_note": [
+        "已知不一致（别当故障排）：model-manager 健康检查打 GET /health 且不带 key（../model-manager/app.py:1043-1047）⇒ 配了 master_key 就 401；症状是『面板 litellm 灯不亮而服务其实在跑』；正解是把探针改成免鉴权的 /health/liveliness，但那是跨仓库改动，未拍板",
+        "别名历史包袱：8101 一条臂挂两个名字（qwen3.8-27b-fable qwen3.8-27b）；8113 与 8101 同名 qwen3.8-27b ⇒ 必须另立条目；8302 exec 8301 互斥同占 die6,7；8107/8109 两引擎/两臂同名同端口族 ⇒ 互斥",
+        "8102/8104/8105/8106 四个底座没有 launcher ⇒ 配置里以注释存在（挂着会让调用方以为可调用，调用才报连接错）"
+      ],
+      "title_or_why": "LiteLLM Proxy 环境（:4000 统一 OpenAI 兼容入口）——它是『8107 挂了，8107 GGUF 还是 8107 vLLM』这类问题的对外收敛点：别名唯一性由 config/litellm_config.yaml 负责，切换底座时调用方零改动。",
+      "verified": "2026-09-15"
+    },
+    {
+      "apply_verify_revert": {
+        "apply": "",
+        "revert": "",
+        "verify": ""
+      },
+      "consumers": [
+        "8103-deepseek-v4-flash-0731-284b-q8kxl-llamacpp",
+        "8107-qwen38-flash-next-176b-q4kxl-llamacpp",
+        "8108-glm-5.3-flash-320b-q8-0-llamacpp",
+        "8110-ornith-1.5-397b-q8-0-llamacpp"
+      ],
+      "id": "llama.cpp_gfx90a-2026.9.8",
+      "kind": "environment",
+      "path_or_target": "envs/llama.cpp_gfx90a-2026.9.8（同一目录树里的多个『环境』：glm5next-rp / qwen4exp-mtp-rp / glm5next / qwen4exp-mtp / qwen4exp-mtp-rccl / build-*）",
+      "rebuild": [
+        "cd /home/qiba/ai && tools/build_llamacpp_gfx90a.sh llama.cpp-glm5-0904:glm5next-rp   # 形式：源树目录名:发布名 [更多对…]；唯一入库版配方",
+        "# 关键开关（逐字复刻现役 CMakeCache，不追求性能差异）：-DAMDGPU_TARGETS=gfx90a -DGGML_HIP=ON -DGGML_CUDA=OFF -DGGML_HIP_MMQ_MFMA=ON -DGGML_HIP_GRAPHS=ON -DGGML_HIP_NO_VMM=ON -DLLAMA_CURL=OFF（rocWMMA OFF）",
+        "# CMAKE_HIP_COMPILER 一律指 7.2.4 的 lib/llvm/bin/clang++ ⇒ 设备码由新版 LLVM 重编、不是逐字节等价，翻默认值前须过对拍（docs/llama.cpp-自足前缀-验收清单-2026-09-08.md）",
+        "tools/build_llamacpp_gfx90a_rccl.sh   # RCCL 变体（ROCM_LOCAL 已是新路径，重跑约 3 分钟 CPU，不占卡）",
+        "构建完必验：readelf -d 的四格 RUNPATH 全部存在 + ldd 0 条 not found"
+      ],
+      "red_lines": [
+        "🛑 RUNPATH 绝不写裸 /opt/rocm/lib：那是 alternatives 可切点（CLAUDE.md 红线 2），换代会静默换库",
+        "🛑 一次目录迁移曾让全机 6 个自足前缀的兜底格同时失效（build.sh:26 曾把 AI= 写死到 /mnt/kioxia-cm6-3t8/ai）⇒ 教训：靠烤绝对路径实现的兜底必须配一条逐格 test -e 的自检",
+        "🛑 envs/llama.cpp_gfx90a-2026.9.8/build.sh 与 launcher/beta/llama-cpp-gfx90a/build.sh 里仍写归位前的旧路径 ⇒ 别再照它们构建（beta 是红线 3 的不可再生区，不动它）",
+        "🛑 glm5next 分支是必需的：strings libllama.so | grep glm5next 在权威构建里 0 命中 ⇒ 跑 GLM-5.3-Flash 只能用 glm5next-rp 前缀（8108 唯一可用构建）",
+        "GGUF 体积 > 宿主 RAM 或任何 mmap 全载场景，起服必带 --fit off --load-mode dio（红线 5，见 knobs/llamacpp-fit-off-load-mode-dio）",
+        "-rp 与旧前缀的唯一差异是 RUNPATH 兜底格指向归位后的 envs/rocm724/... ⇒ 回滚 = 把 LLAMA_DIR 里的 -rp 去掉"
+      ],
+      "selfcheck": [
+        "cd /home/qiba/ai/envs/llama.cpp_gfx90a-2026.9.8 && for p in glm5next-rp qwen4exp-mtp-rp qwen4exp-mtp-rccl; do echo \"== $p  missing=$(ldd $p/bin/llama-server | grep -c 'not found')\"; for r in $(readelf -d $p/bin/llama-server | sed -n 's/.*RUNPATH.*\\[\\(.*\\)\\]/\\1/p' | tr ':' '\\n'); do case \"$r\" in '$ORIGIN'*) echo \"   self $r\";; *) [ -d \"$r\" ] && echo \"   ✔ $r\" || echo \"   ✘ 死格 $r\";; esac; done; done",
+        "不依赖 LD_LIBRARY_PATH 也能起（自足判据）：env -u LD_LIBRARY_PATH ./glm5next-rp/bin/llama-server --version",
+        "arch 是否真在：strings glm5next-rp/lib/libllama.so | grep -x glm5next",
+        "判 GGUF 能不能跑：envs/llama.cpp_gfx90a-2026.9.8/glm5next-rp/bin/llama-server --list-devices（期望 ROCm0..ROCm7 各 65520 MiB）；tools/gguf_head_dump.py <某.gguf> | grep -i architecture 拿 arch 名去前缀表里对"
+      ],
+      "sources": [
+        "CLAUDE.md §6（llama.cpp 两行）",
+        "docs/envs-盘点与整改-2026-09-12.md §2.4、§4",
+        "docs/llama.cpp-自足前缀-验收清单-2026-09-08.md",
+        "docs/MI250X-llama.cpp-TP-RCCL-本机实测-2026-09-12.md",
+        "tools/build_llamacpp_gfx90a.sh、tools/build_llamacpp_gfx90a_rccl.sh"
+      ],
+      "stack": {
+        "framework": "llama.cpp 0.3.0-dev：glm5next-rp = build 223 commit 629b50552；qwen4exp-mtp-rp = build 1 commit a9e9c3c5f（分支来自 github.com/unslothai/llama.cpp 的 glm5next/upstream 等）",
+        "notes": "arch 注册（strings lib/libllama.so）：glm5next-rp = glm5next✔ deepseek4 qwen4exp qwen35(moe)；qwen4exp-mtp-rp = qwen4exp qwen35moe qwen35 deepseek4，无 glm5next；qwen4exp-mtp-rccl 链 librccl.so.1（解析到 /opt/rocm-7.2.4/lib，TP 试验臂非生产）；源树在 envs/llama.cpp_886/；旧默认前缀 glm5next、qwen4exp-mtp 与 -rp 一字节未动、留作回滚位",
+        "rocm": "7.2.4（RUNPATH 四格 = $ORIGIN/../lib : $ORIGIN/../ggml : /opt/rocm-7.2.4/lib : 本盘 envs/rocm724/opt/rocm-7.2.4/lib；绝不写裸 /opt/rocm/lib）"
+      },
+      "status": "active",
+      "status_note": [
+        "每次换前缀 / 迁盘 / 重建后都要跑 §4 自检",
+        "现役构建目录是本前缀族目录树里的 build-*，不是 llama.cpp_886 旁的旧 build-rocm90a*",
+        "1.2 G 体量（对比 dsv41 前缀只装必要件的 107 MB）"
+      ],
+      "title_or_why": "llama.cpp gfx90a 自足前缀族（8103/8107/8108/8110 的运行时）——生产 llama.cpp 只有这一族前缀能用（旧『权威』envs/llama.cpp_886/bin/llama-server 绑已消失的 /opt/rocm-6.4.4，仅可考古），而且 arch 是按分支注册的：换前缀 = 换能跑的模型族。",
+      "verified": "2026-09-15"
+    }
+  ],
+  "generated_at": "2026-09-16T08:22:03+00:00",
+  "source": "/home/qiba/ai/docs/recipes/environments"
+}

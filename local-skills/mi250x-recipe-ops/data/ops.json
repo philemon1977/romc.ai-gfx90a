@@ -1,0 +1,183 @@
+{
+  "generated_at": "2026-09-16T08:22:03+00:00",
+  "ops": [
+    {
+      "commands": [
+        "sudo systemctl restart unsloth-studio        # 改完 config/unsloth-studio.env 之后\ncurl -sS -o /dev/null -w '%{http_code}\\n' http://192.168.100.21:18888/",
+        "curl -s http://127.0.0.1:8888/openapi.json | python3 -c 'import json,sys;d=json.load(sys.stdin);print(d[\"info\"],sorted(d[\"paths\"])[:6])'   # 端口占用定性：只认路由表指纹",
+        "CHECK_PATHS='lib/python*/site-packages/studio/backend/run.py' bash tools/fix_venv_prefix.sh   # 迁盘修复：fail-closed 预检，留 .prefix-backup-<ts>.tgz + .prefix-undo-<ts>.sh；验收不变量 = python 起 + sys.prefix 在 venv 内 + find -xtype l 命中 0 + 无旧前缀文本 + CHECK_PATHS 在位",
+        "systemctl status unsloth-studio; journalctl -u unsloth-studio -n 50"
+      ],
+      "decision_rules": [
+        "“:8888 返回 {\"detail\":\"Not Found\"}”的分诊（2026-09-15 实测）：定性只认路由表指纹不认端口——curl openapi.json：vLLM 指纹 /v1/chat/completions /tokenize /invocations /ping /scale_elastic_ep /generative_scoring；Studio 指纹 /api/models/list /api/inference/status /api/chat/threads/…，健康口是 /api/health（没有 /health）；当时 Studio 压根不在 8888（单元 inactive），占用者是别的会话的 vllm serve --port 8888，FastAPI 无 / 路由 ⇒ 默认 404 被误读成“Studio 坏了”；处置 = 迁端口",
+        "已否证的解释：①Studio 起不来（journal 那阵子没有它）②venv 死路径（签名是 ImportError/进程只活 1 s）③缺 --model 退 2（同样“打不开”，但 8888 上不会有任何 LISTEN）",
+        "“no executable llama.cpp runtime” = runtime pin 失效；报 libhipblas.so.2 is missing = UI 把 pin 改回了死路 envs/llama.cpp_886/bin（绑报废 6.4.4；“装包”是错的建议，§16.1）",
+        "起不来的排查顺序：①systemctl status + journalctl -u -n 50 ②给了 MODEL=… 才查 --model 必填，MODEL=none 必须走 plain ③python 起得来但 import 炸 → 迁盘六处路径（重点 site-packages/studio 软链）④加载模型炸 → pin；加载“卡住” → 大概率 mmap+SVM（红线 5），先看 dmesg ⑤单元依赖故意软",
+        "各 launcher 的显存 fail-fast 预检（如 8108 的“每 die 权重+5 GiB”）会把 Studio 冲突变成起服即拒而不是数分钟后 OOM；被拒时先在 Studio UI Unload"
+      ],
+      "hard_rules": [
+        "🛑 与推理 launcher 抢卡规矩（最重要）：Studio 一旦 load 模型就把 die 钉满 ⇒ 跑大模型前先 Unload。实证：09-05 18:49 load GLM-5.3-Flash Q8_0（自带 llama-server，port 58267，-c 1034240）把 die0-5 各钉 53–58 GB，8108 白烧 6.5 min 才死于 alloc_tensor_range out of memory（318 G×2 > 512 G 物理显存，两者不可能共存）；且它按 GGUF 声明发 -c 1034240（1M），本机必炸",
+        "永远别 pkill -f unsloth——会命中你这条命令行本身（CLAUDE.md §0.4 实录）；停止器识别 main 的口径要窄（匹配 <venv>/bin/unsloth studio --host|--port|-p，否则把它自己第①步起的 unsloth studio stop 子进程误判成 main，§13.1）",
+        "端口被占时不要去 kill 占用者——那是别的会话的压测（CLAUDE §0.4）；start_unsloth_studio.sh 已加端口预检：被占 ⇒ exit 1 并打印占用者，不再静默 fallback 到别的端口（旧行为“进程活着、UI 不在预期端口”更难查）",
+        "这里刻意不抄 model-manager 的 KillMode=process：Studio 的派生进程是占着 GPU 的 worker，留下来就是下次起服 OOM",
+        "单元故意不加 mount 硬依赖（条带盘软链是可降级项；写成硬依赖 = 复刻 09-08 整机 dep-fail）；写单元键名以 systemd-analyze verify 为准——Condition* 只认 [Unit]，systemd 255 没有 ConditionPathIsExecutable（§13.4）",
+        "unsloth studio run 路径 --model 必填（studio.py:2612 model is None → typer.Exit(2)，外部症状=“打不开”）；不能写 unsloth studio --parallel N run …（Typer 不把父选项转发给子命令）；只有 --host/--port/--password/--parallel 共有",
+        "auto-switch 表里的红线 5 地雷故意未改：DSV4.1 条目写着 load_mode=mmap+mlock（414.2 GiB > RAM 251.7 GiB，mlock 锁不下且正是 SVM 挂死签名；同表 GLM/UD-Q4/DSV4 三条都是 dio）——该表只服务 auto-switch 路径且本机 openai_api_auto_switch_model 未设 = 惰性；要拆雷只改这一条，走 app 自己的 upsert_app_settings 写入口、先留原值以便回滚（命令全文 §16.4）",
+        "UI 里点 Load 不吃 auto-switch 表（那次失败发的是 --fit on 且无 --load-mode）⇒ UI 路径参数只能在模型 Run settings 里改 --fit off --load-mode dio（§15 末）",
+        "口令只放 ~/.secrets/unsloth-studio.env（0600），config/unsloth-studio.env 入 git、不放口令"
+      ],
+      "id": "unsloth-studio-8888",
+      "kind": "op",
+      "knob_names": [
+        "MODEL（config/unsloth-studio.env，默认 none）",
+        "PORT（18888；env 是唯一参数层）",
+        "FOREGROUND=1（ExecStart 调脚本用）",
+        "unsloth studio run --model/--max-seq-length/--gguf-variant",
+        "unsloth studio --host/--port/--password/--parallel（plain 形态）",
+        "app_settings.openai_api_auto_switch_overrides / openai_api_auto_switch_model（本机未设=默认关）"
+      ],
+      "scope": [
+        "Studio 常驻服务(:18888)",
+        "全部 llama.cpp 推理臂的抢卡前置检查（8103/8107/8108/8110/8112）",
+        "runtime pin 影响面（llama.cpp_gfx90a-2026.9.8 前缀）"
+      ],
+      "settled_values": {
+        "ExecStart": "不重抄命令 = FOREGROUND=1 调 tools/start_unsloth_studio.sh（服务与手敲共用同一份逻辑含单实例护栏；FOREGROUND=1 让脚本 exec 自己 ⇒ Type=simple/MainPID 成立）",
+        "MODEL": "默认 none（2026-09-15 起＝脚本默认值 + 自启一致）：只起 UI、不预加载任何权重，实测 8 个 die 全留 10 MiB、GPU 开销只有 import torch 枚举；要预加载必须显式 MODEL=<路径>（旧默认 models/Qwen/Qwen3.8-27B 手敲一次就静默钉住 die）",
+        "PORT": "18888（2026-09-15 从 8888 迁来；配方 id 保留旧名不动避免引用漂移；单元里 Environment=PORT= 只是兜底，会被 env 文件覆盖）",
+        "runtime pin": "正解 = pin 到 gfx90a 自足前缀 envs/llama.cpp_gfx90a-2026.9.8/*（§15.2）；改回用 app 自己的 setter（get_app_setting 每请求查 DB，无需重启）；09-13 已加闸口 tools/audit_studio_llama_pin.py",
+        "停止语义": "ExecStop 调 tools/stop_unsloth_studio.sh（四阶段权威停止器）+ KillMode=control-group（默认）兜底；实测一次完整 stop：37 s 退出、端口释放、pid/marker 清零、8 die 回 10 MiB",
+        "日志": "journalctl -u unsloth-studio（+ cache/unsloth-studio/logs/），不在 logs/<key>/——它不属于 launcher 口径"
+      },
+      "sources": [
+        "docs/MI250X-unsloth-安装-2026-09-04.md §12–§16（自启单元、六处路径、runtime pin、auto-switch 表）",
+        "CLAUDE.md §7（Studio 条）、§7.2（迁盘）",
+        "systemd/unsloth-studio.service、config/unsloth-studio.env、tools/start_unsloth_studio.sh、tools/stop_unsloth_studio.sh、tools/fix_venv_prefix.sh、tools/audit_studio_llama_pin.py"
+      ],
+      "status": "active",
+      "title_or_why": "Unsloth Studio(:18888，原 8888) —— 端口迁移、开机自启、两条 CLI 路径、与 launcher 抢卡的规矩：它是本机唯一会“在你不知情时把 die 钉满”的常驻服务（09-05 让 8108 白烧 6.5 min）",
+      "verified": "2026-09-15"
+    },
+    {
+      "commands": [
+        "cd /home/qiba/ai\nbash models/<org>/launcher/<x>.sh                       # 起（先过配方 §2 前置）\ntail -F logs/<key>/server-<port>.current                # 看\ngrep 'listening on' logs/<key>/server-<port>.current    # 就绪签名（超时 → 配方 §8/红线 5）\nkill -TERM -$(cat logs/<key>-<port>.pid)                # 停（负号 = 按 PGID 组杀）\nrm -f logs/<key>-<port>.pid                             # 停完就删把手（死把手 = PID 复用后误杀）",
+        "cat /sys/class/drm/card{1..8}/device/mem_info_vram_used   # 显存观测，单位 bytes；空闲 ≈ 1.0e7",
+        "ss -ltnp | grep ':8108'   # 反查占用取 pid=（永远别按名字杀）",
+        "python3 tools/audit_log_paths.py; python3 tools/audit_ports.py; python3 tools/audit_recipes.py   # 只读闸口，exit 1 即红"
+      ],
+      "decision_rules": [
+        "动手前三件事（多会话同机纪律，§10.5 末条）：①起服必落 PID、停服只按 -PGID ②清共享态前确认无主 ③看 card{1..8} 读数判断哪些 die 有主（历史上两次被旧服务占满卡，还包括 Unsloth Studio——见 ops/unsloth-studio-8888）",
+        "闸口（全部只读，exit 1 = 红）：python3 tools/audit_log_paths.py（MODEL_KEY 在词表 · LOG_DIR/LOG_FILE/PID_FILE 逐字等于规范式 · 禁 /tmp · 默认端口与 key 相容 · 消费方一致性——全仓按 logs/<名>-<端口>.pid 找把手的 63 处，那个名字必须是某 launcher 真会写的；薄封装 exec 且不自己定义 LOG_FILE 自动豁免）；tools/audit_ports.py（launcher↔ports.conf 登记：无默认端口没登记、无两底座抢同口不同 env、互斥声明成文）；tools/audit_recipes.py（配方库形状/路径实物/defaults 反查/覆盖率/索引）",
+        "model-manager 面板的“停止”走 lsof -ti :<port> 按端口反查，不读 PID 文件 ⇒ 挪日志不影响 UI 停服；PID 留顶层是因为 CLAUDE §0.4 硬约定、人肉 cat、历史脚本都按顶层 glob 找",
+        "历史包袱：09-12 旧日志全清（908 件/1.7 G + 35 个死 .pid）⇒ 旧文档按文件名引用的约 47 处已不存在，结论都在正文，要复证用对应 launcher + bench/ 重跑（8112 有 VERBOSE=1、8103 起服即打三段 KV 账）；未收口三件：非推理日志（Studio/download）仍在各自我地盘、.logpath 侧信道与 .current 重叠待并轨（别现在改，bench/qr_* 还在用）、tools/mirror_tmp_logs.sh 已孤儿"
+      ],
+      "hard_rules": [
+        "🛑 停服严禁 pkill -f <脚本名>、严禁把 pgrep 输出喂 kill——实录两类事故：①pkill -f 命中自己这条命令行（把当次调用杀掉 3 次）②pgrep -x llama-server 同时命中探针与生产实例，误杀 8108（CLAUDE.md §0.4）；停服只认 PID 文件里的显式 PID/其进程组，反查用端口 ss -ltnp | grep ':8108' 取 pid=",
+        "组杀（kill -TERM -<pgid>）只在确认 server 的 PGID 独立（setsid/终端手起）时用——nohup 起的 server 若继承调用方 PGID，组杀会连坐自己（8110 扫描脚本实踩过）；手工起服请 setsid（只 nohup 时调用被打断会连带打死服务，下载 §11 坑 3）",
+        "会话起的服务在 dsh-web.service 的 cgroup 里（setsid/nohup 只改会话不改 cgroup）——重启 DSH 面板服务曾连坐杀掉在跑的 8112（09-12 21:54）；已加 drop-in no-kill-descendants.conf（KillMode=process，daemon-reload 即生效），别把它撤了，且重启面板前后仍应按 PID 文件复核服务还活着",
+        "日志不落 /tmp、不入 git（09-12 已把 3 条写 tmpfs 的收编；断电全丢过）；停完就删 .pid 把手（死把手 = PID 复用后误杀）",
+        "新增底座顺序 = 先登记端口 → 再进词表 → 最后写 launcher，反了 audit_log_paths 直接红",
+        "名字只放端口不放脚本名（薄封装 exec 基脚本后 $0 会变）；时间戳到分钟 ⇒ 同分钟重启两次会撞名（8107 vLLM↔GGUF 互斥同口时留意）",
+        "sysfs 按 MiB 文本解析会恒得 0（单位是 bytes）——曾把“等显存释放”变成空转；sysfs 快照不是驻留/进度的可靠判据（缓冲一次性 alloc 实测瞬间跳满后拷贝期读数不动；09-04 见过加载中 8 die 全读 10 MiB 而 worker 自报 13.08 GiB）⇒ 驻留/OOM 只认 vLLM 自报 Model loading took X GiB / N GiB is allocated by PyTorch，llama.cpp 侧真进度看进程 read_bytes/minflt 增量",
+        "进程消失 ≠ 显存释放（实测 kill 完 die 上还留 40+ GiB）⇒ 重启前等上一个实例归还显存",
+        "清 /dev/shm 等共享态前先确认无主；⚠️ 受限沙箱里 /dev/shm 本就不可写——评测出“假 12/17”是环境问题不是模型问题（§0.1b）"
+      ],
+      "id": "serve-start-stop-observe",
+      "kind": "op",
+      "knob_names": [
+        "MODEL_KEY / LOG_DIR / LOG_FILE / PID_FILE（launcher 日志命名变量，一律 ${VAR:-默认} 可外部单点覆盖）",
+        "VRAM_WAIT_FREE_S（8110 基脚本显存等待环，=150）",
+        "VERBOSE（8112 起服详录）",
+        "logs/<key>-<port>.pid（停服把手）",
+        "logs/<key>/server-<port>.current（tail 软链）"
+      ],
+      "scope": [
+        "全部 serving 臂（8101–8114、8203、8301/8302）的起停与观测",
+        "配方库 §6 的公共部分",
+        "新增底座的登记流程"
+      ],
+      "settled_values": {
+        "8110 等待环": "VRAM_WAIT_FREE_S=150（基脚本内置，等上一个实例归还显存）",
+        "model-key 词表": "日志规范 §2（dsv4-flash/flash-next/glm53/ornith397b/dsv41/…），与 config/ports.conf 底座一一对应",
+        "sysfs 口径": "看显存/占用以 cat /sys/class/drm/card{1..8}/device/mem_info_vram_used 为准，单位是 bytes 不是 MiB；空闲 ≈ 1.0e7（=10.5 MiB，如 10993664）；card0 是 BMC 显卡（无 mem_info_vram_total），8 die 是 card1–card8；HIP index i → card{i+1}",
+        "就绪签名": "grep 'listening on' logs/<key>/server-<port>.current（超时 → 配方 §8 / 红线 5）",
+        "日志命名式（唯一规范）": "logs/<model-key>/server-<port>-<YYYYMMDD-HHMM>.log；.current = 最近一次软链（tail 用）；PID 把手 logs/<model-key>-<port>.pid 留 logs/ 顶层；非模型类进 logs/_host/"
+      },
+      "sources": [
+        "docs/日志规范-2026-09-12.md（全文：§1 命名式 / §2 词表 / §3 为什么 PID 留顶层 / §4 闸口 / §5 落地记录 / §6 未收口）",
+        "CLAUDE.md §0.4（严禁按名字定位进程）、§0.6（dsh-web cgroup）、§2 主机档案（sysfs/卡号）、§7（sysfs 快照≠驻留、card0=BMC）",
+        "tools/audit_log_paths.py、tools/audit_ports.py（只读闸口，exit 1 即红）",
+        "models/unsloth/launcher/deepseek-v4-flash-0731_284b_q8kxl_llamacpp_rocm72_1m_8103_unsloth_mi250dx8.sh L226-252（模板臂：PID/.current/ROCm 拦杀/停服提示）"
+      ],
+      "status": "active",
+      "title_or_why": "起停与观测的统一姿势 —— PID 把手、sysfs 口径、cgroup 连坐、闸口：本机多会话同仓同机作业，“杀错人/读错数/被面板连坐”三类事故都有实录，这一页是唯一口径",
+      "verified": "2026-09-15"
+    },
+    {
+      "commands": [
+        "export HF_XET_HIGH_PERFORMANCE=1                     # ★ 主开关（hf_transfer 在 hub 1.x 已废弃）\nexport HF_HUB_ENABLE_HF_TRANSFER=0                   # 必须 0：置 1 会让 hub 绕开 Xet（constants.py:296）\nexport HF_HUB_DISABLE_XET=0\nexport HF_XET_CLIENT_ENABLE_ADAPTIVE_CONCURRENCY=0   # ★ 关自适应并发，否则本机必翻车（§3）\nexport HF_XET_FIXED_DOWNLOAD_CONCURRENCY=4\nexport HF_XET_CLIENT_ENABLE_MULTIRANGE_FETCHING=0",
+        "tools/hf_xet_download.sh --bg <org>/<repo> models/<org>/<repo> <file>.gguf\ntail -f logs/hf_xet_<file>.log                # 每 20 s 一行：三口径速率 + 已落盘 + ETA\nkill $(cat logs/hf_xet_<file>.pid)            # 🛑 只按 PID 文件里的显式 PID（红线 §0.4）\n# 例（09-08 实跑）：tools/hf_xet_download.sh --bg ornith-ai/Ornith-1.5-397B-GGUF models/ornith-ai/Ornith-1.5-397B-GGUF Ornith-1.5-397B-Q8_0.gguf",
+        "tools/ms_parallel_download.py --conns 8 --sha256 …   # ModelScope 单文件多连接：分段 pwrite、.parts.json 断点续传、按 API 的 Sha256 核验",
+        "modelscope download --include 'Ornith-1.5-397B-Q8_0/*' --local-dir …   # 11 分片；绝不整仓拉；中断后原命令重跑即续传",
+        "tools/hf4.py auth whoami   # python 侧身份验证（强制 IPv4）；预检/清单走 curl -4"
+      ],
+      "decision_rules": [
+        "最终判活口径（写进脚本）：max(落盘增量, 进程 RSS 增量, 网卡 rx 增量) 任一有动静即存活；du 权威但滞后 ≈3.5%——HP 先吃内存缓冲（VmRSS 实测 14.3 GiB）再成批落盘，可整整 1 min 不动，别据此判卡住",
+        "同进程能扛过限流窗口：三口径全 0 后 20 s 同进程回到 41.4 MB/s、同一个 temp 继续涨 ⇒ 别急着 kill（kill = 从头重下）",
+        "链路 vs 配置定性：4361 条 range 全 206、curl 直压同一 URL 也只剩 1.8–2.0 MB/s ⇒ 链路按突发量 clamp，不是配置的锅（path_probe_mbps()）",
+        "IPv4 强制的理由：huggingface.co 的 AAAA（2a03:2880:…）与 A（157.240.8.50/103.252.115.153，Meta 段）都是毒记录，靠网关 443 透明拦截才通；curl 有 Happy Eyeballs 无感，python 按 getaddrinfo 顺序逐个试每个用满 timeout（IPv6 黑洞 6.01 s → IPv4 0.01 s；requests.get(timeout=20) 恰好 20.42 s）；边缘 IP 单流 33.8 也回到 26 ⇒ 那只是“一条 HTTPS 流”的水位，不是出口上限",
+        "续传真相 HF vs ModelScope 正好相反：ModelScope 可续传（modelscope_hub/_download.py:1217-1256：tmp 名 <target>.incomplete 存在则 Range: bytes=<size>-，206 才 append）⇒ 中断后原命令重跑即可，不丢字节",
+        "自适应并发翻车现场（只设 AC_MAX_* 压不住，HP 预设会盖掉）：158 线程 / 110 条 ESTAB / 并发计数冲到 124 后 90 s 只进 1.2 KB，而 xet 日志还在打 success ratio 1.000 ⇒ 判活不可信"
+      ],
+      "hard_rules": [
+        "🛑 HF 必带 HF_TOKEN：匿名跑到 23.70 GiB（5.94%）整体僵死（三口径全 0 连续 120 s+、连接 128→6、进程活着不进字节）= 匿名配额的墙，不是 xet 的问题（并发早已压到 4）；带 token 后同一位置直接续上",
+        "🛑 判活禁口径：rchar ❌（hf_xet 的 socket 字节不计入：恒 18 MiB 时 du 一分钟涨了 1.1 GiB）；ss per-socket bytes_received ❌（连接回收后计数随 socket 消失，元数据预热期 2–3 min 读假 0）",
+        "🛑 Xet + --local-dir 跨进程不续传：.incomplete 末尾 8 位随机、每次启动新建并从 0 涨 ⇒ 每 kill 一次 = 整段从头重下（实测 3 次尝试烧 48.26 GiB 带宽只留 23.17 GiB 净进度）⇒ 看门狗默认只观察不杀",
+        ">100 GiB 的文件一口气跑完：别在跑的时候改脚本重启（40 GiB 的学费）",
+        "ModelScope 绝不整仓拉（168 文件 / 4.9 T 的仓）：--include 'Ornith-1.5-397B-Q8_0/*' 正好命中 11 分片（走 stdlib fnmatch，* 跨 /）；--local-dir 绕 cache 不占双份空间",
+        "别拿 du 当 ModelScope 完成信号（完成判据 = 文件名去掉 .incomplete 的 shutil.move）；按 API 精确字节数/Sha256 核验（tools/ms_verify_ornith397b_q8_0.sh）",
+        "--no-xet / HF_HUB_DISABLE_XET=1 不是兜底：>50 GB 单文件 hub 直接拒 “The file is too large to be downloaded using the regular download method”，只有 Xet 一条路",
+        "python 侧一律走 tools/hf4.py（强制 IPv4）；验身份用 tools/hf4.py auth whoami，不要用裸 requests（撞同一坑 + 偶发 ConnectionReset）；预检/清单走 curl -4",
+        "kill 只按 PID 文件里的显式 PID（红线 §0.4）",
+        "完成后硬约束：单文件 >RAM ⇒ 起服必带红线 5（配方 llamacpp-fit-off-load-mode-dio）；399 GiB/8 die = 49.9 GiB/die，KV 只剩 ~14 GiB/die"
+      ],
+      "id": "hf-weight-download",
+      "kind": "op",
+      "knob_names": [
+        "HF_XET_HIGH_PERFORMANCE",
+        "HF_HUB_ENABLE_HF_TRANSFER",
+        "HF_HUB_DISABLE_XET",
+        "HF_XET_CLIENT_ENABLE_ADAPTIVE_CONCURRENCY",
+        "HF_XET_FIXED_DOWNLOAD_CONCURRENCY",
+        "HF_XET_CLIENT_ENABLE_MULTIRANGE_FETCHING",
+        "HF_TOKEN",
+        "STALL_SEC / DL_CONC（脚本 env 覆盖）",
+        "--local-dir / --include（modelscope download）",
+        "--conns / --sha256（tools/ms_parallel_download.py）"
+      ],
+      "scope": [
+        "HuggingFace Xet 大文件下载（tools/hf_xet_download.sh）",
+        "ModelScope 下载（CLI + tools/ms_parallel_download.py）",
+        "完成后起服前置（>RAM 单文件 ⇒ 红线 5）"
+      ],
+      "settled_values": {
+        "HF 开关组合（hub 1.29/1.30 + hf_xet 1.6.0，envs/unsloth_2026.9.2_rocm7.2 实测）": "HF_XET_HIGH_PERFORMANCE=1（主开关，hf_transfer 在 hub 1.x 已废弃）；HF_HUB_ENABLE_HF_TRANSFER=0（必须 0：置 1 会让 hub 绕开 Xet，constants.py:296）；HF_HUB_DISABLE_XET=0；HF_XET_CLIENT_ENABLE_ADAPTIVE_CONCURRENCY=0（关自适应并发，否则本机必翻车）；HF_XET_FIXED_DOWNLOAD_CONCURRENCY=4；HF_XET_CLIENT_ENABLE_MULTIRANGE_FETCHING=0",
+        "HF_TOKEN": "必带；值只存 ~/.secrets/hf（600，不入 git/不进 CLAUDE.md），~/.bashrc 自动挂，hf_xet_download.sh 未设变量时自读该文件",
+        "可用解释器": "只有 envs/unsloth_2026.9.2_rocm7.2/bin/hf；models/cli/venv 那个是死链",
+        "实测速率": "HF Xet 网卡 rx 110–139 MB/s（399.09 GiB ≈ 1.1 h）；HF curl 对照单流 23–27 MB/s、4/8 并发不涨；ModelScope CLI 8 worker 聚合 110 MiB/s（落盘+网卡双口径一致）且匿名即可；ModelScope CDN 单流 ~33 MB/s（单连接限速，ms_parallel_download --conns 8 打的就是它）",
+        "看门狗默认": "STALL_SEC=0（只观察不杀）；真要自动重连：指数退避 COOLDOWN=180→×2→1800 s + path_probe_mbps() 区分“链路被 clamp”与“配置坏了”"
+      },
+      "sources": [
+        "docs/下载-HF-Xet-高速下载-本机口径与配方-2026-09-08.md（全文，尤其 §1–§7b）",
+        "tools/hf_xet_download.sh、tools/hf4.py（头部注释即判据原文）",
+        "docs/下载-ModelScope-Ornith-1.5-397B-Q8_0-与8110底座-2026-09-09.md §1/§3",
+        "tools/ms_parallel_download.py、tools/ms_verify_ornith397b_q8_0.sh、tools/wait_and_hash_ornith397b_mtp_src.sh",
+        "CLAUDE.md §0.2b（HF_TOKEN 存放）、§1（经验检索行）"
+      ],
+      "status": "active",
+      "title_or_why": "大权重下载（HuggingFace Xet / ModelScope）—— 开关组合、判活口径、续传真相：本机 300–400 GiB 级权重已实下 4+ 次，每条“看似合理”的默认姿势（curl、rchar 判活、kill 重连、匿名拉）都被实测证伪过一遍",
+      "verified": "2026-09-15"
+    }
+  ],
+  "source": "/home/qiba/ai/docs/recipes/ops"
+}

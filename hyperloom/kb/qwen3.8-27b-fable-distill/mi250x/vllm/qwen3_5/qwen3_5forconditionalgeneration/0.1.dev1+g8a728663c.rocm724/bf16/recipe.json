@@ -1,0 +1,235 @@
+{
+  "authority": "EXPERIENTIAL",
+  "best_config": {
+    "extra_envs": {
+      "AIS": "0 \u2192 VLLM_AIS_DISABLE=1 + VLLM_FST_KEEP_NOGDS=1\uff08\u6743\u91cd\u5728 PM9A1\uff0chipFileBufRegister \u76f4\u63a5\u5931\u8d25\uff09",
+      "HIP_VISIBLE_DEVICES": "6,7\uff08\u53ea\u8bbe HIP\uff1b\u811a\u672c\u663e\u5f0f unset ROCR_VISIBLE_DEVICES\uff09",
+      "LD_LIBRARY_PATH": "/opt/rocm-7.2.4/lib\uff08\u65e0\u6761\u4ef6\u515c\uff0cslim torch \u7f3a\u4e4b core dump=N13\uff1b\u7edd\u4e0d\u5199\u88f8 /opt/rocm\uff09",
+      "RAY_memory_monitor_refresh_ms": "0",
+      "ROCR_VISIBLE_DEVICES": "\u5fc5\u987b\u4e3a\u7a7a\uff08\u4e8c\u91cd\u8fc7\u6ee4\u4f1a\u81f4\u7a7a\u96c6\uff09",
+      "TORCH_CUDA_ALLOW_TF32": "0",
+      "USE_LIBUV": "0",
+      "VLLM_ENABLE_V1_MULTIPROCESSING": "0\uff08config/vllm.arm-local.conf 7 \u6761\u7b56\u7565 env\uff0c\u4ec5 8101/8107/8109 source\uff09",
+      "VLLM_ROCM_QUICK_REDUCE_QUANTIZATION": "NONE\uff0809-12 \u56fa\u5316\uff1a\u539f :-FP \u56e0 conf \u5148\u7f6e NONE \u6c38\u4e0d\u89e6\u53d1\uff0c\u672c\u81c2\u4ece\u5efa\u7acb\u8d77\u4e00\u76f4\u8dd1 QR \u5173\uff09",
+      "VLLM_ROCM_USE_AITER": "0"
+    },
+    "extra_server_args": "--tensor-parallel-size 2 --model models/TeichAI/Qwen3.8-27B-Fable-Distill --served-model-name qwen3.8-27b-fable qwen3.8-27b --port 8101 --gpu-memory-utilization 0.92 --max-model-len 262144 --max-num-seqs 8 --max-num-batched-tokens 8192 --dtype bfloat16 --load-format fastsafetensors --enable-prefix-caching --enable-chunked-prefill --trust-remote-code --enable-auto-tool-choice --tool-call-parser qwen3_coder --reasoning-parser qwen3 --disable-custom-all-reduce --limit-mm-per-prompt {\"image\":0,\"video\":0} --tokenizer-mode auto SPEC=off\uff08\u9ed8\u8ba4\uff09\uff1b\u541e\u5410\u6863 SPEC=dflash\uff1a--speculative-config {\"method\":\"dflash\",\"model\":\"models/z-lab/Qwen3.8-27B-DFlash2\",\"num_speculative_tokens\":8} SPEC=mtp\uff1aMTP_K=1 \u5fc5\u987b\u663e\u5f0f\u7ed9\uff08checkpoint \u7684 mtp_num_hidden_layers \u5728 text_config\uff0c\u9876\u5c42 getattr\u2192None\uff0c\u4e0a\u6e38 bug\uff09"
+  },
+  "best_throughput": 90.0,
+  "canonical_id": "inference:qwen3.8-27b-fable-distill:mi250x:vllm:qwen3_5:qwen3_5forconditionalgeneration:0.1.dev1+g8a728663c.rocm724:bf16",
+  "confidence": 0.85,
+  "created_at": "2026-09-15T08:06:40.760317+00:00",
+  "engine": "vllm",
+  "entry": "models/TeichAI/launcher/qwen3.8_27b_bf16_Fable_Distill_vllm_rocm724_256k_8101_teichai_mi250dx2_m3.sh",
+  "env_path": "envs/vllm_master_rocm724",
+  "evidence_refs": [
+    "/home/qiba/ai/docs/recipes/serving/8101-qwen38-27b-fable-distill-bf16-vllm-tp2.md",
+    "/home/qiba/ai/models/TeichAI/launcher/qwen3.8_27b_bf16_Fable_Distill_vllm_rocm724_256k_8101_teichai_mi250dx2_m3.sh",
+    "/home/qiba/ai/models/TeichAI/launcher/qwen3.8_27b_bf16_Fable_Distill_vllm_rocm724_256k_8101_teichai_mi250dx2_m3.sh",
+    "/home/qiba/ai/config/ports.conf",
+    "/home/qiba/ai/docs/\u6a21\u578b-\u811a\u672c-\u73af\u5883\u5bf9\u7167\u8868-2026-09-12.md",
+    "/home/qiba/ai/docs/MI250X-hipFile-AIS-\u90e8\u7f72\u624b\u518c.md"
+  ],
+  "exclusive_with": [
+    "8301-qwen38-27b-fable-distill-bf16-vllm-splitkv-ab",
+    "8302-qwen38-27b-fable-distill-bf16-vllm-dflash2",
+    "8107-qwen38-flash-next-176b-bf16-vllm-tp8",
+    "8109-qwen38-flash-next-176b-bf16-vllm-splitkv",
+    "8108-glm-5.3-flash-320b-q8-0-llamacpp",
+    "8110-ornith-1.5-397b-q8-0-llamacpp",
+    "8112-deepseek-v4.1-flash-748b-q4km-llamacpp"
+  ],
+  "framework_name": "vllm",
+  "framework_version": "0.1.dev1+g8a728663c.rocm724",
+  "gpus": "mi250dx2_m3",
+  "hardware": "mi250x",
+  "kernel_optimizations": [],
+  "last_profiled": "2026-09-15",
+  "lessons": [
+    {
+      "measured_impact": "MTP K=2 \u51c0\u4e8f 0.73~0.93\u00d7 vs dflash K=8 \u00d72.7~4.6\uff08\u811a\u672c L134-156\uff09",
+      "statement": "\u6700\u4f18\u6295\u673a\u6df1\u5ea6\u4e0d\u53ef\u8de8\u6a21\u578b/\u8de8\u8349\u7a3f\u673a\u5236\u642c\uff1a\u81ea\u56de\u5f52 MTP \u6bcf\u6b65\u4e32\u884c K \u6b21\u524d\u5411\uff0cK=1 \u662f\u552f\u4e00\u6b63\u6536\u76ca\u6863\uff1b\u5e76\u884c\u8349\u7a3f DFlash \u80fd\u5403\u5230 K=8"
+    },
+    {
+      "measured_impact": "8101 \u7684 :-FP \u56e0 vllm.conf \u5148\u7f6e NONE \u6c38\u4e0d\u89e6\u53d1\uff0c\u672c\u81c2\u4ece\u5efa\u7acb\u8d77\u4e00\u76f4\u8dd1 QR \u5173\uff0c\u76f4\u5230 09-12 \u624d\u53d1\u73b0\uff08\u811a\u672c L196-205\uff09",
+      "statement": "shell \u7684 ${VAR:-\u9ed8\u8ba4} \u5728 conf \u5148\u7f6e\u503c\u65f6\u88ab\u9759\u9ed8\u4f5c\u5e9f\u2014\u2014'\u8bbe\u4e86\u6ca1\u751f\u6548'\u5fc5\u987b\u5148\u67e5\u8d4b\u503c\u65f6\u5e8f\uff08QR \u4e09\u4ef6\u5957\u65f6\u5e8f\u7ea2\u7ebf\u540c\u7406\uff1a_MI250_QR_WANTED \u662f\u6a21\u5757\u7ea7\u6c42\u503c\uff0cenv \u5fc5\u987b\u5728 python \u542f\u52a8\u524d\u8bbe\u597d\uff09"
+    },
+    {
+      "measured_impact": "PM9A1 \u5168\u7eff\u4ecd\u5f53\u573a\u5d29 register_buffer failed\uff08len=3043078144\uff09",
+      "statement": "ais_stack_check \u516d\u9879\u5168\u7eff \u2260 \u8be5\u76d8\u80fd\u5f00 AIS\uff1b\u552f\u4e00\u5224\u636e\u662f\u65e5\u5fd7 Loading weights took \u6216\u641c register_buffer failed\uff08N20\uff09"
+    },
+    {
+      "measured_impact": "\u4e0a\u6e38\u81c2\u540e\u8fc1 8113 \u5206\u79bb\u7aef\u53e3\uff08ports.conf \u4fee\u51b2\u7a81\u8bf4\u660e\uff09",
+      "statement": "\u5e95\u5ea7\u4e0e arch \u6ce8\u518c\u7ed1\u5b9a\uff1amaster \u4e0e 0.28 \u4e24\u68f5\u6811\u4e92\u4e0d\u53ef\u66ff\uff08master \u6709 DFlash/Qwen3_5MTP/vendored FLA\uff0c0.28 \u6709 P1/QR/splitKV \u624b\u6539\uff09\uff1b09-12 \u66fe\u56e0\u4e24\u811a\u672c\u540c\u62a2 8101 \u4e14 env \u4e0d\u540c\u51fa\u8fc7'\u8d77\u6765\u624d\u53d1\u73b0\u5e95\u5ea7\u4e0d\u5bf9'"
+    }
+  ],
+  "model": "qwen3.8-27b-fable-distill",
+  "model_dir": "models/TeichAI/Qwen3.8-27B-Fable-Distill",
+  "other_metrics": [
+    {
+      "name": "\u5355\u6d41\u65e0\u6295\u673a",
+      "note": "300 W\u3001ctx131072\u3001temp=0\uff08\u811a\u672c L134-156 \u5185\u5d4c\u8868\uff09",
+      "value": "short 19.7 / long 19.6 / code 24.4 t/s"
+    },
+    {
+      "name": "dflash K=8 \u4e09\u5f62\u6001",
+      "note": "\u540c\u6863\uff1bKV \u6c60 872,306\u2192417,835 tok\uff08\u221252%\uff09",
+      "value": "90.0 / 53.7 / 68.9 t/s\uff08\u00d72.7~4.6\uff09"
+    },
+    {
+      "name": "MTP K=1",
+      "note": "\u51fa\u8bcd 1.88 tok/\u6b65\uff1b\u63a5\u53d7\u7387 3.51/8\u2192dflash \u51fa\u8bcd 4.51 tok/\u6b65",
+      "value": "36.3 / 33.4 / 33.5 t/s\uff08\u00d71.4~1.8\uff09"
+    },
+    {
+      "name": "MTP K=2",
+      "note": "\u811a\u672c L152-156\uff1b\u81ea\u56de\u5f52\u8349\u7a3f\u6bcf\u6b65\u4e32\u884c\u5728 gfx90a \u4ee3\u4ef7\u76d6\u8fc7\u6536\u76ca",
+      "value": "\u51c0\u4e8f 0.73~0.93\u00d7"
+    },
+    {
+      "name": "bounce \u52a0\u8f7d",
+      "note": "ais.env \u5934\u6ce8\uff1b\u811a\u672c L16 \u7684 ~95s \u662f\u5efa\u6863\u671f\u65e7\u53e3\u5f84",
+      "value": "\u224826 s\uff0855.6 GB / TP2 = 25.95 s\uff0c2.14 GB/s\uff09"
+    }
+  ],
+  "patches": [
+    "patches/vllm-dsa-gfx90a/README.md\uff08\u6765\u6e90\u8bb0\u5f55\uff0c\u672c\u6a21\u578b Qwen3_5 \u4e0d\u8d70 DSA \u7d22\u5f15\u5668\uff0c\u8fd0\u884c\u65f6\u4e0d\u88ab launcher \u8c03\u7528\uff09",
+    "patches/qwen4exp/local-nogds-gds-for-tp-gt1.patch\uff08AIS/nogds \u8865\u4e01\u53ea\u5728 master \u6811\uff0cVLLM_FST_KEEP_NOGDS \u8bfb\u53d6\u65b9\uff09"
+  ],
+  "pitfalls": [
+    {
+      "description": "ROCR_VISIBLE_DEVICES \u4e0e HIP_VISIBLE_DEVICES \u4e8c\u91cd\u8fc7\u6ee4 \u2192 worker \u62a5 RuntimeError: No CUDA GPUs are available\uff08\u4e0e\u6c99\u7bb1\u62e6 /dev/kfd \u540c\u75c7\u72b6\uff09\u3002\u53ea\u8bbe HIP\uff0c\u811a\u672c\u663e\u5f0f unset ROCR\uff1b\u522b source config/gpu_mi250x_*.conf\uff08\u5b83\u4fe9\u90fd\u5bfc\u51fa\uff09",
+      "severity": "crash"
+    },
+    {
+      "description": "AIS=1 \u5728 PM9A1 \u8d77\u670d\u5f53\u573a\u5d29\uff08register_buffer failed\uff0cException \u7ed5\u8fc7 vLLM \u81ea\u52a8\u56de\u9000\uff09\uff1b\u9ed8\u8ba4 AIS=0",
+      "severity": "crash"
+    },
+    {
+      "description": "SPEC=mtp \u5fd8\u7ed9 MTP_K \u8d77\u4e0d\u6765\uff08n_predict \u8bfb\u9876\u5c42 mtp_num_hidden_layers\u2192None\uff09\uff1b\u4e14 MTP K=2 \u662f\u51c0\u4e8f\u6863\uff0cK=1 \u662f\u552f\u4e00\u6b63\u6536\u76ca\u6863",
+      "severity": "config"
+    },
+    {
+      "description": "\u672c\u81c2\u7528 nohup\uff08\u975e setsid\uff09\u21d2 \u505c\u670d\u6309\u88f8 PID kill -TERM $(cat logs/qwen38-27b-fable-8101.pid)\uff1b\u7981 pkill -f\uff1bdie6/7 \u53ef\u80fd\u88ab 8301/8302 \u5e38\u9a7b\u6216 8-die \u81c2\u5360\u7528\uff0c\u53ea\u6309 PID \u505c",
+      "severity": "config"
+    },
+    {
+      "description": "QR \u9759\u9ed8 bug \u56fa\u5316\uff1a\u811a\u672c\u9ed8\u8ba4\u5199\u6b7b NONE\uff1b\u76f4\u63a5\u6539\u811a\u672c\u9ed8\u8ba4=\u65e0\u58f0\u4f5c\u5e9f\u672c\u81c2\u5386\u53f2\u53e3\u5f84\uff0c\u6539\u524d\u987b\u91cd\u6d4b\uff08\u8981\u771f\u5f00\u7528\u547d\u4ee4\u7ea7\u9884\u7f6e VLLM_ROCM_QUICK_REDUCE_QUANTIZATION=FP bash $0\uff09",
+      "severity": "regress"
+    },
+    {
+      "description": "warmup/\u53e3\u5f84\u7ea2\u7ebf\uff1a\u811a\u672c\u5934\u6295\u673a\u5b9e\u6d4b\u8868\u662f 300 W + ctx131072 \u6863\uff0c\u5b9a\u7a3f MAX_MODEL_LEN=262144 \u52ff\u6df7\u8868\uff1b\u73b0 cap=560 W\uff0c300 W \u6570\u5b57\u4e0d\u53ef\u4e0e 560 W \u6a2a\u6bd4\uff1b\u8de8 boot \u03c3\u22484.6%\u3001\u00b12% \u4e0d\u5f53\u7ed3\u8bba\uff1bbench \u6309 usage.completion_tokens\uff08\u6309 SSE chunk \u6570\u7b97\u4f1a\u4f4e\u4f30\u7ea6 6\u00d7\uff09",
+      "severity": "config"
+    },
+    {
+      "description": "\u6295\u673a\u65e0\u635f\u6027\u672a\u6210\u7acb\uff1agfx90a+ROCM_ATTN \u4e0b DFlash/MTP \u4e0e\u975e\u6295\u673a\u9996\u5dee\u5f02 59%/25%\uff08\u76f8\u4f3c\u5ea6 98.1/99.2%\uff09\uff1b\u8981\u9010 token \u590d\u523b\u7528 SPEC=off\uff1b\u522b\u6309 md5 \u8de8\u914d\u7f6e\u5224\u9519",
+      "severity": "config"
+    },
+    {
+      "description": "\u9a7b\u7559\u5224\u636e\u53ea\u8ba4\u65e5\u5fd7 Model loading took X GiB\uff08sysfs \u52a0\u8f7d\u4e2d\u6052 10 MiB \u4f1a\u9a97\u4eba=N17\uff09\uff1b\u52a0\u8f7d\u8def\u5f84\u5224\u636e Loading weights took \u224826 s \u91cf\u7ea7=pinned bounce",
+      "severity": "config"
+    },
+    {
+      "description": "GPU \u6807\u7b7e\"\u540d m3 \u5b9e M2\"\uff1a\u6309\u4ed3\u5e93\u73b0\u884c conf \u6807 die6+7 \u4e3a M3\uff0cPCI \u5b9e\u6d4b\u8fd9\u6279\u662f M2\uff08CLAUDE.md \u00a73 \u6302\u8d77\u9879\uff09\u2014\u2014\u6309 PCI \u6620\u5c04\u6838\u5bf9\uff0c\u522b\u770b\u811a\u672c\u540d",
+      "severity": "config"
+    }
+  ],
+  "port": "8101",
+  "precision": "bf16",
+  "primary_metric_note": "\u53e3\u5f84\uff1aSPEC=dflash K=8 \u5355\u6d41 short @256 tok\uff08\u00d74.6\uff09\uff0ccap=300 W\u3001ctx 131072\u3001temp=0\u3001reasoning_effort=low\uff1bbench/spec_ab.py \u6309 usage.completion_tokens \u8ba1\uff08\u811a\u672c\u5934\u5b9e\u6d4b\u8868 L134-156\uff09\uff1b\u73b0 cap=560 W\uff0c\u4e0d\u53ef\u4e0e 560 W \u6863\u6a2a\u6bd4",
+  "provenance": {
+    "details": "Seeded from the workstation recipe library docs/recipes/ (verified 2026-09-15); metric: decode 90.0tok/s \u2014 \u53e3\u5f84\uff1aSPEC=dflash K=8 \u5355\u6d41 short @256 tok\uff08\u00d74.6\uff09\uff0ccap=300 W\u3001ctx 131072\u3001temp=0\u3001reasoning_effort=low\uff1bbench/spec_ab.py \u6309 usage.completion_tokens \u8ba1\uff08\u811a\u672c\u5934\u5b9e\u6d4b\u8868 L134-156\uff09\uff1b\u73b0 cap=560 W\uff0c\u4e0d\u53ef\u4e0e 560 W \u6863\u6a2a\u6bd4",
+    "recipe_id": "8101-qwen38-27b-fable-distill-bf16-vllm-tp2",
+    "seed_script": "scripts/seed_recipe_kb.py"
+  },
+  "recipe_id": "8101-qwen38-27b-fable-distill-bf16-vllm-tp2",
+  "remaining_gaps": [
+    {
+      "description": "256k \u5b9a\u7a3f\u6863\u4e0b\u7684\u6295\u673a\u4e09\u5f62\u6001\u672a\u590d\u6d4b\uff08\u73b0\u6709 90.0/53.7/68.9 \u662f ctx131072 \u6863\u5b9e\u6d4b\uff09",
+      "metrics": "decode t/s @256k vs @131k"
+    },
+    {
+      "description": "\u672c\u81c2\u5e76\u53d1/\u805a\u5408\u541e\u5410\u65e0\u5b9e\u6d4b\u8bb0\u5f55\uff08\u00a77 \u8868\u5e76\u53d1\u5217\u4e3a\u7a7a\uff0cmax-num-seqs=8\uff09",
+      "metrics": "\u805a\u5408 tok/s"
+    },
+    {
+      "description": "die \u6807\u7b7e m3/M2 \u6302\u8d77\u9879\u672a\u5728\u4ed3\u5e93\u7edf\u4e00\uff08\u5bf9\u5916\u53ef\u89c1\u547d\u540d\u8bed\u4e49\u5f85\u51b3\uff09",
+      "metrics": "\u2014"
+    },
+    {
+      "description": "AIS=1 \u8def\u7ebf\u9700\u5148\u628a\u6743\u91cd\u642c\u5230 intel P4610 \u624d\u53ef\u80fd\u9a8c\u8bc1",
+      "metrics": "register \u6210\u529f\u7387/\u52a0\u8f7d\u79d2\u6570"
+    }
+  ],
+  "seeded_at": "2026-09-15T08:06:40+00:00",
+  "sessions": [
+    {
+      "actions_taken": [
+        "seeded from docs/recipes/8101-qwen38-27b-fable-distill-bf16-vllm-tp2"
+      ],
+      "date": "2026-09-15",
+      "gain_pct": 0.0,
+      "session_id": "recipe-seed:8101-qwen38-27b-fable-distill-bf16-vllm-tp2",
+      "stack_len": 2,
+      "throughput_after": 90.0,
+      "throughput_before": 0.0
+    }
+  ],
+  "stack_fingerprint": {
+    "aiter_commit": "",
+    "rocm_version": "7.2.4",
+    "vllm_version": "0.1.dev1+g8a728663c.rocm724\uff08master editable \u2192 src/vllm-master\uff0cpin 8a728663c\uff09"
+  },
+  "status": "active",
+  "tp": 2,
+  "updated_at": "2026-09-15T08:06:40.760317+00:00",
+  "version": 1,
+  "what_failed": [
+    {
+      "description": "\u672c\u81c2\u7528 P1 \u95e8\u63a7 GEMV",
+      "reason": "master \u6811\u65e0 MI250_GATE_GEMV \u5b9e\u73b0\uff08grep=0\uff09\uff0c\u8bbe env \u65e0\u5bb3\u4f46\u65e0\u6548\uff1b\u8981 P1 \u8d70 0.28 \u5e95\u5ea7\u7684 8111/8113"
+    },
+    {
+      "description": "MTP K\u22652",
+      "reason": "\u5b9e\u6d4b\u51c0\u4e8f 0.73~0.93\u00d7\uff08\u811a\u672c L152\uff09\uff1b\u4e0e 8107 \u7684 n>3 \u5d29\u584c\u540c\u4e00\u673a\u7406\u5bb6\u65cf"
+    },
+    {
+      "description": "PM9A1 \u4e0a\u5f00 AIS\uff08\u542b\u62ff ais_stack_check \u5168\u7eff\u5f53\u653e\u884c\u4f9d\u636e\uff09",
+      "reason": "hipFileBufRegister \u5728\u8be5\u76d8\u76f4\u63a5\u5931\u8d25\uff08submit_io: register_buffer failed \u2026 len=3043078144\uff09\uff0c\u629b Exception \u975e RuntimeError \u2192 \u8d77\u670d\u5f53\u573a\u5d29\uff1bN20\uff1a\u5168\u7eff\u2260\u8be5\u76d8\u53ef\u7528"
+    },
+    {
+      "description": "VLLM_ROCM_USE_AITER=1 / CUSTOM allreduce / one-shot IPC / NCCL_SYMM_MEM / moe-tuned \u79cd\u5b50\u8868",
+      "reason": "AITER RMSNorm \u95e8\u4e0d\u67e5 arch\uff1bCUSTOM \u5728 gfx90a \u9759\u9ed8\u7b97\u9519\uff08\u8f93\u51fa\u5168 !!!\uff09\uff1b\u79cd\u5b50\u8868 \u22123~\u22124%\uff08\u540c 8107 \u00a79\uff0c\u65bd\u5de5\u5355 \u00a7H\uff09"
+    },
+    {
+      "description": "ATOM \u8def\u7ebf",
+      "reason": "09-06 \u5224\u6b7b\uff1benvs/atom_vllm \u4e0e 8201 atom \u81c2\u5df2\u56de\u6536/\u5220\u9664\uff08CLAUDE.md \u00a76/\u5bf9\u7167\u8868\u8868D\uff09"
+    },
+    {
+      "description": "serve + AIS 5014",
+      "reason": "\u672a\u89e3\uff1aapi_server \u8fdb\u7a0b\u6811 + AIS \u4ee5\u5d29\u4ee3\u964d\uff0c\u4e09\u5757\u76d8\u4ea4\u53c9\u8bc1\u660e\u4e0e\u76d8\u65e0\u5173\uff08\u624b\u518c \u00a73.3bis/N23\u2460\uff09"
+    }
+  ],
+  "what_worked": [
+    {
+      "description": "DFlash2 K=8 \u6295\u673a\uff08block-diffusion \u5e76\u884c\u8349\u7a3f\uff0c\u4e00\u6b21\u524d\u5411\u51fa 8 \u5019\u9009\uff09",
+      "measured_impact": "\u5355\u6d41 90.0 t/s @256 tok\uff0c\u00d72.7~4.6\uff08\u811a\u672c\u5934\u5b9e\u6d4b\uff0c300 W/ctx131072\uff09"
+    },
+    {
+      "description": "die6+7 \u540c\u6a21\u7ec4 TP2\uff08xGMI weight=15\uff0cNUMA1\uff09\uff0c55.6 GB\u00f72\u224827.8 GB/die + KV \u4f59\u91cf\u5145\u8db3",
+      "measured_impact": "TP2 \u6743\u91cd 25.17 GiB/worker\uff08\u6a21\u578b-\u811a\u672c-\u73af\u5883\u5bf9\u7167\u8868-2026-09-12\uff09"
+    },
+    {
+      "description": "master \u6811\u5e95\u5ea7\uff08vendored FLA + GDN forward_hip + DFlash2/Qwen3_5MTP \u6ce8\u518c\uff09",
+      "measured_impact": "0.28 wheel \u6ce8\u518c\u8868\u65e0 Qwen3_5MTP/DFlash \u540c\u53e3\u5f84\u5b9e\u73b0\uff0carch \u5224\u636e registry grep\uff08environments/vllm_master_rocm724 \u00a72\uff09"
+    },
+    {
+      "description": "MAX_MODEL_LEN 262144 = text_config.max_position_embeddings \u539f\u751f\u6863\uff0809-13 \u7531 131072 \u62ac\u6863\uff09",
+      "measured_impact": "\u65e0\u9700 YaRN\uff1b\u540c\u5e95\u5ea7 8301 \u81ea 09-07 \u5df2\u6309\u6b64\u8dd1\u901a\uff08docs/research-notes/256k-\u4e0a\u4e0b\u6587-2026-09-07.md\uff09"
+    },
+    {
+      "description": "\u522b\u540d\u53cc\u6302 qwen3.8-27b-fable + qwen3.8-27b\uff0clitellm/cc-switch \u96f6\u6539\u52a8",
+      "measured_impact": "\u2014"
+    }
+  ]
+}

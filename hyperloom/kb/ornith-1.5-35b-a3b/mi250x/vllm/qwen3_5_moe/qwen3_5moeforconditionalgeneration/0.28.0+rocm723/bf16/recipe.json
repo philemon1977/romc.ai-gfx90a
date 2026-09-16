@@ -1,0 +1,224 @@
+{
+  "authority": "EXPERIENTIAL",
+  "best_config": {
+    "extra_envs": {
+      "DEVS": "0,1,2,3",
+      "HIP_VISIBLE_DEVICES": "0,1,2,3",
+      "LD_LIBRARY_PATH": "/opt/rocm-7.2.4/lib",
+      "MI250_GATE_GEMV": "1",
+      "VLLM_ROCM_QUICK_REDUCE_CAST_BF16_TO_FP16": "0",
+      "VLLM_ROCM_QUICK_REDUCE_MIN_SIZE_BYTES_MB": "0",
+      "VLLM_ROCM_QUICK_REDUCE_QUANTIZATION": "FP",
+      "VLLM_ROCM_SPLITKV_PA": "1",
+      "VLLM_ROCM_SPLITKV_PA_MAX_SCRATCH_MIB": "192",
+      "VLLM_ROCM_USE_AITER": "0",
+      "VRAM_FREE_MIN_GIB": "55"
+    },
+    "extra_server_args": "--tp 4 --max-model-len 262144 --gpu-memory-utilization 0.85 --language-model-only --enable-auto-tool-choice --tool-call-parser qwen3_coder --disable-custom-all-reduce --max-num-seqs \u4e0d\u8bbe\uff08\u5403 vLLM \u9ed8\u8ba4\uff0c1915 \u53e3\u5f84\uff09"
+  },
+  "best_throughput": 1915.17,
+  "canonical_id": "inference:ornith-1.5-35b-a3b:mi250x:vllm:qwen3_5_moe:qwen3_5moeforconditionalgeneration:0.28.0+rocm723:bf16",
+  "confidence": 0.85,
+  "created_at": "2026-09-15T08:06:40.755558+00:00",
+  "engine": "vllm",
+  "entry": "launcher/favor/ornith_1.5_35b_a3b_vllm_rocm72_256k_8111_final_ornith_mi250x_tp4.sh",
+  "env_path": "envs/vllm_0.28.0_rocm72",
+  "evidence_refs": [
+    "/home/qiba/ai/docs/recipes/serving/8111-ornith-1.5-35b-a3b-bf16-vllm-tp4.md",
+    "/home/qiba/ai/launcher/favor/ornith_1.5_35b_a3b_vllm_rocm72_256k_8111_final_ornith_mi250x_tp4.sh",
+    "/home/qiba/ai/models/ornith-ai/launcher/ornith_1.5_35b_a3b_vllm_rocm72_256k_8111_final_ornith_mi250x_tp4.sh\uff08\u5934\u6ce8\u91ca L1-42\uff09",
+    "/home/qiba/ai/models/ornith-ai/launcher/ornith_1.5_35b_a3b_vllm_rocm72_mi250x_tp4_256k.sh\uff08\u5b9e\u4f53\u57fa\u811a\u672c\uff09",
+    "/home/qiba/ai/docs/research-notes/splitkv-{\u843d\u5730\u7aef\u5230\u7aef,\u62d0\u70b9\u4e0e\u7a0e\u6536,\u8f6c\u6b63\u8bb8\u53ef\u8bc1}-2026-09-0{7,8}.md"
+  ],
+  "exclusive_with": [
+    "8107",
+    "8109\uff088 die \u5168\u5360\uff09",
+    "8108",
+    "8110",
+    "8112\uff088 die \u5168\u5360\u7684 llama.cpp \u81c2\uff09",
+    "8113\uff08die0+1 \u2282 die0-3\uff09",
+    "8114\uff08\u9ed8\u8ba4 die0\uff09",
+    "8203\uff08\u9ed8\u8ba4 die0\uff09"
+  ],
+  "framework_name": "vllm",
+  "framework_version": "0.28.0+rocm723",
+  "gpus": "mi250x_tp4\uff08die0-3 = card1-4 = \u6a21\u7ec4 M1+M0\uff0c\u5168 NUMA0\uff1b\u523b\u610f\u53ea\u5403\u534a\u673a\uff09",
+  "hardware": "mi250x",
+  "kernel_optimizations": [],
+  "last_profiled": "2026-09-15",
+  "lessons": [
+    {
+      "measured_impact": "@30720 13.1\u219294.5\uff1b@64 1911\u21921915",
+      "statement": "split-KV \u7684\u4ef7\u503c\u5728\u957f\u4e0a\u4e0b\u6587\u5355\u6d41\uff08\u00d77.22\uff09\uff0c\u5e76\u53d1\u53ea +1.4~1.8%\uff1b'\u541e\u5410\u51a0\u519b 1915'\u6765\u81ea\u5e76\u53d1\u805a\u5408\u3001splitKV \u53ea\u8d21\u732e +0.2%\u2014\u2014\u4e24\u79cd\u53d9\u4e8b\u4e0d\u53ef\u6df7\u7528"
+    },
+    {
+      "measured_impact": "sha \u6f02\u79fb\u4e8b\u6545 09-08 \u5b9e\u6293\uff1b0.28 \u6811\u662f\u4e09\u6761\u8def\u7ebf\u7684\u5171\u540c\u6bcd\u672c\uff08\u5355\u70b9\uff0c\u5148\u5907\u4efd\uff09",
+      "statement": "\u4e09\u4ef6\u5957\u91cc\u4e24\u4ef6\u53ea\u6d3b\u5728 0.28 \u6811 site-packages \u624b\u5de5\u8865\u4e01\uff08master \u6811\u6ca1\u6709 P1\uff0cgrep=0\uff09\uff1a\u6362 env=\u4e22\u8865\u4e01\uff1btools/verify_env_patches.sh\uff08md5 \u57fa\u7ebf\uff09\u4e0e port_*.py --check\uff08sha \u5b57\u8282\u6bd4\u5bf9\uff09\u53cc\u8f68\u7f3a\u4e00\u4e0d\u53ef"
+    },
+    {
+      "measured_impact": "quick-reduce \u6536\u76ca\u8868\uff08CLAUDE \u00a710\uff09",
+      "statement": "QR \u6536\u76ca\u968f world size \u4e0e\u62d3\u6251\u53d8\uff1aTP2 +4.7% / TP4 +12.5~24.9% / TP8 \u22120.44% \u5224\u8d1f\uff1b'\u5f00\u5173\u81ea\u5df1\u7684\u65e5\u5fd7'\u4e0d\u662f\u5224\u636e\uff0c\u7aef\u5230\u7aef ABAB/trace \u624d\u662f"
+    }
+  ],
+  "model": "ornith-1.5-35b-a3b",
+  "model_dir": "models/ornith-ai/Ornith-1.5-35B-A3B",
+  "other_metrics": [
+    {
+      "name": "split-KV \u5355\u6d41\u957f\u4e0a\u4e0b\u6587",
+      "note": "\u8f6c\u6b63\u8bb8\u53ef\u8bc1 09-08\uff1b\u540c\u65e5\u590d\u6d4b 13.0\u219294.1\uff08\u00d77.2\uff09\uff1b\u5e76\u53d1\u53ea +1.4/+1.8/+0.2%\uff08@8/@32/@64\uff1a481.61\u2192488.30\u30011277\u21921300\u30011911\u21921915\uff09",
+      "value": "13.1\u219294.5 tok/s\uff08\u00d77.22\uff09@30720"
+    },
+    {
+      "name": "P1 \u95e8\u63a7 GEMV",
+      "note": "CLAUDE \u00a710\uff1b\u4e0e F.linear \u9010\u4f4d\u76f8\u540c",
+      "value": "71.2\u219285.3 tok/s\uff08+19.8%\uff09\u5355\u6d41"
+    },
+    {
+      "name": "QuickReduce",
+      "note": "TP4 \u6863\u5b9e\u6d4b\uff08CLAUDE \u00a710\u30018111 \u5934\u6ce8\uff09",
+      "value": "\u5355\u6d41 +12.5% / \u5e76\u53d14 +24.9%"
+    },
+    {
+      "name": "\u65e7\u53e3\u5f84\uff08\u4e0d\u53ef\u6bd4\uff09",
+      "note": "350 W \u4ee3\u65e7\u5185\u6838+\u65e7 site-packages\uff08se_bench_report_ornith35b_a3b_rocm72_tp4.json\uff09\uff0c\u4e0e\u65b0\u884c\u53e3\u5f84\u65ad\u88c2",
+      "value": "\u5355\u6d41 ~62 / Phase2 365.13 @8"
+    }
+  ],
+  "patches": [
+    "patches/native-env/vllm028-base-p1-qr.patch",
+    "patches/gfx90a/rocm_splitkv_pa.py",
+    "patches/gfx90a/port_splitkv_pa.py\uff08--check \u5728\u4f4d\u5224\u636e\uff09",
+    "patches/native-env/NEW-rocm_splitkv_pa.py\uff08gitignore \u533a\u5916\u552f\u4e00\u526f\u672c\uff09",
+    "recipes: patches/p1-gemv-c2c3-quickreduce.md",
+    "recipes: patches/splitkv-paged-decode.md",
+    "recipes: patches/native-env-drift-baseline.md"
+  ],
+  "pitfalls": [
+    {
+      "description": "HIP_VISIBLE_DEVICES=0,1,2,3 \u7684\u7528\u6cd5\u53ea\u5728'TP4 \u65e0 MTP'\u4e0b\u5b89\u5168\uff08\u4f4e\u7f16\u53f7\u5b50\u96c6\u5e42\u7b49\uff09\uff1b\u5f00 MTP \u7684 8107/8109 \u662f'\u7edd\u4e0d\u8bbe'\uff0c\u673a\u5236\u76f8\u53cd\u3001\u4e0d\u53ef\u4e92\u6284\uff1b\u672c\u81c2\u65e0 unset ROCR \u9632\u7ee7\u627f\uff0c\u6362\u9ad8\u7f16\u53f7 die \u524d\u5148\u6284 8101 \u7684 unset",
+      "severity": "crash"
+    },
+    {
+      "description": "QR w\u22654 \u662f\u6d6e\u70b9\u6c42\u548c\u91cd\u6392\uff080.231 ULP\uff0c\u975e\u810f\u6570\u636e\uff09\u21d2 temp=0 \u9010 token \u8f93\u51fa\u53d8\u300109-08 \u524d\u5386\u53f2\u57fa\u7ebf\u5168\u90e8\u4f5c\u5e9f\uff1bQR/splitKV \u90fd\u6539\u6c42\u548c\u987a\u5e8f\uff08\u8bbe\u8ba1\u8bed\u4e49\uff09\uff0c\u57fa\u7ebf\u987b\u6210\u5bf9\u91cd\u8dd1\u52ff\u8de8\u53e3\u5f84\u6bd4",
+      "severity": "regress"
+    },
+    {
+      "description": "'\u9ad8\u5e76\u53d1\u6ca1\u6536\u76ca\u751a\u81f3\u66f4\u6162'\u591a\u534a\u662f\u8dd1\u4e86\u65e7\u5185\u6838\uff1a\u6e90\u4e0e\u88c5\u6811 sha \u6f02\u79fb\u4f1a'\u9759\u9ed8\u9000\u56de Triton'\u91cf\u51fa\u5047\u62d0\u70b9\uff0809-08 \u5b9e\u6293\uff09\u2014\u2014\u67e5 port_splitkv_pa.py --check \u7684\u88f8 exit \u7801\uff08\u522b | tail \u5403\u6389\uff09",
+      "severity": "config"
+    },
+    {
+      "description": "\u4e0d\u8bbe VLLM_ROCM_SPLITKV_PA_MAX_SEQS\uff1a\u552f\u4e00\u771f\u503c=\u5185\u6838 DEFAULT_MAX_SEQS=64\uff08\u672c\u81c2 TP4 \u6bcf rank 1 \u4e2a kv \u5934 \u21d2 \u653e\u884c num_seqs\u226464\uff09\uff1b\u8981\u66f4\u9ad8\u5e76\u53d1\u6539\u5185\u6838\u4e0d\u6539\u811a\u672c",
+      "severity": "config"
+    },
+    {
+      "description": "\u51b7\u542f\u52a8\uff1a\u9996\u6d4b 26 t/s \u7136\u540e\u53d8 62 = Triton autotune/JIT \u644a\u5165\uff1b\u5148 warmup \u518d\u6d4b\uff1b\u8de8 boot \u03c3\u22484.6%",
+      "severity": "config"
+    },
+    {
+      "description": "TP worker \u5171\u5199\u4e00\u4e2a stats \u6587\u4ef6\u4e92\u76f8\u8986\u76d6 \u21d2 \u8ba1\u6570\u5668\u5012\u9000\uff1b\u6309 .pid<N> \u5206\u6587\u4ef6\u8bfb",
+      "severity": "config"
+    },
+    {
+      "description": "\u65e5\u5fd7 'Using [QUICK_REDUCE,\u2026]' \u53ea\u8bc1\u6784\u9020\u4e0d\u8bc1\u4e0a\u573a\uff1bP1 \u65e0\u65e5\u5fd7\u884c\uff0c\u7ec8\u5224 trace\uff1bPhase1 15/17\u219216/17 \u7684 +1 \u4e0d\u8bb8\u8bfb\u6210\u80fd\u529b\u63d0\u5347\uff08\u8fb9\u754c\u6570\u503c\u9898\u5bf9\u6c42\u548c\u987a\u5e8f\u654f\u611f\uff09",
+      "severity": "config"
+    },
+    {
+      "description": "_final \u4e0d\u662f\u8584\u5c01\u88c5\uff08ports.conf/\u5bf9\u7167\u8868\u8bf4\u6cd5\u4e0e\u5b9e\u7269\u4e0d\u7b26\uff09\uff1a\u81ea\u5e26\u62a4\u680f/\u9884\u68c0/\u547d\u4ee4\u884c\uff1b\u57fa\u811a\u672c mi250x_tp4_256k.sh \u539f\u6837\u4fdd\u7559\u7ed9 A/B \u4e0e beta \u5c01\u88c5\uff08\u7ea2\u7ebf 3\uff1abeta \u53ea\u8bfb\uff09",
+      "severity": "config"
+    },
+    {
+      "description": "die0-3 \u7a7a\u95f2\u68c0\u67e5 fail-closed\uff08\u8bfb\u4e0d\u5230 sysfs \u5373\u62d2\u8d77\uff09\uff1b\u8981\u6c42\u6bcf die \u226555 GiB\uff08=0.85\u00d763.98\u224854.4\uff09\uff1b\u5f3a\u884c\u8d77\u5fc5 OOM\uff1b\u505c\u670d kill -TERM -$(cat pid)\uff08setsid \u8d1f\u53f7=\u6574\u4f1a\u8bdd\u7ec4\uff09\uff0c\u7981 pkill -f",
+      "severity": "crash"
+    },
+    {
+      "description": "\u672c\u81c2\u4e0d source vllm.arm-local.conf\uff087 \u6761\u81c2\u7ea7\u7b56\u7565\u53ea 8101/8107/8109 \u5728\u7528\uff09\uff1a\u5403 vLLM \u9ed8\u8ba4 VLLM_ENABLE_V1_MULTIPROCESSING=True\uff1bconf \u4e00\u5f8b\u5728\u53c2\u6570\u5757\u4e4b\u540e source\uff08\u811a\u672c\u503c\u4f18\u5148\uff09",
+      "severity": "config"
+    }
+  ],
+  "port": "8111",
+  "precision": "bf16",
+  "primary_metric_note": "Phase2 @c=64\u3001512/512 \u6210\u529f\u3001p50 4.29 s \u21d2 \u6bcf\u6d41\u224830 t/s\u3001479 t/s/die \u5168\u5e93\u6700\u9ad8\uff08bench/se_bench_ornith_tp4_splitkvon_c64.json\uff1b\u6d4b\u91cf\u671f 09-11 \u524d\u540e\u3001\u501f 8201 \u7aef\u53e3\u6d4b\u300109-15 \u590d\u6838\u5185\u5d4c url=127.0.0.1:8201\uff1b\u4e0d\u4f9d\u8d56 splitKV\uff1aOFF \u81c2 1911.33\uff09",
+  "provenance": {
+    "details": "Seeded from the workstation recipe library docs/recipes/ (verified 2026-09-15); metric: e2e 1915.17tok/s \u2014 Phase2 @c=64\u3001512/512 \u6210\u529f\u3001p50 4.29 s \u21d2 \u6bcf\u6d41\u224830 t/s\u3001479 t/s/die \u5168\u5e93\u6700\u9ad8\uff08bench/se_bench_ornith_tp4_splitkvon_c64.json\uff1b\u6d4b\u91cf\u671f 09-11 \u524d\u540e\u3001\u501f 8201 \u7aef\u53e3\u6d4b\u300109-15 \u590d\u6838\u5185\u5d4c url=127.0.0.1:8201\uff1b\u4e0d\u4f9d\u8d56 splitKV\uff1aOFF \u81c2 1911.33\uff09",
+    "recipe_id": "8111-ornith-1.5-35b-a3b-bf16-vllm-tp4",
+    "seed_script": "scripts/seed_recipe_kb.py"
+  },
+  "recipe_id": "8111-ornith-1.5-35b-a3b-bf16-vllm-tp4",
+  "remaining_gaps": [
+    {
+      "description": "1915.17 \u662f\u501f 8201 \u7aef\u53e3\u5728 09-11 \u524d\u540e\u6d4b\u7684\uff08bench json \u5185\u5d4c url=8201\uff0c09-15 \u590d\u6838\uff09\uff1b\u672c\u81c2\u540c boot \u540c\u7aef\u53e3\u590d\u6d4b\u672a\u7559\u6863",
+      "metrics": "1915.17 tok/s @c64"
+    },
+    {
+      "description": "09-08 \u4e24\u81c2 A/B \u8868 cap \u672a\u6807\u6ce8\uff0c\u4e0e 560 W \u6863\u53e3\u5f84\u65ad\u88c2",
+      "metrics": "ON/OFF @64: 1915/1911"
+    },
+    {
+      "description": "MQ \u53d8\u4f53\u5019\u9009\uff08cand_splitkv_pa_mq.py\uff09\u672a\u63a5\u7ebf\uff1a\u8ba9 max_query_len>1 \u7684\u6295\u673a\u6a21\u578b\u4e5f\u80fd\u8d70 split-KV",
+      "metrics": "\u2014"
+    }
+  ],
+  "seeded_at": "2026-09-15T08:06:40+00:00",
+  "sessions": [
+    {
+      "actions_taken": [
+        "seeded from docs/recipes/8111-ornith-1.5-35b-a3b-bf16-vllm-tp4"
+      ],
+      "date": "2026-09-15",
+      "gain_pct": 0.0,
+      "session_id": "recipe-seed:8111-ornith-1.5-35b-a3b-bf16-vllm-tp4",
+      "stack_len": 7,
+      "throughput_after": 1915.17,
+      "throughput_before": 0.0
+    }
+  ],
+  "stack_fingerprint": {
+    "aiter_commit": "",
+    "rocm_version": "7.2.4",
+    "vllm_version": "0.28.0+rocm723"
+  },
+  "status": "active",
+  "tp": 4,
+  "updated_at": "2026-09-15T08:06:40.755558+00:00",
+  "version": 1,
+  "what_failed": [
+    {
+      "description": "AITER\uff08\u542b fused MoE / VLLM_ROCM_USE_AITER=1\uff09",
+      "reason": "gfx90a \u7ec8\u6848\u4e0d\u53ef\u7528\uff1aarch \u95e8\uff08get_cdna_version>2\uff09\u3001\u9884\u7f16 .so \u65e0 gfx90a \u7801\u5bf9\u8c61\u3001JIT \u540e CK \u9759\u9ed8\u7b97\u9519\uff08bf16 \u65e0\u5168\u5c40 AtomicAdd\uff09\uff1bTRITON fused MoE \u5373\u6700\u4f18\uff1b\u811a\u672c\u5934 09-03 \u90a3\u6b21'\u542f\u7528 AITER \u5168\u5bb6\u6876'\u5df2\u88ab\u63a8\u7ffb"
+    },
+    {
+      "description": "vLLM CUSTOM allreduce / one-shot IPC / NCCL_SYMM_MEM / \u5206\u5c42 allreduce",
+      "reason": "\u5206\u522b\uff1a\u9759\u9ed8 !!!\uff08--disable-custom-all-reduce \u5df2\u9489\uff0c\u771f\u62a4\u680f\u662f\u5e73\u53f0\u95e8\uff09/ \u5168\u8d25 / \u66f4\u6162 / \u5fc5\u8f93 flat8 2.0~2.5\u00d7\uff08\u6570\u5b66\u4e0b\u9650\uff09\u2014\u2014\u60f3\u5403\u540c\u6a21\u7ec4\u7ea2\u5229=\u591a\u526f\u672c\u800c\u975e\u5206\u5c42"
+    },
+    {
+      "description": "moe-tuned \u79cd\u5b50\u8868",
+      "reason": "\u22123~\u22124%\uff088107 \u540c\u5e95\u5ea7\u6570\u636e\uff1b\u672c\u81c2 E=256 \u672a\u5355\u72ec\u5b9e\u6d4b\uff0c\u8981\u63a5\u5148\u81ea\u6d4b\uff09"
+    },
+    {
+      "description": "--quantization awq \u624b\u6253",
+      "reason": "cyankiwi int4 \u662f pack-quantized\uff08qweight \u6570=0\uff09\uff1bW4A16 \u5728 gfx90a \u6709\u5185\u6838\u65e0\u52a0\u901f"
+    },
+    {
+      "description": "\u628a 8114 \u7684 VLLM_ROCM_USE_AITER=1 \u6284\u5230\u672c\u81c2",
+      "reason": "\u90a3\u662f wu1w-int8-028 \u4e13\u5c5e venv \u7684 a8w8 \u901a\u8def\u8c41\u514d\uff1b0.28 \u5171\u4eab\u6811\u5f00\u5b83\u53ea\u5269 RMSNorm \u98ce\u9669"
+    }
+  ],
+  "what_worked": [
+    {
+      "description": "\u4e09\u4ef6\u5957\u552f\u4e00\u540c\u65f6\u5168\u5f00\u7684\u81c2\uff1aP1 \u95e8\u63a7 GEMV\uff08hipBLASLt 66.5 \u00b5s \u6162\u6838\u00d740 \u5c42 \u2192 Triton GEMV 5.5 \u00b5s\uff09+ QuickReduce C2/C3 \u67b6\u6784\u95e8\uff08FP/0/0 \u4e09 env\uff0cMIN_SIZE_BYTES_MB=0 \u8ba9 4\u201310 KB \u7684 decode allreduce \u4e0a\u573a\uff09+ split-KV paged-decode\uff0809-07 \u8f6c\u6b63\uff09",
+      "measured_impact": "P1 +19.8%\u3001QR +12.5%/+24.9%\u3001splitKV \u00d77.22@30720 \u21d2 479 t/s/die \u672c\u673a\u541e\u5410\u51a0\u519b"
+    },
+    {
+      "description": "split-KV \u5f62\u72b6\u95e8\uff08\u7eaf decode \u2227 bf16 \u2227 hd256 \u2227 \u975e2\u5e42 block \u2227 num_seqs\u00d7kv_heads\u226464\uff09+ MAX_SCRATCH_MIB=192\uff08\u5185\u6838\u9ed8\u8ba4 32 MiB/key \u5728 256k \u4e0b seqs=16..64 \u4e03\u6863\u5168\u88ab\u6253\u56de Triton\uff0c\u6700\u5c0f\u4e00\u6b21\u53ea\u8d85 524,288 B=1.6%\uff09",
+      "measured_impact": "192=\u5b9e\u6d4b\u5cf0\u503c 130 MiB+48% \u4f59\u91cf\uff1bscratch \u4e0d\u5403 KV \u6c60\uff08\u603b\u57fa\u5ea7 MAX_TOTAL_MIB=192 \u4e0d\u53d8\uff09\uff1b\u56de\u9000\u4e00\u884c =32"
+    },
+    {
+      "description": "TP4 \u534a\u673a\uff08die0-3 \u540c NUMA0\uff0c\u53e6\u534a\u7559\u7ed9\u522b\u7684\u6a21\u578b\uff0c\u523b\u610f\u4e0d\u505a 2\u00d7TP4\uff09+ GPU_MEM_UTIL 0.85 \u4e0e 1915 \u540c\u53e3\u5f84 + \u4e0d\u8bbe --max-num-seqs",
+      "measured_impact": "67 G \u6743\u91cd \u00f74\u224816.8 G/die\uff0c\u4f59\u91cf\u5168\u7ed9 KV\uff1b\u8de8\u6a21\u7ec4\u52a0 die \u4f1a\u63ba SYS \u817f"
+    },
+    {
+      "description": "\u6b63\u786e\u6027\u88c1\u5224\u72ec\u7acb\u4e8e\u65e5\u5fd7\uff1abench/pa256_golden.py\uff08float32 \u72ec\u7acb\u624b\u7b97\uff09+ Kineto trace/ABAB \u7ec8\u5224 QR/P1\uff1bsplit-KV \u4e0a\u573a\u770b INFO \u884c 'MI250X split-KV paged-decode \u5df2\u63a5\u7ba1'",
+      "measured_impact": "81 \u683c\u5168\u8fc7\uff1b\u8d77\u670d\u5373\u6709\u63a5\u7ba1\u884c\uff08\u5173\u81c2=0 \u884c\uff09"
+    }
+  ]
+}

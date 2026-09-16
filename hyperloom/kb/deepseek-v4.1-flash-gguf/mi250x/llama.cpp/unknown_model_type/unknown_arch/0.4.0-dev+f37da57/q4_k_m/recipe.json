@@ -1,0 +1,240 @@
+{
+  "authority": "EXPERIENTIAL",
+  "best_config": {
+    "extra_envs": {
+      "CTX_SLOT": "262144",
+      "FA": "on",
+      "GGML_CUDA_P2P": "1",
+      "NGL": "99",
+      "NP": "1",
+      "OMP_NUM_THREADS": "24",
+      "OMP_WAIT_POLICY": "PASSIVE",
+      "RATIO_KV": "1",
+      "REASONING": "on",
+      "REASONING_EFFORT": "75",
+      "SPLIT_MODE": "layer"
+    },
+    "extra_server_args": "-m models/vcruz305/DeepSeek-V4.1-Flash-GGUF/DeepSeek-V4.1-Flash-Q4_K_M-00001-of-00011.gguf --split-mode layer --tensor-split 1,1,1,1,1,1,1,1 --n-gpu-layers 99 --fit off --load-mode dio -c 262144 -np 1 -b 2048 -ub 128 -t 24 -tb 24 -fa on --alias deepseek-v4.1-flash --host 0.0.0.0 --port 8112 --jinja --chat-template-kwargs {\"reasoning_effort\": 75} --reasoning on --chat-template-file models/vcruz305/launcher/templates/dsv41_chat_template.jinja"
+  },
+  "best_throughput": 26.17,
+  "canonical_id": "inference:deepseek-v4.1-flash-gguf:mi250x:llama.cpp:unknown_model_type:unknown_arch:0.4.0-dev+f37da57:q4_k_m",
+  "confidence": 0.85,
+  "created_at": "2026-09-15T08:06:40.753300+00:00",
+  "engine": "llamacpp",
+  "entry": "launcher/favor/deepseek-v4.1-flash_748b_q4km_llamacpp_rocm72_256k_8112_vcruz305_mi250dx8.sh",
+  "env_path": "envs/llama.cpp_dsv41-gfx90a-2026.9.12",
+  "evidence_refs": [
+    "/home/qiba/ai/docs/recipes/serving/8112-deepseek-v4.1-flash-748b-q4km-llamacpp.md",
+    "/home/qiba/ai/launcher/favor/deepseek-v4.1-flash_748b_q4km_llamacpp_rocm72_256k_8112_vcruz305_mi250dx8.sh",
+    "/home/qiba/ai/models/vcruz305/launcher/deepseek-v4.1-flash_748b_q4km_llamacpp_rocm72_256k_8112_vcruz305_mi250dx8.sh\uff08\u5b9e\u4f53\u811a\u672c\uff0c403 \u884c\uff09",
+    "/home/qiba/ai/docs/DeepSeek-V4.1-Flash-gfx90a-\u51c6\u5165\u8c03\u7814-2026-09-12.md \u00a70/\u00a71.1/\u00a74/\u00a79/\u00a710",
+    "/home/qiba/ai/docs/DSV4.1-\u5de5\u5177\u8c03\u7528\u6cc4\u9732-\u6839\u56e0\u4e0e\u4fee\u590d-2026-09-14.md \u00a71/\u00a72/\u00a73\uff08\u914d\u65b9 patch/llamacpp-dsv41-dsml-tags\uff09",
+    "/home/qiba/ai/docs/\u4e0a\u4e0b\u6587\u53e3\u5f84-\u5355\u6761\u4f1a\u8bdd\u6700\u4f4e256k-2026-09-13.md \u00a75.2",
+    "/home/qiba/ai/docs/MI250X-llama.cpp-TP-RCCL-\u672c\u673a\u5b9e\u6d4b-2026-09-12.md\uff08tensor \u5224\u8d1f\uff09",
+    "/home/qiba/ai/config/ports.conf\uff08PORT_BASE_DEEPSEEK_V4_1\uff1a\u4e24\u6761\u5b9e\u4f53\u811a\u672c\u4e92\u65a5\u58f0\u660e\uff09",
+    "/home/qiba/ai/docs/\u6a21\u578b-\u811a\u672c-\u73af\u5883\u5bf9\u7167\u8868-2026-09-12.md \u8868 A \u884c 1"
+  ],
+  "exclusive_with": [
+    "8112-vllm-fp8fp4 \u7b2c\u4e8c\u81c2\uff08\u540c\u7aef\u53e3\uff0cfail-closed \u5224\u6b7b\u3001\u5de5\u4f5c\u533a\u5df2\u5220\uff09",
+    "8103",
+    "8107",
+    "8108",
+    "8109",
+    "8110",
+    "8111",
+    "8301",
+    "8302\uff088 die \u5168\u5360 \u21d2 ports.conf L86 \u539f\u6587\u58f0\u660e\u4e92\u65a5\uff09"
+  ],
+  "framework_name": "llama.cpp",
+  "framework_version": "0.4.0-dev+f37da57",
+  "gpus": "mi250dx8\uff08DEVS=0..7\uff0c\u8de8 NUMA0+1\uff0c\u4e0d\u505a numa bind\uff1b--split-mode layer\uff0c\u975e TP\uff09",
+  "hardware": "mi250x",
+  "kernel_optimizations": [],
+  "last_profiled": "2026-09-14",
+  "lessons": [
+    {
+      "measured_impact": "1M/ub256 OOM 68926 MiB vs 1M/ub32 \u8d77\u5f97\u6765\u4f46 prefill \u221256%",
+      "statement": "\u4e0a\u4e0b\u6587\u6863\u4f4d\u7684\u771f\u5899\u662f\u8ba1\u7b97\u56fe\u7f13\u51b2\uff08\u221d CTX\u00d7UBATCH\uff09\uff0c\u4e0d\u662f KV \u663e\u5b58\u4e5f\u4e0d\u662f\u6ce8\u610f\u529b\u5b9e\u73b0\u2014\u2014FA \u6551\u4e0d\u4e86\u5019\u9009\u63a9\u7801"
+    },
+    {
+      "measured_impact": "TP-RCCL \u5b9e\u6d4b\uff1aprefill \u7ea2\u5229\u53ea\u6709 deepseek4 \u5403\u5f97\u5230",
+      "statement": "arch \u652f\u6301 \u2260 \u6536\u76ca\uff1adeepseek41 \u4e0d\u5728 tensor \u9ed1\u540d\u5355\uff0c\u4f46\u672c\u673a decode 0.30\u00d7 \u5b9e\u6d4b\u5224\u8d1f + \u524d\u7f00\u672a\u94fe RCCL\u2014\u2014\u5224'\u80fd\u4e0d\u80fd'\u8981\u540c\u65f6\u8fc7 arch \u95e8\u3001\u6784\u5efa\u94fe\u3001\u6536\u76ca\u4e09\u5173"
+    },
+    {
+      "measured_impact": "09-14 \u6cc4\u9732\u4fee\u590d\u5168\u94fe",
+      "statement": "C++ \u8865\u4e01\u7684\u9a8c\u6536\u5fc5\u987b\u4e24\u4fa7\uff1a\u6811\u4fa7 --check + \u8fd0\u884c\u4fa7\u884c\u4e3a\u63a2\u9488\uff086/6\uff09\uff0c'\u5728\u6811\u91cc'\u4e0d\u662f\u81ea\u52a8\u4fdd\u8bc1\uff1bmtime \u4fdd\u6301\u4f1a\u8ba9 make \u5224\u65b0\u4e0d\u91cd\u7f16"
+    }
+  ],
+  "model": "deepseek-v4.1-flash-gguf",
+  "model_dir": "models/vcruz305/DeepSeek-V4.1-Flash-GGUF",
+  "other_metrics": [
+    {
+      "name": "16k \u5bf9\u9f50\u6863\uff08\u56de\u6eda\u4f4d\uff09",
+      "note": "2026-09-12 \u51c6\u5165\u8c03\u7814 \u00a79\uff1a\u52a0\u8f7d 138 s\uff1b\u9a7b\u7559 313.9 GiB\uff1b\u5cf0\u503c/die 52092\u202636826 MiB\uff08die0 \u504f\u91cd 11\u201315 GiB\uff09\uff1bbench/dsv41_shapes_8112_run{1,2,3}.json \u5728\u4ed3",
+      "value": "decode geo 29.9 / pp576 303 tok/s"
+    },
+    {
+      "name": "NP=2 \u5224\u636e",
+      "note": "0.85\u00d7\uff0c09-12 \u540c boot \u21d2 NP=1 \u5b9a\u6863\uff08MoE decode \u5e26\u5bbd\u53d7\u9650\u4e32\u884c\u9000\u5316\uff1b\u6761\u6570\u7531\u541e\u5410\u8d26\u5426\u6389\uff0c\u4e0d\u7531\u663e\u5b58\u8d26\uff09",
+      "value": "\u805a\u5408 25.3\uff0812.65+12.68\uff09< \u5355\u6d41 29.9"
+    },
+    {
+      "name": "1M/ub32 \u8bd5\u8dd1\u6863",
+      "note": "09-13 \u21d2 \u7528\u6237\u62cd\u677f\u56de\u843d 256k \u5b9a\u7a3f\uff1b1M/ub256 \u7533\u8bf7 68926 MiB \u5f53\u573a cudaMalloc OOM\uff08failed to allocate compute pp buffers\uff09",
+      "value": "prefill 102 tok/s\uff08\u5b9a\u7a3f\u6863\u7684 1/3\uff09\uff1bdie0 \u9a7b\u7559 60862/65520 MiB"
+    },
+    {
+      "name": "\u5de5\u5177\u8c03\u7528\u9a8c\u6536\uff08\u8865\u4e01+\u6a21\u677f\u540e\uff09",
+      "note": "2026-09-14\uff0c\u6d41\u5f0f\u5206\u7247\u6b63\u5e38\uff08\u6cc4\u9732\u4fee\u590d \u00a73\uff09",
+      "value": "6/6 \u63a2\u9488 + SE-Bench T16 \u5de5\u5177DSML PASS"
+    }
+  ],
+  "patches": [
+    "patches/llama.cpp-dsv41/port_v41_dsml_tags.py\uff08\u4e09\u4ef6\uff1aV41DSML/GENPROMPT-OPTIONAL/TRAILING-SPACE\uff0c\u9700\u91cd\u7f16+\u91cd\u88c5\u524d\u7f00\uff09",
+    "recipes: patches/llamacpp-dsv41-dsml-tags.md"
+  ],
+  "pitfalls": [
+    {
+      "description": ">16384 \u662f'\u8bd5\u8dd1\u533a'\u4e0d\u662f'\u8c03\u5927\u65cb\u94ae'\uff1a\u8be5\u6784\u5efa\u672a\u5b9e\u73b0\u4e24\u6863 candidate mask\uff08deepseek41.cpp:32 \u6ce8\u91ca\u539f\u6587\uff09\u21d2 \u5019\u9009\u96c6\u4e0e\u53c2\u8003\u4e0d\u4e00\u81f4\u3001\u8d28\u91cf\u65e0\u4fdd\u8bc1\uff1b\u771f\u5899=\u8ba1\u7b97\u56fe\u7f13\u51b2 \u221d CTX\u00d7UBATCH\uff1b\u56de\u6eda\u4f4d CTX_SLOT=16384\uff08\u552f\u4e00\u5b9e\u73b0\u5bf9\u9f50\u6863\uff09\uff1bub<8 \u811a\u672c\u62d2\u542f",
+      "severity": "crash"
+    },
+    {
+      "description": "\u6b64 arch \u4e0d\u652f\u6301\u4efb\u4f55 --spec-type\uff08MTP/ngram \u90fd\u4e0d\u52a0\uff0c\u767d\u70e7\uff09",
+      "severity": "config"
+    },
+    {
+      "description": "\u8865\u4e01\u6253\u5b8c\u5fc5\u987b touch \u751f\u6548\uff1apatchkit \u4fdd mtime \u4f1a\u9a97\u8fc7 make \u21d2'\u91cd\u7f16\u7a7a\u8f6c'\uff08\u65bd\u5de5\u5751 1\uff0c\u5df2\u710a\u8fdb\u811a\u672c\uff09\uff1b\u4e14 --apply \u540e\u5fc5\u987b cmake --build + cmake --install \u4e24\u6b65\u624d\u8fdb\u524d\u7f00",
+      "severity": "config"
+    },
+    {
+      "description": "'\u8865\u4e01\u81ea\u52a8\u5728\u6811'\u4e0d\u6210\u7acb\uff1alauncher \u53ea\u628a\u8865\u4e01\u5199\u8fdb\u6ce8\u91ca\u3001\u4e0d\u4f1a\u81ea\u52a8 --apply/--check\uff08\u65e0 --require \u51c6\u5165\u95e8\uff09\u21d2 \u524d\u7f00\u88ab\u91cd\u5efa/\u56de\u9000\u540e\u65e0\u4eba\u88ab\u544a\u77e5\uff0c\u75c7\u72b6='\u5de5\u5177\u8c03\u7528\u6084\u6084\u6f0f\u6210\u6587\u672c'\uff1b\u9a8c\u6536\u53ea\u80fd\u4eba\u5de5\uff1a--check \u7eff + test/dsv41/probe_tools_8112.py 6/6",
+      "severity": "config"
+    },
+    {
+      "description": "--jinja \u9ed8\u8ba4\u662f\u5173\u3001\u5fc5\u987b\u663e\u5f0f\u52a0\uff08\u811a\u672c\u65e9\u671f\u6ce8\u91ca\u65ad\u8a00'\u9ed8\u8ba4 enabled'\u5df2\u88ab\u5b9e\u6d4b\u8bc1\u4f2a\uff09\uff1b\u4e14 --chat-template-file \u5fc5\u987b\u7ed9\uff08GGUF \u5185\u5d4c\u662f V4 \u8001\u6a21\u677f\uff0cDSML \u65e0\u524d\u5bfc\u7a7a\u683c \u21d2 \u4e0d\u6362 tools \u5fc5\u9000\u5316\u6210\u7eaf\u6587\u672c\uff1b\u6a21\u677f\u7f3a\u5931\u65f6\u811a\u672c\u53ea\u8b66\u544a\u4e0d\u62d2\u542f \u21d2 \u76ef\u542f\u52a8\u884c\uff09",
+      "severity": "config"
+    },
+    {
+      "description": "\u9884\u68c0\u522b\u7167\u642c 8103 \u6a21\u677f\u628a 414 G \u5168\u644a\u663e\u5b58\uff1a\u5fc5\u987b\u6263 engram 103 GiB \u4e14\u9010 die \u7b97\uff1b\u9884\u68c0\u6052\u5931\u8d25\u65f6\u522b\u8c03\u95e8\u69db\u6570\u5b57\u7cca\u8fc7\u53bb\uff0c\u5148\u817e\u5361\u6216\u964d\u6863",
+      "severity": "config"
+    },
+    {
+      "description": "\u53d7\u9650\u6c99\u7bb1\u4f1a\u9759\u9ed8 CPU-only \u7a7a\u70e7 414 G\uff1a\u8d77\u670d 30 s \u540e grep -c 'failed to initialize ROCm' \u5fc5\u987b 0 \u4e14 VRAM \u5728\u6da8\uff08\u811a\u672c\u5185\u7f6e sleep 3 \u62e6\u6740\uff09",
+      "severity": "crash"
+    },
+    {
+      "description": "\u65b9\u6cd5\u8bba\uff1a\u9996\u6d4b\u6863\u4f1a\u4f4e ~30%\uff08JIT \u644a\u5165\uff09\uff0c\u5148 warmup \u518d\u6d4b\uff1b\u91cd\u590d\u540c\u5185\u5bb9\u6d4b pp \u4f1a\u88ab prefix cache \u9a97\uff1b\u540c boot \u624d\u53ef\u6bd4\u3001\u8de8 boot \u6f02 \u00b115%",
+      "severity": "config"
+    },
+    {
+      "description": "temp=0 \u9010 token \u8f93\u51fa\u8de8 FA \u6863\u4e0d\u4fdd\u8bc1\u9010\u5b57\u76f8\u540c \u21d2 \u522b\u62ff md5 \u5224\u5bf9\u9519\uff1b\u6052\u544a\u8b66 resolve_fused_ops: fused HC pre\u2192ROCm0 \u65e0\u5bb3\uff08die0 \u6743\u91cd\u504f\u91cd\u7684\u8d21\u732e\u9879\uff09",
+      "severity": "config"
+    },
+    {
+      "description": "\u7981\u628a SKIP_CHAT_PARSING=1 \u5f53\u9ed8\u8ba4\uff0809-12 \u6743\u5b9c\uff0c\u5f00\u4e86\u5de5\u5177\u6c38\u4e0d\u89e3\u6790\uff09\uff1b\u672c GGUF \u6a21\u677f thinking \u9ed8\u8ba4 false\uff08\u4e0e 8103 \u76f8\u53cd\uff09\uff0c--reasoning on \u7ed9\u6a21\u677f\u704c enable_thinking=true \u21d2 CoT \u8fdb reasoning_content\uff1boff \u6863\u6a21\u578b\u4ecd\u5148\u5410 CoT \u4f46\u65e0\u6807\u7b7e\u53ef\u4f9d\u3001max_tokens \u8981\u4e3a\u601d\u8003\u7559\u91cf",
+      "severity": "config"
+    }
+  ],
+  "port": "8112",
+  "precision": "q4_k_m",
+  "primary_metric_note": "256k/ub128 \u5b9a\u7a3f\u6863\u3001\u540c boot\u3001temp0 \u4e09\u5f62\u6001 decode geo\uff08\u76f8\u5bf9 16k \u6863 \u221212.5%\uff09\uff1b\u540c boot prefill 230 tok/s\uff1b16k \u5bf9\u9f50\u6863 geo 29.9 \u53e6\u5217\uff1b\u8de8 boot \u6f02 \u00b115%",
+  "provenance": {
+    "details": "Seeded from the workstation recipe library docs/recipes/ (verified 2026-09-14); metric: decode 26.17tok/s \u2014 256k/ub128 \u5b9a\u7a3f\u6863\u3001\u540c boot\u3001temp0 \u4e09\u5f62\u6001 decode geo\uff08\u76f8\u5bf9 16k \u6863 \u221212.5%\uff09\uff1b\u540c boot prefill 230 tok/s\uff1b16k \u5bf9\u9f50\u6863 geo 29.9 \u53e6\u5217\uff1b\u8de8 boot \u6f02 \u00b115%",
+    "recipe_id": "8112-deepseek-v4.1-flash-748b-q4km-llamacpp",
+    "seed_script": "scripts/seed_recipe_kb.py"
+  },
+  "recipe_id": "8112-deepseek-v4.1-flash-748b-q4km-llamacpp",
+  "remaining_gaps": [
+    {
+      "description": "1M \u6863\u8981\u7b49\u4e0a\u6e38\u5b9e\u73b0\u4e24\u6863 candidate mask\uff08>16384 \u8d28\u91cf\u8bed\u4e49\u65e0\u4fdd\u8bc1\uff09",
+      "metrics": "1M/ub32 \u53ef\u8dd1\u4f46 prefill 102 vs 230\u3001die0 \u53ea\u5269 4.5 GiB"
+    },
+    {
+      "description": "vLLM \u8def\u7ebf\u590d\u8bc4\u4e09\u89e6\u53d1\u6761\u4ef6\uff08T1/T2/T3\uff0c\u8c03\u7814 \u00a710.4\uff09\u672a\u547d\u4e2d",
+      "metrics": "\u2014"
+    },
+    {
+      "description": "RUNPATH \u7b2c 4 \u683c\u6b7b\u683c\uff08ai/rocm724\u2192envs/rocm724 \u5f52\u4f4d\u9057\u7559\uff0c\u53ea\u9760\u7b2c 3 \u683c\uff09\uff1b\u811a\u672c L110-113'\u539f\u7248\u6743\u91cd\u843d kioxia+\u4ed3\u5e93\u8f6f\u94fe'\u8fc7\u65f6\uff1akioxia \u73b0\u4e3a\u7a7a\u76d8\uff0c475 G \u539f\u7248\u5b9e\u4f53\u5728 /mnt/stripe-3mix-3t2/models/deepseek-ai/",
+      "metrics": "\u5c5e\u5e76\u53d1\u4f1a\u8bdd\u8def\u7ebf\uff0c\u53ea\u62a5\u544a\u4e0d\u64c5\u81ea\u52a8"
+    },
+    {
+      "description": "\u8d77\u670d/\u9a7b\u7559\u5e38\u6570\u6362\u6863\u540e\u987b VERBOSE=1 \u56de\u6821 sched_reserve \u4e0e DSV4 CSA size \u4e24\u884c\u5e76\u56de\u586b",
+      "metrics": "\u00b15% \u62df\u5408"
+    }
+  ],
+  "seeded_at": "2026-09-15T08:06:40+00:00",
+  "sessions": [
+    {
+      "actions_taken": [
+        "seeded from docs/recipes/8112-deepseek-v4.1-flash-748b-q4km-llamacpp"
+      ],
+      "date": "2026-09-14",
+      "gain_pct": 0.0,
+      "session_id": "recipe-seed:8112-deepseek-v4.1-flash-748b-q4km-llamacpp",
+      "stack_len": 2,
+      "throughput_after": 26.17,
+      "throughput_before": 0.0
+    }
+  ],
+  "stack_fingerprint": {
+    "aiter_commit": "",
+    "rocm_version": "7.2.4",
+    "vllm_version": ""
+  },
+  "status": "active",
+  "tp": 0,
+  "updated_at": "2026-09-15T08:06:40.753300+00:00",
+  "version": 1,
+  "what_failed": [
+    {
+      "description": "--split-mode tensor + RCCL \u751f\u4ea7\u5316",
+      "reason": "decode 0.30\u00d7\u3001\u5c31\u7eea 1\u203213\u2033\u21927\u203205\u2033\uff0c\u4e14\u672c\u524d\u7f00\u672a\u94fe RCCL\uff08ldd libggml-hip.so grep rccl \u7a7a \u21d2 tensor \u8def\u65e0\u7801\uff09"
+    },
+    {
+      "description": "-fa on \u5f53\u957f\u4e0a\u4e0b\u6587\u524d\u63d0",
+      "reason": "09-13 \u5b9e\u6d4b\u63a8\u7ffb\uff1aFA \u751f\u6548\u540e 1M/ub256 \u7167\u6837 68.9 GiB OOM\u2014\u2014\u90a3\u5757\u7f13\u51b2\u662f DSA \u5019\u9009\u63a9\u7801\uff08\u8fdb\u56fe\u5728\u6ce8\u610f\u529b\u7b97\u5b50\u4e4b\u524d\uff09\uff0c\u4e0d\u662f\u6ce8\u610f\u529b\u5206\u6570"
+    },
+    {
+      "description": "-ot \u9489 CPU \u8c03\u5e73",
+      "reason": "embd/logits\u2192CPU \u221247% \u4e14\u5cf0\u503c\u4e0d\u964d\uff1b\u5355\u5c42\u4e13\u5bb6\u2192CPU \u5cf0\u503c \u22126.1 GiB \u4f46 \u221213% \u21d2 \u65e0\u8d62\u5bb6\uff0c\u53ea\u7559\u65cb\u94ae"
+    },
+    {
+      "description": "NP>1",
+      "reason": "\u805a\u5408 25.3 < 29.9\uff0809-12 \u5b9e\u6d4b\uff09"
+    },
+    {
+      "description": "\u4e0b\u539f\u7248\u6743\u91cd\u81ea\u5df1\u91cf\u5316",
+      "reason": "\u4e2d\u95f4\u6001 1.36\u20132.72 TiB + \u7167\u6837\u7f3a 5 \u4e2a engram \u5e38\u6570\u952e"
+    },
+    {
+      "description": "vLLM \u8def\u7ebf\uff08\u73b0\u671f\uff09",
+      "reason": "\u4e09\u4e2a vLLM env \u5747\u672a\u6ce8\u518c arch DeepseekV41ForCausalLM\uff08\u8981\u8dd1\u5f97\u65b0\u5efa\u524d\u7f00\u5e76\u91cd\u7f16 _C\uff09\u21d2 \u505c\u7ebf\u7b49\u7248\u672c\uff1b\u4e09\u6761\u590d\u8bc4\u89e6\u53d1\u6761\u4ef6\uff08T1/T2/T3\uff09\u89c1\u8c03\u7814 \u00a710.4\uff1b\u540c\u7aef\u53e3\u7b2c\u4e8c\u81c2\uff08vLLM fp8fp4\uff09fail-closed \u4e14\u5de5\u4f5c\u533a\u5df2\u5220\uff08\u672a\u63d0\u4ea4\uff09"
+    },
+    {
+      "description": "export GGML_HIP_RCCL / \u53d1\u660e LLAMA_SPLIT_MODE env",
+      "reason": "\u524d\u8005\u662f CMake \u7f16\u8bd1\u671f\u5f00\u5173\uff08export \u65e0\u8fd0\u884c\u65f6\u6548\u679c\uff09\u3001\u540e\u8005\u6839\u672c\u4e0d\u5b58\u5728 \u21d2 \u81ea\u6b3a\uff08\u5b9a\u6863\u4f9d\u636e 6\uff09"
+    }
+  ],
+  "what_worked": [
+    {
+      "description": "dsv41 \u79c1\u6709\u5206\u652f\u524d\u7f00 envs/llama.cpp_dsv41-gfx90a-2026.9.12\uff08vcruz305 fork @ runtime/deepseek41\uff0c19 \u6587\u4ef6/2429 \u884c\u5168\u5728 runtime/\u3001ggml \u96f6\u6539\u52a8\uff09\uff1b\u5168\u673a RUNPATH \u56db\u683c\u5168\u6d3b\u7684\u6837\u677f\u524d\u7f00",
+      "measured_impact": "\u5168\u673a\u552f\u4e00\u80fd\u8dd1 arch deepseek41\uff08V4.1\uff09\u7684\u73b0\u5f79\u5e95\u5ea7\uff1b\u4e0a\u6e38\u65e0\u6b64 runtime\u3001PR #28696 \u4ec5\u8f6c\u6362\u4fa7\u672a\u5408"
+    },
+    {
+      "description": "port_v41_dsml_tags.py \u4e09\u4ef6\u8865\u4e01\uff08V41DSML \u5e26\u7a7a\u683c\u6807\u7b7e / GENPROMPT-OPTIONAL / TRAILING-SPACE\uff0c\u6539 common/parsers/deepseek.cpp\uff09+ \u4fee\u597d add_generation_prompt \u7684 dsv41_chat_template.jinja\uff08tools/dsv41_tpl_check.py 5 \u7ec4\u5b98\u65b9\u91d1\u6807\uff09",
+      "measured_impact": "chat \u4ece\u4e00\u5f8b HTTP 500 peg-native / DSML \u6574\u6bb5\u6f0f\u8fdb content \u21d2 09-14 \u8d77 6/6 \u63a2\u9488 + T16 PASS\uff1b\u8865\u4e01\u4e0e\u6a21\u677f\u7f3a\u4e00\u5373\u56de\u5f52\u75c7\u72b6"
+    },
+    {
+      "description": "CTX\u00d7UBATCH \u6210\u5bf9\u9636\u68af\uff08\u56fe\u7f13\u51b2 \u221d CTX\u00d7UBATCH\uff1a1M/ub32\uff5c768k/ub42\uff5c512k/ub64\uff5c384k/ub85\uff5c256k/ub128\uff5c128k/ub256\uff5c16k/ub256\uff09+ DRY_RUN=1 \u6362\u6863\u524d\u5148\u7b97\u8d26",
+      "measured_impact": "\u5b9a\u7a3f 256k/ub128 geo 26.17 / prefill 230\uff1b\u8df3\u6863\uff081M/ub256\uff09=\u5f53\u573a OOM 68926 MiB"
+    },
+    {
+      "description": "\u9010 die \u663e\u5b58\u9884\u68c0\uff08W_DIE_MIB \u6743\u91cd\u8868 + BUF_BASE/K_MIB + BUF_SKEW_PCT \u504f\u659c\u8868 + \u6e90 die KV + 4 GiB \u4f59\u91cf\uff09\uff0c\u5e38\u6570\u7531 09-13 \u56db\u70b9 VERBOSE \u5b9e\u6d4b\u6807\u5b9a",
+      "measured_impact": "\u5747\u644a\u53e3\u5f84\u5fc5\u9519\uff08die0 \u504f\u91cd 11\u201315 GiB\uff09\uff1b\u56db\u70b9 1374/17470/68926/9292 MiB \u00b15% \u62df\u5408"
+    },
+    {
+      "description": "--fit off --load-mode dio \u786c\u7f16\u7801\uff1aengram 103 GiB\uff08shard2/6\uff09lazy \u8bfb\u4e0d\u8fdb\u663e\u5b58\uff0c\u9884\u68c0\u5fc5\u6263",
+      "measured_impact": "\u771f\u673a dmesg svm_range_restore_work \u5168\u7a0b 0 \u21d2 dio \u4e0e engram lazy \u8bfb\u5b9e\u6d4b\u4e0d\u51b2\u7a81"
+    }
+  ]
+}

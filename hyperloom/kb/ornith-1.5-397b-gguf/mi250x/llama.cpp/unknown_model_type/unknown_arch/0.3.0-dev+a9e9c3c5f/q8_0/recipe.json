@@ -1,0 +1,245 @@
+{
+  "authority": "EXPERIENTIAL",
+  "best_config": {
+    "extra_envs": {
+      "CACHE_REUSE": "256",
+      "MTP_N": "2",
+      "NGRAM_MATCH": "24",
+      "NGRAM_MAX": "32",
+      "NGRAM_MIN": "16",
+      "NP": "1",
+      "OMP_NUM_THREADS": "24",
+      "OMP_WAIT_POLICY": "PASSIVE",
+      "P2P": "1\uff08GGML_CUDA_P2P\uff09",
+      "ROPE_SCALING": "none\uff08_final\uff1a\u6bcf\u69fd 256k=\u8bad\u7ec3\u4e0a\u9650\uff0c\u4e0d\u5957 YaRN\uff09",
+      "SLOT_CTX": "262144",
+      "SPLIT_MODE": "layer",
+      "USE_MTP": "1\uff08\u81ea\u52a8\uff1a\u63a2\u5230\u8349\u7a3f\u5934\uff09",
+      "USE_NGRAM": "1",
+      "VRAM_WAIT_FREE_S": "150"
+    },
+    "extra_server_args": "-m models/bartowski/Ornith-1.5-397B-GGUF/Ornith-1.5-397B-Q8_0/Ornith-1.5-397B-Q8_0-00001-of-00011.gguf --split-mode layer --tensor-split 1,1,1,1,1,1,1,1 --n-gpu-layers 999 --fit off --load-mode dio -c 262144 -np 1 -b 2048 -ub 128 -t 24 -tb 24 --jinja --host 0.0.0.0 --port 8110 --alias ornith-1.5-397b --mmproj models/bartowski/Ornith-1.5-397B-GGUF/Ornith-1.5-397B-Q8_0/mmproj-Ornith-1.5-397B-BF16.gguf --spec-type ngram-mod,draft-mtp --spec-draft-n-max 2 --spec-ngram-mod-n-min 16 --spec-ngram-mod-n-max 32 --spec-ngram-mod-n-match 24 -md models/bartowski/Ornith-1.5-397B-GGUF/Ornith-1.5-397B-Q8_0/mtp-Ornith-1.5-397B-Q8_0.gguf --cache-reuse 256"
+  },
+  "best_throughput": 47.28,
+  "canonical_id": "inference:ornith-1.5-397b-gguf:mi250x:llama.cpp:unknown_model_type:unknown_arch:0.3.0-dev+a9e9c3c5f:q8_0",
+  "confidence": 0.85,
+  "created_at": "2026-09-15T08:06:40.756759+00:00",
+  "engine": "llamacpp",
+  "entry": "models/bartowski/launcher/ornith1.5_397b_q8_0_llamacpp_rocm72_256k_8110_final_bartowski_mi250dx8.sh",
+  "env_path": "envs/llama.cpp_gfx90a-2026.9.8/qwen4exp-mtp-rp",
+  "evidence_refs": [
+    "/home/qiba/ai/docs/recipes/serving/8110-ornith-1.5-397b-q8-0-llamacpp.md",
+    "/home/qiba/ai/models/bartowski/launcher/ornith1.5_397b_q8_0_llamacpp_rocm72_256k_8110_final_bartowski_mi250dx8.sh",
+    "/home/qiba/ai/models/bartowski/launcher/ornith1.5_397b_q8_0_llamacpp_rocm72_256k_8110_bartowski_mi250dx8.sh\uff08\u5b9e\u4f53\u57fa\u811a\u672c\uff0c439 \u884c\uff09",
+    "/home/qiba/ai/models/bartowski/launcher/ornith1.5_397b_q8_0_llamacpp_rocm72_256k_8110_final_bartowski_mi250dx8.sh\uff08\u2605favor \u5165\u53e3\uff0c\u8584\u5c01\u88c5\uff09",
+    "/home/qiba/ai/docs/\u4e0b\u8f7d-ModelScope-Ornith-1.5-397B-Q8_0-\u4e0e8110\u5e95\u5ea7-2026-09-09.md \u00a72/\u00a76/\u00a711/\u00a712/\u00a713/\u00a714/\u00a715",
+    "/home/qiba/ai/docs/Ornith-397B-MTP\u8349\u7a3f\u5934-\u91cd\u5bfc-2026-09-11.md \u00a76/\u00a77.5\uff08\u4e94\u817f\u6743\u5a01\u53e3\u5f84\uff09",
+    "/home/qiba/ai/docs/MI250X-llama.cpp-TP-RCCL-\u672c\u673a\u5b9e\u6d4b-2026-09-12.md \u00a75",
+    "/home/qiba/ai/config/ports.conf\uff08PORT_BASE_ORNITH_1_5_397B\uff1abase + _final \u4e92\u65a5\uff09",
+    "/home/qiba/ai/docs/\u4e0a\u4e0b\u6587\u53e3\u5f84-\u5355\u6761\u4f1a\u8bdd\u6700\u4f4e256k-2026-09-13.md \u00a73"
+  ],
+  "exclusive_with": [
+    "\u672c\u914d\u65b9\u5b9e\u4f53\u57fa\u811a\u672c\uff08\u540c\u7aef\u53e3 8110 \u540c PID \u628a\u624b\uff09",
+    "8103",
+    "8107\uff08vLLM \u4e0e q4kxl \u4e24\u5f15\u64ce\uff09",
+    "8108",
+    "8109",
+    "8111\uff08die0-3\uff09",
+    "8112",
+    "8301",
+    "8302\uff088 die \u6ee1\u5360 \u21d2 \u4e0e\u5176\u4f59\u6ee1 die \u81c2\u4e92\u65a5\uff0cports.conf \u540c\u6b3e\u58f0\u660e\uff09"
+  ],
+  "framework_name": "llama.cpp",
+  "framework_version": "0.3.0-dev+a9e9c3c5f",
+  "gpus": "mi250dx8\uff08DEVS=0..7\uff0c\u8de8 NUMA0+1\uff0c\u4e0d\u505a numa bind\uff1b--split-mode layer\uff0c\u975e TP\uff09",
+  "hardware": "mi250x",
+  "kernel_optimizations": [],
+  "last_profiled": "2026-09-12",
+  "lessons": [
+    {
+      "measured_impact": "\u4e94\u817f\u4ea4\u53c9 ABAB\uff08\u91cd\u5bfc \u00a77.5\uff0c\u552f\u4e00\u53ef\u4fe1\u53e3\u5f84\uff09",
+      "statement": "MTP \u4e0e ngram \u6536\u76ca\u9ad8\u5ea6\u91cd\u53e0\uff08\u5173 ngram +40.2% vs \u5f00 ngram +19.8%\uff09\uff1a\u590d\u8ff0/\u7eed\u5199\u4e3a\u4e3b ngram \u4e3b\u529b\u3001\u5168\u65b0\u5185\u5bb9\u4e3a\u4e3b MTP \u4e3b\u529b\uff1b\u7ec4\u5408\u8bed\u4e49='\u514d\u8d39\u7684\u4f18\u5148\u3001\u82b1\u94b1\u7684\u515c\u5e95'\u4e0d\u662f\u53e0\u52a0"
+    },
+    {
+      "measured_impact": "\u4e0b\u8f7d \u00a711 \u56db\u6863 + \u91cd\u5bfc \u00a77.5",
+      "statement": "\u6295\u673a\u6df1\u5ea6\u4e0d\u53ef\u8de8\u6a21\u578b\u642c\uff1a\u7531'\u8349\u7a3f\u6210\u672c/\u4e3b\u5e72\u8bfb\u91cf'\u51b3\u5b9a\u2014\u20148110 \u8349\u7a3f\u224842% \u6545 n=2 \u5373\u9876\uff08n3 \u221224.9%\uff09\uff0c8107 vLLM \u5355\u5934\u8fb9\u9645 ~2\u20133% \u624d\u6491\u5230 n=3"
+    },
+    {
+      "measured_impact": "09-09 \u9996\u7248\u5934\u968f\u76ee\u5f55\u5220\u9664\u4e22\u5931 \u21d2 8110 \u65e0\u6295\u673a 33 t/s \u8dd1\u4e86\u4e24\u5468",
+      "statement": "\u79bb\u7ebf\u8d44\u4ea7\u7684\u9759\u9ed8\u9000\u5316\u6bd4\u663e\u5f0f\u5931\u8d25\u66f4\u8d35\uff1a\u5236\u9020\u94fe\u5fc5\u987b\u53ef\u590d\u8dd1\u3001\u7f3a\u5934\u5fc5\u987b\u663e\u5f0f\u8b66\u544a"
+    },
+    {
+      "measured_impact": "111 GiB \u6743\u91cd\uff08RAM 251.7 GiB\uff09\u5b9e\u6d4b\u7167\u6837\u4e2d\u62db\uff08\u7ea2\u7ebf 5 \u636e\u6b64\u66f4\u6b63\uff09",
+      "statement": "--fit off --load-mode dio \u662f'\u53ef\u7528\u524d\u63d0'\u800c\u975e\u4f18\u5316\u9879\uff0c\u89e6\u53d1\u6761\u4ef6\u4e0e\u4f53\u79ef/RAM \u65e0\u5173\uff08\u6a21\u578b<RAM \u4e0d\u8c41\u514d\uff09"
+    }
+  ],
+  "model": "ornith-1.5-397b-gguf",
+  "model_dir": "models/bartowski/Ornith-1.5-397B-GGUF",
+  "other_metrics": [
+    {
+      "name": "\u65e0\u6295\u673a\u5730\u677f",
+      "note": "\u4e94\u817f\u53e3\u5f84\uff1b09-09 \u4e09\u70b9 33.0/33.0/33.0\uff08\u65b9\u5dee 0.1%\uff0c256k/np1 temp0 560 W\uff09",
+      "value": "33.09 tok/s"
+    },
+    {
+      "name": "\u7eaf MTP n2 \u589e\u76ca\uff08\u5173 ngram\uff09",
+      "note": "33.09\u219246.39\uff08\u91cd\u5bfc \u00a77.5 \u817f\u2463\uff09\uff1b\u5f00 ngram \u65f6 MTP \u589e\u91cf\u53ea\u5269 +19.8%",
+      "value": "+40.2%"
+    },
+    {
+      "name": "MTP \u6df1\u5ea6\u56db\u6863 geo\uff0809-09\uff09",
+      "note": "\u4e0b\u8f7d \u00a711\uff1b\u4e94\u817f\u590d\u6d4b n2\u2192n3 \u221224.9% \u21d2 \u5cf0\u5728 2",
+      "value": "n0 40.86 / n2 46.07 / n3 36.60 / n4 33.74"
+    },
+    {
+      "name": "llama-bench layer\uff0809-12\uff0c8 die\uff09",
+      "note": "tensor \u5bf9\u6bd4\uff1adecode 0.30\u00d7\u3001prefill \u00b10% \u65e0\u7ea2\u5229\uff08TP-RCCL \u00a75\uff09",
+      "value": "pp512 539.81 / tg128 32.84"
+    },
+    {
+      "name": "\u8d77\u670d\u4e0e\u9a7b\u7559\uff08dio\uff0c256k\u00d71\uff09",
+      "note": "09-09 \u5b9e\u6d4b\uff1b>5 min=\u7ea2\u7ebf 5 \u73b0\u573a",
+      "value": "3 min 37.9 s\uff1b\u6700\u5fd9 die 55.1/64 GiB"
+    }
+  ],
+  "patches": [
+    "patches/llama.cpp-mtp-only-export.patch\uff08\u4ec5\u79bb\u7ebf\u5236\u9020\u8349\u7a3f\u5934\uff0c\u4e0d\u5728\u670d\u52a1\u94fe\u4e0a\uff09",
+    "recipes: patches/llamacpp-mtp-only-export.md"
+  ],
+  "pitfalls": [
+    {
+      "description": "\u8349\u7a3f\u5934\u8def\u5f84\u6ca1\u88ab\u5019\u9009\u547d\u4e2d \u21d2 USE_MTP \u9759\u9ed8\u964d 0\u3001\u541e\u5410\u6389\u56de ~33\uff0809-11 \u771f\u5b9e\u4e8b\u6545\uff1a\u767d\u8dd1\u4e24\u5468\u65e0\u6295\u673a\uff0c\u4e22 +19.8%/+40.2%\uff09\uff1b\u6bcf\u6b21\u8d77\u670d\u524d\u8dd1 test -e + tools/gguf_head_dump.py \u9a8c\u5934\uff0c\u6216\u663e\u5f0f MTP_HEAD=<\u8def\u5f84>",
+      "severity": "regress"
+    },
+    {
+      "description": "\u6d4b\u91cf\u6c61\u67d3\uff1a\u540c\u5185\u5bb9\u8fde\u53d1\u65f6 ngram \u4ece\u672c slot \u521a\u751f\u6210\u539f\u6587\u91cc\u6284\uff08mean len 29.88 \u5047\u8c61\u300160+ t/s\uff09\uff1b'\u65e5\u5fd7\u51fa\u73b0 draft acceptance \u884c'\u53ea\u662f\u5fc5\u8981\u6761\u4ef6\uff0c\u5bf9\u7167\u7ec4\u5fc5\u987b\u4e0d\u540c\u5185\u5bb9",
+      "severity": "config"
+    },
+    {
+      "description": "1M \u6863\uff1an_ctx_slot=min(n_ctx_seq, GGUF \u58f0\u660e context_length)\uff0c\u547d\u4ee4\u884c\u65e0\u89e3\u2014\u2014\u914d 1M \u5b9e\u9645\u53ea\u6709 262k\uff08'capping'\u53ea\u662f warn \u6587\u6848\uff09\uff1b\u8981 1M \u5fc5\u987b\u4e3b 00001+\u8349\u7a3f\u5934\u4e24\u5904 u32 \u4e00\u8d77\u6539\u5e76\u5f00 YaRN\uff1b\u811a\u672c\u6ce8\u91ca\u7ed9\u7684 dd \u8fd8\u539f\u5907\u4efd /mnt/stripe-3mix-3t2/models/_dl/gguf-head-backup/ \u73b0\u5df2\u6574\u76ee\u5f55\u4e0d\u5b58\u5728",
+      "severity": "config"
+    },
+    {
+      "description": "\u8d77\u670d\u5373 alloc OOM/\u9884\u68c0\u62d2\u7edd\uff1a8 die \u88ab\u522b\u7684\u5e95\u5ea7/Studio \u5360\uff1b\u91cd\u542f\u524d\u5148\u7b49\u663e\u5b58\u5f52\u8fd8\uff08\u8fdb\u7a0b\u6d88\u5931\u2260\u91ca\u653e\uff0c\u811a\u672c\u6700\u591a\u7b49 150 s\uff09",
+      "severity": "crash"
+    },
+    {
+      "description": "content \u8fd4\u56de\u7a7a\u4e32\uff1a\u9996\u7b54\u601d\u8003\u9884\u7b97\u5168\u70e7\u8fdb reasoning_content \u21d2 \u5ba2\u6237\u7aef chat_template_kwargs {\"enable_thinking\":false} \u6216\u7ed9\u8db3 max_tokens",
+      "severity": "config"
+    },
+    {
+      "description": "\u541e\u5410\u6838\u7b97\u9519\uff1a/completion \u7684 tokens_evaluated \u4e0d\u662f'\u65b0\u751f\u6210 token \u6570'\uff1b\u7528 timings.predicted_per_second \u6216\u7aef\u5230\u7aef\u00f7n_predict",
+      "severity": "config"
+    },
+    {
+      "description": "\u624b\u5de5\u8d77\u670d\u5fc5\u987b setsid\uff08\u53ea nohup \u65f6\u8c03\u7528\u65b9\u88ab\u6253\u65ad\u4f1a\u8fde\u5750 llama-server\uff09\uff1b\u505c\u670d\u53ea\u6309 PID/\u5176 PGID \u8d1f\u53f7\uff0c\u7981 pkill -f\u3001\u522b\u628a pgrep \u8f93\u51fa\u5582 kill\uff08R7/R13\uff09",
+      "severity": "crash"
+    },
+    {
+      "description": "\u591a\u6a21\u6001\u4e0b llama.cpp \u81ea\u52a8\u7981\u7528 --cache-reuse\uff08\u6709\u610f\u884c\u4e3a\u53d8\u66f4\uff09\uff1bMMPROJ/MTP_HEAD \u5019\u9009\u6ca1\u8ddf\u4e0a\u6587\u4ef6\u642c\u5bb6\u66fe\u8ba9 vision \u9759\u9ed8\u9000 0",
+      "severity": "regress"
+    },
+    {
+      "description": "\u6743\u91cd\u6839\u4e0d\u80fd\u5199\u6b7b ${AI_HOME}/models\uff08\u811a\u672c\u6309 MODELS_ROOT/\u3001${AI_HOME}/models\u3001/mnt/stripe-3mix-3t2/models \u63a2'\u8c01\u771f\u6709\u8fd9\u4e2a\u4ed3\u5e93\u76ee\u5f55'\uff09\uff1b\u8de8 boot \u7edd\u5bf9\u503c\u6f02 \u00b113\u201315% \u4e0d\u6df7\u8868\uff0c\u5355\u70b9\u6570\u5b57\u4e0d\u53ef\u5916\u4f20\u5fc5\u987b\u5e26 session \u4e0e\u5f00\u5173\u7ec4\u5408",
+      "severity": "config"
+    }
+  ],
+  "port": "8110",
+  "precision": "q8_0",
+  "primary_metric_note": "_final \u5b9a\u7a3f\u6863\uff08ngram 16/32/24 + MTP n2\uff0c256k\u00d71\uff0cvision=1\uff0ctemp0\uff09\u4e09\u5f62\u6001 geo\uff1b\u4e24 session 47.28/44.91\u300109-09 \u72ec\u7acb\u590d\u73b0 46.07 \u21d2 \u62a5 45\u201347\uff0c\u8de8 session \u6f02\u79fb \u00b113%\uff1b45\u201347 \u6d4b\u51fa\u6863\u5e26 yarn4\uff0c\u5b9a\u7a3f ROPE=none \u4e0e\u4e4b\u5dee\u8fd9\u4e00\u4e2a\u5f00\u5173",
+  "provenance": {
+    "details": "Seeded from the workstation recipe library docs/recipes/ (verified 2026-09-12); metric: decode 47.28tok/s \u2014 _final \u5b9a\u7a3f\u6863\uff08ngram 16/32/24 + MTP n2\uff0c256k\u00d71\uff0cvision=1\uff0ctemp0\uff09\u4e09\u5f62\u6001 geo\uff1b\u4e24 session 47.28/44.91\u300109-09 \u72ec\u7acb\u590d\u73b0 46.07 \u21d2 \u62a5 45\u201347\uff0c\u8de8 session \u6f02\u79fb \u00b113%\uff1b45\u201347 \u6d4b\u51fa\u6863\u5e26 yarn4\uff0c\u5b9a\u7a3f ROPE=none \u4e0e\u4e4b\u5dee\u8fd9\u4e00\u4e2a\u5f00\u5173",
+    "recipe_id": "8110-ornith-1.5-397b-q8-0-llamacpp",
+    "seed_script": "scripts/seed_recipe_kb.py"
+  },
+  "recipe_id": "8110-ornith-1.5-397b-q8-0-llamacpp",
+  "remaining_gaps": [
+    {
+      "description": "\u57fa\u811a\u672c\u9ed8\u8ba4\u6863 1M\u00d72\uff08\u6bcf\u69fd 1M\u3001YaRN 4\u00d7\uff09\u8d26\u672c\u4f59\u91cf\u4ec5 0.8\u20131.8 GiB\uff0c\u542f\u52a8\u4ece\u672a\u5b9e\u6d4b",
+      "metrics": "\u63a8\u7b97 62.2\u201363.2 GiB/die\uff08\u4e0b\u8f7d \u00a715\uff09"
+    },
+    {
+      "description": "\u5b9a\u7a3f ROPE=none \u4e0e 45\u201347 \u6d4b\u51fa\u6863\uff08yarn4\uff09\u4e4b\u95f4\uff1a\u901f\u5ea6\u5dee\u53ef\u5ffd\u7565\uff0c\u8d28\u91cf\u5dee\u672a\u6d4b",
+      "metrics": "\u552f\u4e00\u5dee\u5f02=\u8fd9\u4e00\u4e2a\u5f00\u5173"
+    },
+    {
+      "description": "\u5bf9\u7167\u8868\u5199'402\u2013411 GiB\u00b713 \u7247'\u4e0e du \u5b9e\u8bfb 392.6 GiB/11 \u7247\u4e0d\u7b26\uff08\u4ea4\u4ed8\u62a5\u544a\u77db\u76fe\u6e05\u5355\uff09\uff1bmodels/ornith-ai \u60ac\u7a7a\u8f6f\u94fe\u5f85\u5220",
+      "metrics": "du 421,576,669,536 B"
+    }
+  ],
+  "seeded_at": "2026-09-15T08:06:40+00:00",
+  "sessions": [
+    {
+      "actions_taken": [
+        "seeded from docs/recipes/8110-ornith-1.5-397b-q8-0-llamacpp"
+      ],
+      "date": "2026-09-12",
+      "gain_pct": 0.0,
+      "session_id": "recipe-seed:8110-ornith-1.5-397b-q8-0-llamacpp",
+      "stack_len": 2,
+      "throughput_after": 47.28,
+      "throughput_before": 0.0
+    }
+  ],
+  "stack_fingerprint": {
+    "aiter_commit": "",
+    "rocm_version": "7.2.4",
+    "vllm_version": ""
+  },
+  "status": "active",
+  "tp": 0,
+  "updated_at": "2026-09-15T08:06:40.756759+00:00",
+  "version": 1,
+  "what_failed": [
+    {
+      "description": "\u6307\u671b bartowski \u6743\u91cd\u81ea\u5e26 MTP",
+      "reason": "\u9010\u6761\u679a\u4e3e 100 \u4e2a\u6253\u5305\u5f20\u91cf\uff0c\u542b mtp/predict/eh_proj/rewrite = 0 \u4e2a \u21d2 \u5fc5\u987b\u81ea\u5bfc\u72ec\u7acb\u8349\u7a3f\u5934\uff1b--spec-type draft-mtp \u65e0\u5934\u65f6\u9759\u9ed8\u65e0\u8349\u7a3f\u3001\u767d\u642d\u6846\u67b6"
+    },
+    {
+      "description": "MTP_N\u22653",
+      "reason": "n2\u2192n3 \u221224.9%\uff08\u51c0\u4e8f\u4e0d\u662f\u9012\u51cf\uff09\uff1a\u8349\u7a3f=\u6574\u5c42 MoE 6.60B \u2248 \u4e3b\u5e72\u8bfb\u91cf 42%\uff1b\u4e14\u7981\u6b62\u5728 ngram \u5f00\u7740\u7684\u751f\u4ea7\u914d\u7f6e\u4e0a\u505a\u6df1\u5ea6\u9009\u578b\uff08\u5206\u8fa8\u7387\u4e0d\u591f\uff09"
+    },
+    {
+      "description": "NP>1 \u589e\u541e\u5410",
+      "reason": "\u03a3\u805a\u5408\u6052 ~40 t/s\u3001\u5355\u6d41\u6309 1/N \u6389\uff08512 \u4e13\u5bb6\u6d3b\u8dc3\u4e13\u5bb6\u96c6\u968f\u5e76\u53d1\u7ebf\u6027\u81a8\u80c0\uff09\u2014\u2014\u8981\u5e76\u884c\u8d77\u7b2c\u4e8c\u5b9e\u4f8b\u6216\u6362\u6a21\u578b"
+    },
+    {
+      "description": "--split-mode tensor\uff08RCCL\uff09/ row",
+      "reason": "qwen35moe prefill 0.99\u00d7 \u96f6\u7ea2\u5229 + decode 0.30\u00d7 + \u51b7\u542f\u52a8 \u00d76\uff1brow \u65e0 split buffer \u6b7b\u8def"
+    },
+    {
+      "description": "-ot \u9489 CPU",
+      "reason": "embd/logits\u2192CPU \u221247% \u4e14\u5cf0\u503c\u4e0d\u964d\uff1b\u5355\u5c42\u4e13\u5bb6\u2192CPU \u5cf0\u503c \u22126.1 GiB \u4f46 \u221213% \u21d2 \u53ea\u5728\u771f OOM \u8fb9\u7f18\u624d\u503c\u5f97\u4ed8\u8fd9\u4e2a\u7a0e"
+    },
+    {
+      "description": "\u7b2c\u4e8c\u6863\u91cf\u5316\u518d\u4e0b\u76d8",
+      "reason": "\u6761\u5e26\u76d8\u8be5\u6c60\u4ec5\u5269 ~100 G\uff0c\u6491\u7206"
+    },
+    {
+      "description": "\u540c\u540d mmproj 921,704,800 B \u90a3\u4efd",
+      "reason": "sha256 \u4e0e\u5b98\u65b9\u4e0d\u7b26\uff08\u5dee 224 B\uff09\uff0c\u5df2\u6539\u540d *.local-mismatch-20260909 \u7559\u8bc1\uff0c\u4e0d\u8981\u7528"
+    },
+    {
+      "description": "09-11 \u00a77 \u65e7\u8868\u6570\u5b57\uff08+9.4% / \u221212% / 'n=1 \u6253\u5e73'\uff09",
+      "reason": "\u89e3\u6790\u5668 rsplit \u4e8b\u6545\u4ea7\u7269\uff0c\u5df2\u4f5c\u5e9f\uff1b'n=1\u2248n=2'\u5b9e\u4e3a ngram \u63a9\u76d6\u5047\u8c61\uff08\u53bb ngram \u540e n=2 \u5feb 4.2%\uff09"
+    }
+  ],
+  "what_worked": [
+    {
+      "description": "\u81ea\u5bfc MTP \u8349\u7a3f\u5934\uff1allama.cpp-mtp-only-export.patch\uff08--mtp \u53ea\u5bfc\u8349\u7a3f\u5c42 + keep-names \u8865\u591a\u6a21\u6001\u771f\u540d\uff09\u4ece ornith-ai/Ornith-1.5-397B \u4e09\u7247 17.17 GiB + tokenizer \u8f6c\u51fa bf16 16.09 GiB \u2192 llama-quantize Q8_0\uff0824 \u7ebf\u7a0b 20.6 s\uff09\u2192 8.56 GiB",
+      "measured_impact": "\u5730\u677f 33.09 \u2192 +MTP n2 46.39\uff08+40.2%\uff09\uff1b\u4ea7\u7269\u5224\u636e qwen35moe / nextn_predict_layers=1 / block_count=61 / 23 \u5f20\u91cf / \u65e0 blk.0.attn_norm\uff1b09-15 \u5b9e\u6d4b\u5934\u5728\u4f4d\u3001context_length=1048576 \u4e0e\u4e3b\u6a21\u578b\u5bf9\u9f50"
+    },
+    {
+      "description": "\u2605favor \u5165\u53e3 _final \u8584\u5c01\u88c5\u5b9a\u7a3f 256k\u00d71 + ROPE=none\uff08\u57fa\u811a\u672c\u9ed8\u8ba4 1M\u00d72+YaRN4 \u4ec5\u8d26\u672c\u63a8\u7b97\uff09",
+      "measured_impact": "\u5b9e\u6d4b\u6700\u5fd9 die 55.1/64\uff08\u4f59\u91cf 8.9\uff09\uff1b1M\u00d72 \u63a8\u7b97 62.2\u201363.2/64\u3001\u4e00\u6b21 368k prefill \u518d +1.5 GiB \u21d2 \u5361\u8fb9\u4e14\u542f\u52a8\u672a\u9a8c\u8bc1"
+    },
+    {
+      "description": "--fit off --load-mode dio \u786c\u7f16\u7801\uff08\u7ea2\u7ebf 5 \u53ef\u7528\u524d\u63d0\uff0c\u4e0e\u4f53\u79ef\u65e0\u5173\uff09",
+      "measured_impact": "\u7ed5\u5f00 mmap\u2192SVM \u6ce8\u518c\u6b7b\u8def\uff1a\u4e2d\u62db 8 \u5206\u949f\u96f6\u8fdb\u5ea6/~2 MB/s vs \u8865\u5f00\u5173 38 s \u5230 listening\uff08\u540c\u673a\u6848\u4f8b\uff09\uff1b\u672c\u81c2 dio \u8d77\u670d \u22483 min"
+    },
+    {
+      "description": "ngram-mod(16/32/24)+draft-mtp(n2) \u7ec4\u5408\uff08'\u514d\u8d39\u4f18\u5148\u3001\u82b1\u94b1\u515c\u5e95'\uff09+ USE_MTP/USE_VISION \u5019\u9009\u81ea\u52a8\u63a2\u6d4b + \u8349\u7a3f/\u4e3b\u6a21\u578b context_length \u5bf9\u9f50\u62a4\u680f",
+      "measured_impact": "\u5b9a\u7a3f\u4e09\u5f62\u6001 geo 45\u201347\uff1bn_min \u662f\u4e22\u5f03\u95e8\u69db\u4e0d\u662f\u957f\u5ea6\uff08\u6846\u67b6\u9ed8\u8ba4 48=\u6ca1\u5f00\uff09"
+    }
+  ]
+}

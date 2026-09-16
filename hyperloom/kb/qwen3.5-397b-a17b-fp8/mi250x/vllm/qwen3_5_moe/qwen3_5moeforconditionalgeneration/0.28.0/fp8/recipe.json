@@ -1,0 +1,149 @@
+{
+  "active_parameters": "17B",
+  "architecture": "moe",
+  "authority": "VENDOR_REFERENCE",
+  "base_args": [
+    "--trust-remote-code"
+  ],
+  "base_env": {
+    "VLLM_DEEP_GEMM_WARMUP": "skip",
+    "VLLM_USE_DEEP_GEMM": "0"
+  },
+  "best_config": {
+    "extra_envs": {
+      "VLLM_DEEP_GEMM_WARMUP": "skip",
+      "VLLM_USE_DEEP_GEMM": "0"
+    },
+    "extra_server_args": "--trust-remote-code --language-model-only --reasoning-parser qwen3 --tensor-parallel-size 8"
+  },
+  "best_throughput": 0.0,
+  "canonical_id": "inference:qwen3.5-397b-a17b-fp8:mi250x:vllm:qwen3_5_moe:qwen3_5moeforconditionalgeneration:0.28.0:fp8",
+  "confidence": 0.95,
+  "context_length": 262144,
+  "created_at": "2026-09-15T17:55:41.487468+00:00",
+  "ep": 1,
+  "evidence_refs": [
+    "https://recipes.vllm.ai/Qwen/Qwen3.5-397B-A17B",
+    "https://recipes.vllm.ai/Qwen/Qwen3.5-397B-A17B.json",
+    "/home/qiba/ROCm.AI/.tmp/kb_extract/qwen3_5_397b_reference.json"
+  ],
+  "framework_name": "vllm",
+  "framework_version": "0.28.0",
+  "gpus": "mi250dx8",
+  "hardware": "mi250x",
+  "kernel_optimizations": [],
+  "last_profiled": "2026-09-15",
+  "lessons": [
+    {
+      "measured_impact": "\u5382\u5546\u77e9\u9635 {h200, gb200, mi300x, mi325x, mi355x, ascend_950dt}\uff0c\u65e0 mi250x / mi350x",
+      "statement": "\u5b98\u65b9 vLLM \u914d\u65b9 (vllm-project/recipes, models/Qwen/Qwen3.5-397B-A17B.yaml) \u5bf9 AMD \u53ea\u9a8c\u8bc1\u5230 MI300X/MI325X/MI355X\uff1bMI250X \u4e0d\u5728\u652f\u6301\u77e9\u9635\u5185\uff0c\u5b98\u65b9 AMD \u8f6e\u5b50\u660e\u786e\u5199 \"Supported GPUs: MI300X, MI325X, MI355X\""
+    },
+    {
+      "measured_impact": "\u672c\u673a fp8 \u9996\u6b21 linear apply \u5373 die\uff0c\u9519\u8bef\u6587\u672c\u4e0e\u914d\u65b9\u786c\u4ef6\u524d\u63d0\u4e00\u81f4",
+      "statement": "\u8be5\u914d\u65b9 AMD \u4fa7\u6574\u6761\u7ebf\u90fd\u8dd1 FP8 checkpoint + FP8 GEMM\uff08Qwen/Qwen3.5-397B-A17B-FP8\uff0cW8A8 \u52a8\u6001 per-token \u6fc0\u6d3b\uff09\u3002gfx90a \u65e0 FP8 \u77e9\u9635\u6838\uff0ctorch._scaled_mm \u786c\u95e8 >=MI300+\uff0c\u6240\u4ee5\u8fd9\u662f\u7845\u5c42\u9762\u7684\u95e8\uff0c\u4e0d\u662f\u53ef\u8c03\u53c2\u6570"
+    },
+    {
+      "measured_impact": "Ornith-1.5-397B-FP8 \u4e0e\u672c\u6a21\u578b\u540c model_type/architectures\uff0c\u6545\u53ef\u5bf9\u6807",
+      "statement": "\u540c\u4e00\u8eab\u4efd (model_type=qwen3_5_moe / architectures=[Qwen3_5MoeForConditionalGeneration])\uff0c\u56e0\u6b64\u914d\u65b9\u7684\u67b6\u6784\u7ea7\u65d7\u6807\u53ef\u7528\uff1a--language-model-only\u3001VLLM_USE_DEEP_GEMM=0\u3001--trust-remote-code\uff0c\u4ee5\u53ca hybrid GDN+Mamba \u72b6\u6001\u7f13\u5b58\u7684\u5751"
+    }
+  ],
+  "mi250x_applicability": {
+    "silicon_gated_on_gfx90a": [
+      "FP8 checkpoint + FP8 GEMM: the entire official AMD lane runs Qwen/Qwen3.5-397B-A17B-FP8 (W8A8, dynamic per-token activations); gfx90a (CDNA2) has no FP8 matrix core, and torch._scaled_mm refuses anything below MI300+ -> engine init dies",
+      "variants nvfp4 (nvidia/*), fp8 (RedHatAI/*), ascend_w8a8_mtp / ascend_w4a4_mxfp4",
+      "--moe-backend flashinfer_trtllm (recipe hardware_overrides.nvidia)",
+      "--kv-cache-dtype fp8 in the fp8/nvfp4 variant extra_args"
+    ],
+    "transferable_to_mi250x": [
+      "--language-model-only (skip vision tower): architecture-level, frees HBM per die on a text-only workload where weights alone eat ~48-55 GiB of 64 GiB",
+      "VLLM_USE_DEEP_GEMM=0 + VLLM_DEEP_GEMM_WARMUP=skip (base_env): DeepGEMM is CUDA-only; avoids pointless warmup on ROCm",
+      "--trust-remote-code (base_args)",
+      "--reasoning-parser qwen3 (output parsing only; also gates --default-chat-template-kwargs enable_thinking=false)",
+      "--enable-prefix-caching (vendor throughput flag)",
+      "the num_cache_lines>=batch -> --max-cudagraph-capture-size pitfall: hybrid GDN/Mamba state cache bounds graph capture on every GPU (our boot already logs mamba/attention page-size padding)",
+      "MTP is present in the checkpoint (mtp.* tensors) -> --speculative-config mtp is a model-level lever, but the vendor explicitly flags MTP on AMD as under development",
+      "--enable-expert-parallel / -dp 8 style MoE parallelism: architecture-level, but xGMI all-to-all cost on MI250X is unmeasured"
+    ],
+    "unverified_on_mi250x": [
+      "MTP-1 speculative decoding on ROCm",
+      "expert parallelism across 8 MI250X dies",
+      "VLLM_SSM_CONV_STATE_LAYOUT=DS (vendor sets it only for pd_cluster prefill+decode)"
+    ],
+    "verdict": "vendor recipe is NOT an MI250X-supported configuration; only its hardware-independent parts transfer"
+  },
+  "min_vllm_version": "0.17.0",
+  "model": "Qwen3.5-397B-A17B-FP8",
+  "parameter_count": "397B",
+  "pitfalls": [
+    {
+      "description": "hybrid GDN+Mamba \u72b6\u6001\u7f13\u5b58\u4f1a\u9650\u6b7b CUDA graph \u6355\u83b7\uff1avendor \u914d\u65b9\u672c\u6a21\u578b\u7684\u6545\u969c\u9879 \"assert num_cache_lines >= batch\"\uff08graph capture size > Mamba state cache\uff09\uff0c\u4fee\u6cd5\u662f\u8c03\u4f4e --max-cudagraph-capture-size\uff08\u9ed8\u8ba4 512\uff09\u3002\u6211\u4eec\u81ea\u5df1\u7684\u542f\u52a8\u65e5\u5fd7\u5df2\u7ecf\u51fa\u73b0\u540c\u7c7b\u5f62\u6001\uff1a\"Setting attention block size to 528 tokens to ensure attention page size >= mamba page size\" + \"Padding mamba page size by 1.34%\"",
+      "severity": "crash"
+    },
+    {
+      "description": "MTP\uff1acheckpoint \u81ea\u5e26 mtp.* \u6743\u91cd\uff081553 \u4e2a\u5f20\u91cf\uff09\uff0c\u6545 --speculative-config mtp \u662f\u6a21\u578b\u7ea7\u53ef\u7528\u6760\u6746\uff1b\u4f46 vendor \u660e\u786e\u6807\u6ce8 AMD \u4e0a MTP-1 speculative decoding \u4ecd\u5728\u5f00\u53d1\u4e2d\uff0c\u4e14 MTP \u5728\u9ad8\u5e76\u53d1\u4e0b\u53cd\u800c\u5403 KV/\u964d\u541e\u5410\u3002\u8981\u7528\u5fc5\u987b\u5148\u770b acceptance\uff0c\u518d\u5224\u6536\u76ca",
+      "severity": "regress"
+    }
+  ],
+  "precision": "fp8",
+  "provenance": {},
+  "reference_artifact": ".tmp/kb_extract/qwen3_5_397b_reference.json",
+  "remaining_gaps": [
+    {
+      "description": "MI250X \u4e0a\u8be5\u8eab\u4efd\u7684\u6d3b\u7740\u914d\u7f6e\u5c1a\u672a\u6d4b\u51fa\uff1aBF16 \u6743\u91cd 780 GiB > 512 GiB HBM\uff08\u4e0d\u53ef\u884c\uff09\uff0cFP8 \u9700\u8981 gfx90a \u53cd\u91cf\u5316\u4eff\u771f\u5185\u6838\uff08\u672c\u5730\u8865\u4e01\u5df2\u80fd\u52a0\u8f7d\uff0c\u672a\u89c1\u5065\u5eb7\u7aef\u70b9/\u7aef\u5230\u7aef\u541e\u5410\uff09",
+      "metrics": "N/A"
+    }
+  ],
+  "rocm_version": "7.2.4",
+  "seeded_at": "2026-09-15T17:55:41.486969+00:00",
+  "sessions": [],
+  "stack_fingerprint": {
+    "aiter_commit": "",
+    "rocm_version": "7.2.4",
+    "vllm_version": "0.28.0+rocm723"
+  },
+  "status": "reference",
+  "tp": 8,
+  "updated_at": "2026-09-15T17:55:41.487468+00:00",
+  "vendor_hardware_matrix": {
+    "amd_requirement": "ROCm wheel needs Python 3.12, ROCm 7.0, glibc >= 2.35",
+    "amd_rocm_wheel_supported_gpus": [
+      "MI300X",
+      "MI325X",
+      "MI355X"
+    ],
+    "mi250x": "absent_from_vendor_matrix",
+    "mi350x": "absent_from_vendor_matrix",
+    "verified": {
+      "ascend_950dt": "verified",
+      "gb200": "verified",
+      "h200": "verified",
+      "mi300x": "verified",
+      "mi325x": "verified",
+      "mi355x": "verified"
+    }
+  },
+  "vendor_recipe": {
+    "date_updated": "2026-09-14",
+    "json_api": "https://recipes.vllm.ai/Qwen/Qwen3.5-397B-A17B.json",
+    "page": "https://recipes.vllm.ai/Qwen/Qwen3.5-397B-A17B",
+    "variant": "fp8",
+    "vendor_commands": {
+      "mi355x": "Qwen/Qwen3.5-397B-A17B-FP8 -tp 2 --enable-expert-parallel --language-model-only --reasoning-parser qwen3 --enable-prefix-caching",
+      "text_only_throughput": "Qwen/Qwen3.5-397B-A17B-FP8 -dp 8 --enable-expert-parallel --language-model-only --reasoning-parser qwen3 --enable-prefix-caching"
+    },
+    "vendor_model_id": "Qwen/Qwen3.5-397B-A17B-FP8"
+  },
+  "version": 1,
+  "what_failed": [
+    {
+      "description": "\u5728 MI250X \u4e0a\u7167\u6284\u5b98\u65b9 AMD \u547d\u4ee4\uff08Qwen/Qwen3.5-397B-A17B-FP8 + FP8 GEMM\uff09\u5fc5\u7136 server_init_dead",
+      "reason": "vendor \u7684 AMD \u524d\u63d0\u662f MI300X+\uff08FP8 MMA\uff09\u3002gfx90a \u4e0a\u62a5\u7684 capability \u88ab Torch \u8ba4\u6210 (9,0)\uff0c\u53cd\u800c\u7ed5\u8fc7 cc \u95e8\uff0c\u6700\u7ec8\u5728 scaled_mm/pytorch.py:227 \u629b\u51fa 'only supported on CUDA devices with compute capability >= 9.0 or 8.9, or ROCm MI300+'"
+    }
+  ],
+  "what_worked": [
+    {
+      "description": "\u540c\u8eab\u4efd\u7684\u672c\u5730\u53cd\u91cf\u5316\u4eff\u771f\u8def\u7ebf\u5df2\u80fd\u8fc7\u6743\u91cd\u52a0\u8f7d\uff1aTP8 \u4e0b 'Model loading took 48.27 GiB memory and 266 s'\uff0c\u968f\u540e\u5b8c\u6210 hybrid cache \u5206\u9875\u5bf9\u9f50\u5e76\u8fdb\u5165 torch.compile",
+      "measured_impact": "weights load OK\uff1b\u5065\u5eb7\u7aef\u70b9\u4e0e\u7aef\u5230\u7aef\u541e\u5410\u672a\u6d4b\uff08session 20260915T161838Z-ba2694ea\uff09"
+    }
+  ]
+}

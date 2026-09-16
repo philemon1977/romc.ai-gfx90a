@@ -1,0 +1,221 @@
+{
+  "archived_at": "2026-09-15T19:16:06.661421+00:00",
+  "canonical_id": "inference:ornith-1.5-397b-fp8:mi250x:vllm:qwen3_5_moe:qwen3_5moeforconditionalgeneration:0.28.0:fp8",
+  "replaced_by": {
+    "details": {
+      "evidence": [
+        "log:session-20260915T161838Z-ba2694ea"
+      ],
+      "phase": "close_finalize"
+    },
+    "generated_at": "2026-09-15T19:16:06.659398+00:00",
+    "generator": "coordinator",
+    "source": "hyperloom-inference-optimizer"
+  },
+  "snapshot": {
+    "architectures": [
+      "Qwen3_5MoeForConditionalGeneration"
+    ],
+    "authority": "EXPERIENTIAL",
+    "best_config": {
+      "extra_envs": {},
+      "extra_server_args": "--tensor-parallel-size 8"
+    },
+    "best_throughput": 0.0,
+    "canonical_id": "inference:ornith-1.5-397b-fp8:mi250x:vllm:qwen3_5_moe:qwen3_5moeforconditionalgeneration:0.28.0:fp8",
+    "conc": 64,
+    "confidence": 0.85,
+    "created_at": "2026-09-15T15:58:00.907929+00:00",
+    "emulation_boot": {
+      "blocked_by": "",
+      "cuda_graphs": {
+        "full_decode": 35,
+        "piecewise": 51
+      },
+      "gpu_kv_cache_tokens": 154624,
+      "launch_recipe": "# inside hyperloom-srv (that is where /opt/envs/vllm + ROCm live)\nexport PYTHONPATH=<specialist run>/worktree        # patched vLLM source\nexport VLLM_CACHE_ROOT=<fresh dir>                  # AOT graph is hash-keyed:\nexport TORCHINDUCTOR_CACHE_DIR=<fresh dir>/inductor # a selection-only patch does NOT invalidate it\nexport VLLM_ROCM_USE_AITER=0 HSA_NO_SCRATCH_RECLAIM=1\nvllm serve /mnt/kioxia-cm6-3t8/ai/models/ornith-ai/Ornith-1.5-397B-FP8 \\\n  --port <port> --tensor-parallel-size=8 --gpu-memory-utilization 0.95 \\\n  --max-model-len 6144 --trust-remote-code",
+      "max_concurrency_at_6144": 25.17,
+      "measured_note": "single boot, specialist server; optimizer baseline still 0.0",
+      "measured_ttft_tps": {
+        "caveat": "specialist validation server, not the optimizer's sealed baseline; no warmup/sigma protocol; conc capped at 8 to limit interference",
+        "conc8": {
+          "aggregate_output_tps": 61.14605145445167,
+          "mean_tpot_ms": 89.7289212155692,
+          "mean_ttft_ms": 5327.246672000911,
+          "osl": 128,
+          "p50_ttft_ms": 6034.228067015647,
+          "wall_s": 16.74678864199086
+        },
+        "config": {
+          "extra": "--language-model-only --trust-remote-code",
+          "gpu_memory_utilization": 0.95,
+          "max_model_len": 6144,
+          "tp": 8,
+          "vllm_rocm_use_aiter": 0
+        },
+        "endpoint": "specialist validation server :8892 (worktree 8628519056, patches 001+002)",
+        "isl_tokens": 776,
+        "measured_at": "2026-09-15T18:53:16Z",
+        "osl_tokens": 256,
+        "reference_same_host": "llama.cpp Q8_0 arm 47.28 tok/s decode (with ngram+MTP speculation; this path has none)",
+        "single_stream": {
+          "decode_tps": 23.39725337800824,
+          "decode_tps_runs": [
+            23.39725337800824,
+            23.422761788979148,
+            23.082406951273175
+          ],
+          "tpot_ms": 42.74005943534932,
+          "ttft_ms_first_cold": 1365.2083549823146,
+          "ttft_ms_median": 373.31304998951964
+        }
+      },
+      "model_load_sec": [
+        266.1,
+        272.0
+      ],
+      "patch": "FP8W8A8EmulationLinearKernel (dense linears dequant FP8->BF16 at load, then F.linear)",
+      "verified_at": "2026-09-15T18:12Z",
+      "weights_per_die_gib": 48.27
+    },
+    "emulation_note_at": "2026-09-15T18:53:39.406779+00:00",
+    "engine": "vllm",
+    "ep": 1,
+    "evidence_refs": [],
+    "framework_name": "vllm",
+    "framework_version": "0.28.0",
+    "gpus": "mi250dx8",
+    "hardware": "mi250x",
+    "image_digest": "rocm-ai/vllm:0.28.0-rocm7.2.4",
+    "isl": 1024,
+    "kernel_optimizations": [],
+    "last_profiled": "2026-09-15",
+    "lessons": [],
+    "max_model_len": 6144,
+    "model": "Ornith-1.5-397B-FP8",
+    "model_dir": "/mnt/kioxia-cm6-3t8/ai/models/ornith-ai/Ornith-1.5-397B-FP8",
+    "model_type": "qwen3_5_moe",
+    "osl": 1024,
+    "pitfalls": [
+      {
+        "description": "fp8 \u81c2\u5931\u8d25\u65f6 orchestrator \u53ef\u80fd\u8fdb\u5165 brain-dead\uff08\u4e3b\u8fdb\u7a0b ep_poll \u5b58\u6d3b\u30010 \u5b50\u8fdb\u7a0b\u3001robustness \u9759\u9ed8\uff0c\u547d\u4e2d\u672c\u673a issue#3 Part A \u5f62\u6001\uff0cturn \u4e0a\u9650 36 \u4e5f\u5728 RCA+enablement \u8def\u5f84\u70e7\u7a7f\uff09\u2014\u2014\u5224\u6d3b\u8981\u770b tick \u662f\u5426\u63a8\u8fdb\uff0c\u522b\u4fe1 stop_reason \u4e3a\u7a7a",
+        "severity": "crash"
+      },
+      {
+        "description": "coordinator \u88ab\u6740\u540e specialist \u62c9\u8d77\u7684 vllm serve \u4f1a\u4ee5\u72ec\u7acb pgid \u5b64\u513f\u5316\u5360\u5361\uff0c\u5fc5\u987b\u679a\u4e3e PID \u663e\u5f0f\u6e05\u7406\uff08rocm-smi --showpids / ps --sort=start_time\uff09\uff0c\u4e14\u5bb9\u5668 root \u5199\u7684 kb/state \u6587\u4ef6\u56de\u8bfb\u8981 chmod",
+        "severity": "regress"
+      },
+      {
+        "description": "hybrid GDN+Mamba \u72b6\u6001\u7f13\u5b58\u9650\u6b7b CUDA graph \u6355\u83b7\uff1a\u5b98\u65b9\u914d\u65b9\u672c\u6a21\u578b\u7684\u6545\u969c\u9879 \"assert num_cache_lines >= batch\"\uff0c\u4fee\u6cd5 --max-cudagraph-capture-size \u8c03\u4f4e\uff08\u9ed8\u8ba4 512\uff09\u3002\u672c\u81c2\u542f\u52a8\u65e5\u5fd7\u5df2\u89c1\u540c\u65cf\u5f62\u6001\uff1aattention block size 528 / mamba page size padding 1.34% (interface.py:911/935)",
+        "severity": "crash"
+      },
+      {
+        "description": "\u5b98\u65b9\u5efa\u8bae text-only \u65f6\u4e0d\u8981\u540c\u65f6\u5f00 vision \u76f8\u5173\u9879\uff1a--language-model-only \u4e0e --mm-encoder-tp-mode data \u4e92\u65a5\uff1bencoder DP \u4f1a\u989d\u5916\u5403\u663e\u5b58\uff0c\u9700\u8981\u540c\u65f6\u8c03 --gpu-memory-utilization",
+        "severity": "regress"
+      },
+      {
+        "description": "\u5728\u8dd1\u7684 Hyperloom run \u4f1a\u4e3b\u52a8\u56de\u6536\u5916\u6765 GPU \u8fdb\u7a0b\uff0c\u4fa7\u8def\u63a2\u6d4b\u65e0\u6cd5\u4e0e\u4e4b\u5171\u5b58\uff1asession 20260915T161838Z-ba2694ea \u7684 specialist 8628519056b24176b3fa5c9a0e106dd6 \u8bfb\u5230\u5916\u6765\u63a2\u6d4b\u811a\u672c\u540e\u6267\u884c 'kill -TERM -35120'\uff0c\u628a\u5df2\u8dd1\u5230 CUDA graph capture \u7684\u72ec\u7acb\u4eff\u771f\u670d\u52a1\u76f4\u63a5\u6740\u6389\u53bb\u817e\u5361\u3002\u8981\u72ec\u7acb\u6d4b\u8fd9\u4efd\u4eff\u771f\u8def\u7ebf\uff0c\u53ea\u80fd\u7b49 run \u6536\u5b98\uff08\u6216\u5728 --resume-from \u4e4b\u524d\u5148\u6d4b\uff09",
+        "severity": "crash"
+      }
+    ],
+    "precision": "fp8",
+    "provenance": {},
+    "reference_folded_at": "2026-09-15T17:55:16.391699+00:00",
+    "remaining_gaps": [
+      {
+        "description": "vLLM fp8 weight-only bf16-dequant \u540e\u7aef\uff08\u975e scaled_mm \u8def\u5f84\uff09\u5728 gfx90a \u662f\u5426\u53ef\u7528\u4f5c\u663e\u5f0f --quantization \u8986\u76d6\uff0c\u672a\u6d4b",
+        "metrics": "N/A"
+      },
+      {
+        "description": "\u53cd\u91cf\u5316\u4eff\u771f\u8def\u7ebf\u7684\u7aef\u5230\u7aef\u57fa\u7ebf\u672a\u62ff\u4e0b\uff1a\u52a0\u8f7d\u901a\u8fc7\u4f46 /v1/models \u672a ready\uff0c\u9996\u6b21 torch.compile \u5f88\u6162\uff08Dynamo 12.4 s \u8d77\u6b65 + shm broadcast 60 s \u65e0\u5757\u544a\u8b66\u5c5e\u7f16\u8bd1\u671f\u6b63\u5e38\u5f62\u6001\uff09",
+        "metrics": "N/A"
+      },
+      {
+        "description": "\u5b98\u65b9\u786c\u4ef6\u65e0\u5173\u65d7\u6807\u91cc\u672a\u5728\u672c\u81c2\u8bd5\u8fc7\u7684\uff1a--language-model-only\u3001VLLM_USE_DEEP_GEMM=0\u3001--enable-expert-parallel/-dp \u5f62\u72b6\u3001--kv-cache-dtype fp8\uff08hybrid \u7f13\u5b58\u4e0b\u7684\u5b9e\u9645\u6536\u76ca\u672a\u77e5\uff09",
+        "metrics": "N/A"
+      },
+      {
+        "description": "\u53cd\u91cf\u5316\u4eff\u771f\u8def\u7ebf\u7684 TTFT / \u8f93\u51fa\u541e\u5410\u4ecd\u672a\u6d4b\uff1a\u672c\u6b21\u63a2\u6d4b\u5728 graph capture \u9636\u6bb5\u88ab\u540c\u673a run \u56de\u6536\uff0c\u800c run \u81ea\u5df1\u7684\u57fa\u51c6\u53c8\u88ab\u9884\u7b97\u8df3\u8fc7\uff08grid_runner: 4293s left cannot fit 2x7800s \u2192 variant not_run\uff09",
+        "metrics": "N/A"
+      }
+    ],
+    "rocm_version": "7.2.4",
+    "seeded_at": "2026-09-15T16:20:00+00:00",
+    "sessions": [
+      {
+        "actions_taken": [
+          "hyperloom 3h optimize -> baseline server_init_dead",
+          "orphan serve \u6e05\u7406",
+          "verdict \u624b\u5de5\u5165\u6863"
+        ],
+        "date": "2026-09-15",
+        "gain_pct": 0.0,
+        "session_id": "20260915T150443Z-6b7d597b",
+        "stack_len": 0,
+        "throughput_after": 0.0,
+        "throughput_before": 0.0
+      }
+    ],
+    "stack_fingerprint": {
+      "aiter_commit": "",
+      "rocm_version": "7.2.4",
+      "vllm_version": "0.28.0+rocm723"
+    },
+    "status": "experimental",
+    "status_note": "\u539f\u5224 dead \u9488\u5bf9\"\u65e0\u8865\u4e01\u7684 stock vLLM fp8 \u8def\u7ebf\"\uff1b\u53cd\u91cf\u5316\u4eff\u771f\u5185\u6838\u5df2\u8bc1\u660e\u53ef\u52a0\u8f7d\u6743\u91cd\uff0c\u7aef\u5230\u7aef\u672a\u6d4b\uff0c\u6545\u964d\u7ea7\u4e3a experimental\uff08\u672c\u884c\u968f\u540e\u7531 optimizer CLOSE \u7684 sediment \u8986\u5199\uff09",
+    "tp": 8,
+    "updated_at": "2026-09-15T18:53:39.406905+00:00",
+    "vendor_reference": {
+      "artifact": ".tmp/kb_extract/qwen3_5_397b_reference.json",
+      "date_updated": "2026-09-14",
+      "hf_id": "Qwen/Qwen3.5-397B-A17B",
+      "json_api": "https://recipes.vllm.ai/Qwen/Qwen3.5-397B-A17B.json",
+      "page": "https://recipes.vllm.ai/Qwen/Qwen3.5-397B-A17B",
+      "silicon_gated_on_gfx90a": [
+        "FP8 checkpoint + FP8 GEMM: the entire official AMD lane runs Qwen/Qwen3.5-397B-A17B-FP8 (W8A8, dynamic per-token activations); gfx90a (CDNA2) has no FP8 matrix core, and torch._scaled_mm refuses anything below MI300+ -> engine init dies",
+        "variants nvfp4 (nvidia/*), fp8 (RedHatAI/*), ascend_w8a8_mtp / ascend_w4a4_mxfp4",
+        "--moe-backend flashinfer_trtllm (recipe hardware_overrides.nvidia)",
+        "--kv-cache-dtype fp8 in the fp8/nvfp4 variant extra_args"
+      ],
+      "third_party_commands": {
+        "mi355x": "Qwen/Qwen3.5-397B-A17B-FP8 -tp 2 --enable-expert-parallel --language-model-only --reasoning-parser qwen3 --enable-prefix-caching",
+        "text_only_throughput": "Qwen/Qwen3.5-397B-A17B-FP8 -dp 8 --enable-expert-parallel --language-model-only --reasoning-parser qwen3 --enable-prefix-caching"
+      },
+      "transferable_to_mi250x": [
+        "--language-model-only (skip vision tower): architecture-level, frees HBM per die on a text-only workload where weights alone eat ~48-55 GiB of 64 GiB",
+        "VLLM_USE_DEEP_GEMM=0 + VLLM_DEEP_GEMM_WARMUP=skip (base_env): DeepGEMM is CUDA-only; avoids pointless warmup on ROCm",
+        "--trust-remote-code (base_args)",
+        "--reasoning-parser qwen3 (output parsing only; also gates --default-chat-template-kwargs enable_thinking=false)",
+        "--enable-prefix-caching (vendor throughput flag)",
+        "the num_cache_lines>=batch -> --max-cudagraph-capture-size pitfall: hybrid GDN/Mamba state cache bounds graph capture on every GPU (our boot already logs mamba/attention page-size padding)",
+        "MTP is present in the checkpoint (mtp.* tensors) -> --speculative-config mtp is a model-level lever, but the vendor explicitly flags MTP on AMD as under development",
+        "--enable-expert-parallel / -dp 8 style MoE parallelism: architecture-level, but xGMI all-to-all cost on MI250X is unmeasured"
+      ]
+    },
+    "version": 8,
+    "what_failed": [],
+    "what_worked": [
+      {
+        "description": "compressed-tensors FP8 \u6743\u91cd\u8def\u5f84\u88ab vLLM \u63a5\u53d7\u5e76\u5b8c\u6574\u52a0\u8f7d\uff1a122 \u7247 / 389.6 GiB / 49.0 GiB per die\uff0cTP8 workers \u6b63\u5e38 spawn\uff0c\u65e0 OOM\u3001\u65e0\u91cf\u5316\u683c\u5f0f\u62d2\u7edd\uff08server.log 15:05-15:14\uff0csession 20260915T150443Z-6b7d597b\uff09",
+        "measured_impact": "\u6743\u91cd\u52a0\u8f7d 5-10 min \u5168\u8fc7\uff0cengine init \u624d\u6b7b"
+      },
+      {
+        "description": "\u53cd\u91cf\u5316\u4eff\u771f\u5185\u6838\u628a FP8 \u6743\u91cd\u8dd1\u901a\u4e86\u52a0\u8f7d\u9636\u6bb5\uff08TP8\uff09\uff1a'Model loading took 48.27 GiB memory and 266 s'\uff0cdense linear \u5728 load \u65f6 FP8\u2192BF16 \u53cd\u91cf\u5316\uff08emulation.py:175\uff09\uff0c\u968f\u540e hybrid cache \u5206\u9875\u5bf9\u9f50\u3001\u8fdb\u5165 torch.compile",
+        "measured_impact": "\u6743\u91cd\u53ef\u52a0\u8f7d\uff1b\u5065\u5eb7\u7aef\u70b9 / \u7aef\u5230\u7aef\u541e\u5410\u4ecd\u672a\u6d4b\uff08session 20260915T161838Z-ba2694ea\uff09"
+      },
+      {
+        "description": "\u53cd\u91cf\u5316\u4eff\u771f\u8def\u7ebf\u5728 gfx90a \u4e0a\u53ef\u91cd\u590d\u5730\u8d77\u5f97\u6765\uff08\u4e24\u6b21\u72ec\u7acb\u542f\u52a8\uff0c\u6570\u5b57\u4e00\u81f4\uff09\uff1aemulation.py:175 'Emulating FP8 w8a8 dense linears with bfloat16 GEMM ... dequantizing weights at load' \u2192 'Model loading took 48.27 GiB memory and 266 s'\uff08\u9996\u6b21\uff09/ 272 s\uff08\u4e8c\u6b21\uff09\u2192 hybrid cache \u5206\u9875\u5bf9\u9f50\uff08attention block 528 / mamba page padding 1.34%\uff09\u2192 torch.compile \u2192 CUDA graph capture\uff0851 PIECEWISE + 35 FULL\uff09",
+        "measured_impact": "\u6743\u91cd\u6309 TP8 \u5168\u90e8\u52a0\u8f7d\uff0848.27 GiB/die\uff09\uff0c\u670d\u52a1\u5bb9\u91cf GPU KV cache 154,624 tokens / max concurrency 25.17x @ max-model-len 6144"
+      },
+      {
+        "description": "\u8d77\u670d\u52a1\u6240\u9700\u7684\u6700\u5c0f\u914d\u7f6e\uff08\u7b2c\u4e8c\u6b21\u542f\u52a8\u5b9e\u6d4b\u590d\u73b0\uff09\uff1a# inside hyperloom-srv (that is where /opt/envs/vllm + ROCm live) ; export PYTHONPATH=<specialist run>/worktree        # patched vLLM source ; export VLLM_CACHE_ROOT=<fresh dir>                  # AOT graph is hash-keyed: ; export TORCHINDUCTOR_CACHE_DIR=<fresh dir>/inductor # a selection-only patch does NOT invalidate it ; export VLLM_ROCM_USE_AITER=0 HSA_NO_SCRATCH_RECLAIM=1 ; vllm serve /mnt/kioxia-cm6-3t8/ai/models/ornith-ai/Ornith-1.5-397B-FP8 \\ ;   --port <port> --tensor-parallel-size=8 --gpu-memory-utilization 0.95 \\ ;   --max-model-len 6144 --trust-remote-code",
+        "measured_impact": "\u7f3a\u5931 fresh VLLM_CACHE_ROOT \u65f6\u4f1a\u91cd\u653e FP8 [K,N] \u7684\u65e7 AOT \u56fe\uff0c\u5728 profile_run \u5224\u6b7b"
+      },
+      {
+        "description": "\u53cd\u91cf\u5316\u4eff\u771f\u8def\u7ebf\u7aef\u5230\u7aef\u5b9e\u6d4b\uff08live server :8892\uff0c\u8865\u4e01 001+002\uff0cTP8\uff0c--language-model-only\uff0cmax-model-len 6144\uff09\uff1a\u5355\u6d41 ISL 776 \u2192 TTFT 373 ms\uff08\u9996\u4e2a\u51b7\u8c03\u7528 1365 ms\uff09\uff0cdecode 23.4 tok/s\uff08TPOT 42.7 ms\uff09\uff0c256 token e2e 11.3-12.3 s\uff1bconc 8\uff08OSL 128\uff09\u805a\u5408 61.1 tok/s\uff0cmean TTFT 5327 ms / p50 6034 ms\uff0cmean TPOT 90 ms",
+        "measured_impact": "\u5bf9\u7167\u540c\u673a llama.cpp Q8_0 = 47.28 tok/s\uff08\u4f46\u90a3\u6761\u5e26 ngram+MTP \u6295\u673a\uff0c\u672c\u8def\u7ebf\u65e0\u6295\u673a\uff09"
+      }
+    ]
+  },
+  "version": 8
+}

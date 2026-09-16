@@ -1,0 +1,3215 @@
+{
+  "arms": [
+    {
+      "architectures": [
+        "Qwen3_5ForConditionalGeneration"
+      ],
+      "best_args": [
+        "--tensor-parallel-size 2",
+        "--model models/TeichAI/Qwen3.8-27B-Fable-Distill",
+        "--served-model-name qwen3.8-27b-fable qwen3.8-27b",
+        "--port 8101",
+        "--gpu-memory-utilization 0.92",
+        "--max-model-len 262144",
+        "--max-num-seqs 8",
+        "--max-num-batched-tokens 8192",
+        "--dtype bfloat16",
+        "--load-format fastsafetensors",
+        "--enable-prefix-caching",
+        "--enable-chunked-prefill",
+        "--trust-remote-code",
+        "--enable-auto-tool-choice",
+        "--tool-call-parser qwen3_coder",
+        "--reasoning-parser qwen3",
+        "--disable-custom-all-reduce",
+        "--limit-mm-per-prompt {\"image\":0,\"video\":0}",
+        "--tokenizer-mode auto",
+        "SPEC=off（默认）；吞吐档 SPEC=dflash：--speculative-config {\"method\":\"dflash\",\"model\":\"models/z-lab/Qwen3.8-27B-DFlash2\",\"num_speculative_tokens\":8}",
+        "SPEC=mtp：MTP_K=1 必须显式给（checkpoint 的 mtp_num_hidden_layers 在 text_config，顶层 getattr→None，上游 bug）"
+      ],
+      "best_env": {
+        "AIS": "0 → VLLM_AIS_DISABLE=1 + VLLM_FST_KEEP_NOGDS=1（权重在 PM9A1，hipFileBufRegister 直接失败）",
+        "HIP_VISIBLE_DEVICES": "6,7（只设 HIP；脚本显式 unset ROCR_VISIBLE_DEVICES）",
+        "LD_LIBRARY_PATH": "/opt/rocm-7.2.4/lib（无条件兜，slim torch 缺之 core dump=N13；绝不写裸 /opt/rocm）",
+        "RAY_memory_monitor_refresh_ms": "0",
+        "ROCR_VISIBLE_DEVICES": "必须为空（二重过滤会致空集）",
+        "TORCH_CUDA_ALLOW_TF32": "0",
+        "USE_LIBUV": "0",
+        "VLLM_ENABLE_V1_MULTIPROCESSING": "0（config/vllm.arm-local.conf 7 条策略 env，仅 8101/8107/8109 source）",
+        "VLLM_ROCM_QUICK_REDUCE_QUANTIZATION": "NONE（09-12 固化：原 :-FP 因 conf 先置 NONE 永不触发，本臂从建立起一直跑 QR 关）",
+        "VLLM_ROCM_USE_AITER": "0"
+      },
+      "config_model_type": "qwen3_5",
+      "engine": "vllm",
+      "entry": "models/TeichAI/launcher/qwen3.8_27b_bf16_Fable_Distill_vllm_rocm724_256k_8101_teichai_mi250dx2_m3.sh",
+      "env_path": "envs/vllm_master_rocm724",
+      "exclusive_with": [
+        "8301-qwen38-27b-fable-distill-bf16-vllm-splitkv-ab",
+        "8302-qwen38-27b-fable-distill-bf16-vllm-dflash2",
+        "8107-qwen38-flash-next-176b-bf16-vllm-tp8",
+        "8109-qwen38-flash-next-176b-bf16-vllm-splitkv",
+        "8108-glm-5.3-flash-320b-q8-0-llamacpp",
+        "8110-ornith-1.5-397b-q8-0-llamacpp",
+        "8112-deepseek-v4.1-flash-748b-q4km-llamacpp"
+      ],
+      "framework_version": "0.1.dev1+g8a728663c.rocm724",
+      "gpus": "mi250dx2_m3",
+      "lessons": [
+        {
+          "measured_impact": "MTP K=2 净亏 0.73~0.93× vs dflash K=8 ×2.7~4.6（脚本 L134-156）",
+          "statement": "最优投机深度不可跨模型/跨草稿机制搬：自回归 MTP 每步串行 K 次前向，K=1 是唯一正收益档；并行草稿 DFlash 能吃到 K=8"
+        },
+        {
+          "measured_impact": "8101 的 :-FP 因 vllm.conf 先置 NONE 永不触发，本臂从建立起一直跑 QR 关，直到 09-12 才发现（脚本 L196-205）",
+          "statement": "shell 的 ${VAR:-默认} 在 conf 先置值时被静默作废——'设了没生效'必须先查赋值时序（QR 三件套时序红线同理：_MI250_QR_WANTED 是模块级求值，env 必须在 python 启动前设好）"
+        },
+        {
+          "measured_impact": "PM9A1 全绿仍当场崩 register_buffer failed（len=3043078144）",
+          "statement": "ais_stack_check 六项全绿 ≠ 该盘能开 AIS；唯一判据是日志 Loading weights took 或搜 register_buffer failed（N20）"
+        },
+        {
+          "measured_impact": "上游臂后迁 8113 分离端口（ports.conf 修冲突说明）",
+          "statement": "底座与 arch 注册绑定：master 与 0.28 两棵树互不可替（master 有 DFlash/Qwen3_5MTP/vendored FLA，0.28 有 P1/QR/splitKV 手改）；09-12 曾因两脚本同抢 8101 且 env 不同出过'起来才发现底座不对'"
+        }
+      ],
+      "model_dir": "models/TeichAI/Qwen3.8-27B-Fable-Distill",
+      "model_slug": "qwen3.8-27b-fable-distill",
+      "other_metrics": [
+        {
+          "name": "单流无投机",
+          "note": "300 W、ctx131072、temp=0（脚本 L134-156 内嵌表）",
+          "value": "short 19.7 / long 19.6 / code 24.4 t/s"
+        },
+        {
+          "name": "dflash K=8 三形态",
+          "note": "同档；KV 池 872,306→417,835 tok（−52%）",
+          "value": "90.0 / 53.7 / 68.9 t/s（×2.7~4.6）"
+        },
+        {
+          "name": "MTP K=1",
+          "note": "出词 1.88 tok/步；接受率 3.51/8→dflash 出词 4.51 tok/步",
+          "value": "36.3 / 33.4 / 33.5 t/s（×1.4~1.8）"
+        },
+        {
+          "name": "MTP K=2",
+          "note": "脚本 L152-156；自回归草稿每步串行在 gfx90a 代价盖过收益",
+          "value": "净亏 0.73~0.93×"
+        },
+        {
+          "name": "bounce 加载",
+          "note": "ais.env 头注；脚本 L16 的 ~95s 是建档期旧口径",
+          "value": "≈26 s（55.6 GB / TP2 = 25.95 s，2.14 GB/s）"
+        }
+      ],
+      "patches": [
+        "patches/vllm-dsa-gfx90a/README.md（来源记录，本模型 Qwen3_5 不走 DSA 索引器，运行时不被 launcher 调用）",
+        "patches/qwen4exp/local-nogds-gds-for-tp-gt1.patch（AIS/nogds 补丁只在 master 树，VLLM_FST_KEEP_NOGDS 读取方）"
+      ],
+      "pitfalls": [
+        {
+          "description": "ROCR_VISIBLE_DEVICES 与 HIP_VISIBLE_DEVICES 二重过滤 → worker 报 RuntimeError: No CUDA GPUs are available（与沙箱拦 /dev/kfd 同症状）。只设 HIP，脚本显式 unset ROCR；别 source config/gpu_mi250x_*.conf（它俩都导出）",
+          "severity": "crash"
+        },
+        {
+          "description": "AIS=1 在 PM9A1 起服当场崩（register_buffer failed，Exception 绕过 vLLM 自动回退）；默认 AIS=0",
+          "severity": "crash"
+        },
+        {
+          "description": "SPEC=mtp 忘给 MTP_K 起不来（n_predict 读顶层 mtp_num_hidden_layers→None）；且 MTP K=2 是净亏档，K=1 是唯一正收益档",
+          "severity": "config"
+        },
+        {
+          "description": "本臂用 nohup（非 setsid）⇒ 停服按裸 PID kill -TERM $(cat logs/qwen38-27b-fable-8101.pid)；禁 pkill -f；die6/7 可能被 8301/8302 常驻或 8-die 臂占用，只按 PID 停",
+          "severity": "config"
+        },
+        {
+          "description": "QR 静默 bug 固化：脚本默认写死 NONE；直接改脚本默认=无声作废本臂历史口径，改前须重测（要真开用命令级预置 VLLM_ROCM_QUICK_REDUCE_QUANTIZATION=FP bash $0）",
+          "severity": "regress"
+        },
+        {
+          "description": "warmup/口径红线：脚本头投机实测表是 300 W + ctx131072 档，定稿 MAX_MODEL_LEN=262144 勿混表；现 cap=560 W，300 W 数字不可与 560 W 横比；跨 boot σ≈4.6%、±2% 不当结论；bench 按 usage.completion_tokens（按 SSE chunk 数算会低估约 6×）",
+          "severity": "config"
+        },
+        {
+          "description": "投机无损性未成立：gfx90a+ROCM_ATTN 下 DFlash/MTP 与非投机首差异 59%/25%（相似度 98.1/99.2%）；要逐 token 复刻用 SPEC=off；别按 md5 跨配置判错",
+          "severity": "config"
+        },
+        {
+          "description": "驻留判据只认日志 Model loading took X GiB（sysfs 加载中恒 10 MiB 会骗人=N17）；加载路径判据 Loading weights took ≈26 s 量级=pinned bounce",
+          "severity": "config"
+        },
+        {
+          "description": "GPU 标签\"名 m3 实 M2\"：按仓库现行 conf 标 die6+7 为 M3，PCI 实测这批是 M2（CLAUDE.md §3 挂起项）——按 PCI 映射核对，别看脚本名",
+          "severity": "config"
+        }
+      ],
+      "port": "8101",
+      "precision": "bf16",
+      "primary_metric": {
+        "date": "2026-09-13",
+        "note": "口径：SPEC=dflash K=8 单流 short @256 tok（×4.6），cap=300 W、ctx 131072、temp=0、reasoning_effort=low；bench/spec_ab.py 按 usage.completion_tokens 计（脚本头实测表 L134-156）；现 cap=560 W，不可与 560 W 档横比",
+        "phase": "decode",
+        "unit": "tok/s",
+        "value": 90.0
+      },
+      "recipe_id": "8101-qwen38-27b-fable-distill-bf16-vllm-tp2",
+      "remaining_gaps": [
+        {
+          "description": "256k 定稿档下的投机三形态未复测（现有 90.0/53.7/68.9 是 ctx131072 档实测）",
+          "metrics": "decode t/s @256k vs @131k"
+        },
+        {
+          "description": "本臂并发/聚合吞吐无实测记录（§7 表并发列为空，max-num-seqs=8）",
+          "metrics": "聚合 tok/s"
+        },
+        {
+          "description": "die 标签 m3/M2 挂起项未在仓库统一（对外可见命名语义待决）",
+          "metrics": "—"
+        },
+        {
+          "description": "AIS=1 路线需先把权重搬到 intel P4610 才可能验证",
+          "metrics": "register 成功率/加载秒数"
+        }
+      ],
+      "sources": [
+        "models/TeichAI/launcher/qwen3.8_27b_bf16_Fable_Distill_vllm_rocm724_256k_8101_teichai_mi250dx2_m3.sh",
+        "config/ports.conf",
+        "docs/模型-脚本-环境对照表-2026-09-12.md",
+        "CLAUDE.md",
+        "docs/MI250X-hipFile-AIS-部署手册.md"
+      ],
+      "stack_fingerprint": {
+        "aiter_commit": "",
+        "rocm_version": "7.2.4",
+        "vllm_version": "0.1.dev1+g8a728663c.rocm724（master editable → src/vllm-master，pin 8a728663c）"
+      },
+      "status": "active",
+      "tp": 2,
+      "verified": "2026-09-15",
+      "what_failed": [
+        {
+          "description": "本臂用 P1 门控 GEMV",
+          "reason": "master 树无 MI250_GATE_GEMV 实现（grep=0），设 env 无害但无效；要 P1 走 0.28 底座的 8111/8113"
+        },
+        {
+          "description": "MTP K≥2",
+          "reason": "实测净亏 0.73~0.93×（脚本 L152）；与 8107 的 n>3 崩塌同一机理家族"
+        },
+        {
+          "description": "PM9A1 上开 AIS（含拿 ais_stack_check 全绿当放行依据）",
+          "reason": "hipFileBufRegister 在该盘直接失败（submit_io: register_buffer failed … len=3043078144），抛 Exception 非 RuntimeError → 起服当场崩；N20：全绿≠该盘可用"
+        },
+        {
+          "description": "VLLM_ROCM_USE_AITER=1 / CUSTOM allreduce / one-shot IPC / NCCL_SYMM_MEM / moe-tuned 种子表",
+          "reason": "AITER RMSNorm 门不查 arch；CUSTOM 在 gfx90a 静默算错（输出全 !!!）；种子表 −3~−4%（同 8107 §9，施工单 §H）"
+        },
+        {
+          "description": "ATOM 路线",
+          "reason": "09-06 判死；envs/atom_vllm 与 8201 atom 臂已回收/删除（CLAUDE.md §6/对照表表D）"
+        },
+        {
+          "description": "serve + AIS 5014",
+          "reason": "未解：api_server 进程树 + AIS 以崩代降，三块盘交叉证明与盘无关（手册 §3.3bis/N23①）"
+        }
+      ],
+      "what_worked": [
+        {
+          "description": "DFlash2 K=8 投机（block-diffusion 并行草稿，一次前向出 8 候选）",
+          "measured_impact": "单流 90.0 t/s @256 tok，×2.7~4.6（脚本头实测，300 W/ctx131072）"
+        },
+        {
+          "description": "die6+7 同模组 TP2（xGMI weight=15，NUMA1），55.6 GB÷2≈27.8 GB/die + KV 余量充足",
+          "measured_impact": "TP2 权重 25.17 GiB/worker（模型-脚本-环境对照表-2026-09-12）"
+        },
+        {
+          "description": "master 树底座（vendored FLA + GDN forward_hip + DFlash2/Qwen3_5MTP 注册）",
+          "measured_impact": "0.28 wheel 注册表无 Qwen3_5MTP/DFlash 同口径实现，arch 判据 registry grep（environments/vllm_master_rocm724 §2）"
+        },
+        {
+          "description": "MAX_MODEL_LEN 262144 = text_config.max_position_embeddings 原生档（09-13 由 131072 抬档）",
+          "measured_impact": "无需 YaRN；同底座 8301 自 09-07 已按此跑通（docs/research-notes/256k-上下文-2026-09-07.md）"
+        },
+        {
+          "description": "别名双挂 qwen3.8-27b-fable + qwen3.8-27b，litellm/cc-switch 零改动",
+          "measured_impact": "—"
+        }
+      ]
+    },
+    {
+      "architectures": [],
+      "best_args": [
+        "--split-mode layer",
+        "--tensor-split 1,1,1,1,1,1,1,1",
+        "--n-gpu-layers 999",
+        "--fit off",
+        "--load-mode dio",
+        "-c 2097152（=CTX_SLOT×NP，总上下文；每 slot 得 -c/NP=1M）",
+        "-np 2",
+        "-b 2048",
+        "-ub 256（=max(NP×(NGRAM_MAX+1),256)）",
+        "-t 24 -tb 24",
+        "--spec-type ngram-mod",
+        "--spec-ngram-mod-n-min 16",
+        "--spec-ngram-mod-n-max 32",
+        "--spec-ngram-mod-n-match 24",
+        "--alias deepseek-v4-flash --host 0.0.0.0 --port 8103",
+        "REASONING=on（定稿：质量优先，无 --reasoning* flag；批量复述才整套 off=--reasoning-budget 0）"
+      ],
+      "best_env": {
+        "GGML_CUDA_P2P": "1",
+        "HIP_VISIBLE_DEVICES": "0,1,2,3,4,5,6,7",
+        "OMP_NUM_THREADS": "24",
+        "OMP_WAIT_POLICY": "PASSIVE",
+        "ROCR_VISIBLE_DEVICES": "0,1,2,3,4,5,6,7（llama.cpp 臂现役脚本一律 HIP+ROCR 双设同一 DEVS 集；全 0..7 子集低编号起幂等安全）"
+      },
+      "config_model_type": "",
+      "engine": "llamacpp",
+      "entry": "models/unsloth/launcher/deepseek-v4-flash-0731_284b_q8kxl_llamacpp_rocm72_1m_8103_unsloth_mi250dx8.sh",
+      "env_path": "envs/llama.cpp_gfx90a-2026.9.8/qwen4exp-mtp-rp",
+      "exclusive_with": [
+        "8108-glm-5.3-flash-320b-q8-0-llamacpp",
+        "8110-ornith-1.5-397b-q8-0-llamacpp",
+        "8112-deepseek-v4.1-flash-748b-q4km-llamacpp",
+        "8107-qwen38-flash-next-176b-bf16-vllm-tp8",
+        "8107-qwen38-flash-next-176b-q4kxl-llamacpp",
+        "8109-qwen38-flash-next-176b-bf16-vllm-splitkv",
+        "8111-ornith-1.5-35b-a3b-bf16-vllm-tp4",
+        "8301-qwen38-27b-fable-distill-bf16-vllm-splitkv-ab",
+        "8302-qwen38-27b-fable-distill-bf16-vllm-dflash2"
+      ],
+      "framework_version": "0.3.0-dev (build 1, commit a9e9c3c5f)",
+      "gpus": "mi250dx8",
+      "lessons": [
+        {
+          "measured_impact": "8108/8103 双教训（knobs/llamacpp-speculation §1；脚本 L96）",
+          "statement": "ngram 的 n_min 是丢弃门槛不是草稿长度——草稿短于 n_min 整个作废，框架默认 48 对散文几乎永远达不到，不调到 ~16 等于没开"
+        },
+        {
+          "measured_impact": "复测 59–62 s 就绪（勘察 §6）",
+          "statement": "'判死'可能是误诊：09-05 的挂死是红线 5 现场而非容量问题；先按成本排序做差分实验（换小输入 15s→换开关 1-3min→重编 10min+，R2），顺序全反会白烧很久"
+        },
+        {
+          "measured_impact": "TP-RCCL §7 源码取证",
+          "statement": "编译期开关（GGML_HIP_RCCL）与不存在的 env（LLAMA_SPLIT_MODE）运行时 export 无任何效果；三层次（CMake/命令行/运行期 env）别混"
+        },
+        {
+          "measured_impact": "envs 盘点 §4",
+          "statement": "跨 boot 漂移 σ≈4.6%，±2% 级差异不得当结论；引用数字先对齐 cap 与底座（300W/560W、4die/8die 不可混表）"
+        },
+        {
+          "measured_impact": "R6、勘察 §7",
+          "statement": "测量口径：reasoning 模型测速只用服务端 timings 或 content+reasoning_content 合并计数；计时正则要排除 prompt eval time 行（否则 prefill 混进 decode 均值出过 28/67 假数）"
+        }
+      ],
+      "model_dir": "models/unsloth/DeepSeek-V4-Flash-0731-GGUF",
+      "model_slug": "deepseek-v4-flash-0731-gguf",
+      "other_metrics": [
+        {
+          "name": "prefill",
+          "note": "2026-09-12，4 die/32k 档（勘察 §6）",
+          "value": "284.9–285 t/s @756 tok"
+        },
+        {
+          "name": "ngram 复述档",
+          "note": "8 die/1M、ngram 16/32/24、关思考口径（脚本 L37-38；同日勘察 §7 记 60.38/geo 30.97，差 ~2% 噪声内）；三形态：分析 22.19/代码 22.18/复述 61.54",
+          "value": "61.54 t/s（+177%，acc .875）"
+        },
+        {
+          "name": "冷 1M prefill",
+          "note": "勘察 §7：1M 只在增量输入+前缀复用下可用",
+          "value": "≈61 min"
+        },
+        {
+          "name": "加载/就绪",
+          "note": "红线 5 开关在位时（勘察 §6/§7）",
+          "value": "59–62 s"
+        },
+        {
+          "name": "dspark 臂",
+          "note": "acc 0.531/len 2.59，勿用（脚本 L45、勘察 §7）",
+          "value": "13.81 t/s（−38%）"
+        },
+        {
+          "name": "tensor split（RCCL 手工档）",
+          "note": "TP-RCCL §5/§5.1，非默认",
+          "value": "pp512 1.72× / pp32768 1.83×；decode 0.30×；就绪 1′13″→7′05″"
+        },
+        {
+          "name": "1M vs 32k",
+          "note": "2026-09-12 勘察 §7",
+          "value": "decode 只 −3%"
+        }
+      ],
+      "patches": [],
+      "pitfalls": [
+        {
+          "description": "红线 5：缺 --fit off --load-mode dio（已焊死在 ARGS，脚本 L211）→ >2 min 无 listening on、GPU util 恒 0%、dmesg SVM mapping failed/svm_range_restore_work hogged CPU；与'文件<RAM'无关；判据'先查这两开关别查盘'",
+          "severity": "crash"
+        },
+        {
+          "description": "受限沙箱打不开 /dev/kfd 时静默退化 CPU-only 空烧 155 G：起服 30 s 后必须 grep -c 'failed to initialize ROCm' == 0 且 VRAM 在涨（脚本已内置拦杀）",
+          "severity": "regress"
+        },
+        {
+          "description": "-c 是总上下文不是每 slot：每 slot 得 -c/NP；起后核对日志 n_slots=2, n_ctx_slot=1048576；起不来按 524288→262144 降档并回报，别悄改默认",
+          "severity": "config"
+        },
+        {
+          "description": "UBATCH 必须 ≥ NP×(NGRAM_MAX+1)，低于它投机验证批被切；BATCH%UBATCH≠0 被静默夹取（脚本 L120-127/L173）",
+          "severity": "config"
+        },
+        {
+          "description": "NGRAM_MIN=48（框架默认）= 没开 ngram——它是丢弃门槛不是长度，必须 16（GLM 教训，脚本 L96）",
+          "severity": "regress"
+        },
+        {
+          "description": "禁 pkill -f；kill $! 曾把 nohup+numactl 包装进程 PID 当把手（09-12 实踩）⇒ 只按 logs/dsv4-flash-8103.pid kill -TERM -PGID，排障用 ss -ltnp 反查真 pid",
+          "severity": "config"
+        },
+        {
+          "description": "复述档测法：raw /completion 无模板 instruct 循环 echo = 复读假象（'63 t/s 长文'）；测形态必须走 chat 端点（脚本 L43-44）",
+          "severity": "config"
+        },
+        {
+          "description": "别把 SPLIT_MODE 默认改 tensor（实验参数变生产，TP-RCCL §8 明令禁止）；别 export GGML_HIP_RCCL（编译期）/LLAMA_SPLIT_MODE（不存在）——运行时 export = 自欺（§7）",
+          "severity": "regress"
+        },
+        {
+          "description": "进程消失 ≠ 显存立刻归还；Unsloth Studio(:8888) 或别的会话可占 die——显存预检报不足但 ss 查不到服务时先 Studio Unload/fuser -v /dev/kfd",
+          "severity": "config"
+        },
+        {
+          "description": "权重叶子软链 → /mnt/stripe-3mix-3t2，条带盘没挂载预检即失败",
+          "severity": "config"
+        }
+      ],
+      "port": "8103",
+      "precision": "ud-q8_k_xl",
+      "primary_metric": {
+        "date": "2026-09-12",
+        "note": "口径：单流 decode，8 die/1M ctx/np=1、temp0、560 W（勘察 §7；实测 22.12–22.14）；ngram 在分析/代码档零命中零税，故该数即当前定稿配置口径",
+        "phase": "decode",
+        "unit": "tok/s",
+        "value": 22.1
+      },
+      "recipe_id": "8103-deepseek-v4-flash-0731-284b-q8kxl-llamacpp",
+      "remaining_gaps": [
+        {
+          "description": "NP=2 档端到端未实测（脚本 L32 明说；np>1 无并发数据，同 arch 8112 实测 np=2 聚合 25.3 < 单流 29.9 即 0.85× 串行退化）",
+          "metrics": "并发聚合 tok/s vs 单流"
+        },
+        {
+          "description": "tensor split 长 prefill 只测到 pp32768=1.83×，CTX=1048576 一点未实测（61→~34 min 是外推不能当结论）",
+          "metrics": "pp @1M"
+        },
+        {
+          "description": "MTP 头 future work：盯未合并 PR 分支 mtp/borrow-target-tensors、repin-27742-nextn",
+          "metrics": "arch 注册后可重测"
+        },
+        {
+          "description": "KV 常数出处日志目录 logs/tp-comm-20260912-1232/ 已被清，判据仅剩脚本注释存证",
+          "metrics": "—"
+        }
+      ],
+      "sources": [
+        "models/unsloth/launcher/deepseek-v4-flash-0731_284b_q8kxl_llamacpp_rocm72_1m_8103_unsloth_mi250dx8.sh",
+        "docs/DSV4-Flash-0731-本机可行性勘察-2026-09-05.md",
+        "CLAUDE.md",
+        "docs/MI250X-llama.cpp-TP-RCCL-本机实测-2026-09-12.md",
+        "config/ports.conf",
+        "docs/模型-脚本-环境对照表-2026-09-12.md"
+      ],
+      "stack_fingerprint": {
+        "aiter_commit": "",
+        "rocm_version": "7.2.4",
+        "vllm_version": ""
+      },
+      "status": "active",
+      "tp": 8,
+      "verified": "2026-09-12",
+      "what_failed": [
+        {
+          "description": "dspark 投机",
+          "reason": "13.81 t/s（−38%），跨头 dtype 复现（09-05 IQ3+Q8_0 旧测 −39%）⇒ 成本在验证 4 token 的 MoE 步，对 DSV4 稳固（勘察 §7）"
+        },
+        {
+          "description": "MTP 头",
+          "reason": "arch deepseek4_mtp_support 在本机 4 个构建、deepseek-v4-flash-port 分支、unsloth master@477b844 全部未注册（grep=0）；deepseek-v4-flash-port 实为 converter-only 别再重建（脚本 L47-51）"
+        },
+        {
+          "description": "FP16/全精度档",
+          "reason": "284B×2B≈529 GiB > 512 GiB 总显存；且 decode M=1 是 GEMV 不吃 MFMA，fp16 只会更慢（脚本 L11-12）"
+        },
+        {
+          "description": "vLLM 路线",
+          "reason": "卡 indexer only supported on AITER 硬门（CLAUDE.md §10）；8103 上 fp8fp4/atom/dspark-int8 三条臂已删（对照表表B）"
+        },
+        {
+          "description": "盘上多量化档",
+          "reason": "decode 与量化档解耦（字节 −60% 速度打平），用户拍板留一个 q8（勘察 §8）"
+        },
+        {
+          "description": "tensor split 当默认",
+          "reason": "decode −70%、冷启动 ×6；只作 deepseek4 长 prefill 手工档（TP-RCCL §0/§8）"
+        },
+        {
+          "description": "09-05 '深 offload 挂死'原判",
+          "reason": "那是红线 5 现场（SVM/memlock）而非容量问题，复测 59–62 s 就绪（勘察 §6 判死修正）"
+        }
+      ],
+      "what_worked": [
+        {
+          "description": "红线 5 开关 --fit off --load-mode dio（O_DIRECT 不进页缓存，绕开 KFD SVM 常驻 + ulimit -l=8 MiB 死路）——09-05 判死后 09-12 用它复活",
+          "measured_impact": "缺开关 8 min 零进展 → 补后 59–62 s 就绪（勘察 §6 判死修正；红线 5）"
+        },
+        {
+          "description": "ngram-mod 16/32/24（无草稿头、零命中零税、命中即提速）",
+          "measured_impact": "复述档 61.54 t/s（+177%）；分析/代码档覆盖 0 不变（脚本 L35-44，2026-09-12 A/B）"
+        },
+        {
+          "description": "1M/slot ×2：每加一条 1M slot 只 +6.75 GiB KV（KV 常数 6912 MiB/slot）",
+          "measured_impact": "显存上限 ~39 条；-c 绝对上限 33,554,432 先卡在 32 条（脚本 L18-26/L103）"
+        },
+        {
+          "description": "qwen4exp-mtp-rp 自足前缀（RUNPATH 四格全命中重建，不需要 LD_LIBRARY_PATH）",
+          "measured_impact": "strings libllama.so 含 deepseek4=91；旧 qwen4exp-mtp 兜底格 09-09 迁移后指死路径，09-12 翻默认（envs 盘点 §4）"
+        },
+        {
+          "description": "UD-Q8_K_XL（FP8-attn + FP4-experts 反量化档）装下 284B",
+          "measured_impact": "154.3 GiB / 8 die 可跑；decode 与量化档解耦（勘察 §8）"
+        }
+      ]
+    },
+    {
+      "architectures": [
+        "Qwen4ExpForConditionalGeneration"
+      ],
+      "best_args": [
+        "--tensor-parallel-size 8",
+        "--model models/Qwen/Qwen3.8-Flash-Next-BF16",
+        "--port 8107",
+        "--gpu-memory-utilization 0.95",
+        "--max-model-len 262144",
+        "--max-num-seqs 8",
+        "--max-num-batched-tokens 8192",
+        "--load-format fastsafetensors",
+        "--trust-remote-code",
+        "--speculative-config {\"method\":\"mtp\",\"num_speculative_tokens\":3}",
+        "--enable-auto-tool-choice",
+        "--tool-call-parser qwen3_coder",
+        "--reasoning-parser qwen3",
+        "--disable-custom-all-reduce",
+        "--limit-mm-per-prompt.image 0 --limit-mm-per-prompt.video 0",
+        "--served-model-name qwen3.8-flash-next qwen3.8-flash-next-bf16"
+      ],
+      "best_env": {
+        "AIS": "0 → VLLM_AIS_DISABLE=1 + VLLM_FST_KEEP_NOGDS=1 + VLLM_AIS_PLE_FP8=0 三连写死（AIS=1 直接 exit 2 拒启）",
+        "HIP_VISIBLE_DEVICES/ROCR_VISIBLE_DEVICES/CUDA_VISIBLE_DEVICES": "三个都绝不设（开 MTP 硬规则，基脚本 L34-38 病根对照）",
+        "LD_LIBRARY_PATH": "/opt/rocm-7.2.4/lib（slim torch 缺之 import torch core dump=N13；绝不写裸 /opt/rocm=红线 2）",
+        "OMP_NUM_THREADS": "1",
+        "TORCH_CUDA_ALLOW_TF32": "0",
+        "USE_LIBUV": "0",
+        "VLLM_AIS_PLE_FP8": "0（BF16 checkpoint 无 weight_scale，开着=静默把 PLE 量化成 fp8，N25；脚本硬 export 不可省略）",
+        "VLLM_ALLOW_LONG_MAX_MODEL_LEN": "1",
+        "VLLM_ENABLE_CUDAGRAPH_GC": "1",
+        "VLLM_ENABLE_V1_MULTIPROCESSING": "0（config/vllm.arm-local.conf 7 条臂级策略 env，仅 8101/8107/8109 source）",
+        "VLLM_ROCM_QUICK_REDUCE_QUANTIZATION": "NONE（QR=0 定稿=决定不是遗漏；QR=1 时三件套 FP/0/0 + QR_MAX_MB=64）",
+        "VLLM_ROCM_USE_AITER": "0"
+      },
+      "config_model_type": "qwen4_exp",
+      "engine": "vllm",
+      "entry": "launcher/favor/qwen3.8-flash-next_176b_bf16_vllm_rocm724_256k_8107_final_Qwen_mi250dx8.sh",
+      "env_path": "envs/vllm_master_rocm724",
+      "exclusive_with": [
+        "8107-qwen38-flash-next-176b-q4kxl-llamacpp",
+        "8109-qwen38-flash-next-176b-bf16-vllm-splitkv",
+        "8103-deepseek-v4-flash-0731-284b-q8kxl-llamacpp",
+        "8108-glm-5.3-flash-320b-q8-0-llamacpp",
+        "8110-ornith-1.5-397b-q8-0-llamacpp",
+        "8112-deepseek-v4.1-flash-748b-q4km-llamacpp"
+      ],
+      "framework_version": "0.1.dev1+g8a728663c.rocm724",
+      "gpus": "mi250dx8",
+      "lessons": [
+        {
+          "measured_impact": "160.14/260.81/296.86/257.28（2026-09-05 同 boot）",
+          "statement": "可行 ≠ 划算、曲线非单调：n=4 与 n=3 同 capacity=8 曾被推断为'免费一档'，实测单流 −33%——只看并发会低估 ring 代价"
+        },
+        {
+          "measured_impact": "knobs/vllm-mtp-spec-depth §4（8111_final 头注 L13 引 8110：n=3 −24.9%）",
+          "statement": "最优深度不可跨模型搬：8110 草稿步≈主干读量 42% 所以 n=2 顶；本臂单头边际 ~2–3% 才撑得到 3；且数字别跨引擎抄（那是 llama.cpp MTP_N 口径）"
+        },
+        {
+          "measured_impact": "knobs/vllm-mtp-spec-depth §7",
+          "statement": "所有开关的最终判据都是端到端 ABAB，不是开关自己的日志：MTP eager +54%→graph 后 +23.3%；QR 微基准 2.9×→端到端 −0.44%"
+        },
+        {
+          "measured_impact": "三件套复核 §6",
+          "statement": "WARNING 行可能骗人：'prefix cache 被 MTP 架空'（kv_cache_utils 警告）是误判，实测复用率 70.5%→94.4% 共存默认开；测法须同内容连发 ≥3 次 + 异内容对照组"
+        },
+        {
+          "measured_impact": "knobs/quick-reduce-gfx90a §3",
+          "statement": "fail-closed 准入（--require 而非 --check）才让'我开了 QR'可证伪——8107 全部历史日志恒 Using ['PYNCCL'] 正是没有该断言的形状"
+        }
+      ],
+      "model_dir": "models/Qwen/Qwen3.8-Flash-Next-BF16",
+      "model_slug": "qwen3.8-flash-next-bf16",
+      "other_metrics": [
+        {
+          "name": "单流 short（SPEC=3）",
+          "note": "2026-09-05 @560 W+batched 8192 同档",
+          "value": "88.6 t/s"
+        },
+        {
+          "name": "MTP 深度曲线 Phase2",
+          "note": "单流同曲线 45.2/67.8/88.6/59.5；n=3 在单流与并发同时是峰，曲线非单调（CLAUDE §9 表）",
+          "value": "n=1 160.14（⚠️200 W 不可跨比）/ n=2 260.81 / n=3 296.86 / n=4 257.28 tok/s"
+        },
+        {
+          "name": "无 MTP 基线",
+          "note": "2026-09-04，基脚本头注释 L10",
+          "value": "40.8 t/s 单流（graph/temp=0）@250 W"
+        },
+        {
+          "name": "prefix cache 复用率",
+          "note": "三件套复核 §6：曾误判'被 MTP 架空'；TTFT 省 72%",
+          "value": "70.5%→94.4%（与 MTP 共存、默认开）"
+        },
+        {
+          "name": "QR=1 @TP8",
+          "note": "trace 证明上场 120,696 次仍无收益（吸收落地 L313）⇒ 定稿 QR=0",
+          "value": "−0.44%"
+        },
+        {
+          "name": "moe-tuned 种子表",
+          "note": "2026-09-10 施工单 §H；生效但更慢",
+          "value": "60.8→58.8（−3%）、agg 289.0→276.4（−4%）"
+        },
+        {
+          "name": "2026-09-10 复测",
+          "note": "与 88.6 差 46% 超跨 boot σ≈4.6% 可解释范围，疑 cap，未闭合（bench/davetha-ab/results-20260910-045349.txt）",
+          "value": "单流 60.8 / agg@8 289.0（cap 未标注）"
+        }
+      ],
+      "patches": [
+        "patches/gfx90a/port_p1_c2_c3.py（C2/C3 QR 架构门在役；--with-p1 故意不装）",
+        "patches/vllm-dsa-gfx90a/README.md（DSA 索引器 fp32 参考版来源记录，commit 9349d08，运行时不被 launcher 调用）",
+        "patches/qwen4exp/local-nogds-gds-for-tp-gt1.patch（VLLM_FST_KEEP_NOGDS 读取方）",
+        "patches/qwen4exp/local-ple-fp8-resident.patch（PLE fp8 驻留 + dtype 护栏 N25）",
+        "src/hipais-shim（LD_PRELOAD shim；7.2.4 缺 hipAmdFileRead 的转接，serve 侧本臂默认不用 AIS）"
+      ],
+      "pitfalls": [
+        {
+          "description": "可见性三变量一个都不许设（SPEC>0 硬规则）；手滑设了就等着复现'16 分钟挂起'假象——那是冷 Triton autotune 非死锁。对照 8111 用 HIP_VISIBLE_DEVICES 限 die 是 TP4 无 MTP，两件事不可互相抄",
+          "severity": "crash"
+        },
+        {
+          "description": "AIS=1 = exit 2 拒启（不是建议别开）；绕开脚本给 serve 开 AIS → 5014 崩",
+          "severity": "crash"
+        },
+        {
+          "description": "VLLM_AIS_PLE_FP8=0 不可省略：开着对 BF16 checkpoint = 无声把 PLE 量化成 fp8（模型照起输出照通顺；现 dtype 护栏 raise TypeError）",
+          "severity": "regress"
+        },
+        {
+          "description": "自设 QR=1 的显存副作用：QuickAllReduce 构造在显存探测前吃 IPC 缓冲 ~8-9 GiB/die（两个通信组×4 GiB 默认 2 GiB qr_max）→ 启动门报 Free memory 54.94/63.98 恒定缺 9 GiB，极易误判成'别的会话抢卡'；QR=1 需 QR_MAX_MB=64 + 建议 GPU_MEM_UTIL=0.85",
+          "severity": "crash"
+        },
+        {
+          "description": "QR=1 但日志仍 Using ['PYNCCL'] = 补丁漂移；绕过脚本直跑 python 会静默退化——跑 port_p1_c2_c3.py --require（不是 --check：未打补丁的干净树 --check 也算过）",
+          "severity": "config"
+        },
+        {
+          "description": "投机真上场判据 = /metrics 的 spec_decode_num_drafts_total 增长（num_draft_tokens/num_drafts=n）；看 'Using …' 构造行会骗人；本臂默认恒 PYNCCL",
+          "severity": "config"
+        },
+        {
+          "description": "md5 对拍禁止跨配置判对错：只改 SPEC 也在第 327 字符分叉（大量精确并列 top1，批形状一变即翻 token）；跨配置正确性只认 Phase1 分数（各档全 17/17）",
+          "severity": "config"
+        },
+        {
+          "description": "驻留判据只认 Model loading took 43.x GiB（sysfs 加载中恒读 10 MiB=N17）；pkill -f 禁（setsid ⇒ kill -TERM -$(cat logs/flash-next-8107.pid)）",
+          "severity": "config"
+        },
+        {
+          "description": "cap 口径不可混：n=1 的 160.14 是 200 W 档、其余 560 W；跨 boot σ≈4.6%，±2% 不当结论",
+          "severity": "config"
+        },
+        {
+          "description": "vllm.arm-local.conf 的 7 条策略 env 与 vLLM 默认不同，只 8101/8107/8109 source——别 blanket 到别的臂",
+          "severity": "config"
+        },
+        {
+          "description": "改行为=改 src/vllm-master 并 commit（envs/ 里只有 editable finder）；两个推不出去的本地 commit 9349d08/af49926 靠 backup remote + bundle 保底",
+          "severity": "config"
+        }
+      ],
+      "port": "8107",
+      "precision": "bf16",
+      "primary_metric": {
+        "date": "2026-09-05",
+        "note": "口径：SE-Bench Phase2 聚合，SPEC=3 @560 W + batched 8192，2.329 req/s、76/76；bench/se_bench_report_qwen38_flash_next_bf16_rocm724_tp8_mtp3_uncapped.json（CLAUDE.md §9）；同档单流 short 88.6 t/s",
+        "phase": "e2e",
+        "unit": "tok/s",
+        "value": 296.86
+      },
+      "recipe_id": "8107-qwen38-flash-next-176b-bf16-vllm-tp8",
+      "remaining_gaps": [
+        {
+          "description": "60.8（09-10）vs 88.6（09-05）单流差 46% 未闭合（疑 cap，_final 头注释）",
+          "metrics": "单流 t/s @ 对齐 cap"
+        },
+        {
+          "description": "深度上探 n=9（余量 3）可行但零实测",
+          "metrics": "Phase2 tok/s @n=9"
+        },
+        {
+          "description": "MAX_MODEL_LEN 降档=常数税回收实验未做（见 8301 配方 §9）",
+          "metrics": "decode/TTFT @降档"
+        },
+        {
+          "description": "serve+AIS 5014 未解；直读显存需求目前只能离线 run_q4e_ais_load.sh",
+          "metrics": "—"
+        }
+      ],
+      "sources": [
+        "CLAUDE.md",
+        "models/Qwen/launcher/qwen3.8-flash-next_176b_bf16_vllm_rocm724_256k_8107_Qwen_mi250dx8.sh",
+        "models/Qwen/launcher/qwen3.8-flash-next_176b_bf16_vllm_rocm724_256k_8107_final_Qwen_mi250dx8.sh",
+        "docs/MI250X-BF16-MTP三件套复核与prefix-cache架空-2026-09-05.md",
+        "docs/模型-脚本-环境对照表-2026-09-12.md",
+        "docs/MI250X-AITER-cDNA2-吸收落地-2026-09-07.md"
+      ],
+      "stack_fingerprint": {
+        "aiter_commit": "",
+        "rocm_version": "7.2.4",
+        "vllm_version": "0.1.dev1+g8a728663c.rocm724（master editable → src/vllm-master，pin 8a728663c；torch 2.12.0+git6bbd260 slim）"
+      },
+      "status": "active",
+      "tp": 8,
+      "verified": "2026-09-15",
+      "what_failed": [
+        {
+          "description": "TP8 开 QuickReduce",
+          "reason": "上场 12 万次实测 −0.44%；QR 收益只在 TP2(+4.7%)/TP4(+12.5~24.9%)（吸收落地 L313）"
+        },
+        {
+          "description": "serve + AIS",
+          "reason": "cuFileBufRegister 5014 以崩代降（抛 Exception 非 RuntimeError 绕过自动回退）；三块盘交叉证明与盘无关、只属 api_server 进程树，未解"
+        },
+        {
+          "description": "vLLM CUSTOM allreduce / one-shot IPC / NCCL_SYMM_MEM",
+          "reason": "CUSTOM 在 gfx90a 静默算错（输出全 !!!，真护栏是上游平台门）；one-shot 五配方全败；SYMM_MEM 正确但更慢——decode AR 最优就是 QR"
+        },
+        {
+          "description": "AITER MoE（VLLM_ROCM_USE_AITER=1）",
+          "reason": "CDNA2 终案不可用；RMSNorm 优先级门不查 arch，置 1 会真调没有 gfx90a 码对象的核；TRITON fused MoE 即最优"
+        },
+        {
+          "description": "moe-tuned 种子表接默认",
+          "reason": "本机 §H A/B −3%/−4%（日志确认命中）⇒ 默认不接，VLLM_TUNED_CONFIG_FOLDER 勿进 conf（闸口 R3）"
+        },
+        {
+          "description": "fp8-KV / EP",
+          "reason": "QSA 硬要求 BF16 主 KV（显式 raise）；EP 实测 agg −6%（施工单 §H）"
+        },
+        {
+          "description": "MTP n=5–8",
+          "reason": "qsa_cache.py:836 断言 416%capacity==0 死区，起服即崩；n=4 起得来但 ring 零余量单流 −33%（可行≠划算）"
+        },
+        {
+          "description": "开 MTP 时设任何 HIP/ROCR/CUDA_VISIBLE_DEVICES",
+          "reason": "触发 ROCm deprecated 二次过滤路径，全体 worker 在 get_kv_cache_spec 回包时连带损坏、无内核错误（基脚本 L34-38 病根对照：崩过的两次全设了，成功组全不设）"
+        },
+        {
+          "description": "P1 门控 GEMV（--with-p1）",
+          "reason": "故意不装：对 qwen4_exp 仅 +0.2%，低于噪声底（patches/gfx90a README L18-20）"
+        }
+      ],
+      "what_worked": [
+        {
+          "description": "MTP n=3 投机（权重自带 31 个 mtp.* 张量，qwen4_exp→qwen4_exp_mtp→Qwen4ExpMTP）",
+          "measured_impact": "Phase2 296.86 tok/s、单流 88.6 t/s（2026-09-05 @560W+8192）；增益 graph 后 +23.3%（eager 口径 +54%）"
+        },
+        {
+          "description": "TP8 唯一可行档：hidden 2560/moe_intermediate 640/experts 512 只被 2/4/8 整除，BF16 360 GB 在 TP4=83.8 GiB/die>64",
+          "measured_impact": "TP≠8 起不来；PP 被 model_state.py 限 1（基脚本 L17-18）"
+        },
+        {
+          "description": "master 树（全仓唯一注册 Qwen4Exp/Qwen4ExpMTP 的 arch 表：registry.py grep=5 处 vs 0.28 wheel 0）",
+          "measured_impact": "换 0.28 wheel = 起服即 arch not supported（environments/vllm_master_rocm724 §2）"
+        },
+        {
+          "description": "C2/C3 QR 架构门补丁打在 master 树 + QR=1 分支跑 port_p1_c2_c3.py --require 的 fail-closed 准入门",
+          "measured_impact": "quick_all_reduce.py 含 gfx90、cuda_communicator.py 含 _MI250_QR_WANTED（09-15 实查在役）；--require 保证'开了'可证伪"
+        },
+        {
+          "description": "--max-num-batched-tokens 8192 显式传（开 MTP 不传会被压到 2048 并 WARNING）",
+          "measured_impact": "与 296.86 基线同口径；WARNING 消失即档位正确旁证（基脚本 L133-135）"
+        },
+        {
+          "description": "--limit-mm-per-prompt 禁多模态输入（带视觉塔包装 arch 的 profiling 异步错免疫）",
+          "measured_impact": "否则 hipErrorInvalidKernelFile 拖到下一个 API 调用才爆（基脚本 L163-165）"
+        }
+      ]
+    },
+    {
+      "architectures": [],
+      "best_args": [
+        "numactl --cpunodebind=0 --membind=0",
+        "--split-mode layer（arch qwen4exp 在 tensor 黑名单，写死）",
+        "--tensor-split 1,1,1,1",
+        "--n-gpu-layers 999",
+        "--fit off",
+        "--load-mode dio",
+        "-c 262144（=GGUF 声明 qwen4exp.context_length 原生训练上限）",
+        "-np 1（写死：PLE n-gram 嵌入 GGML_ASSERT 不支持多序列）",
+        "-b 2048",
+        "-ub 128",
+        "-t 24 -tb 24",
+        "--jinja",
+        "-md models/unsloth/Qwen3.8-Flash-Next-GGUF/MTP/mtp-Qwen3.8-Flash-Next-Q8_0.gguf",
+        "--spec-type draft-mtp",
+        "--spec-draft-n-max 2",
+        "--mmproj models/unsloth/Qwen3.8-Flash-Next-GGUF/mmproj-F16.gguf",
+        "--image-min-tokens 1024（Qwen-VL grounding 下限）",
+        "--host 127.0.0.1 --port 8107 --alias qwen3.8-flash-next"
+      ],
+      "best_env": {
+        "GGML_CUDA_P2P": "1（实测 ±0.3%=0 零增益但免费保留；对照组 P2P=0）",
+        "HIP_VISIBLE_DEVICES": "0,1,2,3",
+        "LD_LIBRARY_PATH": "不需要——RUNPATH 四格自足（$ORIGIN/../lib + $ORIGIN/../ggml + /opt/rocm-7.2.4/lib + 本盘兜底）",
+        "OMP_NUM_THREADS": "24",
+        "OMP_WAIT_POLICY": "PASSIVE",
+        "ROCR_VISIBLE_DEVICES": "0,1,2,3（llama.cpp 臂 HIP+ROCR 双设同一 DEVS 集，低编号起幂等安全）"
+      },
+      "config_model_type": "",
+      "engine": "llamacpp",
+      "entry": "models/unsloth/launcher/qwen3.8-flash-next_176b_q4kxl_llamacpp_rocm72_mtp_256k_8107_unsloth_mi250dx4.sh",
+      "env_path": "envs/llama.cpp_gfx90a-2026.9.8/qwen4exp-mtp-rp",
+      "exclusive_with": [
+        "8107-qwen38-flash-next-176b-bf16-vllm-tp8",
+        "8109-qwen38-flash-next-176b-bf16-vllm-splitkv",
+        "8103-deepseek-v4-flash-0731-284b-q8kxl-llamacpp",
+        "8108-glm-5.3-flash-320b-q8-0-llamacpp",
+        "8110-ornith-1.5-397b-q8-0-llamacpp",
+        "8112-deepseek-v4.1-flash-748b-q4km-llamacpp",
+        "8111-ornith-1.5-35b-a3b-bf16-vllm-tp4",
+        "8301-qwen38-27b-fable-distill-bf16-vllm-splitkv-ab",
+        "8302-qwen38-27b-fable-distill-bf16-vllm-dflash2"
+      ],
+      "framework_version": "0.3.0-dev (build 1, commit a9e9c3c5f)",
+      "gpus": "mi250dx4",
+      "lessons": [
+        {
+          "measured_impact": "脚本 L15（n=2 +63%）；knobs/llamacpp-speculation §1 公理 3",
+          "statement": "深度曲线跨引擎不可混抄：'n=3 见顶、n=4 ring 零余量'是 vLLM MTP 机理；GGUF 侧判据是 mean len 贴 n_max+1 且草稿成本≪主干成本"
+        },
+        {
+          "measured_impact": "111 GiB « 251.7 GiB RAM 实测中招（09-08）",
+          "statement": "红线 5 触发条件与体积/RAM 比无关——是 mmap→KFD SVM 常驻 + memlock 的机理问题，任何全量 GPU offload 都要带 --fit off --load-mode dio"
+        },
+        {
+          "measured_impact": "§7 表注",
+          "statement": "对外报数对齐档位：61.1 是 32k 档、256k 定稿档用 60.06；同 boot 未测，跨 boot 漂 ±4.6%"
+        },
+        {
+          "measured_impact": "起服即 GGML_ASSERT 崩（脚本 L23-24）",
+          "statement": "np 扩档前先查 arch 的共享 token 断言（PLE n-gram 嵌入）——llama.cpp 的 -np 不是无条件免费"
+        }
+      ],
+      "model_dir": "models/unsloth/Qwen3.8-Flash-Next-GGUF",
+      "model_slug": "qwen3.8-flash-next-gguf",
+      "other_metrics": [
+        {
+          "name": "32k 档 MTP（3 次中位）",
+          "note": "2026-09-05 前后，temp0，die0-3（脚本 L15/L137；CLAUDE §10.5）",
+          "value": "无投机 37.5 → 61.1 t/s（+63%），acc .80 / mean len 2.60"
+        },
+        {
+          "name": "挂视觉档",
+          "note": "= 噪声内；合成图 2.1 s 答对（脚本 L37）",
+          "value": "61.8 t/s"
+        },
+        {
+          "name": "加载",
+          "note": "2026-09-08；缺开关 8 min 零进展（脚本 L110-112、红线 5）",
+          "value": "38 s 到 listening（补红线开关后）"
+        },
+        {
+          "name": "122,163 tok 长请求",
+          "note": "2026-09-13，256k 定稿档（上下文口径 §5.1）",
+          "value": "跑通，冷 prefill 328 s"
+        },
+        {
+          "name": "就绪",
+          "note": "脚本 L140",
+          "value": "~30 s"
+        }
+      ],
+      "patches": [],
+      "pitfalls": [
+        {
+          "description": "红线 5：日志恒停 load_model: loading model 数分钟 + dmesg svm_range_restore_work hogged CPU ⇒ 先查 --fit off -lm dio 在不在，别查盘；'模型<RAM'不是豁免（111 GiB«251.7 GiB 照样中招）",
+          "severity": "crash"
+        },
+        {
+          "description": "-np 1 是脚本字面量非旋钮；加槽必 GGML_ASSERT 崩",
+          "severity": "crash"
+        },
+        {
+          "description": "与 vLLM BF16 臂同端口 8107 且都占默认 die：同刻只能跑一条，'起来才发现底座不对/性能对不上'就查这条（把手不同：logs/flash-next-8107.pid vs vLLM 臂）",
+          "severity": "config"
+        },
+        {
+          "description": "256k 档起服必查两行：① n_ctx_slot/context size = 262144（不是被钳的 32768）；② sched_reserve compute buffer size die0 异常大时按 8112 口径补 -fa on——本底座未实测该开关，别写进默认",
+          "severity": "config"
+        },
+        {
+          "description": "投机头配错：dspark-*.gguf 与本模型无关（dflash.cpp 硬绑 DSV4，配错被拒）；-md 缺失预检 exit 1；判真开 MTP 看日志 creating MTP draft context + draft acceptance 行",
+          "severity": "config"
+        },
+        {
+          "description": "无显存预检（与 8103/8108 不同）：起前手工查 card1-4 mem_info_vram_used（bytes，空闲≈1.0e7）",
+          "severity": "config"
+        },
+        {
+          "description": "禁 pkill -f；nohup numactl 包装进程的 $! 可能是假把手——排障 ss -ltnp 反查真 pid，停服走 PID 文件组杀",
+          "severity": "config"
+        },
+        {
+          "description": "换前缀不是二进制等价：7.2.4 clang++ 重编设备码 ⇒ 上线后须比对 decode 与输出（09-13 已回填完成）；勿与 6.4.4 构建混 LD_LIBRARY_PATH",
+          "severity": "regress"
+        },
+        {
+          "description": "HOST 默认 127.0.0.1（本臂不做 LAN 暴露，与 8103/8108 的 0.0.0.0 不同）",
+          "severity": "config"
+        },
+        {
+          "description": "该分支不含 glm5next ⇒ 不能拿 qwen4exp-mtp-rp 前缀跑 8108 的 GLM（反之 8108 前缀也不能抄来跑本臂）",
+          "severity": "config"
+        }
+      ],
+      "port": "8107",
+      "precision": "ud-q4_k_xl",
+      "primary_metric": {
+        "date": "2026-09-13",
+        "note": "口径：256k 定稿档、np=1、MTP n=2，单流三形态 geomean（vs 32k 档 −1.7% 噪声内）；对照表 A 行 22、docs/上下文口径-单条会话最低256k-2026-09-13.md §5.1；61.1 是 32k 旧档中位，对外报数用 60.06",
+        "phase": "decode",
+        "unit": "tok/s",
+        "value": 60.06
+      },
+      "recipe_id": "8107-qwen38-flash-next-176b-q4kxl-llamacpp",
+      "remaining_gaps": [
+        {
+          "description": "并发档全部未实测（np 写死 1；16k/其他档未测）",
+          "metrics": "并发聚合 tok/s"
+        },
+        {
+          "description": "GGUF 侧 MTP 深度 n>2 未实测（n=3 见顶是 vLLM 口径参照）",
+          "metrics": "t/s @ n=3+"
+        },
+        {
+          "description": "USE_VISION=0 省 ~1.7 GB 显存是脚本 L82 注记，未单独复测",
+          "metrics": "GiB/die"
+        },
+        {
+          "description": "-fa on 对 sched_reserve 大 compute buffer 的效果在本底座未实测，不进默认",
+          "metrics": "—"
+        }
+      ],
+      "sources": [
+        "models/unsloth/launcher/qwen3.8-flash-next_176b_q4kxl_llamacpp_rocm72_mtp_256k_8107_unsloth_mi250dx4.sh",
+        "CLAUDE.md",
+        "docs/模型-脚本-环境对照表-2026-09-12.md",
+        "docs/上下文口径-单条会话最低256k-2026-09-13.md",
+        "config/ports.conf",
+        "docs/envs-盘点与整改-2026-09-12.md"
+      ],
+      "stack_fingerprint": {
+        "aiter_commit": "",
+        "rocm_version": "7.2.4",
+        "vllm_version": ""
+      },
+      "status": "active",
+      "tp": 4,
+      "verified": "2026-09-13",
+      "what_failed": [
+        {
+          "description": "-np >1",
+          "reason": "qwen4exp 的 PLE n-gram 嵌入断言 GGML_ASSERT(ubatch->n_seq_id[i]==1) 起服即崩；要高并发走同端口 vLLM 臂（脚本 L23-24）"
+        },
+        {
+          "description": "--split-mode tensor / RCCL 加速",
+          "reason": "qwen4exp 在 llm_arch_supports_sm_tensor 黑名单必报错；即便放行 TP-RCCL 实测 decode 0.30×，'别为 8107 编 RCCL'（TP-RCCL §5/§8）；-sm row 无 split buffer"
+        },
+        {
+          "description": "shared-* 上游推荐头（2.60 GB）路线",
+          "reason": "要靠跨模型张量借用，本仓构建未验证过 ⇒ '不赌'，用 self-contained Q8_0 头（脚本 L18-19）"
+        },
+        {
+          "description": "权威构建 envs/llama.cpp_886/llama.cpp-src/build-rocm90a",
+          "reason": "架构表无 qwen4exp + 绑报废 /opt/rocm-6.4.4，仅可考古"
+        },
+        {
+          "description": "旧判据'GGUF 体积 < RAM ⇒ 不需要红线 5 开关'",
+          "reason": "09-08 用 111 GiB 权重（RAM 251.7 GiB）实测证伪"
+        },
+        {
+          "description": "旧 dspark GGUF 臂（…_dspark_32k_8107_…）",
+          "reason": "dspark 判死 + 抢 8107，已列'建议删'（对照表表B）"
+        },
+        {
+          "description": "并发 8 场景开 MTP",
+          "reason": "上游判净亏 0.81~0.87× ⇒ 高并发 USE_MTP=0（脚本 L20/L81）"
+        }
+      ],
+      "what_worked": [
+        {
+          "description": "self-contained Q8_0 MTP 草稿头（4,137,429,120 B，-md + --spec-type draft-mtp n≤2）",
+          "measured_impact": "单流 37.5 → 61.1 t/s（+63%，32k 档中位）；acc 0.80/len 2.60（脚本 L15）"
+        },
+        {
+          "description": "--fit off --load-mode dio（红线 5 开关，对 111 GiB 权重同样必需）",
+          "measured_impact": "缺开关 8 min 零进展（dmesg svm_range_restore_work 512 times 递增）→ 补后 38 s 到 listening（2026-09-08 实测）"
+        },
+        {
+          "description": "die0-3 = NUMA0 两个完整 OAM 模组 + numactl 绑 node0",
+          "measured_impact": "103.7 GiB/4 die；扩 8 die 要同改 TENSOR_SPLIT 并去掉 numa bind（跨 node 绑单 node 会限一半核，同 8103 教训）"
+        },
+        {
+          "description": "CTX 256k 抬档 = GGUF 声明的 qwen4exp.context_length 原生训练上限（非外推）",
+          "measured_impact": "三形态 geo 60.06 vs 32k −1.7% 噪声内；122k tok 长请求跑通（2026-09-13）"
+        },
+        {
+          "description": "qwen4exp-mtp-rp 自足前缀（09-12 翻默认，唯一差异=RUNPATH 兜底格归位）",
+          "measured_impact": "不需要 LD_LIBRARY_PATH；回滚=去掉 -rp，旧前缀一字节未动（envs 盘点 §4）"
+        }
+      ]
+    },
+    {
+      "architectures": [],
+      "best_args": [
+        "--split-mode layer（本机唯一可跑：row 无 split buffer、tensor arch 黑名单）",
+        "--tensor-split 1,1,1,1,1,1,1,1",
+        "--n-gpu-layers 999",
+        "--fit off",
+        "--load-mode dio",
+        "-c 1048576",
+        "-np 1",
+        "-b 2048",
+        "-ub 128（故意的：ub 128→2048 TTFT −40% 但 decode −10%，8192 腰斩到 14.0）",
+        "-t 24 -tb 24",
+        "--jinja",
+        "--spec-type ngram-mod,draft-mtp（agent 画像；longform 纯 draft-mtp）",
+        "--spec-draft-n-max 2（MTP_N=2；基脚本默认 4 被两封装压回）",
+        "--spec-ngram-mod-n-min 16 --spec-ngram-mod-n-max 64 --spec-ngram-mod-n-match 24",
+        "--cache-reuse 256（np=1 实测零增益，留作 np>1 铺路）",
+        "--mmproj models/unsloth/GLM-5.3-Flash-GGUF/mmproj-F16.gguf（USE_VISION=0 默认关）",
+        "--alias glm-5.3-flash --host 0.0.0.0 --port 8108",
+        "入口必须指 Q8_0-00001-of-00008.gguf（00001 仅 9.4 MB/n_tensors=0，是 unsloth 分片布局的元数据/词表入口，不是残缺）",
+        "MTP 吃主文件自带 nextn 头（blk.45.nextn.*），无需外部 -md"
+      ],
+      "best_env": {
+        "DEVS": "0..7 跨 NUMA0+1，不做 numa bind（绑单 node 会限一半核，基脚本 L17）",
+        "GGML_CUDA_P2P": "1（P2P=1 定稿：实测 ±0.3%=0 零增益但免费保留；对照组 P2P=0）",
+        "LD_LIBRARY_PATH": "不需要——glm5next-rp RUNPATH 四格自足（旧构建缺 $ORIGIN、末格=cwd，从非 bin/ 目录起必崩）"
+      },
+      "config_model_type": "",
+      "engine": "llamacpp",
+      "entry": "launcher/favor/glm5.3-flash_320b_q8_0_llamacpp_rocm72_1m_8108_agent_unsloth_mi250dx8.sh",
+      "env_path": "envs/llama.cpp_gfx90a-2026.9.8/glm5next-rp",
+      "exclusive_with": [
+        "8108-base(实体基脚本，同端口同 PID)",
+        "8108-longform(longform 画像，同端口同 PID)",
+        "8103-deepseek-v4-flash-0731-284b-q8kxl-llamacpp",
+        "8107-qwen38-flash-next-176b-q4kxl-llamacpp",
+        "8107-qwen38-flash-next-176b-bf16-vllm-tp8",
+        "8110-ornith-1.5-397b-q8-0-llamacpp",
+        "8112-deepseek-v4.1-flash-748b-q4km-llamacpp",
+        "8301-qwen38-27b-fable-distill-bf16-vllm-splitkv-ab",
+        "8302-qwen38-27b-fable-distill-bf16-vllm-dflash2",
+        "Unsloth Studio(:8888) load 同一份权重"
+      ],
+      "framework_version": "0.3.0-dev (build 223, commit 629b50552)",
+      "gpus": "mi250dx8",
+      "lessons": [
+        {
+          "measured_impact": "agent geo 41.6 vs 35.1；longform 散文 ngram acc .66/len 2.32 命中≈0（§D、longform 头注 1-3 条）",
+          "statement": "画像决定投机开关：agent（temp=0，与非投机逐字相同）可开 ngram+MTP；longform（temp>0）开 ngram 是质量风险不是收益——llama.cpp 投机不保证分布等价（逐位比对首不匹配即截断，非拒绝采样）"
+        },
+        {
+          "measured_impact": "n2 41.6 vs n4 38.5（§D）；n16 8.7 t/s",
+          "statement": "加深前只认一条判据：mean len 贴 n_max+1 且草稿步成本≪主干步成本——GLM 深度每 +1 ≈ +17 ms ≈ 1/3 整模型 forward"
+        },
+        {
+          "measured_impact": "mul_mat_vec_q 总时长实测（全记录 §6.9/6.12）",
+          "statement": "decode GEMV 不随字节缩放 ⇒ 换量化不是提速路（−41% 字节只 +3.1%）"
+        },
+        {
+          "measured_impact": "全记录 §4.2 九步排除法",
+          "statement": "差分实验按成本排序做（R2）：换小输入（15 s）→换配置开关（1–3 min）→换版本重编（10 min+）；09-05 那次顺序全反白烧很久——五轮 HSA_* 开关全挂、6.4.4 重编同挂，真凶是 mmap→SVM+memlock"
+        },
+        {
+          "measured_impact": "§D",
+          "statement": "报数硬规矩：分形态测 + 几何平均 + 同 boot 成对；'聚合÷单流 <1.5 = 串行'可当场识破假吞吐"
+        }
+      ],
+      "model_dir": "models/unsloth/GLM-5.3-Flash-GGUF",
+      "model_slug": "glm-5.3-flash-gguf",
+      "other_metrics": [
+        {
+          "name": "agent A/B 几何平均（ctx131k temp0）",
+          "note": "2026-09-06，§D + 全记录 §6.6/6.7；n=4 只在纯复述赢",
+          "value": "ngram+MTP n=2 geo 41.6（三形态 30.41/42.71/55.39）；n=4 geo 38.5；纯 MTP n2 30.5/36.4/39.2；地板（无投机）≈19.73"
+        },
+        {
+          "name": "SE-Bench",
+          "note": "2026-09-06 think-off agent 档",
+          "value": "17/17；TTFT-content 平均 2439 ms（≈537 固定 + 2.92/tok）"
+        },
+        {
+          "name": "并发",
+          "note": "2026-09-06 吞吐形（基脚本 L21-22、§D）",
+          "value": "np8 聚合 58.75 t/s（每路 7.96，加速比 2.71×）；np9 掉 44.12（9 行 MMQ 悬崖）"
+        },
+        {
+          "name": "1M 档",
+          "note": "DSA 每步只读 indexer_top_k=2048；增量输入实测第 2 步计费 141/2324 tok（省 93.9%）",
+          "value": "加载 2 min 13 s；总显存 378.4/512 GiB；每 token 缓存 ≈57 KB；decode 与 256k 只差 2.5%；冷 prefill ≈53 min"
+        },
+        {
+          "name": "UD-Q4_K_XL 对照",
+          "note": "量化提速路线判负依据（§9）",
+          "value": "字节 −41% ⇒ 只 +3.1%（19.73→20.35）"
+        },
+        {
+          "name": "就绪",
+          "note": "全记录 §6.1；>5 min 没动=红线 5 老路",
+          "value": "-lm dio 下 ~2.5 min（加载 2′15″–2′31″，读盘 ~2.5 GB/s）"
+        }
+      ],
+      "patches": [],
+      "pitfalls": [
+        {
+          "description": "基脚本曾被未提交删除（09-14/15），两个薄封装当时必然起不来：前置先 test -f + bash -n 校验基脚本，缺则 git -C /home/qiba/ai checkout -- 还原 + tools/sync_launcher_links.py 重建软链（09-15 已还原）",
+          "severity": "crash"
+        },
+        {
+          "description": "红线 5：>5 min 没动 = SVM 老路，先查 --fit off -lm dio 是否被删（基脚本 L323、全记录 §5 六项排除法）；根治 memlock（limits.d/no_system_mem_limit）未验证别当结论",
+          "severity": "crash"
+        },
+        {
+          "description": "Unsloth Studio(:8888) load 同一份权重时再起 = 白烧 ~6.5 min 后 alloc_tensor_range OOM（318×2 > 512 GiB；09-05 18:49 实证）；预检 fail-fast 阈值 44 GiB/die（按 du 现算）",
+          "severity": "crash"
+        },
+        {
+          "description": "入口 GGUF 必须指 00001-of-00008（仅 9.4 MB / n_tensors=0 是元数据/词表入口）——按'分片残缺'去重下/换文件就是错",
+          "severity": "config"
+        },
+        {
+          "description": "np 陷阱：9~16 跨 MMQ 悬崖（np9 −25% 聚合）；-np 3 × 1M 卡'最忙 die 66.1>64 GiB'起不来，-np 2 有余量",
+          "severity": "regress"
+        },
+        {
+          "description": "投机旋钮：MTP_N 基脚本默认 4（坏默认），两封装都压 2——绕过封装直接跑基脚本会吃 n=4 档；NGRAM_MIN 不调到 16 等于没开 ngram；temp>0 时 ngram 草稿源自历史原文有文风回拽风险（longform 必须 USE_NGRAM=0）",
+          "severity": "regress"
+        },
+        {
+          "description": "SE-Bench/测速口径：--reasoning-budget 0 必须给否则假 FAIL（enable_thinking kwarg 对 GLM 是空操作）；必须分形态测（bench/glm53_shapes.py 三档+geo），同一开关在三档结论互相矛盾；聚合÷单流 <1.5 ⇒ 是串行；跨 boot/跨构建绝对值不可混表（漂过 +15%）",
+          "severity": "config"
+        },
+        {
+          "description": "禁 pkill -f / pgrep -x 按名字定位（R7/R13 多会话同机）：只按 logs/glm53-8108.pid kill -TERM -PGID；探针与生产同二进制多实例时用 PID 文件 + cmdline 里 --port/--model 定位；kill 后端口占用用 ss -ltnp 反查",
+          "severity": "config"
+        },
+        {
+          "description": "旧构建 RUNPATH 无 $ORIGIN、末格=cwd：从非 bin/ 目录起必崩 libllama-server-impl.so cannot open shared object——用 -rp 前缀，别用 LD_LIBRARY_PATH 代偿；回滚档 llama.cpp_886/llama.cpp-glm5-0904 绑报废 6.4.4，不可与 7.2.4 混",
+          "severity": "crash"
+        },
+        {
+          "description": "CACHE_REUSE=256 在 np=1 实测零增益（两档三形态逐项相同）——别当加速项，真实作用域 np>1",
+          "severity": "config"
+        },
+        {
+          "description": "19.73 t/s 是实测地板不是物理极限；重启前等显存归还（进程消失≠释放）",
+          "severity": "config"
+        }
+      ],
+      "port": "8108",
+      "precision": "q8_0",
+      "primary_metric": {
+        "date": "2026-09-06",
+        "note": "口径：单流三形态 geomean（29.4/44.4/100.5），agent 画像 SE-Bench think-off 档、temp0、560 W（对照表 A；CLAUDE.md §9 同 json：bench/se_bench_report_glm53_q8_0_8108_mi250dx8_thinkoff_2026-09-06.json）；ctx131k A/B 档 geo 41.6 为另一口径，勿混",
+        "phase": "decode",
+        "unit": "tok/s",
+        "value": 50.8
+      },
+      "recipe_id": "8108-glm-5.3-flash-320b-q8-0-llamacpp",
+      "remaining_gaps": [
+        {
+          "description": "memlock 根治（limits.d 或 amdgpu no_system_mem_limit=1）本机从未验证——dio 可能本来就是更对的路",
+          "metrics": "mmap 路加载时长/稳定性"
+        },
+        {
+          "description": "19.73 地板的小-K GEMV 尾巴：换路径三问（已最优/无路/要大改）均判不过 = future work；大头是该读的大权重 GEMV",
+          "metrics": "decode t/s"
+        },
+        {
+          "description": "np=2 有余量但 1M 语境并发红利未实测；np8 数字来自吞吐形非生产画像",
+          "metrics": "np2/np8 @1M 生产口径"
+        },
+        {
+          "description": "对照表 A 仍写旧前缀 glm5next（文档与实际 -rp 翻默认不一致，已列交付报告矛盾清单）",
+          "metrics": "—"
+        }
+      ],
+      "sources": [
+        "models/unsloth/launcher/glm5.3-flash_320b_q8_0_llamacpp_rocm72_1m_8108_base_unsloth_mi250dx8.sh",
+        "models/unsloth/launcher/glm5.3-flash_320b_q8_0_llamacpp_rocm72_1m_8108_agent_unsloth_mi250dx8.sh",
+        "models/unsloth/launcher/glm5.3-flash_320b_q8_0_llamacpp_rocm72_1m_8108_longform_unsloth_mi250dx8.sh",
+        "docs/MI250X-GLM-5.3-Flash-本机运行全记录-2026-09-05.md",
+        "docs/MI250X-CLAUDE-下沉细节-2026-09-06.md",
+        "CLAUDE.md",
+        "config/ports.conf"
+      ],
+      "stack_fingerprint": {
+        "aiter_commit": "",
+        "rocm_version": "7.2.4",
+        "vllm_version": ""
+      },
+      "status": "active",
+      "tp": 8,
+      "verified": "2026-09-12",
+      "what_failed": [
+        {
+          "description": "换量化提速（UD-Q4_K_XL）",
+          "reason": "字节 −41% 只 +3.1%；mul_mat_vec_q 总时长不随字节缩放 ⇒ 量化路线到此为止（§9）"
+        },
+        {
+          "description": "BF16 档",
+          "reason": "597.6 GiB > 512 GiB 显存，且 gfx90a 无 bf16 MFMA（llvm-mc instruction not supported）"
+        },
+        {
+          "description": "减 die（8→6）/ GGML_CUDA_P2P / 关 CUDA graph / 通用 fusion / multi-GEMV batching",
+          "reason": "分别实测 +0.2%、±0.3%=0、=0（'减发射数'前提不成立）、4–8% 不成立、前提不成立（§9）"
+        },
+        {
+          "description": "加深 MTP（n=4/5/8、n=16）与只用 ngram 不带 MTP",
+          "reason": "n=4/5/8 全面落败、n=16 仅 8.7 t/s；纯 ngram geo 36.8 vs 组合 50.8（§D）"
+        },
+        {
+          "description": "-np 9~16",
+          "reason": "跨 9 行触发 MMQ 路径悬崖，np=9 聚合反掉 44.12（−25%）"
+        },
+        {
+          "description": "--split-mode row / tensor",
+          "reason": "row 无 split buffer 必抛；tensor arch 黑名单；'改一行黑名单就好'删 case 重编 → GGML_ASSERT + 换占位后静默崩，需整套名字→切分轴移植工程，已放弃还原（全记录 §8.0）"
+        },
+        {
+          "description": "vLLM 路线（glm5next arch）",
+          "reason": "09-11 曾真跑起来，三形态 geo 7.21 t/s，比无投机地板还慢 2.7× ⇒ 判死清资产（docs/GLM53-HF路线资产清理-2026-09-12.md）"
+        }
+      ],
+      "what_worked": [
+        {
+          "description": "运行开关 --fit off --load-mode dio（非外部补丁，硬编码在 ARGS）——从'永远起不来'到 '2 min 起'",
+          "measured_impact": "加载 15 min 冻死（SVM mapping failed）→ 2′13″–2′31″ 就绪（全记录 §4/§5、§6.1）"
+        },
+        {
+          "description": "按负载画像拆双入口：agent（ngram+MTP n=2, 16/64/24）与 longform（纯 MTP n=2，故意关 ngram=质量决策）",
+          "measured_impact": "agent geo 41.6 vs 纯 MTP 35.1（代码 +17%、复述 +42%、分析 ≈0 零税）；longform 关 ngram 避 temp>0 文风回拽（§D、longform 头注）"
+        },
+        {
+          "description": "MTP_N=2（基脚本默认 4 被封装压回）",
+          "measured_impact": "n2 geo 41.6 vs n4 geo 38.5；深度每加一次 ≈ +17 ms ≈ 1/3 整模型 forward"
+        },
+        {
+          "description": "UBATCH=128 默认（'prefill 换 decode'杠杆按保守档）",
+          "measured_impact": "ub 128→2048：TTFT −40% 但 decode −10%；8192 腰斩到 14.0 t/s（基脚本 L149-155）"
+        },
+        {
+          "description": "1M 常驻 + 增量输入 + 前缀复用",
+          "measured_impact": "decode 与 256k 只差 2.5%（DSA 每步只读 indexer_top_k=2048）；实测第 2 步计费 141/2324 tok 省 93.9%"
+        },
+        {
+          "description": "glm5next-rp 自足前缀（arch glm5next 只在 unsloth fork 分支 glm5next/upstream）",
+          "measured_impact": "strings libllama.so | grep -c glm5next > 0；权威构建 0 命中（CLAUDE §6；版本 0.3.0-dev build 223）"
+        }
+      ]
+    },
+    {
+      "architectures": [
+        "Qwen4ExpForConditionalGeneration"
+      ],
+      "best_args": [
+        "--tensor-parallel-size 8",
+        "--max-model-len 262144",
+        "--gpu-memory-utilization 0.95",
+        "--max-num-seqs 8",
+        "--max-num-batched-tokens 8192",
+        "--speculative-config {\"method\":\"mtp\",\"num_speculative_tokens\":3}",
+        "--enable-auto-tool-choice",
+        "--tool-call-parser qwen3_coder",
+        "--reasoning-parser qwen3",
+        "--load-format fastsafetensors",
+        "--limit-mm-per-prompt {\"image\":0,\"video\":0}"
+      ],
+      "best_env": {
+        "AIS": "0",
+        "GPU_MEM_UTIL": "0.95",
+        "HOST": "0.0.0.0",
+        "LD_LIBRARY_PATH": "/opt/rocm-7.2.4/lib",
+        "MAX_MODEL_LEN": "262144",
+        "MAX_NUM_BATCHED_TOKENS": "8192",
+        "MAX_NUM_SEQS": "8",
+        "PROBE": "0",
+        "QR": "0",
+        "ROCM724": "/opt/rocm-7.2.4",
+        "SPEC": "3",
+        "SPLITKV": "0",
+        "VLLM_AIS_DISABLE": "1",
+        "VLLM_AIS_PLE_FP8": "0",
+        "VLLM_FST_KEEP_NOGDS": "1",
+        "VLLM_ROCM_USE_AITER": "0",
+        "VRAM_FREE_MAX_BYTES": "20971520"
+      },
+      "config_model_type": "qwen4_exp",
+      "engine": "vllm",
+      "entry": "models/Qwen/launcher/qwen3.8-flash-next_176b_bf16_vllm_rocm724_256k_8109_Qwen_mi250dx8.sh",
+      "env_path": "envs/vllm_master_rocm724",
+      "exclusive_with": [
+        "8107-qwen38-flash-next-176b-bf16-vllm-tp8（同底座同 8 die，ports.conf 硬互斥）",
+        "8107-qwen38-flash-next-176b-q4kxl-llamacpp（同 8 die）",
+        "8108",
+        "8110",
+        "8112（各占满 8 die 的 llama.cpp 臂）"
+      ],
+      "framework_version": "0.1.dev1+g8a728663c.rocm724",
+      "gpus": "mi250dx8（全 8 die）",
+      "lessons": [
+        {
+          "measured_impact": "8109：三独立证据链判死（唯一调用者 / 模型侧 grep 0 命中 / 17 份日志 0 命中）",
+          "statement": "移植'接管型'优化前先做结构可达性判定（谁调用该算子、后端绑定、MTP 形状条件），再谈收益；否则门开了也是空操作"
+        },
+        {
+          "measured_impact": "8107 全部历史日志恒 Using ['PYNCCL'] 正是这个形状",
+          "statement": "共享 editable 树的写入一律 opt-in + fail-closed 准入（QR=1 用 --require 而非 --check：未打补丁的干净树过 check 是假阳性，会静默跑 PYNCCL）"
+        },
+        {
+          "measured_impact": "崩过的两次 serve+MTP 全部显式设了可见性；ROCR=6,7+HIP=6,7 实测空集",
+          "statement": "GPU 可见性规则随'是否开 MTP'反转：8107/8109 一个都不许设；8111/8113（无 MTP、低编号子集）设 HIP 才安全，且绝不叠加 ROCR（重编号后二次筛选出空集）"
+        }
+      ],
+      "model_dir": "models/Qwen/Qwen3.8-Flash-Next-BF16",
+      "model_slug": "qwen3.8-flash-next-bf16",
+      "other_metrics": [
+        {
+          "name": "单流（引 8107）",
+          "note": "2026-09-05 @560 W，SPEC=3 同基线",
+          "value": "88.6 tok/s"
+        },
+        {
+          "name": "split-KV 接管计数（本模型）",
+          "note": "2026-09-07 结构判定（代码级，非吞吐）：17 份定稿日志 grep '已接管'=0，路径不经过该算子",
+          "value": "0"
+        }
+      ],
+      "patches": [
+        "patches/gfx90a/port_splitkv_pa.py",
+        "patches/gfx90a/rocm_splitkv_pa.py",
+        "patches/gfx90a/probe_splitkv_reach.py",
+        "patches/gfx90a/port_p1_c2_c3.py",
+        "recipes: patches/splitkv-paged-decode.md",
+        "recipes: patches/p1-gemv-c2c3-quickreduce.md",
+        "recipes: patches/qwen4exp-ais-ple.md（master 树 nogds/PLE 件；本臂 BF16 钉 VLLM_AIS_PLE_FP8=0）"
+      ],
+      "pitfalls": [
+        {
+          "description": "SPEC>0（MTP）时设任何 HIP/ROCR/CUDA_VISIBLE_DEVICES ⇒ 起服即崩、无内核错误（worker 在 get_kv_cache_spec 回包时连带损坏）；8111 的 HIP_VISIBLE_DEVICES=0,1,2,3 是 TP4 无 MTP 的另一套规矩，不可互抄",
+          "severity": "crash"
+        },
+        {
+          "description": "slim torch 缺 LD_LIBRARY_PATH=/opt/rocm-7.2.4/lib 直接 core dump（N13）；绝不碰 /opt/rocm alternatives（红线 2，两代 libamdhip64 同名 .so.7 静默换库）",
+          "severity": "crash"
+        },
+        {
+          "description": "SPEC 5–8 是起服即崩死区（qsa_cache capacity=12∤416，n=5 实测崩）；n=4 起得来但 ring 零余量（单流 −33%）——可行≠划算",
+          "severity": "crash"
+        },
+        {
+          "description": "不设 VLLM_ROCM_SPLITKV_PA_MAX_SEQS：门限唯一真值=内核 DEFAULT_MAX_SEQS=64，脚本再写一遍=制造第二个真值（beta 封装曾把 64 按回 16 翻车）",
+          "severity": "config"
+        },
+        {
+          "description": "实验完必须 port_splitkv_pa.py --revert 与 probe_splitkv_reach.py --revert，把 editable 树还原成与 git HEAD 逐字节一致并 git status 自证干净——那棵树是 8107 的生产代码",
+          "severity": "config"
+        },
+        {
+          "description": "探针/TP worker 共写同一计数文件互相覆盖 ⇒ '计数器从 12000 掉回 2000'（09-08 实测抓过）；按 .pid<PID>.json 分文件读",
+          "severity": "config"
+        },
+        {
+          "description": "改 SPEC 深度/开关即换配置：md5 禁跨配置对拍（temp=0 投机与非投机不逐字同）；同 boot 成对重跑才可比，跨 boot ±2% 不当结论（σ≈4.6%）",
+          "severity": "config"
+        },
+        {
+          "description": "驻留判据只认 'Model loading took X GiB memory'（加载期 sysfs 恒 ~10 MiB，N17）；就绪收口 'Application startup complete'；有 die 被占 exit 4 时绝不加杀信号、等或换时",
+          "severity": "config"
+        }
+      ],
+      "port": "8109",
+      "precision": "bf16",
+      "primary_metric": {
+        "date": "2026-09-05",
+        "note": "引 8107 同底座基线（默认档与 8107 逐字同形：SPEC=3/256k/TP8 @560 W，Phase2 聚合，bench …mtp3_uncapped.json）；本臂从未以差异化配置跑出过独立成绩",
+        "phase": "e2e",
+        "unit": "tok/s",
+        "value": 296.86
+      },
+      "recipe_id": "8109-qwen38-flash-next-176b-bf16-vllm-splitkv",
+      "remaining_gaps": [
+        {
+          "description": "本臂从未以差异化配置单独测过吞吐（数字全引 8107）；arm 留存意义=给下一个底座复用 split-KV 接管门",
+          "metrics": "296.86 tok/s / 单流 88.6（09-05 @560 W，8107 镜像）"
+        },
+        {
+          "description": "cand_splitkv_pa_mq.py（多查询 MQ 变体候选稿）未接线，留作下一步实验",
+          "metrics": "—"
+        }
+      ],
+      "sources": [
+        "models/Qwen/launcher/qwen3.8-flash-next_176b_bf16_vllm_rocm724_256k_8109_Qwen_mi250dx8.sh（头注释 L5-L32）",
+        "docs/research-notes/splitkv-8107-移植-2026-09-07.md（结构判定全记录）",
+        "CLAUDE.md §9/§10/§10.5",
+        "config/ports.conf PORT_AB_QWEN3_8_FLASH_NEXT 块"
+      ],
+      "stack_fingerprint": {
+        "aiter_commit": "",
+        "rocm_version": "7.2.4",
+        "vllm_version": "0.1.dev1+g8a728663c.rocm724"
+      },
+      "status": "experimental",
+      "tp": 8,
+      "verified": "2026-09-15",
+      "what_failed": [
+        {
+          "description": "split-KV 移植到 Flash-Next 底座（SPLITKV=1）",
+          "reason": "空操作：本模型 full-attention 走 QSA 稀疏后端（indexer_n_heads=4⇒use_qsa，绑 Qwen4ExpQSAFlashAttentionBackend，自带 _qsa_sparse_paged_gqa_splitk_kernel），不调用接管寄生的 chunked_prefill_paged_decode；再叠 MTP SPEC=3 时 max_query_len=1+3=4≠1 又被门拒一次。收益只在 ROCM_ATTN 走 Triton 回退的模型（8111/8301）兑现"
+        },
+        {
+          "description": "serve + AIS",
+          "reason": "api_server 进程树 cuFileBufRegister error=5014（未解，三盘交叉与盘无关），脚本做成 AIS=1 exit 2 硬拒；直读需求走离线 run_q4e_ais_load.sh"
+        },
+        {
+          "description": "VLLM_ROCM_USE_AITER=1",
+          "reason": "RMSNorm 陷阱（platforms/rocm.py:1109-1116 优先级门只看 env 不查 arch）+ AITER MoE gfx90a 终案不可用（同 8107 §9）"
+        },
+        {
+          "description": "CUSTOM allreduce / one-shot IPC / NCCL_SYMM_MEM",
+          "reason": "分别：静默输出 !!! / 五配方全败 / 更慢（同 8107 §9）"
+        },
+        {
+          "description": "moe-tuned 种子表",
+          "reason": "本机同底座 A/B −3~−4%（60.8→58.8、289.0→276.4，生效但更慢），默认 tile 已近最优"
+        },
+        {
+          "description": "QR=1 在本底座 TP8",
+          "reason": "TP8 判负（trace 证明上场 120,696 次，端到端 −0.44%）；默认 QR=0 是决定不是遗漏；QR 收益只在 TP≤4"
+        },
+        {
+          "description": "ATOM / fp8-KV on QSA",
+          "reason": "gfx90a 四道墙判死 / 显式 raise（同 8107 §9）"
+        }
+      ],
+      "what_worked": [
+        {
+          "description": "六道前置断言内置 launcher（A0 权重可读 / A5 每 die 空闲≤20 MiB / A6 端口未占 / A1–A4 split-KV 补丁准入），写共享 editable 树设成 opt-in：默认 SPLITKV=0 且 PROBE=0 完全不碰 src/vllm-master",
+          "measured_impact": "超限拒起（exit 3/4/5）替代带病起服；与 8107 共用的在役树零默认扰动"
+        },
+        {
+          "description": "sha 不变式判据：第 0 环 = 源 rocm_splitkv_pa.py sha256 == 装树 sha256（两处相等判定，不写死值）+ --check/--require fail-closed",
+          "measured_impact": "--revert 后逐字节==git HEAD（09-07 实测，研究笔记 §1）"
+        },
+        {
+          "description": "内置 stop 子命令：只认 PID 文件显式 PGID，TERM→80 s→KILL→再等 90 s sysfs 回落；旧把手改名 .dead/.stale-absent",
+          "measured_impact": "停服后可复核 card1..8 回落与端口释放，不误杀别人进程"
+        },
+        {
+          "description": "PROBE 调用计数探针把'路径不经过(a)'与'经过被门拒(b)'变成可数证据（每进程 .pid<PID>.json 分文件）",
+          "measured_impact": "(a) 已证实：唯一调用者=ROCM_ATTN :459；grep qwen4_exp/ 0 命中；接管日志 0 命中——三证据链"
+        }
+      ]
+    },
+    {
+      "architectures": [],
+      "best_args": [
+        "-m models/bartowski/Ornith-1.5-397B-GGUF/Ornith-1.5-397B-Q8_0/Ornith-1.5-397B-Q8_0-00001-of-00011.gguf",
+        "--split-mode layer",
+        "--tensor-split 1,1,1,1,1,1,1,1",
+        "--n-gpu-layers 999",
+        "--fit off",
+        "--load-mode dio",
+        "-c 262144",
+        "-np 1",
+        "-b 2048",
+        "-ub 128",
+        "-t 24",
+        "-tb 24",
+        "--jinja",
+        "--host 0.0.0.0 --port 8110 --alias ornith-1.5-397b",
+        "--mmproj models/bartowski/Ornith-1.5-397B-GGUF/Ornith-1.5-397B-Q8_0/mmproj-Ornith-1.5-397B-BF16.gguf",
+        "--spec-type ngram-mod,draft-mtp",
+        "--spec-draft-n-max 2",
+        "--spec-ngram-mod-n-min 16",
+        "--spec-ngram-mod-n-max 32",
+        "--spec-ngram-mod-n-match 24",
+        "-md models/bartowski/Ornith-1.5-397B-GGUF/Ornith-1.5-397B-Q8_0/mtp-Ornith-1.5-397B-Q8_0.gguf",
+        "--cache-reuse 256"
+      ],
+      "best_env": {
+        "CACHE_REUSE": "256",
+        "MTP_N": "2",
+        "NGRAM_MATCH": "24",
+        "NGRAM_MAX": "32",
+        "NGRAM_MIN": "16",
+        "NP": "1",
+        "OMP_NUM_THREADS": "24",
+        "OMP_WAIT_POLICY": "PASSIVE",
+        "P2P": "1（GGML_CUDA_P2P）",
+        "ROPE_SCALING": "none（_final：每槽 256k=训练上限，不套 YaRN）",
+        "SLOT_CTX": "262144",
+        "SPLIT_MODE": "layer",
+        "USE_MTP": "1（自动：探到草稿头）",
+        "USE_NGRAM": "1",
+        "VRAM_WAIT_FREE_S": "150"
+      },
+      "config_model_type": "",
+      "engine": "llamacpp",
+      "entry": "models/bartowski/launcher/ornith1.5_397b_q8_0_llamacpp_rocm72_256k_8110_final_bartowski_mi250dx8.sh",
+      "env_path": "envs/llama.cpp_gfx90a-2026.9.8/qwen4exp-mtp-rp",
+      "exclusive_with": [
+        "本配方实体基脚本（同端口 8110 同 PID 把手）",
+        "8103",
+        "8107（vLLM 与 q4kxl 两引擎）",
+        "8108",
+        "8109",
+        "8111（die0-3）",
+        "8112",
+        "8301",
+        "8302（8 die 满占 ⇒ 与其余满 die 臂互斥，ports.conf 同款声明）"
+      ],
+      "framework_version": "0.3.0-dev (build 1, commit a9e9c3c5f)",
+      "gpus": "mi250dx8（DEVS=0..7，跨 NUMA0+1，不做 numa bind；--split-mode layer，非 TP）",
+      "lessons": [
+        {
+          "measured_impact": "五腿交叉 ABAB（重导 §7.5，唯一可信口径）",
+          "statement": "MTP 与 ngram 收益高度重叠（关 ngram +40.2% vs 开 ngram +19.8%）：复述/续写为主 ngram 主力、全新内容为主 MTP 主力；组合语义='免费的优先、花钱的兜底'不是叠加"
+        },
+        {
+          "measured_impact": "下载 §11 四档 + 重导 §7.5",
+          "statement": "投机深度不可跨模型搬：由'草稿成本/主干读量'决定——8110 草稿≈42% 故 n=2 即顶（n3 −24.9%），8107 vLLM 单头边际 ~2–3% 才撑到 n=3"
+        },
+        {
+          "measured_impact": "09-09 首版头随目录删除丢失 ⇒ 8110 无投机 33 t/s 跑了两周",
+          "statement": "离线资产的静默退化比显式失败更贵：制造链必须可复跑、缺头必须显式警告"
+        },
+        {
+          "measured_impact": "111 GiB 权重（RAM 251.7 GiB）实测照样中招（红线 5 据此更正）",
+          "statement": "--fit off --load-mode dio 是'可用前提'而非优化项，触发条件与体积/RAM 无关（模型<RAM 不豁免）"
+        }
+      ],
+      "model_dir": "models/bartowski/Ornith-1.5-397B-GGUF",
+      "model_slug": "ornith-1.5-397b-gguf",
+      "other_metrics": [
+        {
+          "name": "无投机地板",
+          "note": "五腿口径；09-09 三点 33.0/33.0/33.0（方差 0.1%，256k/np1 temp0 560 W）",
+          "value": "33.09 tok/s"
+        },
+        {
+          "name": "纯 MTP n2 增益（关 ngram）",
+          "note": "33.09→46.39（重导 §7.5 腿④）；开 ngram 时 MTP 增量只剩 +19.8%",
+          "value": "+40.2%"
+        },
+        {
+          "name": "MTP 深度四档 geo（09-09）",
+          "note": "下载 §11；五腿复测 n2→n3 −24.9% ⇒ 峰在 2",
+          "value": "n0 40.86 / n2 46.07 / n3 36.60 / n4 33.74"
+        },
+        {
+          "name": "llama-bench layer（09-12，8 die）",
+          "note": "tensor 对比：decode 0.30×、prefill ±0% 无红利（TP-RCCL §5）",
+          "value": "pp512 539.81 / tg128 32.84"
+        },
+        {
+          "name": "起服与驻留（dio，256k×1）",
+          "note": "09-09 实测；>5 min=红线 5 现场",
+          "value": "3 min 37.9 s；最忙 die 55.1/64 GiB"
+        }
+      ],
+      "patches": [
+        "patches/llama.cpp-mtp-only-export.patch（仅离线制造草稿头，不在服务链上）",
+        "recipes: patches/llamacpp-mtp-only-export.md"
+      ],
+      "pitfalls": [
+        {
+          "description": "草稿头路径没被候选命中 ⇒ USE_MTP 静默降 0、吞吐掉回 ~33（09-11 真实事故：白跑两周无投机，丢 +19.8%/+40.2%）；每次起服前跑 test -e + tools/gguf_head_dump.py 验头，或显式 MTP_HEAD=<路径>",
+          "severity": "regress"
+        },
+        {
+          "description": "测量污染：同内容连发时 ngram 从本 slot 刚生成原文里抄（mean len 29.88 假象、60+ t/s）；'日志出现 draft acceptance 行'只是必要条件，对照组必须不同内容",
+          "severity": "config"
+        },
+        {
+          "description": "1M 档：n_ctx_slot=min(n_ctx_seq, GGUF 声明 context_length)，命令行无解——配 1M 实际只有 262k（'capping'只是 warn 文案）；要 1M 必须主 00001+草稿头两处 u32 一起改并开 YaRN；脚本注释给的 dd 还原备份 /mnt/stripe-3mix-3t2/models/_dl/gguf-head-backup/ 现已整目录不存在",
+          "severity": "config"
+        },
+        {
+          "description": "起服即 alloc OOM/预检拒绝：8 die 被别的底座/Studio 占；重启前先等显存归还（进程消失≠释放，脚本最多等 150 s）",
+          "severity": "crash"
+        },
+        {
+          "description": "content 返回空串：首答思考预算全烧进 reasoning_content ⇒ 客户端 chat_template_kwargs {\"enable_thinking\":false} 或给足 max_tokens",
+          "severity": "config"
+        },
+        {
+          "description": "吞吐核算错：/completion 的 tokens_evaluated 不是'新生成 token 数'；用 timings.predicted_per_second 或端到端÷n_predict",
+          "severity": "config"
+        },
+        {
+          "description": "手工起服必须 setsid（只 nohup 时调用方被打断会连坐 llama-server）；停服只按 PID/其 PGID 负号，禁 pkill -f、别把 pgrep 输出喂 kill（R7/R13）",
+          "severity": "crash"
+        },
+        {
+          "description": "多模态下 llama.cpp 自动禁用 --cache-reuse（有意行为变更）；MMPROJ/MTP_HEAD 候选没跟上文件搬家曾让 vision 静默退 0",
+          "severity": "regress"
+        },
+        {
+          "description": "权重根不能写死 ${AI_HOME}/models（脚本按 MODELS_ROOT/、${AI_HOME}/models、/mnt/stripe-3mix-3t2/models 探'谁真有这个仓库目录'）；跨 boot 绝对值漂 ±13–15% 不混表，单点数字不可外传必须带 session 与开关组合",
+          "severity": "config"
+        }
+      ],
+      "port": "8110",
+      "precision": "q8_0",
+      "primary_metric": {
+        "date": "2026-09-11",
+        "note": "_final 定稿档（ngram 16/32/24 + MTP n2，256k×1，vision=1，temp0）三形态 geo；两 session 47.28/44.91、09-09 独立复现 46.07 ⇒ 报 45–47，跨 session 漂移 ±13%；45–47 测出档带 yarn4，定稿 ROPE=none 与之差这一个开关",
+        "phase": "decode",
+        "unit": "tok/s",
+        "value": 47.28
+      },
+      "recipe_id": "8110-ornith-1.5-397b-q8-0-llamacpp",
+      "remaining_gaps": [
+        {
+          "description": "基脚本默认档 1M×2（每槽 1M、YaRN 4×）账本余量仅 0.8–1.8 GiB，启动从未实测",
+          "metrics": "推算 62.2–63.2 GiB/die（下载 §15）"
+        },
+        {
+          "description": "定稿 ROPE=none 与 45–47 测出档（yarn4）之间：速度差可忽略，质量差未测",
+          "metrics": "唯一差异=这一个开关"
+        },
+        {
+          "description": "对照表写'402–411 GiB·13 片'与 du 实读 392.6 GiB/11 片不符（交付报告矛盾清单）；models/ornith-ai 悬空软链待删",
+          "metrics": "du 421,576,669,536 B"
+        }
+      ],
+      "sources": [
+        "models/bartowski/launcher/ornith1.5_397b_q8_0_llamacpp_rocm72_256k_8110_bartowski_mi250dx8.sh（实体基脚本，439 行）",
+        "models/bartowski/launcher/ornith1.5_397b_q8_0_llamacpp_rocm72_256k_8110_final_bartowski_mi250dx8.sh（★favor 入口，薄封装）",
+        "docs/下载-ModelScope-Ornith-1.5-397B-Q8_0-与8110底座-2026-09-09.md §2/§6/§11/§12/§13/§14/§15",
+        "docs/Ornith-397B-MTP草稿头-重导-2026-09-11.md §6/§7.5（五腿权威口径）",
+        "docs/MI250X-llama.cpp-TP-RCCL-本机实测-2026-09-12.md §5",
+        "config/ports.conf（PORT_BASE_ORNITH_1_5_397B：base + _final 互斥）",
+        "docs/上下文口径-单条会话最低256k-2026-09-13.md §3"
+      ],
+      "stack_fingerprint": {
+        "aiter_commit": "",
+        "rocm_version": "7.2.4",
+        "vllm_version": ""
+      },
+      "status": "active",
+      "tp": 0,
+      "verified": "2026-09-12",
+      "what_failed": [
+        {
+          "description": "指望 bartowski 权重自带 MTP",
+          "reason": "逐条枚举 100 个打包张量，含 mtp/predict/eh_proj/rewrite = 0 个 ⇒ 必须自导独立草稿头；--spec-type draft-mtp 无头时静默无草稿、白搭框架"
+        },
+        {
+          "description": "MTP_N≥3",
+          "reason": "n2→n3 −24.9%（净亏不是递减）：草稿=整层 MoE 6.60B ≈ 主干读量 42%；且禁止在 ngram 开着的生产配置上做深度选型（分辨率不够）"
+        },
+        {
+          "description": "NP>1 增吞吐",
+          "reason": "Σ聚合恒 ~40 t/s、单流按 1/N 掉（512 专家活跃专家集随并发线性膨胀）——要并行起第二实例或换模型"
+        },
+        {
+          "description": "--split-mode tensor（RCCL）/ row",
+          "reason": "qwen35moe prefill 0.99× 零红利 + decode 0.30× + 冷启动 ×6；row 无 split buffer 死路"
+        },
+        {
+          "description": "-ot 钉 CPU",
+          "reason": "embd/logits→CPU −47% 且峰值不降；单层专家→CPU 峰值 −6.1 GiB 但 −13% ⇒ 只在真 OOM 边缘才值得付这个税"
+        },
+        {
+          "description": "第二档量化再下盘",
+          "reason": "条带盘该池仅剩 ~100 G，撑爆"
+        },
+        {
+          "description": "同名 mmproj 921,704,800 B 那份",
+          "reason": "sha256 与官方不符（差 224 B），已改名 *.local-mismatch-20260909 留证，不要用"
+        },
+        {
+          "description": "09-11 §7 旧表数字（+9.4% / −12% / 'n=1 打平'）",
+          "reason": "解析器 rsplit 事故产物，已作废；'n=1≈n=2'实为 ngram 掩盖假象（去 ngram 后 n=2 快 4.2%）"
+        }
+      ],
+      "what_worked": [
+        {
+          "description": "自导 MTP 草稿头：llama.cpp-mtp-only-export.patch（--mtp 只导草稿层 + keep-names 补多模态真名）从 ornith-ai/Ornith-1.5-397B 三片 17.17 GiB + tokenizer 转出 bf16 16.09 GiB → llama-quantize Q8_0（24 线程 20.6 s）→ 8.56 GiB",
+          "measured_impact": "地板 33.09 → +MTP n2 46.39（+40.2%）；产物判据 qwen35moe / nextn_predict_layers=1 / block_count=61 / 23 张量 / 无 blk.0.attn_norm；09-15 实测头在位、context_length=1048576 与主模型对齐"
+        },
+        {
+          "description": "★favor 入口 _final 薄封装定稿 256k×1 + ROPE=none（基脚本默认 1M×2+YaRN4 仅账本推算）",
+          "measured_impact": "实测最忙 die 55.1/64（余量 8.9）；1M×2 推算 62.2–63.2/64、一次 368k prefill 再 +1.5 GiB ⇒ 卡边且启动未验证"
+        },
+        {
+          "description": "--fit off --load-mode dio 硬编码（红线 5 可用前提，与体积无关）",
+          "measured_impact": "绕开 mmap→SVM 注册死路：中招 8 分钟零进度/~2 MB/s vs 补开关 38 s 到 listening（同机案例）；本臂 dio 起服 ≈3 min"
+        },
+        {
+          "description": "ngram-mod(16/32/24)+draft-mtp(n2) 组合（'免费优先、花钱兜底'）+ USE_MTP/USE_VISION 候选自动探测 + 草稿/主模型 context_length 对齐护栏",
+          "measured_impact": "定稿三形态 geo 45–47；n_min 是丢弃门槛不是长度（框架默认 48=没开）"
+        }
+      ]
+    },
+    {
+      "architectures": [
+        "Qwen3_5MoeForConditionalGeneration"
+      ],
+      "best_args": [
+        "--tp 4",
+        "--max-model-len 262144",
+        "--gpu-memory-utilization 0.85",
+        "--language-model-only",
+        "--enable-auto-tool-choice",
+        "--tool-call-parser qwen3_coder",
+        "--disable-custom-all-reduce",
+        "--max-num-seqs 不设（吃 vLLM 默认，1915 口径）"
+      ],
+      "best_env": {
+        "DEVS": "0,1,2,3",
+        "HIP_VISIBLE_DEVICES": "0,1,2,3",
+        "LD_LIBRARY_PATH": "/opt/rocm-7.2.4/lib",
+        "MI250_GATE_GEMV": "1",
+        "VLLM_ROCM_QUICK_REDUCE_CAST_BF16_TO_FP16": "0",
+        "VLLM_ROCM_QUICK_REDUCE_MIN_SIZE_BYTES_MB": "0",
+        "VLLM_ROCM_QUICK_REDUCE_QUANTIZATION": "FP",
+        "VLLM_ROCM_SPLITKV_PA": "1",
+        "VLLM_ROCM_SPLITKV_PA_MAX_SCRATCH_MIB": "192",
+        "VLLM_ROCM_USE_AITER": "0",
+        "VRAM_FREE_MIN_GIB": "55"
+      },
+      "config_model_type": "qwen3_5_moe",
+      "engine": "vllm",
+      "entry": "launcher/favor/ornith_1.5_35b_a3b_vllm_rocm72_256k_8111_final_ornith_mi250x_tp4.sh",
+      "env_path": "envs/vllm_0.28.0_rocm72",
+      "exclusive_with": [
+        "8107",
+        "8109（8 die 全占）",
+        "8108",
+        "8110",
+        "8112（8 die 全占的 llama.cpp 臂）",
+        "8113（die0+1 ⊂ die0-3）",
+        "8114（默认 die0）",
+        "8203（默认 die0）"
+      ],
+      "framework_version": "0.28.0+rocm723",
+      "gpus": "mi250x_tp4（die0-3 = card1-4 = 模组 M1+M0，全 NUMA0；刻意只吃半机）",
+      "lessons": [
+        {
+          "measured_impact": "@30720 13.1→94.5；@64 1911→1915",
+          "statement": "split-KV 的价值在长上下文单流（×7.22），并发只 +1.4~1.8%；'吞吐冠军 1915'来自并发聚合、splitKV 只贡献 +0.2%——两种叙事不可混用"
+        },
+        {
+          "measured_impact": "sha 漂移事故 09-08 实抓；0.28 树是三条路线的共同母本（单点，先备份）",
+          "statement": "三件套里两件只活在 0.28 树 site-packages 手工补丁（master 树没有 P1，grep=0）：换 env=丢补丁；tools/verify_env_patches.sh（md5 基线）与 port_*.py --check（sha 字节比对）双轨缺一不可"
+        },
+        {
+          "measured_impact": "quick-reduce 收益表（CLAUDE §10）",
+          "statement": "QR 收益随 world size 与拓扑变：TP2 +4.7% / TP4 +12.5~24.9% / TP8 −0.44% 判负；'开关自己的日志'不是判据，端到端 ABAB/trace 才是"
+        }
+      ],
+      "model_dir": "models/ornith-ai/Ornith-1.5-35B-A3B",
+      "model_slug": "ornith-1.5-35b-a3b",
+      "other_metrics": [
+        {
+          "name": "split-KV 单流长上下文",
+          "note": "转正许可证 09-08；同日复测 13.0→94.1（×7.2）；并发只 +1.4/+1.8/+0.2%（@8/@32/@64：481.61→488.30、1277→1300、1911→1915）",
+          "value": "13.1→94.5 tok/s（×7.22）@30720"
+        },
+        {
+          "name": "P1 门控 GEMV",
+          "note": "CLAUDE §10；与 F.linear 逐位相同",
+          "value": "71.2→85.3 tok/s（+19.8%）单流"
+        },
+        {
+          "name": "QuickReduce",
+          "note": "TP4 档实测（CLAUDE §10、8111 头注）",
+          "value": "单流 +12.5% / 并发4 +24.9%"
+        },
+        {
+          "name": "旧口径（不可比）",
+          "note": "350 W 代旧内核+旧 site-packages（se_bench_report_ornith35b_a3b_rocm72_tp4.json），与新行口径断裂",
+          "value": "单流 ~62 / Phase2 365.13 @8"
+        }
+      ],
+      "patches": [
+        "patches/native-env/vllm028-base-p1-qr.patch",
+        "patches/gfx90a/rocm_splitkv_pa.py",
+        "patches/gfx90a/port_splitkv_pa.py（--check 在位判据）",
+        "patches/native-env/NEW-rocm_splitkv_pa.py（gitignore 区外唯一副本）",
+        "recipes: patches/p1-gemv-c2c3-quickreduce.md",
+        "recipes: patches/splitkv-paged-decode.md",
+        "recipes: patches/native-env-drift-baseline.md"
+      ],
+      "pitfalls": [
+        {
+          "description": "HIP_VISIBLE_DEVICES=0,1,2,3 的用法只在'TP4 无 MTP'下安全（低编号子集幂等）；开 MTP 的 8107/8109 是'绝不设'，机制相反、不可互抄；本臂无 unset ROCR 防继承，换高编号 die 前先抄 8101 的 unset",
+          "severity": "crash"
+        },
+        {
+          "description": "QR w≥4 是浮点求和重排（0.231 ULP，非脏数据）⇒ temp=0 逐 token 输出变、09-08 前历史基线全部作废；QR/splitKV 都改求和顺序（设计语义），基线须成对重跑勿跨口径比",
+          "severity": "regress"
+        },
+        {
+          "description": "'高并发没收益甚至更慢'多半是跑了旧内核：源与装树 sha 漂移会'静默退回 Triton'量出假拐点（09-08 实抓）——查 port_splitkv_pa.py --check 的裸 exit 码（别 | tail 吃掉）",
+          "severity": "config"
+        },
+        {
+          "description": "不设 VLLM_ROCM_SPLITKV_PA_MAX_SEQS：唯一真值=内核 DEFAULT_MAX_SEQS=64（本臂 TP4 每 rank 1 个 kv 头 ⇒ 放行 num_seqs≤64）；要更高并发改内核不改脚本",
+          "severity": "config"
+        },
+        {
+          "description": "冷启动：首测 26 t/s 然后变 62 = Triton autotune/JIT 摊入；先 warmup 再测；跨 boot σ≈4.6%",
+          "severity": "config"
+        },
+        {
+          "description": "TP worker 共写一个 stats 文件互相覆盖 ⇒ 计数器倒退；按 .pid<N> 分文件读",
+          "severity": "config"
+        },
+        {
+          "description": "日志 'Using [QUICK_REDUCE,…]' 只证构造不证上场；P1 无日志行，终判 trace；Phase1 15/17→16/17 的 +1 不许读成能力提升（边界数值题对求和顺序敏感）",
+          "severity": "config"
+        },
+        {
+          "description": "_final 不是薄封装（ports.conf/对照表说法与实物不符）：自带护栏/预检/命令行；基脚本 mi250x_tp4_256k.sh 原样保留给 A/B 与 beta 封装（红线 3：beta 只读）",
+          "severity": "config"
+        },
+        {
+          "description": "die0-3 空闲检查 fail-closed（读不到 sysfs 即拒起）；要求每 die ≥55 GiB（=0.85×63.98≈54.4）；强行起必 OOM；停服 kill -TERM -$(cat pid)（setsid 负号=整会话组），禁 pkill -f",
+          "severity": "crash"
+        },
+        {
+          "description": "本臂不 source vllm.arm-local.conf（7 条臂级策略只 8101/8107/8109 在用）：吃 vLLM 默认 VLLM_ENABLE_V1_MULTIPROCESSING=True；conf 一律在参数块之后 source（脚本值优先）",
+          "severity": "config"
+        }
+      ],
+      "port": "8111",
+      "precision": "bf16",
+      "primary_metric": {
+        "date": "2026-09-11",
+        "note": "Phase2 @c=64、512/512 成功、p50 4.29 s ⇒ 每流≈30 t/s、479 t/s/die 全库最高（bench/se_bench_ornith_tp4_splitkvon_c64.json；测量期 09-11 前后、借 8201 端口测、09-15 复核内嵌 url=127.0.0.1:8201；不依赖 splitKV：OFF 臂 1911.33）",
+        "phase": "e2e",
+        "unit": "tok/s",
+        "value": 1915.17
+      },
+      "recipe_id": "8111-ornith-1.5-35b-a3b-bf16-vllm-tp4",
+      "remaining_gaps": [
+        {
+          "description": "1915.17 是借 8201 端口在 09-11 前后测的（bench json 内嵌 url=8201，09-15 复核）；本臂同 boot 同端口复测未留档",
+          "metrics": "1915.17 tok/s @c64"
+        },
+        {
+          "description": "09-08 两臂 A/B 表 cap 未标注，与 560 W 档口径断裂",
+          "metrics": "ON/OFF @64: 1915/1911"
+        },
+        {
+          "description": "MQ 变体候选（cand_splitkv_pa_mq.py）未接线：让 max_query_len>1 的投机模型也能走 split-KV",
+          "metrics": "—"
+        }
+      ],
+      "sources": [
+        "models/ornith-ai/launcher/ornith_1.5_35b_a3b_vllm_rocm72_256k_8111_final_ornith_mi250x_tp4.sh（头注释 L1-42）",
+        "models/ornith-ai/launcher/ornith_1.5_35b_a3b_vllm_rocm72_mi250x_tp4_256k.sh（实体基脚本）",
+        "docs/research-notes/splitkv-{落地端到端,拐点与税收,转正许可证}-2026-09-0{7,8}.md",
+        "CLAUDE.md §9/§10；config/ports.conf PORT_BASE_ORNITH_1_5_35B_A3B 块",
+        "bench/se_bench_ornith_tp4_splitkvon_c64.json（09-15 复核：内嵌 url=127.0.0.1:8201）"
+      ],
+      "stack_fingerprint": {
+        "aiter_commit": "",
+        "rocm_version": "7.2.4",
+        "vllm_version": "0.28.0+rocm723"
+      },
+      "status": "active",
+      "tp": 4,
+      "verified": "2026-09-15",
+      "what_failed": [
+        {
+          "description": "AITER（含 fused MoE / VLLM_ROCM_USE_AITER=1）",
+          "reason": "gfx90a 终案不可用：arch 门（get_cdna_version>2）、预编 .so 无 gfx90a 码对象、JIT 后 CK 静默算错（bf16 无全局 AtomicAdd）；TRITON fused MoE 即最优；脚本头 09-03 那次'启用 AITER 全家桶'已被推翻"
+        },
+        {
+          "description": "vLLM CUSTOM allreduce / one-shot IPC / NCCL_SYMM_MEM / 分层 allreduce",
+          "reason": "分别：静默 !!!（--disable-custom-all-reduce 已钉，真护栏是平台门）/ 全败 / 更慢 / 必输 flat8 2.0~2.5×（数学下限）——想吃同模组红利=多副本而非分层"
+        },
+        {
+          "description": "moe-tuned 种子表",
+          "reason": "−3~−4%（8107 同底座数据；本臂 E=256 未单独实测，要接先自测）"
+        },
+        {
+          "description": "--quantization awq 手打",
+          "reason": "cyankiwi int4 是 pack-quantized（qweight 数=0）；W4A16 在 gfx90a 有内核无加速"
+        },
+        {
+          "description": "把 8114 的 VLLM_ROCM_USE_AITER=1 抄到本臂",
+          "reason": "那是 wu1w-int8-028 专属 venv 的 a8w8 通路豁免；0.28 共享树开它只剩 RMSNorm 风险"
+        }
+      ],
+      "what_worked": [
+        {
+          "description": "三件套唯一同时全开的臂：P1 门控 GEMV（hipBLASLt 66.5 µs 慢核×40 层 → Triton GEMV 5.5 µs）+ QuickReduce C2/C3 架构门（FP/0/0 三 env，MIN_SIZE_BYTES_MB=0 让 4–10 KB 的 decode allreduce 上场）+ split-KV paged-decode（09-07 转正）",
+          "measured_impact": "P1 +19.8%、QR +12.5%/+24.9%、splitKV ×7.22@30720 ⇒ 479 t/s/die 本机吞吐冠军"
+        },
+        {
+          "description": "split-KV 形状门（纯 decode ∧ bf16 ∧ hd256 ∧ 非2幂 block ∧ num_seqs×kv_heads≤64）+ MAX_SCRATCH_MIB=192（内核默认 32 MiB/key 在 256k 下 seqs=16..64 七档全被打回 Triton，最小一次只超 524,288 B=1.6%）",
+          "measured_impact": "192=实测峰值 130 MiB+48% 余量；scratch 不吃 KV 池（总基座 MAX_TOTAL_MIB=192 不变）；回退一行 =32"
+        },
+        {
+          "description": "TP4 半机（die0-3 同 NUMA0，另半留给别的模型，刻意不做 2×TP4）+ GPU_MEM_UTIL 0.85 与 1915 同口径 + 不设 --max-num-seqs",
+          "measured_impact": "67 G 权重 ÷4≈16.8 G/die，余量全给 KV；跨模组加 die 会掺 SYS 腿"
+        },
+        {
+          "description": "正确性裁判独立于日志：bench/pa256_golden.py（float32 独立手算）+ Kineto trace/ABAB 终判 QR/P1；split-KV 上场看 INFO 行 'MI250X split-KV paged-decode 已接管'",
+          "measured_impact": "81 格全过；起服即有接管行（关臂=0 行）"
+        }
+      ]
+    },
+    {
+      "architectures": [],
+      "best_args": [
+        "-m models/vcruz305/DeepSeek-V4.1-Flash-GGUF/DeepSeek-V4.1-Flash-Q4_K_M-00001-of-00011.gguf",
+        "--split-mode layer",
+        "--tensor-split 1,1,1,1,1,1,1,1",
+        "--n-gpu-layers 99",
+        "--fit off",
+        "--load-mode dio",
+        "-c 262144",
+        "-np 1",
+        "-b 2048",
+        "-ub 128",
+        "-t 24",
+        "-tb 24",
+        "-fa on",
+        "--alias deepseek-v4.1-flash --host 0.0.0.0 --port 8112",
+        "--jinja",
+        "--chat-template-kwargs {\"reasoning_effort\": 75}",
+        "--reasoning on",
+        "--chat-template-file models/vcruz305/launcher/templates/dsv41_chat_template.jinja"
+      ],
+      "best_env": {
+        "CTX_SLOT": "262144",
+        "FA": "on",
+        "GGML_CUDA_P2P": "1",
+        "NGL": "99",
+        "NP": "1",
+        "OMP_NUM_THREADS": "24",
+        "OMP_WAIT_POLICY": "PASSIVE",
+        "RATIO_KV": "1",
+        "REASONING": "on",
+        "REASONING_EFFORT": "75",
+        "SPLIT_MODE": "layer"
+      },
+      "config_model_type": "",
+      "engine": "llamacpp",
+      "entry": "launcher/favor/deepseek-v4.1-flash_748b_q4km_llamacpp_rocm72_256k_8112_vcruz305_mi250dx8.sh",
+      "env_path": "envs/llama.cpp_dsv41-gfx90a-2026.9.12",
+      "exclusive_with": [
+        "8112-vllm-fp8fp4 第二臂（同端口，fail-closed 判死、工作区已删）",
+        "8103",
+        "8107",
+        "8108",
+        "8109",
+        "8110",
+        "8111",
+        "8301",
+        "8302（8 die 全占 ⇒ ports.conf L86 原文声明互斥）"
+      ],
+      "framework_version": "0.4.0-dev (build 1, commit f37da57)",
+      "gpus": "mi250dx8（DEVS=0..7，跨 NUMA0+1，不做 numa bind；--split-mode layer，非 TP）",
+      "lessons": [
+        {
+          "measured_impact": "1M/ub256 OOM 68926 MiB vs 1M/ub32 起得来但 prefill −56%",
+          "statement": "上下文档位的真墙是计算图缓冲（∝ CTX×UBATCH），不是 KV 显存也不是注意力实现——FA 救不了候选掩码"
+        },
+        {
+          "measured_impact": "TP-RCCL 实测：prefill 红利只有 deepseek4 吃得到",
+          "statement": "arch 支持 ≠ 收益：deepseek41 不在 tensor 黑名单，但本机 decode 0.30× 实测判负 + 前缀未链 RCCL——判'能不能'要同时过 arch 门、构建链、收益三关"
+        },
+        {
+          "measured_impact": "09-14 泄露修复全链",
+          "statement": "C++ 补丁的验收必须两侧：树侧 --check + 运行侧行为探针（6/6），'在树里'不是自动保证；mtime 保持会让 make 判新不重编"
+        }
+      ],
+      "model_dir": "models/vcruz305/DeepSeek-V4.1-Flash-GGUF",
+      "model_slug": "deepseek-v4.1-flash-gguf",
+      "other_metrics": [
+        {
+          "name": "16k 对齐档（回滚位）",
+          "note": "2026-09-12 准入调研 §9：加载 138 s；驻留 313.9 GiB；峰值/die 52092…36826 MiB（die0 偏重 11–15 GiB）；bench/dsv41_shapes_8112_run{1,2,3}.json 在仓",
+          "value": "decode geo 29.9 / pp576 303 tok/s"
+        },
+        {
+          "name": "NP=2 判据",
+          "note": "0.85×，09-12 同 boot ⇒ NP=1 定档（MoE decode 带宽受限串行退化；条数由吞吐账否掉，不由显存账）",
+          "value": "聚合 25.3（12.65+12.68）< 单流 29.9"
+        },
+        {
+          "name": "1M/ub32 试跑档",
+          "note": "09-13 ⇒ 用户拍板回落 256k 定稿；1M/ub256 申请 68926 MiB 当场 cudaMalloc OOM（failed to allocate compute pp buffers）",
+          "value": "prefill 102 tok/s（定稿档的 1/3）；die0 驻留 60862/65520 MiB"
+        },
+        {
+          "name": "工具调用验收（补丁+模板后）",
+          "note": "2026-09-14，流式分片正常（泄露修复 §3）",
+          "value": "6/6 探针 + SE-Bench T16 工具DSML PASS"
+        }
+      ],
+      "patches": [
+        "patches/llama.cpp-dsv41/port_v41_dsml_tags.py（三件：V41DSML/GENPROMPT-OPTIONAL/TRAILING-SPACE，需重编+重装前缀）",
+        "recipes: patches/llamacpp-dsv41-dsml-tags.md"
+      ],
+      "pitfalls": [
+        {
+          "description": ">16384 是'试跑区'不是'调大旋钮'：该构建未实现两档 candidate mask（deepseek41.cpp:32 注释原文）⇒ 候选集与参考不一致、质量无保证；真墙=计算图缓冲 ∝ CTX×UBATCH；回滚位 CTX_SLOT=16384（唯一实现对齐档）；ub<8 脚本拒启",
+          "severity": "crash"
+        },
+        {
+          "description": "此 arch 不支持任何 --spec-type（MTP/ngram 都不加，白烧）",
+          "severity": "config"
+        },
+        {
+          "description": "补丁打完必须 touch 生效：patchkit 保 mtime 会骗过 make ⇒'重编空转'（施工坑 1，已焊进脚本）；且 --apply 后必须 cmake --build + cmake --install 两步才进前缀",
+          "severity": "config"
+        },
+        {
+          "description": "'补丁自动在树'不成立：launcher 只把补丁写进注释、不会自动 --apply/--check（无 --require 准入门）⇒ 前缀被重建/回退后无人被告知，症状='工具调用悄悄漏成文本'；验收只能人工：--check 绿 + test/dsv41/probe_tools_8112.py 6/6",
+          "severity": "config"
+        },
+        {
+          "description": "--jinja 默认是关、必须显式加（脚本早期注释断言'默认 enabled'已被实测证伪）；且 --chat-template-file 必须给（GGUF 内嵌是 V4 老模板，DSML 无前导空格 ⇒ 不换 tools 必退化成纯文本；模板缺失时脚本只警告不拒启 ⇒ 盯启动行）",
+          "severity": "config"
+        },
+        {
+          "description": "预检别照搬 8103 模板把 414 G 全摊显存：必须扣 engram 103 GiB 且逐 die 算；预检恒失败时别调门槛数字糊过去，先腾卡或降档",
+          "severity": "config"
+        },
+        {
+          "description": "受限沙箱会静默 CPU-only 空烧 414 G：起服 30 s 后 grep -c 'failed to initialize ROCm' 必须 0 且 VRAM 在涨（脚本内置 sleep 3 拦杀）",
+          "severity": "crash"
+        },
+        {
+          "description": "方法论：首测档会低 ~30%（JIT 摊入），先 warmup 再测；重复同内容测 pp 会被 prefix cache 骗；同 boot 才可比、跨 boot 漂 ±15%",
+          "severity": "config"
+        },
+        {
+          "description": "temp=0 逐 token 输出跨 FA 档不保证逐字相同 ⇒ 别拿 md5 判对错；恒告警 resolve_fused_ops: fused HC pre→ROCm0 无害（die0 权重偏重的贡献项）",
+          "severity": "config"
+        },
+        {
+          "description": "禁把 SKIP_CHAT_PARSING=1 当默认（09-12 权宜，开了工具永不解析）；本 GGUF 模板 thinking 默认 false（与 8103 相反），--reasoning on 给模板灌 enable_thinking=true ⇒ CoT 进 reasoning_content；off 档模型仍先吐 CoT 但无标签可依、max_tokens 要为思考留量",
+          "severity": "config"
+        }
+      ],
+      "port": "8112",
+      "precision": "q4_k_m",
+      "primary_metric": {
+        "date": "2026-09-13",
+        "note": "256k/ub128 定稿档、同 boot、temp0 三形态 decode geo（相对 16k 档 −12.5%）；同 boot prefill 230 tok/s；16k 对齐档 geo 29.9 另列；跨 boot 漂 ±15%",
+        "phase": "decode",
+        "unit": "tok/s",
+        "value": 26.17
+      },
+      "recipe_id": "8112-deepseek-v4.1-flash-748b-q4km-llamacpp",
+      "remaining_gaps": [
+        {
+          "description": "1M 档要等上游实现两档 candidate mask（>16384 质量语义无保证）",
+          "metrics": "1M/ub32 可跑但 prefill 102 vs 230、die0 只剩 4.5 GiB"
+        },
+        {
+          "description": "vLLM 路线复评三触发条件（T1/T2/T3，调研 §10.4）未命中",
+          "metrics": "—"
+        },
+        {
+          "description": "RUNPATH 第 4 格死格（ai/rocm724→envs/rocm724 归位遗留，只靠第 3 格）；脚本 L110-113'原版权重落 kioxia+仓库软链'过时：kioxia 现为空盘，475 G 原版实体在 /mnt/stripe-3mix-3t2/models/deepseek-ai/",
+          "metrics": "属并发会话路线，只报告不擅自动"
+        },
+        {
+          "description": "起服/驻留常数换档后须 VERBOSE=1 回校 sched_reserve 与 DSV4 CSA size 两行并回填",
+          "metrics": "±5% 拟合"
+        }
+      ],
+      "sources": [
+        "models/vcruz305/launcher/deepseek-v4.1-flash_748b_q4km_llamacpp_rocm72_256k_8112_vcruz305_mi250dx8.sh（实体脚本，403 行）",
+        "docs/DeepSeek-V4.1-Flash-gfx90a-准入调研-2026-09-12.md §0/§1.1/§4/§9/§10",
+        "docs/DSV4.1-工具调用泄露-根因与修复-2026-09-14.md §1/§2/§3（配方 patch/llamacpp-dsv41-dsml-tags）",
+        "docs/上下文口径-单条会话最低256k-2026-09-13.md §5.2",
+        "docs/MI250X-llama.cpp-TP-RCCL-本机实测-2026-09-12.md（tensor 判负）",
+        "CLAUDE.md §10 首条、红线 5",
+        "config/ports.conf（PORT_BASE_DEEPSEEK_V4_1：两条实体脚本互斥声明）",
+        "docs/模型-脚本-环境对照表-2026-09-12.md 表 A 行 1"
+      ],
+      "stack_fingerprint": {
+        "aiter_commit": "",
+        "rocm_version": "7.2.4",
+        "vllm_version": ""
+      },
+      "status": "active",
+      "tp": 0,
+      "verified": "2026-09-14",
+      "what_failed": [
+        {
+          "description": "--split-mode tensor + RCCL 生产化",
+          "reason": "decode 0.30×、就绪 1′13″→7′05″，且本前缀未链 RCCL（ldd libggml-hip.so grep rccl 空 ⇒ tensor 路无码）"
+        },
+        {
+          "description": "-fa on 当长上下文前提",
+          "reason": "09-13 实测推翻：FA 生效后 1M/ub256 照样 68.9 GiB OOM——那块缓冲是 DSA 候选掩码（进图在注意力算子之前），不是注意力分数"
+        },
+        {
+          "description": "-ot 钉 CPU 调平",
+          "reason": "embd/logits→CPU −47% 且峰值不降；单层专家→CPU 峰值 −6.1 GiB 但 −13% ⇒ 无赢家，只留旋钮"
+        },
+        {
+          "description": "NP>1",
+          "reason": "聚合 25.3 < 29.9（09-12 实测）"
+        },
+        {
+          "description": "下原版权重自己量化",
+          "reason": "中间态 1.36–2.72 TiB + 照样缺 5 个 engram 常数键"
+        },
+        {
+          "description": "vLLM 路线（现期）",
+          "reason": "三个 vLLM env 均未注册 arch DeepseekV41ForCausalLM（要跑得新建前缀并重编 _C）⇒ 停线等版本；三条复评触发条件（T1/T2/T3）见调研 §10.4；同端口第二臂（vLLM fp8fp4）fail-closed 且工作区已删（未提交）"
+        },
+        {
+          "description": "export GGML_HIP_RCCL / 发明 LLAMA_SPLIT_MODE env",
+          "reason": "前者是 CMake 编译期开关（export 无运行时效果）、后者根本不存在 ⇒ 自欺（定档依据 6）"
+        }
+      ],
+      "what_worked": [
+        {
+          "description": "dsv41 私有分支前缀 envs/llama.cpp_dsv41-gfx90a-2026.9.12（vcruz305 fork @ runtime/deepseek41，19 文件/2429 行全在 runtime/、ggml 零改动）；全机 RUNPATH 四格全活的样板前缀",
+          "measured_impact": "全机唯一能跑 arch deepseek41（V4.1）的现役底座；上游无此 runtime、PR #28696 仅转换侧未合"
+        },
+        {
+          "description": "port_v41_dsml_tags.py 三件补丁（V41DSML 带空格标签 / GENPROMPT-OPTIONAL / TRAILING-SPACE，改 common/parsers/deepseek.cpp）+ 修好 add_generation_prompt 的 dsv41_chat_template.jinja（tools/dsv41_tpl_check.py 5 组官方金标）",
+          "measured_impact": "chat 从一律 HTTP 500 peg-native / DSML 整段漏进 content ⇒ 09-14 起 6/6 探针 + T16 PASS；补丁与模板缺一即回归症状"
+        },
+        {
+          "description": "CTX×UBATCH 成对阶梯（图缓冲 ∝ CTX×UBATCH：1M/ub32｜768k/ub42｜512k/ub64｜384k/ub85｜256k/ub128｜128k/ub256｜16k/ub256）+ DRY_RUN=1 换档前先算账",
+          "measured_impact": "定稿 256k/ub128 geo 26.17 / prefill 230；跳档（1M/ub256）=当场 OOM 68926 MiB"
+        },
+        {
+          "description": "逐 die 显存预检（W_DIE_MIB 权重表 + BUF_BASE/K_MIB + BUF_SKEW_PCT 偏斜表 + 源 die KV + 4 GiB 余量），常数由 09-13 四点 VERBOSE 实测标定",
+          "measured_impact": "均摊口径必错（die0 偏重 11–15 GiB）；四点 1374/17470/68926/9292 MiB ±5% 拟合"
+        },
+        {
+          "description": "--fit off --load-mode dio 硬编码：engram 103 GiB（shard2/6）lazy 读不进显存，预检必扣",
+          "measured_impact": "真机 dmesg svm_range_restore_work 全程 0 ⇒ dio 与 engram lazy 读实测不冲突"
+        }
+      ]
+    },
+    {
+      "architectures": [
+        "Qwen3_5ForConditionalGeneration"
+      ],
+      "best_args": [
+        "--model models/Qwen/Qwen3.8-27B",
+        "--served-model-name qwen3.8-27b",
+        "--tp 2",
+        "--util 0.92",
+        "--max-model-len 262144",
+        "--max-num-seqs 8",
+        "--max-num-batched-tokens 8192",
+        "--enable-prefix-caching",
+        "--enable-chunked-prefill",
+        "--dtype bfloat16",
+        "--enable-auto-tool-choice",
+        "--tool-call-parser qwen3_coder",
+        "--disable-custom-all-reduce",
+        "--no-use-tqdm-on-load",
+        "--limit-mm-per-prompt {\"image\":0,\"video\":0}"
+      ],
+      "best_env": {
+        "GPU_MEM_UTIL": "0.92",
+        "HIP_VISIBLE_DEVICES": "0,1",
+        "LD_LIBRARY_PATH": "/opt/rocm-7.2.4/lib",
+        "MAX_BATCHED_TOKENS": "8192",
+        "MAX_MODEL_LEN": "262144",
+        "MAX_NUM_SEQS": "8",
+        "MI250_GATE_GEMV": "1",
+        "ROCM724": "/opt/rocm-7.2.4",
+        "VLLM_PYTHON": "${AI_HOME}/envs/vllm_0.28.0_rocm72/bin/python",
+        "VLLM_ROCM_QUICK_REDUCE_CAST_BF16_TO_FP16": "0",
+        "VLLM_ROCM_QUICK_REDUCE_MIN_SIZE_BYTES_MB": "0",
+        "VLLM_ROCM_QUICK_REDUCE_QUANTIZATION": "FP"
+      },
+      "config_model_type": "qwen3_5",
+      "engine": "vllm",
+      "entry": "models/Qwen/launcher/qwen3.8_27b_bf16_vllm_rocm72_mi250x_tp2_256k.sh",
+      "env_path": "envs/vllm_0.28.0_rocm72",
+      "exclusive_with": [
+        "8111（die0-3 覆盖本臂 die0+1）",
+        "8107",
+        "8109",
+        "8108",
+        "8110",
+        "8112（8 die 全占）",
+        "8114（默认 die0）",
+        "8203（默认 die0）"
+      ],
+      "framework_version": "0.28.0+rocm723",
+      "gpus": "mi250x_tp2（die0+1，同模组；HIP 0/1=PCI 31/34=M1——文件名无 _mN 尾段，§3 标签错配是待决项）",
+      "lessons": [
+        {
+          "measured_impact": "8101↔8113 拆分前'起来才发现底座不对'",
+          "statement": "端口与底座必须一一对应：'同端口不同底座'让复现变成碰运气，拆端口（09-12）是方法论修正不是洁癖"
+        },
+        {
+          "measured_impact": "TP2 +4.7%/+2.0% 且输出不变；TP4 基线成对重跑（8111 §7）",
+          "statement": "QR 的世界尺寸纪律：w=2 逐位一致（可安全开）、w≥4 求和重排（旧基线全废）——上 QR 前先认清 TP"
+        },
+        {
+          "measured_impact": "工具DSML HTTP 400 → 补齐后 17/17",
+          "statement": "投机/解析器/旗标决定评测分数形态：缺两个 parser flag=16/17，与性能无关"
+        }
+      ],
+      "model_dir": "models/Qwen/Qwen3.8-27B",
+      "model_slug": "qwen3.8-27b",
+      "other_metrics": [
+        {
+          "name": "TP2 单流稳态",
+          "note": "350 W 代稳态行；冷启动首请求慢（Triton autotune）",
+          "value": "~33 tok/s"
+        },
+        {
+          "name": "TP8 历史基线（同脚本抬 TP=8）",
+          "note": "350 W 代，bench/se_bench_report_qwen38_27b_rocm72_vllm_tp8_350w.json（CLAUDE §9）",
+          "value": "285.97 tok/s（单流 55–56，2.275 req/s，73/73）"
+        },
+        {
+          "name": "QR（稠密 TP2 实测）",
+          "note": "w=2 与 NCCL 逐位一致 ⇒ 本臂开 QR 不破 temp=0 可比（w≥4 才重排求和）",
+          "value": "单流 +4.7% / 并发 +2.0%"
+        },
+        {
+          "name": "P1",
+          "note": "shared_expert_gate 1×1×2048 GEMM 66.5 µs→5.5 µs，与 F.linear 位一致",
+          "value": "+19.8%（Ornith 臂口径；本臂为上游 27B 的验证载体）"
+        },
+        {
+          "name": "SE-Bench Phase1",
+          "note": "须带 --enable-auto-tool-choice --tool-call-parser qwen3_coder（首跑 16/17=工具DSML HTTP 400）；TP2 KV 池 928K tok（350 W 代旧 ctx 档）",
+          "value": "17/17"
+        }
+      ],
+      "patches": [
+        "patches/native-env/vllm028-base-p1-qr.patch（P1+C2/C3，site-packages 手改的唯一可复现副本）",
+        "recipes: patches/p1-gemv-c2c3-quickreduce.md",
+        "recipes: patches/native-env-drift-baseline.md（tools/verify_env_patches.sh md5 基线）",
+        "split-KV K/I/T 代码在树、门默认关（port_splitkv_pa.py --env vllm_0.28.0_rocm72 --check 可验）"
+      ],
+      "pitfalls": [
+        {
+          "description": "本脚本只查端口不查显存：die0/1 被 8111（die0-3）或任一 8-die 臂占着时起服 OOM/加载中途死——起前手查 card{1,2}/device/mem_info_vram_used（bytes ≈1.0e7）",
+          "severity": "crash"
+        },
+        {
+          "description": "本臂 nohup 无 setsid ⇒ 停服用裸 PID（kill -TERM $(cat logs/qwen38-27b-8113.pid)），带负号可能波及调用方进程组；禁 pkill -f",
+          "severity": "crash"
+        },
+        {
+          "description": "去掉 --limit-mm-per-prompt ⇒ 视觉塔 profiling 异步错误拖到第二个 API 调用才爆（hipErrorInvalidKernelFile，'随崩'排查半天）；手敲复现命令漏 --enable-auto-tool-choice/--tool-call-parser ⇒ SE-Bench 工具DSML 400（用脚本别手敲）",
+          "severity": "crash"
+        },
+        {
+          "description": "HIP=0,1 低编号子集幂等所以现状无碍，但脚本没有防继承的 unset ROCR_VISIBLE_DEVICES——要换高编号 die（6,7 类）先抄 8101 的 unset，否则 ROCR 重编号+HIP 二次筛选出空集（'No CUDA GPUs are available'）",
+          "severity": "config"
+        },
+        {
+          "description": "slim torch 缺 LD_LIBRARY_PATH=/opt/rocm-7.2.4/lib = core dump（N13）；AI_HOME 09-12 已修（原写死指向已不存在的 samsung 盘）",
+          "severity": "crash"
+        },
+        {
+          "description": "口径纪律：128k 档旧数（KV 928K 等）勿与 256k 新档混表；350 W 代数字勿冒充 560 W；'Using [QUICK_REDUCE]'只证构造、TP2 输出逐字不变是正确行为（w=2 位一致）；驻留只认 'Model loading took X GiB memory'（N17）",
+          "severity": "config"
+        },
+        {
+          "description": "split-KV 门默认关（本臂不 export VLLM_ROCM_SPLITKV_PA）：代码在树也不上场，grep '已接管' 恒 0 是预期不是故障；要开须按转正许可证流程先重立两臂基线（会破 temp=0 基线）",
+          "severity": "config"
+        }
+      ],
+      "port": "8113",
+      "precision": "bf16",
+      "primary_metric": {
+        "date": "",
+        "note": "Phase2 162.33 tok/s（TP2、P1+QR、SE-Bench 1.303 req/s、41/41、P95 6.35 s），350 W 代（具体日期配方未标，ctx 为 128k/8k 世代）；现 cap=560 W（09-15 实测 /etc/amdgpu-powercap.conf），256k 档+560 W 组合未实测；bench/se_bench_report_qwen38_27b_rocm72_vllm.json",
+        "phase": "e2e",
+        "unit": "tok/s",
+        "value": 162.33
+      },
+      "recipe_id": "8113-qwen38-27b-bf16-vllm-tp2",
+      "remaining_gaps": [
+        {
+          "description": "256k 档 + 560 W 组合未实测（要认领 296.86 那种 560 W 档须同 boot 复测）",
+          "metrics": "现成数全是 350 W 代：162.33（TP2）/ 285.97（TP8）"
+        },
+        {
+          "description": "§3 标签错配待决：文件名无 _mN 尾段但 HIP 0/1=PCI 31/34=M1",
+          "metrics": "—"
+        },
+        {
+          "description": "split-KV 在本臂是'现状默认关'不是结论；TP2 dense 臂转正数据只有 8301 间接口径",
+          "metrics": "8111（TP4）×7.2 与 8301（TP2）已转正"
+        }
+      ],
+      "sources": [
+        "models/Qwen/launcher/qwen3.8_27b_bf16_vllm_rocm72_mi250x_tp2_256k.sh",
+        "config/ports.conf PORT_BASE_QWEN3_8_27B_UPSTREAM 块（迁移理由原文）",
+        "CLAUDE.md §9（TP2 162.33 / TP8 285.97 两行）、§10（P1/QR 数据）",
+        "docs/模型-脚本-环境对照表-2026-09-12.md 表A（52 GiB、改名+抬档记录）"
+      ],
+      "stack_fingerprint": {
+        "aiter_commit": "",
+        "rocm_version": "7.2.4",
+        "vllm_version": "0.28.0+rocm723"
+      },
+      "status": "active",
+      "tp": 2,
+      "verified": "2026-09-15",
+      "what_failed": [
+        {
+          "description": "本臂沿用 8101 端口",
+          "reason": "09-12 判死：同端口不同 env 底座 ⇒ '起来才发现底座不对'；已迁 8113，勿改回"
+        },
+        {
+          "description": "AITER 全家桶",
+          "reason": "RMSNorm 陷阱（platforms/rocm.py:1109-1116 优先级门不查 arch）+ gfx90a 终案（判据 CLAUDE §10/§11）"
+        },
+        {
+          "description": "CUSTOM allreduce / one-shot IPC / NCCL_SYMM_MEM / 分层 allreduce / moe-tuned 种子表 / --quantization awq 手打 / ATOM",
+          "reason": "分别：静默 !!! / 全败 / 更慢 / 必输 flat8 / −3~−4% / 本权重非 AWQ 格式（qweight=0）/ envs/atom_vllm 已回收判死（对照表表D）"
+        },
+        {
+          "description": "FP8/FP4 档与 fp8-KV 存储",
+          "reason": "gfx90a 无硬件 FP8/FP4 路径（§8 命名规则禁用）；fp8-KV 在 0.28.0+rocm723 实测静默回退/崩（施工单 §A），用前必须先验 KV dtype 落位"
+        }
+      ],
+      "what_worked": [
+        {
+          "description": "P1 门控 GEMV + QR 三 env（FP/0/0）作为上游 Qwen3.8-27B 的实测载体：两补丁只手工装在 0.28 树 site-packages（vllm028-base-p1-qr.patch + MANIFEST.md5）",
+          "measured_impact": "QR 稠密 TP2 单流 +4.7%/并发 +2.0%；P1 位一致 ⇒ 关闭无口径风险、开着白赚"
+        },
+        {
+          "description": "09-12 从 8101 迁出独立端口（PORT_BASE_QWEN3_8_27B_UPSTREAM）：消除'同端口不同底座'（8101=master+Fable-Distill vs 8113=0.28+上游权重）",
+          "measured_impact": "两臂 env/权重不可互替；迁移后口径可追责"
+        },
+        {
+          "description": "09-13 改名抬档 256k（…_tp2_128k.sh → …_tp2_256k.sh）：256k = text_config.max_position_embeddings 原生，同尺寸 8301 臂已跑通",
+          "measured_impact": "满足'单条会话≥256k'口径；旧 128k 档数字（KV 928K）隔离不混表"
+        },
+        {
+          "description": "--limit-mm-per-prompt '{\"image\":0,\"video\":0}' 固定 + 不 source vllm.arm-local.conf（吃 vLLM 默认）",
+          "measured_impact": "VL 包装（333 个 visual.* 张量）不做视觉塔 profiling，消除异步 hipErrorInvalidKernelFile"
+        }
+      ]
+    },
+    {
+      "architectures": [
+        "Qwen3_5ForConditionalGeneration"
+      ],
+      "best_args": [
+        "--model models/davetha/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8",
+        "--served-model-name qwen38-27b",
+        "--port 8114",
+        "--tensor-parallel-size 1",
+        "--max-model-len 131072",
+        "--gpu-memory-utilization 0.90",
+        "--compilation-config {\"cudagraph_mode\": \"FULL_DECODE_ONLY\"}",
+        "--speculative-config {\"method\": \"dflash\", \"model\": \"models/z-lab/Qwen3.8-27B-DFlash2\", \"num_speculative_tokens\": 12}",
+        "--quantization compressed-tensors",
+        "--language-model-only",
+        "--safetensors-load-strategy eager",
+        "--mamba-cache-mode align",
+        "--max-num-seqs 8",
+        "--max-num-batched-tokens 8192",
+        "--enable-prefix-caching",
+        "--enable-chunked-prefill",
+        "--trust-remote-code"
+      ],
+      "best_env": {
+        "GPU_PINNED_MIN_XFER_SIZE": "67108864",
+        "HIP_FORCE_DEV_KERNARG": "1",
+        "HIP_VISIBLE_DEVICES": "0",
+        "HSA_NO_SCRATCH_RECLAIM": "1",
+        "LD_LIBRARY_PATH": "/opt/rocm-7.2.4/lib",
+        "PYTORCH_CUDA_ALLOC_CONF": "expandable_segments:True",
+        "VLLM_CACHE_ROOT": "${AI_HOME}/cache/vllm-pr41",
+        "VLLM_ROCM_USE_AITER": "1",
+        "VLLM_ROCM_USE_AITER_LINEAR": "1"
+      },
+      "config_model_type": "qwen3_5",
+      "engine": "vllm",
+      "entry": "models/davetha/launcher/qwen3.8_27b_int8_abliterated_vllm_rocm72_128k_8114_dflash12_davetha_mi250x_0.sh",
+      "env_path": "envs/wu1w-int8-028",
+      "exclusive_with": [],
+      "framework_version": "0.28.0+rocm723",
+      "gpus": "mi250x_0（单 die TP=1，默认 die0，可 HIP_VISIBLE_DEVICES=<n> 换任意空闲 die）",
+      "lessons": [
+        {
+          "measured_impact": "acc/draft≈2.53、pos0 75.6%",
+          "statement": "旧注翻案：'DFlash2 在 W8A8 上接受率 0'（施工单 §C 硬规则）已被本臂实测推翻——引用该旧注前先看 PR41 §8.1"
+        },
+        {
+          "measured_impact": "09-14 曾据此误判'本机跑不到配方数'（44~60 t/s 假象）",
+          "statement": "tok/s = tokens/step × steps/s 两因子独立，tokens/step 是文风函数；报数必须自然散文 + 同报 ms/step"
+        },
+        {
+          "measured_impact": "三条验收 grep 全绿才算起成",
+          "statement": "'日志构造行不算上场证据'：投机上场判据 = /metrics num_draft_tokens/num_drafts=12.0；kernel 上场判据 = Selected AiterInt8…"
+        },
+        {
+          "measured_impact": "TP1 一比一，99.6%",
+          "statement": "复现同构硬件时先核逐字同构项（gfx90a/104CU/64GiB vs MI210）再下 TP 结论；配方 §2 的 render node 掉 2.4× 告警本机 8/8 全 0x740c，属其原话 Skip 情形"
+        }
+      ],
+      "model_dir": "models/davetha/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8",
+      "model_slug": "qwen3.8-27b-abliterated-w8a8-gdnint8",
+      "other_metrics": [
+        {
+          "name": "tokens/step",
+          "note": "2026-09-14 同 boot；tokens/step 是文风函数，退化重复文本会打到 <2",
+          "value": "3.531"
+        },
+        {
+          "name": "ms/step",
+          "note": "2026-09-14；报数必须与 tok/s 同报",
+          "value": "43.97"
+        },
+        {
+          "name": "8路并发聚合",
+          "note": "2026-09-14；同时单流中位 28.5",
+          "value": "173.4 tok/s"
+        },
+        {
+          "name": "prefill",
+          "note": "2026-09-14 复现文档 §5",
+          "value": "1620 tok/s @2.6k / 1578 tok/s @9.2k"
+        },
+        {
+          "name": "KV 池",
+          "note": "配方 ~375k，差 46%；复现文档 §7 待办 B：--mamba-cache-mode align 首要嫌疑 + block 848 + 25% padding waste",
+          "value": "171,749 tok"
+        },
+        {
+          "name": "投机接受",
+          "note": "2026-09-14 实测；pos11 1.8%（spec-depth 旋钮配方）；推翻旧注'DFlash2 在 W8A8 上接受率 0'",
+          "value": "acc/draft≈2.53、pos0 75.6%、num_draft_tokens/num_drafts=12.0"
+        },
+        {
+          "name": "CK INT8 vs Triton INT8（wu1w A/B，另一权重）",
+          "note": "2026-09-10 施工单 §G.2/G.3，Freaksterz W8A8 ckpt，引用勿混本臂 80.3",
+          "value": "16.34 → 22.71 tok/s（+39%）"
+        },
+        {
+          "name": "权重体积",
+          "note": "davetha ckpt + z-lab/Qwen3.8-27B-DFlash2（与 HF 逐字节同）",
+          "value": "29.99 GB + 草稿 3.85 GB"
+        }
+      ],
+      "patches": [
+        "patches/native-env/wu1w-int8-on-top-of-base.patch",
+        "patches/wu1w/fused_gdn_hip.hip",
+        "patches/native-env/vllm028-base-p1-qr.patch",
+        "src/vllm-mi210/scripts/apply_gfx90a.py（幂等打补丁器/起服前置闸）",
+        "配方: patches/wu1w-int8-aiter"
+      ],
+      "pitfalls": [
+        {
+          "description": "起服前必须先过闸 envs/wu1w-int8-028/bin/python src/vllm-mi210/scripts/apply_gfx90a.py --check，任何一条非 ok/skip 就别起；升级 vLLM 后补丁必须重打",
+          "severity": "crash"
+        },
+        {
+          "description": "验收 grep：Selected AiterInt8ScaledMMLinearKernel 必须是 Aiter 系，见 TritonInt8ScaledMMLinearKernel 立即停（a8w8 JIT 件丢了/闸门被升级冲掉）",
+          "severity": "regress"
+        },
+        {
+          "description": "日志写着 AITER 实际仍跑 Triton：沿用别的臂的 torch_compile_cache 所致；脚本已钉 VLLM_CACHE_ROOT=cache/vllm-pr41，改过补丁后清缓存重测",
+          "severity": "config"
+        },
+        {
+          "description": "去掉 --safetensors-load-strategy eager（或 WU1W_EXTRAS=0 后 ckpt 走 mmap）⇒ 加载在 shards 0/2 静默死亡，无 traceback/OOM 记录",
+          "severity": "crash"
+        },
+        {
+          "description": "红线 LD_LIBRARY_PATH=/opt/rocm-7.2.4/lib（N13）；slim torch 缺它直接 core dump",
+          "severity": "crash"
+        },
+        {
+          "description": "测量陷阱：用 ignore_eos 硬凑长输出 → 退化重复 → tokens/step 崩到 <2，读数 44~60 t/s 且 ms/step 恒 44——不是机器慢（09-14 亲身误判）；必须自然散文 + 同报 ms/step",
+          "severity": "config"
+        },
+        {
+          "description": "cp -a 出来的 env bin/ 下 71 个脚本 shebang 曾指向母本 env：bin/vllm serve 静默加载未打 wu1w 补丁的 vLLM、bin/pip install 污染现役主力 env；09-12 已修（tools/fix_venv_prefix.sh）",
+          "severity": "config"
+        },
+        {
+          "description": "not found tuned config in a8w8_tuned_gemm.csv, will use default config! = 正确行为不是警告（配方原话，本机逐字复现）",
+          "severity": "config"
+        },
+        {
+          "description": "起服 7–9 min 属正常（torch.compile+捕获），非挂死；就绪判驻留行 Model loading took X GiB，别信加载中 sysfs",
+          "severity": "config"
+        },
+        {
+          "description": "端口 8114 另起原因：底座不同（envs/wu1w-int8-028 ≠ envs/vllm_0.28.0_rocm72），'同端口不同底座'是 09-12 事故的同类规避",
+          "severity": "config"
+        }
+      ],
+      "port": "8114",
+      "precision": "int8_w8a8",
+      "primary_metric": {
+        "date": "2026-09-14",
+        "note": "单流 decode；die0@560W、TP1、tokens/wall 口径、自然散文 prompt；配方（davetha PR#41, MI210）80.6 tok/s ⇒ 复现到 99.6%；80.3 是 dflash 投机 N=12 + CK INT8 一起的复合结果，非纯量化提速",
+        "phase": "decode",
+        "unit": "tok/s",
+        "value": 80.3
+      },
+      "recipe_id": "8114-qwen38-27b-int8-w8a8-vllm-tp1-dflash12",
+      "remaining_gaps": [
+        {
+          "description": "KV 池 171,749 tok vs 配方 ~375k（差 46%）：复现文档 §7 待办 B——--mamba-cache-mode align 首要嫌疑 + block_size=848 + 25% padding waste",
+          "metrics": "171,749 vs ~375,000 tok"
+        },
+        {
+          "description": "256k 档未实测且偏离 PR#41 复现口径（本臂钉 128k，是 09-13 口径下第二个非 256k 臂，矛盾已登记交付报告）",
+          "metrics": "MAX_MODEL_LEN=131072"
+        },
+        {
+          "description": "到不了 wu1w 的 54.3 t/s（本臂 A/B 只到 22.71，归因构建差异）",
+          "metrics": "16.34→22.71 vs 54.3"
+        },
+        {
+          "description": "fused_gdn_hip HIP 核未链进 env——数值对但非瓶颈，ms/step 已持平配方，属待收尾巴",
+          "metrics": "ms/step 43.97 ≈ 配方"
+        }
+      ],
+      "sources": [
+        "models/davetha/launcher/qwen3.8_27b_int8_abliterated_vllm_rocm72_128k_8114_dflash12_davetha_mi250x_0.sh（头注释全量）",
+        "docs/MI250X-PR41-Qwen38-27B-INT8-dflash-本机复现-2026-09-14.md（全记录）",
+        "docs/davetha-wu1w-gfx90a-落地施工单-2026-09-10.md §C/§G",
+        "config/ports.conf PORT_BASE_QWEN3_8_27B_INT8 块（为何另起 8114）",
+        "src/mi210-vllm/docs/RECIPE-QWEN38-27B-INT8.md（上游配方本体）"
+      ],
+      "stack_fingerprint": {
+        "aiter_commit": "",
+        "rocm_version": "7.2.4",
+        "vllm_version": "0.28.0+rocm723"
+      },
+      "status": "active",
+      "tp": 1,
+      "verified": "2026-09-15",
+      "what_failed": [
+        {
+          "description": "把本臂当'量化提速'的通用路线",
+          "reason": "80.3 t/s 是 dflash 投机 + CK INT8 复合结果，且只覆盖 W8A8(a8w8) 通路，W8A16 用不上"
+        },
+        {
+          "description": "W8A16 / int4 '有内核无加速'",
+          "reason": "W8A16-MTP 权重已删；cyankiwi AWQ-INT4 单流 12.1/7.4 t/s = HBM 上限 11%/13%；conch WNA16 Triton 路径 tile 调优旋钮实测无效；绝不能手打 --quantization awq（pack-quantized，qweight=0）"
+        },
+        {
+          "description": "VLLM_ROCM_USE_AITER=1 出圈（用到别的 env/别的臂）",
+          "reason": "主链 MoE/RMSNorm/CUSTOM_AR 在 gfx90a 三层卡点终案不可用（预编 .so 无 gfx90a 码对象、JIT 后 CK 静默算错=bf16 无全局 AtomicAdd；RMSNorm 优先级门不查 arch）；本臂仅是 a8w8 线性层的定向豁免"
+        },
+        {
+          "description": "换 fork 镜像追接受率",
+          "reason": "dflash 全链路与官方 0.28 逐字节相同（PR41 §6）⇒ 不改变任何数"
+        },
+        {
+          "description": "fp8 计算 / FP4 档",
+          "reason": "CDNA2 硬件没有 FP8/FP4 矩阵单元；fp8-KV 在 0.28.0+rocm723 静默回退/崩"
+        },
+        {
+          "description": "fused_gdn_hip.hip HIP GDN decode 核",
+          "reason": "未链进本 env（日志 Falling back to the Triton GDN decode path）；wu1w 实测其'数值对但非瓶颈'⇒ 待收尾巴非缺口"
+        }
+      ],
+      "what_worked": [
+        {
+          "description": "wu1w gfx90a AITER CK INT8 闸门（apply_gfx90a.py 幂等改 site-packages，全机唯一让 gemm_a8w8 在 gfx90a JIT 出码对象的路径）",
+          "measured_impact": "线性层实测 2.9× Triton INT8（环境配方）；wu1w A/B +39%（16.34→22.71，2026-09-10，另一权重）"
+        },
+        {
+          "description": "DFlash2 投机 N=12 配 FULL_DECODE_ONLY cudagraph（N=16 接受更多但草稿成本涨得更快，脚本 L72 定 12）",
+          "measured_impact": "单流 80.30 tok/s = 配方 80.6 的 99.6%；tokens/step 3.531；/metrics num_draft_tokens/num_drafts=12.0 证真上场"
+        },
+        {
+          "description": "单 die TP1（MI210=gfx90a/104CU/64GiB 与本机 die 三项逐字同构 ⇒ 一比一复现，不需要跨 die）",
+          "measured_impact": "复现 99.6%；TP2 反而引入 allreduce"
+        },
+        {
+          "description": "--safetensors-load-strategy eager（本机必需非优化）",
+          "measured_impact": "去掉后在 Loading safetensors checkpoint shards 0/2 静默死亡（无 traceback/OOM 记录，09-14 A/B 坐实）"
+        },
+        {
+          "description": "独立 VLLM_CACHE_ROOT=cache/vllm-pr41",
+          "measured_impact": "防别的臂的 stale torch_compile_cache 把 AITER 图顶掉（日志写 AITER 实际跑 Triton 的经典假象）"
+        }
+      ]
+    },
+    {
+      "architectures": [
+        "Qwen2ForCausalLM"
+      ],
+      "best_args": [
+        "--model models/Qwen/Qwen2.5-1.5B-Instruct",
+        "--served-model-name qwen2.5-1.5b",
+        "--port 8203",
+        "--tensor-parallel-size 1",
+        "--max-model-len 32768",
+        "--gpu-memory-utilization 0.40",
+        "--trust-remote-code",
+        "--no-enable-log-requests"
+      ],
+      "best_env": {
+        "HF_HUB_OFFLINE": "1",
+        "LD_LIBRARY_PATH": "/opt/rocm-7.2.4/lib",
+        "TRANSFORMERS_OFFLINE": "1",
+        "VLLM_ROCM_QUICK_REDUCE_CAST_BF16_TO_FP16": "0",
+        "VLLM_ROCM_QUICK_REDUCE_MIN_SIZE_BYTES_MB": "0",
+        "VLLM_ROCM_QUICK_REDUCE_QUANTIZATION": "NONE"
+      },
+      "config_model_type": "qwen2",
+      "engine": "vllm",
+      "entry": "models/Qwen/launcher/qwen2.5-1.5b_bf16_vllm_rocm72_32k_8203_Qwen_mi250x_0.sh",
+      "env_path": "envs/vllm_0.28.0_rocm72",
+      "exclusive_with": [
+        "8113-qwen38-27b-bf16-vllm-tp2",
+        "8111-ornith-1.5-35b-a3b-bf16-vllm-tp4",
+        "8114-qwen38-27b-int8-w8a8-vllm-tp1-dflash12",
+        "8107",
+        "8108",
+        "8109",
+        "8110",
+        "8112"
+      ],
+      "framework_version": "0.28.0+rocm723",
+      "gpus": "mi250x_0（TP1；脚本不设可见性变量，vLLM 取 device 0）",
+      "lessons": [
+        {
+          "measured_impact": "对照侧已给出形状：2.159→0.021 µs/ctx-token（8111 split-KV）",
+          "statement": "验证 attention 路径之差必须两端用上下文斜率折 GB/s 比，不能比 t/s——层数/尺寸/专家结构都不同"
+        },
+        {
+          "measured_impact": "—",
+          "statement": "'孤立微基准会骗人'：引用 596/12.3 GB/s 时注意其口径=隔离微基准，端到端以斜率实测为准（CLAUDE §9 测速方法论）"
+        },
+        {
+          "measured_impact": "—",
+          "statement": "无 traceback 的 SIGSEGV 先查 ROCm 库路径（N13 家族），再怀疑被测对象——本坑曾被误判成 QuickAllReduce 坏了"
+        }
+      ],
+      "model_dir": "models/Qwen/Qwen2.5-1.5B-Instruct",
+      "model_slug": "qwen2.5-1.5b-instruct",
+      "other_metrics": [
+        {
+          "name": "custom PA 隔离微基准（hd=128）",
+          "note": "出处口径=隔离微基准，端到端以斜率实测为准；'孤立微基准会骗人'（CLAUDE §9）",
+          "value": "~596 GB/s"
+        },
+        {
+          "name": "Triton 参考实现（hd=256）隔离微基准",
+          "note": "同上；验证必须两端用上下文斜率折 GB/s 比，不能比 t/s",
+          "value": "~12.3 GB/s（慢 39–48×）"
+        },
+        {
+          "name": "对照侧 8111（Ornith hd256）",
+          "note": "Triton → split-KV 后；docs/research-notes/splitkv-落地端到端-2026-09-07.md（2026-09-07）",
+          "value": "2.159 → 0.021 µs/ctx-token"
+        },
+        {
+          "name": "每 token KV",
+          "note": "= 28 层×2×2 kv头×128×2B；attn_share.py --kv-per-token 用，形状自检会重算",
+          "value": "28672 B"
+        },
+        {
+          "name": "权重体积",
+          "note": "对照表 2026-09-12 表A；ModelScope 拉取（本地 11 个可服务模型 0 个合格才下载的它）",
+          "value": "3 GiB"
+        }
+      ],
+      "patches": [],
+      "pitfalls": [
+        {
+          "description": "端口号登记冲突：ports.conf PORT_BENCH_DEEPSEEK_V4=8203 是 deepseek-v4 底座的评测并行端口，本臂拿它当了常驻冒烟位；当前 DSV4 评测臂无实体（表B 判死）所以无实害，但谁复活 DSV4 bench 就会撞（已录交付报告矛盾清单）",
+          "severity": "config"
+        },
+        {
+          "description": "缺 LD_LIBRARY_PATH=/opt/rocm-7.2.4/lib ⇒ RCCL 加载错版本库，症状=普通 dist.all_reduce 直接 SIGSEGV 无 traceback（曾被误判成'QuickAllReduce 在 gfx90a 坏了'）；用脚本起，别裸敲 python（N13）",
+          "severity": "crash"
+        },
+        {
+          "description": "换错模型进来（MODEL_PATH 覆盖过）⇒ 形状自检 ❌ head_dim 不在 (64,128) exit 2：探针身份只对 Qwen2.5-1.5B 成立",
+          "severity": "config"
+        },
+        {
+          "description": "斜率异常地平（接近 0.06 µs 以下）= 内容走了缓存/退化路径；换 attn_share 自带盐的 prompt 档",
+          "severity": "config"
+        },
+        {
+          "description": "确证走没走 custom PA 看 trace kernel 名（paged_attention 家族 vs kernel_paged_attention_2d）——日志构造行不算上场证据",
+          "severity": "config"
+        },
+        {
+          "description": "TP1 用不到 RCCL 但三条 ROCm 运行时路径仍保持一致（脚本 L38-44 实测教训）；就绪签名 Application startup complete（1.5B 冷启含编译一般 <2 min），驻留判 Model loading took X GiB（N17，sysfs 加载中不可信）",
+          "severity": "config"
+        }
+      ],
+      "port": "8203",
+      "precision": "bf16",
+      "primary_metric": {
+        "date": "",
+        "note": "本臂斜率读数未实测（无落盘记录）。期望值：每 token 注意力边际成本比 Ornith(hd256) 的 2.118 µs/token 低 1~2 个数量级（脚本头）。它是探针不是底座",
+        "phase": "decode",
+        "unit": "µs/ctx-token",
+        "value": 0
+      },
+      "recipe_id": "8203-qwen2.5-1.5b-bf16-vllm-smoke",
+      "remaining_gaps": [
+        {
+          "description": "本臂斜率读数未实测——如要出数：同 boot、ctxs 四档（1024/4096/16384/30720）、reps≥3、与 8111 侧同尺（bench/attn_share.py），并先对齐 cap（现 560 W）",
+          "metrics": "期望 2.118 µs/token 的 1/10~1/100"
+        }
+      ],
+      "sources": [
+        "models/Qwen/launcher/qwen2.5-1.5b_bf16_vllm_rocm72_32k_8203_Qwen_mi250x_0.sh（头注释全量）",
+        "docs/MI250X-attention-hd256-内核缺口-2026-09-07.md L245-247（探针用法出处）",
+        "docs/模型-脚本-环境对照表-2026-09-12.md 表A（3 GiB、唯一显式豁免）",
+        "config/ports.conf（⚠️ 8203 同时登记为 PORT_BENCH_DEEPSEEK_V4）"
+      ],
+      "stack_fingerprint": {
+        "aiter_commit": "",
+        "rocm_version": "7.2.4",
+        "vllm_version": "0.28.0+rocm723"
+      },
+      "status": "active",
+      "tp": 1,
+      "verified": "2026-09-15",
+      "what_failed": [
+        {
+          "description": "给本探针抬 256k/1M 档",
+          "reason": "RoPE 缩放混进斜率＝实验目的被换掉（脚本头原话）；会话需求走各底座脚本"
+        },
+        {
+          "description": "拿 vllm serve --rope-scaling 手打",
+          "reason": "0.28 无此 CLI 参数（实测 grep arg_utils 无此项）；正解是 --hf-overrides 塞 rope_parameters 并带上 rope_theta（只给 rope_parameters 会把原生 1e6 顶成 None，已实测）——但结论必须重述'与 32k 档曲线不可混表'"
+        },
+        {
+          "description": "用别的本地模型做 custom-PA 对照",
+          "reason": "11 个模型 0 合格（hd256 一律被 platforms/rocm.py:404 拒之门外，这正是课题本身，别再找替代品验证）"
+        }
+      ],
+      "what_worked": [
+        {
+          "description": "全仓唯一 head_dim=128 且满足 vllm.platforms.rocm.use_rocm_custom_paged_attention 全部 dispatch 条件的模型（2026-09-07 用真判据逐个代入筛出）——用它量'每 token 注意力边际成本'，兼做底座回归冒烟位",
+          "measured_impact": "命题：hd=128 走 custom PA（隔离 ~596 GB/s）vs hd=256 只能走 Triton 参考实现（~12.3 GB/s）"
+        },
+        {
+          "description": "钉 32768 上限（'单条会话≥256k'口径下的唯一显式豁免，用户拍板）：原生上限就是 32768，抬档必挂 YaRN 8× ⇒ RoPE 一变与 Ornith(hd256) 对照不再同口径",
+          "measured_impact": "保住探针存在的全部意义；attn_share 采样档最大 30720，256k 纯多余"
+        },
+        {
+          "description": "GPU_MEM_UTIL 0.40 压低占用；脚本自带形状自检（head_dim∈{64,128} ∧ 非 sliding_window，否则 exit 2）把住入口",
+          "measured_impact": "方便与其它臂同 die 周旋；探针身份防误用"
+        },
+        {
+          "description": "刻意裸底座：与手工补丁系无关（P1/QR/splitKV 都不设），量上游原生两条 attention 路径之差；QR 由 conf 落 NONE/0/0——TP1 无 allreduce 可减，中性",
+          "measured_impact": "判据链干净：custom PA dispatch 判据属于 0.28 这棵树（platforms/rocm.py:404）"
+        }
+      ]
+    },
+    {
+      "architectures": [
+        "Qwen3_5ForConditionalGeneration"
+      ],
+      "best_args": [
+        "--port 8301",
+        "--tensor-parallel-size 2",
+        "--max-model-len 262144",
+        "--gpu-memory-utilization 0.92",
+        "--max-num-seqs 8",
+        "--max-num-batched-tokens 8192",
+        "--dtype bfloat16",
+        "--async-scheduling",
+        "--load-format fastsafetensors",
+        "--enable-prefix-caching",
+        "--enable-chunked-prefill",
+        "--disable-custom-all-reduce",
+        "--limit-mm-per-prompt {\"image\":0,\"video\":0}",
+        "--reasoning-parser qwen3"
+      ],
+      "best_env": {
+        "AIS": "0",
+        "HIP_VISIBLE_DEVICES": "6,7",
+        "LD_LIBRARY_PATH": "/opt/rocm-7.2.4/lib",
+        "OMP_NUM_THREADS": "1",
+        "VLLM_ALLOW_LONG_MAX_MODEL_LEN": "1",
+        "VLLM_ENABLE_V1_MULTIPROCESSING": "0",
+        "VLLM_ROCM_QUICK_REDUCE_CAST_BF16_TO_FP16": "0",
+        "VLLM_ROCM_QUICK_REDUCE_MIN_SIZE_BYTES_MB": "0",
+        "VLLM_ROCM_QUICK_REDUCE_QUANTIZATION": "FP",
+        "VLLM_ROCM_SPLITKV_PA": "1",
+        "VLLM_ROCM_SPLITKV_PA_MAX_SCRATCH_MIB": "192"
+      },
+      "config_model_type": "qwen3_5",
+      "engine": "vllm",
+      "entry": "models/TeichAI/launcher/qwen3.8_27b_bf16_Fable_Distill_vllm_rocm72_256k_8301_teichai_mi250dx2_m3.sh",
+      "env_path": "envs/vllm_0.28.0_rocm72",
+      "exclusive_with": [
+        "8302-qwen38-27b-fable-distill-bf16-vllm-dflash2",
+        "8101-qwen38-27b-fable-distill-bf16-vllm-tp2",
+        "8107",
+        "8109",
+        "8108",
+        "8110",
+        "8112"
+      ],
+      "framework_version": "0.28.0+rocm723",
+      "gpus": "mi250dx2_m3（die6+7 同模组 TP2，NUMA1；'名 m3 实 M2'标签错配见 CLAUDE.md §3，本臂只保证 die 号正确）",
+      "lessons": [
+        {
+          "measured_impact": "+0.59 ms/步常数税；自然内容中位 −1.8%（噪声内）",
+          "statement": "'默认开'不是一元开关：split-KV 收益随 ctx 单调（+2.2%@64 → ×4.31@30720），短 ctx 只交常数税"
+        },
+        {
+          "measured_impact": "—",
+          "statement": "full graph 下主机侧读到的 ctx 是 capture dummy（max_seq_len=1）⇒ 想加'ctx<N 不接管'下限门=按假值随机关路（§13 方法论三连自纠）"
+        },
+        {
+          "measured_impact": "ports.conf 把它们分开登记",
+          "statement": "同一份权重两套底座（8101 master vs 8301 0.28）必须分端口登记——'同端口不同底座'事故的反面教材"
+        },
+        {
+          "measured_impact": "—",
+          "statement": "sha 不变式：rocm_splitkv_pa.py 与已装树做字节比对 ⇒ 只许改位置不许改内容；改行为要升 sha、重投、重对拍"
+        }
+      ],
+      "model_dir": "models/TeichAI/Qwen3.8-27B-Fable-Distill",
+      "model_slug": "qwen3.8-27b-fable-distill",
+      "other_metrics": [
+        {
+          "name": "A/B 单流 decode @4096",
+          "note": "2026-09-07 两臂对照，splitkv-27b-0.28env-A-B §5/§8",
+          "value": "OFF 25.26 → ON 36.95 tok/s（×1.47）"
+        },
+        {
+          "name": "A/B 单流 decode @16384",
+          "note": "同上",
+          "value": "OFF 12.95 → ON 35.89 tok/s（×2.77）"
+        },
+        {
+          "name": "attention 边际成本",
+          "note": "门 OFF→ON，2026-09-07",
+          "value": "3.158 → 0.060 µs/ctx-token（÷52.8）"
+        },
+        {
+          "name": "常数税",
+          "note": "门 ON 的代价；收益随 ctx 单调（+2.2%@64 → ×4.31@30720）",
+          "value": "+0.59 ms/步（+2.2%）"
+        },
+        {
+          "name": "自然内容 10 条（短 ctx 主导）",
+          "note": "短 ctx 上 ON≈OFF（−1.8% 在噪声内），同文 §13.0",
+          "value": "off 中位 35.92 / on 35.27 t/s"
+        },
+        {
+          "name": "结构上限",
+          "note": "门 ON 已吃 92–97% ⇒ 27B-TP2 上此优化已饱和（§8 VERDICT）",
+          "value": "38.1 t/s（1000/26.25 ms 非注意力截距钉死）"
+        },
+        {
+          "name": "起服资源",
+          "note": "2026-09-07 同文 TL;DR",
+          "value": "权重 25.92 s、25.17 GiB/worker；KV 池 865,527 tok；block 784"
+        }
+      ],
+      "patches": [
+        "patches/gfx90a/port_splitkv_pa.py",
+        "patches/gfx90a/rocm_splitkv_pa.py",
+        "patches/native-env/vllm028-base-p1-qr.patch",
+        "配方: patches/splitkv-paged-decode、patches/p1-gemv-c2c3-quickreduce、patches/native-env-drift-baseline"
+      ],
+      "pitfalls": [
+        {
+          "description": "'补丁在位'≠'上场'：在位判据=port_splitkv_pa.py --check exit 0（K/I/T applied、sha 与 rocm_splitkv_pa.py 逐字节等）；上场证据=起服日志 **已接管** 行的 grep -c（ON 首验臂=8 行+stats；OFF 臂恒 0），不是 applied/import 成功",
+          "severity": "config"
+        },
+        {
+          "description": "高并发'没收益'且没报错，三查：①源与装树漂移→静默退 Triton（09-08 抓过 --check exit 2）②scratch 超预算整档打回③num_seqs×2>64 被门拒——按序查 --check、stats 的 reject_by_reason、显式 MAX_SEQS",
+          "severity": "regress"
+        },
+        {
+          "description": "TP2 下门限：内核 DEFAULT_MAX_SEQS=64 但每 rank 只有 2 个 kv 头 ⇒ 实际放行 num_seqs≤32；测更高并发要显式 MAX_SEQS=<n> 透传，绝不在脚本里写 :-16 兜底（beta 封装把 64 按回 16 翻过车）",
+          "severity": "config"
+        },
+        {
+          "description": "AIS=1 起服当场崩 submit_io: register_buffer failed（PM9A1）；回默认 AIS=0。注意 0.28 侧 AIS 两变量在 wheel 全树 grep=0（无实际作用，别当护栏，TP>1 由 wheel 原生 nogds 保证）",
+          "severity": "crash"
+        },
+        {
+          "description": "本臂无相互锁：die6+7 被 8101/8302 叠着跑会高并发 OOM——按 PID 文件理清归属再起",
+          "severity": "crash"
+        },
+        {
+          "description": "输出与'无优化'基线逐字不同 = 分段+log-sum-exp 归并改了求和顺序（与 QR w≥4 同类，设计语义）；基线须成对重跑才可比",
+          "severity": "config"
+        },
+        {
+          "description": "SPEC=1 时'已接管=0'是预期（门条件 max_query_len==1 不成立），不是补丁坏了；证据看 stats 的 reject_by_reason 全 max_query_len=N!=1；SPEC=1 就等价 8302",
+          "severity": "config"
+        },
+        {
+          "description": "接管计数内核按 pid 分文件写 logs/splitkv-stats-<脚本名>-1.pid<N>.txt——共写一文件会'倒退'",
+          "severity": "config"
+        },
+        {
+          "description": "只设 HIP 不设 ROCR（8301 还显式 unset ROCR_VISIBLE_DEVICES 防继承）：ROCR+HIP 叠加二次过滤 ⇒ die6,7 越界空集 ⇒ No CUDA GPUs are available；且本臂不 source config/gpu_mi250x_*.conf（它双导出 HIP+ROCR）",
+          "severity": "crash"
+        },
+        {
+          "description": "红线 LD_LIBRARY_PATH=/opt/rocm-7.2.4/lib 无条件（N13：缺它连 dist.all_reduce 都无 traceback SIGSEGV）；QR env 必须在 python 启动前设好（_MI250_QR_WANTED 模块级求值）",
+          "severity": "crash"
+        },
+        {
+          "description": "脚本 L83 自称'不 source 引擎 conf'已过期，L197 就在 source（矛盾清单已录）；本臂不 source vllm.arm-local.conf 但自带同值三条策略 env——读 conf 关系时别记成 arm-local 提供的",
+          "severity": "config"
+        }
+      ],
+      "port": "8301",
+      "precision": "bf16",
+      "primary_metric": {
+        "date": "2026-09-07",
+        "note": "A/B 判分：门 ON vs 对照 OFF @ctx30720 单流 8.09→34.89 t/s（×4.31）；die6+7 TP2 util0.92、两臂只差门、cap 未标注。全表见 other_metrics",
+        "phase": "decode",
+        "unit": "tok/s",
+        "value": 34.89
+      },
+      "recipe_id": "8301-qwen38-27b-fable-distill-bf16-vllm-splitkv-ab",
+      "remaining_gaps": [
+        {
+          "description": "A/B 原始落盘件在工作区与对照表描述不一致：对照表写的 bench/splitkv_out_*.json 不存在，实物是 bench/splitkv27b_out_{off,on,spec}.json、bench/splitkv27b_{off,on}_arm_0907.json 等（可复算）",
+          "metrics": "—"
+        },
+        {
+          "description": "09-07 读数 cap 未标注；对照表判语'定稿即归档'——已量完，长期常驻会让人误数出'4 个 27B 底座'；生产服务用 8101",
+          "metrics": "cap 未标注"
+        },
+        {
+          "description": "投机与 split-KV 的统一出路=内核扩到 partition×query_token（§13.7 原话'改代码不是调配置'，未做；cand_splitkv_pa_mq.py 多查询变体候选稿未接线）",
+          "metrics": "—"
+        }
+      ],
+      "sources": [
+        "models/TeichAI/launcher/qwen3.8_27b_bf16_Fable_Distill_vllm_rocm72_256k_8301_teichai_mi250dx2_m3.sh（头注释全量）",
+        "docs/research-notes/splitkv-27b-0.28env-A-B-2026-09-07.md（§5 两臂对照 / §8 VERDICT / §13 反转 ctx）",
+        "config/ports.conf PORT_AB_SPLITKV_QWEN3_8_27B 块；docs/模型-脚本-环境对照表-2026-09-12.md 表A",
+        "docs/research-notes/256k-上下文-2026-09-07.md（容量算术与'scratch 不吃 KV 池'实测）"
+      ],
+      "stack_fingerprint": {
+        "aiter_commit": "",
+        "rocm_version": "7.2.4",
+        "vllm_version": "0.28.0+rocm723"
+      },
+      "status": "experimental",
+      "tp": 2,
+      "verified": "2026-09-15",
+      "what_failed": [
+        {
+          "description": "ATOM 底座复活本臂",
+          "reason": "09-06 判死四道墙；8201 臂与其脚本、envs/atom_vllm/vllm_master_rocm724_atom 已删/回收——引用'原脚本'字样皆为历史（本臂血统即复制自 8201 判死臂）"
+        },
+        {
+          "description": "投机×split-KV 叠加",
+          "reason": "每步互斥：投机步 max_query_len=1+n>1 撞门第 1 条 ⇒ 一个 decode 步都不接管（门条件非配置偏好，与 8107 MTP 同构；8302 拿它当读数实验）；要真叠加须把内核扩到 partition×query_token——改代码不是调配置"
+        },
+        {
+          "description": "PM9A1 上 AIS / serve+AIS 5014",
+          "reason": "AIS 在该盘 register 当场崩（抛 Exception 绕过 vLLM 回退）；5014 只属 api_server 进程树（三盘交叉证明）——AIS=1 头注释已声明会失败"
+        },
+        {
+          "description": "VLLM_ROCM_USE_AITER=1、CUSTOM AR、one-shot IPC、NCCL_SYMM_MEM、moe-tuned 种子表",
+          "reason": "同 8107 配方 §9 口径：AITER RMSNorm 陷阱+MoE 终案；CUSTOM AR 静默输出全 !!!；moe-tuned −3~−4%"
+        },
+        {
+          "description": "继续投 attention 优化",
+          "reason": "结构上限判语：天花板被非注意力截距钉死（38.1 t/s），门 ON 已吃 92–97% ⇒ 27B-TP2 上没有肉了（§8 VERDICT）"
+        }
+      ],
+      "what_worked": [
+        {
+          "description": "split-KV paged-decode 接管（补丁 K/I/T + VLLM_ROCM_SPLITKV_PA=1）：把 KV 维切开填满 104 CU——hd256 被 platforms/rocm.py:404 拒 custom PA 后 dispatch 恰好落到补丁接管点；64 层中 16 层 full_attention（interval 4），其余 GDN O(1) 不受影响",
+          "measured_impact": "单流 ×1.47/×2.77/×4.31 @4k/16k/30k；attention 边际成本 ÷52.8"
+        },
+        {
+          "description": "VLLM_ROCM_SPLITKV_PA_MAX_SCRATCH_MIB=192：默认 32 MiB/key 会让本臂 seqs=8 档 'scratch 50626560 超预算'×64 整档打回 Triton（最小一次只超阈值 1.6%）",
+          "measured_impact": "192 = 家族实测峰值 130 MiB + 48% 余量；scratch 在 KV 池 sizing 后独立分配，不吃 KV 池（256k 笔记 §6）"
+        },
+        {
+          "description": "MAX_MODEL_LEN 262144（09-07 唯一例外改动）：容量算术 16 full-attn 层×2×2 kv头/rank×256×2B=32,768 B/tok/die ×262,144 = 8.0 GiB/die ≪ 可用 27.51 GiB",
+          "measured_impact": "131072 代历史数勿混表"
+        },
+        {
+          "description": "--load-format fastsafetensors bounce 路径（AIS=0）：PM9A1 mmap 4K 页错误会 hung ⇒ 禁默认 mmap",
+          "measured_impact": "起服权重 25.92 s / 25.17 GiB/worker"
+        },
+        {
+          "description": "QR 三 env（FP/0/0，同 8111 形态）：C2/C3 手工件在 0.28 树在位，QR 开（w=2）",
+          "measured_impact": "w=2 与 NCCL 逐位一致（FP lossless）；TP2 稠密 27B QR 收益 +4.7% 单流（CLAUDE §10 口径）"
+        },
+        {
+          "description": "对照臂一行回退：VLLM_ROCM_SPLITKV_PA=0 bash 同脚本；门条件（内核 12 条）任何一条不满足自动走原路径，是设计不是遗漏",
+          "measured_impact": "两臂只差门，A/B 干净；stats 文件名带门状态不串"
+        }
+      ]
+    },
+    {
+      "architectures": [
+        "Qwen3_5ForConditionalGeneration"
+      ],
+      "best_args": [
+        "--port 8302",
+        "--speculative-config {\"method\": \"dflash\", \"model\": \"models/z-lab/Qwen3.8-27B-DFlash2\", \"num_speculative_tokens\": 3}",
+        "--tensor-parallel-size 2",
+        "--max-model-len 262144",
+        "--gpu-memory-utilization 0.92",
+        "--max-num-seqs 8",
+        "--max-num-batched-tokens 8192",
+        "--dtype bfloat16",
+        "--async-scheduling",
+        "--load-format fastsafetensors",
+        "--enable-prefix-caching",
+        "--enable-chunked-prefill",
+        "--disable-custom-all-reduce",
+        "--limit-mm-per-prompt {\"image\":0,\"video\":0}",
+        "--reasoning-parser qwen3"
+      ],
+      "best_env": {
+        "PORT": "8302",
+        "SPEC": "1",
+        "SPEC_MODEL": "${AI_HOME}/models/z-lab/Qwen3.8-27B-DFlash2",
+        "SPEC_TOKENS": "3",
+        "VLLM_ROCM_SPLITKV_PA": "1",
+        "VLLM_ROCM_SPLITKV_PA_MAX_SCRATCH_MIB": "192",
+        "VLLM_ROCM_SPLITKV_PA_STATS_EVERY": "50"
+      },
+      "config_model_type": "qwen3_5",
+      "engine": "vllm",
+      "entry": "models/TeichAI/launcher/qwen3.8_27b_bf16_Fable_Distill_vllm_rocm72_dflash2_256k_8302_teichai_mi250dx2_m3.sh",
+      "env_path": "envs/vllm_0.28.0_rocm72",
+      "exclusive_with": [
+        "8301-qwen38-27b-fable-distill-bf16-vllm-splitkv-ab",
+        "8101-qwen38-27b-fable-distill-bf16-vllm-tp2",
+        "8107",
+        "8109",
+        "8108",
+        "8110",
+        "8112"
+      ],
+      "framework_version": "0.28.0+rocm723",
+      "gpus": "mi250dx2_m3（die6+7 同模组 TP2，继承基脚本 8301）",
+      "lessons": [
+        {
+          "measured_impact": "8101 K=8 vs 本臂 n=3/7 数字互不可比（底座不同）",
+          "statement": "深度最优不可跨模型搬：8101 的 DFlash 能吃 K=8 ×2.7~4.6，本臂 0.28/n=7-3 另一套；且 DFlash（并行草稿）与 MTP（串行草稿）机理不同"
+        },
+        {
+          "measured_impact": "×1.46~1.62 vs README ×3.4",
+          "statement": "跨底座配对草稿必须实测，README 倍率不得当预期"
+        },
+        {
+          "measured_impact": "中位 ×1.052 / 几何 ×0.976、TTFT max −58%",
+          "statement": "n 的定稿翻案如实记录：覆盖预注册规则（§14.3 原判定退回 7）钉 3，脚本注释留痕并录交付报告矛盾清单——A/B 的读数（n=3 几何 ×0.976）与决策（削峰填谷）可以不一致，但要写明依据"
+        },
+        {
+          "measured_impact": "已接管=0 恒成立",
+          "statement": "门保留 ON 让'互斥'可证伪：reject_by_reason 全部=max_query_len!=1 即是结论本身"
+        }
+      ],
+      "model_dir": "models/TeichAI/Qwen3.8-27B-Fable-Distill",
+      "model_slug": "qwen3.8-27b-fable-distill",
+      "other_metrics": [
+        {
+          "name": "attn_share 尺（filler prompt，投机虚高⚠️）n=7",
+          "note": "对照①基线 ×3.76~4.13；对照②split-KV 在 30k ×0.89 ↓（长 ctx 输给 split-KV 臂），§12.3",
+          "value": "104.44 / 48.71 / 31.17 t/s @4k/16k/30k"
+        },
+        {
+          "name": "n=7 vs n=3（同 10 条自然内容尺）",
+          "note": "极差 40.99–105.27→50.41–72.99＝削峰填谷，非整体变快，§14.2",
+          "value": "n=3 中位 57.95（×1.052）/ 几何 59.41（×0.976）"
+        },
+        {
+          "name": "TTFT",
+          "note": "n=7→n=3 定稿依据之一；另 KV 池 +6.1%、接受长度 2.67（上限 4≈吃饱）、代价几何平均 −2.4%",
+          "value": "max 280 → 117 ms"
+        },
+        {
+          "name": "资源差分（vs 无投机臂同 boot）",
+          "note": "2026-09-07 §6",
+          "value": "27.38 GiB/worker（草稿 +2.21 GiB/die）、block 784→832、KV 池 865,527→493,013 tok（−43%）"
+        },
+        {
+          "name": "起服时间",
+          "note": "2026-09-07 实测",
+          "value": "torch.compile 97.32 s + dflash_head 二次编译 + warmup 60.07 s（比基脚本慢）"
+        },
+        {
+          "name": "互斥读数",
+          "note": "n=3 时代读数应是 max_query_len=4!=1（脚本里写的 =8!=1 是 n=7 时代残留）——投机×split-KV 每步互斥的可证伪复核",
+          "value": "grep -c '已接管' = 0 且 reject 全为 query_len 项"
+        },
+        {
+          "name": "自然内容接受长度",
+          "note": "/metrics draft/accepted 计数；别拿 attn_share 重复填充 prompt 测——接受长度虚高到 7.44–8.00、t/s 104.4（已知口径陷阱 §12.4）",
+          "value": "2.07–3.71"
+        }
+      ],
+      "patches": [
+        "patches/gfx90a/port_splitkv_pa.py（继承 8301，在位门 ON，本臂预期已接管=0）",
+        "patches/gfx90a/rocm_splitkv_pa.py",
+        "投机本体无补丁：0.28 wheel 原生 dflash 通路",
+        "配方: patches/splitkv-paged-decode"
+      ],
+      "pitfalls": [
+        {
+          "description": "报 t/s 虚高到 100+ = 用了 attn_share 重复句 prompt（投机极端有利）；报数必须自然内容 + bench/realistic_tps.py 口径",
+          "severity": "config"
+        },
+        {
+          "description": "输出像换了个模型/接受率极低 = V2 被手动关掉，静默退化 DFlash1；已接管行数>0 且很快 = 有人把 SPEC 关了（在跑 8301 的活）",
+          "severity": "regress"
+        },
+        {
+          "description": "KV 池比预期小近一半（−43%：865,527→493,013，block 784→832）＝投机固有代价 + 草稿 KV 对齐；长上下文并发场景回 8301/8101",
+          "severity": "config"
+        },
+        {
+          "description": "temp=0 输出与无投机分叉（10 条中 5 条）不是坏：投机改批形状与内核路径，逐字可比性天然更弱——接受长度+事实题全对才是裁判（§12.5、CLAUDE §10 md5 规矩）",
+          "severity": "config"
+        },
+        {
+          "description": "与 :8301 同机并存（端口维度）但 die 维度互斥——die6+7 上有 8101/8301 或 8-die 臂时不起；A/B 脚本无相互锁",
+          "severity": "crash"
+        },
+        {
+          "description": "长上下文（≥30k）decode 场景别用本臂：30720 档输给 split-KV 臂 ×0.89，≤16k 才归它赢；生产服务用 8101（master 底座 dflash，K=8 不同口径）",
+          "severity": "config"
+        },
+        {
+          "description": "SPEC 硬 export=1（非 ${VAR:-} 形态，故意不开放覆盖）：置 0 就等于在跑 8301；回退深度一行 SPEC_N=7 bash <本脚本>",
+          "severity": "config"
+        }
+      ],
+      "port": "8302",
+      "precision": "bf16",
+      "primary_metric": {
+        "date": "2026-09-07",
+        "note": "自然内容 10 条中位（诚实口径）55.04 / 几何 60.81 t/s，无投机对照（≈8301 门 OFF）37.62 ⇒ ×1.46~1.62；cap 未标注；与 8101 表（90.0 t/s @256、master env、K=8、300 W）两套口径不可互抄",
+        "phase": "decode",
+        "unit": "tok/s",
+        "value": 55.04
+      },
+      "recipe_id": "8302-qwen38-27b-fable-distill-bf16-vllm-dflash2",
+      "remaining_gaps": [
+        {
+          "description": "投机与 split-KV 的统一：内核扩到 partition×query_token（cand_splitkv_pa_mq.py 候选稿未接线）",
+          "metrics": "每步互斥已实测"
+        },
+        {
+          "description": "读数 cap 未标注；跨底座配对的实际接受率相对官方配对的损失未量化",
+          "metrics": "自然内容接受长度 2.07–3.71"
+        }
+      ],
+      "sources": [
+        "models/TeichAI/launcher/qwen3.8_27b_bf16_Fable_Distill_vllm_rocm72_dflash2_256k_8302_teichai_mi250dx2_m3.sh（薄封装全文）",
+        "models/TeichAI/launcher/qwen3.8_27b_bf16_Fable_Distill_vllm_rocm72_256k_8301_teichai_mi250dx2_m3.sh（实体基脚本）",
+        "docs/research-notes/splitkv-27b-0.28env-A-B-2026-09-07.md §12（三臂对照）/§13.7/§14（n=7→3→7→3 全过程）",
+        "config/ports.conf PORT_AB_DFLASH2_QWEN3_8_27B 块；docs/模型-脚本-环境对照表-2026-09-12.md 表A"
+      ],
+      "stack_fingerprint": {
+        "aiter_commit": "",
+        "rocm_version": "7.2.4",
+        "vllm_version": "0.28.0+rocm723"
+      },
+      "status": "experimental",
+      "tp": 2,
+      "verified": "2026-09-15",
+      "what_failed": [
+        {
+          "description": "拿 README ×3.4 当预期",
+          "reason": "跨底座配对（草稿 base_model=Qwen/Qwen3.8-27B，接在蒸馏底座 Fable-Distill 上）必须实测——hidden/layers/vocab 三项逐字相同（5120/64/248320）所以能跑，但接受率可能低于官方配对（薄封装头 L27-29 原话）"
+        },
+        {
+          "description": "投机×split-KV 叠加收益",
+          "reason": "每步互斥已实测（30k 档还倒贴 ×0.89 输给 split-KV 臂）；统一出路=内核扩 partition×query_token（未做）"
+        },
+        {
+          "description": "n>7",
+          "reason": "撞草稿 block_size=8 合法上限（1 bonus + n mask）；n=5–8 MTP 死区是 8107 另一条规矩，别串线"
+        },
+        {
+          "description": "手动关 Model Runner V2",
+          "reason": "_is_dflash2_draft() 强制 V2——V1 上同一份 checkpoint 只走 DFlashProposer，静默退化成 DFlash1（上游注释原话）"
+        },
+        {
+          "description": "继承自 8301/8107 的路线级否证（ATOM、AITER、CUSTOM AR、one-shot IPC、NCCL_SYMM_MEM、moe-tuned、PM9A1-AIS、serve+AIS 5014、--quantization awq 手打）",
+          "reason": "逐条口径见 8301 与 8107 配方 §9，本臂无新增反例"
+        }
+      ],
+      "what_worked": [
+        {
+          "description": "0.28 wheel 原生 dflash 通路挂 DFlash2 草稿头（无补丁；DFlash2DraftModel 在 wheel registry.py:628 已注册）",
+          "measured_impact": "自然内容 ×1.46~1.62（中位 55.04 vs 37.62）"
+        },
+        {
+          "description": "SPEC_TOKENS 钉 3（${SPEC_N:-3}，用户拍板，明确覆盖 §14.0 预注册规则'打平不取胜→保留 7'）：接受长度 2.67 上限 4≈吃饱",
+          "measured_impact": "极差 50–73（削峰填谷）、TTFT max 280→117 ms、KV 池 +6.1%；代价几何平均 −2.4%"
+        },
+        {
+          "description": "split-KV 门故意留 ON + STATS_EVERY=50 调密采样（基脚本 2000）",
+          "measured_impact": "把'投机与 split-KV 每步互斥'从推断变成读数：reject_by_reason 全 = max_query_len!=1，复核通过"
+        },
+        {
+          "description": "薄封装继承 8301 基脚本（export 若干 + exec；停止路径/PID/断言口径全继承，实体实现只一份）",
+          "measured_impact": "与 8108 agent/longform 同套路；日志名只由 ${PORT} 决定（'薄封装不写日志行'规范的唯一例外，8302 自 pin 一份）"
+        }
+      ]
+    }
+  ],
+  "generated_at": "2026-09-16T08:22:03+00:00",
+  "hardware": "8x MI250X gfx90a, ROCm 7.2.4, power cap 560W/module",
+  "source": "/home/qiba/ai/docs/recipes/serving"
+}

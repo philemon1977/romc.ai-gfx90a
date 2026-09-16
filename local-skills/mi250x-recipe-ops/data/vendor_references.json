@@ -1,0 +1,90 @@
+{
+  "generated_at": "2026-09-16T08:22:03+00:00",
+  "note": "Vendor (vllm-project/recipes) recipes folded in as *reference*, not as MI250X-validated configs. Each entry separates the hardware-independent flags that transfer to gfx90a from what the vendor's own support matrix gates to MI300X+.",
+  "references": [
+    {
+      "architecture": "moe",
+      "architectures": [
+        "Qwen3_5MoeForConditionalGeneration"
+      ],
+      "artifact": ".tmp/kb_extract/qwen3_5_397b_reference.json",
+      "base_args": [
+        "--trust-remote-code"
+      ],
+      "base_env": {
+        "VLLM_DEEP_GEMM_WARMUP": "skip",
+        "VLLM_USE_DEEP_GEMM": "0"
+      },
+      "date_updated": "2026-09-14",
+      "hf_id": "Qwen/Qwen3.5-397B-A17B",
+      "json_api": "https://recipes.vllm.ai/Qwen/Qwen3.5-397B-A17B.json",
+      "mi250x_applicability": {
+        "silicon_gated_on_gfx90a": [
+          "FP8 checkpoint + FP8 GEMM: the entire official AMD lane runs Qwen/Qwen3.5-397B-A17B-FP8 (W8A8, dynamic per-token activations); gfx90a (CDNA2) has no FP8 matrix core, and torch._scaled_mm refuses anything below MI300+ -> engine init dies",
+          "variants nvfp4 (nvidia/*), fp8 (RedHatAI/*), ascend_w8a8_mtp / ascend_w4a4_mxfp4",
+          "--moe-backend flashinfer_trtllm (recipe hardware_overrides.nvidia)",
+          "--kv-cache-dtype fp8 in the fp8/nvfp4 variant extra_args"
+        ],
+        "transferable_to_mi250x": [
+          "--language-model-only (skip vision tower): architecture-level, frees HBM per die on a text-only workload where weights alone eat ~48-55 GiB of 64 GiB",
+          "VLLM_USE_DEEP_GEMM=0 + VLLM_DEEP_GEMM_WARMUP=skip (base_env): DeepGEMM is CUDA-only; avoids pointless warmup on ROCm",
+          "--trust-remote-code (base_args)",
+          "--reasoning-parser qwen3 (output parsing only; also gates --default-chat-template-kwargs enable_thinking=false)",
+          "--enable-prefix-caching (vendor throughput flag)",
+          "the num_cache_lines>=batch -> --max-cudagraph-capture-size pitfall: hybrid GDN/Mamba state cache bounds graph capture on every GPU (our boot already logs mamba/attention page-size padding)",
+          "MTP is present in the checkpoint (mtp.* tensors) -> --speculative-config mtp is a model-level lever, but the vendor explicitly flags MTP on AMD as under development",
+          "--enable-expert-parallel / -dp 8 style MoE parallelism: architecture-level, but xGMI all-to-all cost on MI250X is unmeasured"
+        ],
+        "unverified_on_mi250x": [
+          "MTP-1 speculative decoding on ROCm",
+          "expert parallelism across 8 MI250X dies",
+          "VLLM_SSM_CONV_STATE_LAYOUT=DS (vendor sets it only for pd_cluster prefill+decode)"
+        ],
+        "verdict": "vendor recipe is NOT an MI250X-supported configuration; only its hardware-independent parts transfer"
+      },
+      "model_type": "qwen3_5_moe",
+      "page": "https://recipes.vllm.ai/Qwen/Qwen3.5-397B-A17B",
+      "troubleshooting": {
+        "disable_reasoning": "--reasoning-parser qwen3 --default-chat-template-kwargs '{\"enable_thinking\": false}'",
+        "encoder_data_parallel": "--mm-encoder-tp-mode data costs extra memory, may need --gpu-memory-utilization tuning",
+        "long_context": "YaRN via --hf-overrides nested under text_config (factor 4.0, original_max_position_embeddings 262144) + --max-model-len ~1010000 + VLLM_ALLOW_LONG_MAX_MODEL_LEN=1",
+        "mamba_cache_assert": {
+          "cause": "CUDA-graph capture size > Mamba/SSM state cache size (hybrid GDN+Mamba model)",
+          "fix": "lower --max-cudagraph-capture-size (default 512)",
+          "hardware_independent": true,
+          "ref": "https://github.com/vllm-project/vllm/pull/34571",
+          "symptom": "assert num_cache_lines >= batch"
+        },
+        "mtp_tradeoff": "MTP-1 lowers TPOT but costs throughput under concurrency (spec tokens consume KV); num_speculative_tokens 1-5; vendor notes MTP-1 on AMD is still under development",
+        "prefix_caching_mamba_align": "experimental in 'align' mode"
+      },
+      "vendor_commands": {
+        "amd_mi300x_mi355x_tp8": "Qwen/Qwen3.5-397B-A17B-FP8 --tensor-parallel-size 8 --reasoning-parser qwen3 --enable-prefix-caching (docker vllm/vllm-openai-rocm:latest, NO AITER env in the vendor block)",
+        "gb200_nvfp4": "nvidia/Qwen3.5-397B-A17B-NVFP4 -dp 4 --enable-expert-parallel --language-model-only --reasoning-parser qwen3 --enable-prefix-caching",
+        "latency_mtp1": "Qwen/Qwen3.5-397B-A17B-FP8 --tensor-parallel-size 8 --speculative-config '{\"method\":\"mtp\",\"num_speculative_tokens\":1}' --reasoning-parser qwen3",
+        "mi355x": "Qwen/Qwen3.5-397B-A17B-FP8 -tp 2 --enable-expert-parallel --language-model-only --reasoning-parser qwen3 --enable-prefix-caching",
+        "nvidia_tp8": "vllm serve Qwen/Qwen3.5-397B-A17B --tensor-parallel-size 8 --reasoning-parser qwen3 --enable-prefix-caching",
+        "throughput_multimodal": "as text_only but --mm-encoder-tp-mode data --mm-processor-cache-type shm",
+        "throughput_text_only": "Qwen/Qwen3.5-397B-A17B-FP8 -dp 8 --enable-expert-parallel --language-model-only --reasoning-parser qwen3 --enable-prefix-caching"
+      },
+      "vendor_hardware_matrix": {
+        "amd_requirement": "ROCm wheel needs Python 3.12, ROCm 7.0, glibc >= 2.35",
+        "amd_rocm_wheel_supported_gpus": [
+          "MI300X",
+          "MI325X",
+          "MI355X"
+        ],
+        "mi250x": "absent_from_vendor_matrix",
+        "mi350x": "absent_from_vendor_matrix",
+        "verified": {
+          "ascend_950dt": "verified",
+          "gb200": "verified",
+          "h200": "verified",
+          "mi300x": "verified",
+          "mi325x": "verified",
+          "mi355x": "verified"
+        }
+      }
+    }
+  ]
+}

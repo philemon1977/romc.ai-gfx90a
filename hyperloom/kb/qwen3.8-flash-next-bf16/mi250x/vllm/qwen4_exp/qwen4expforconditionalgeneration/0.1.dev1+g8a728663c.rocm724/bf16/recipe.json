@@ -1,0 +1,390 @@
+{
+  "authority": "EXPERIENTIAL",
+  "best_config": {
+    "extra_envs": {
+      "AIS": "0 \u2192 VLLM_AIS_DISABLE=1 + VLLM_FST_KEEP_NOGDS=1 + VLLM_AIS_PLE_FP8=0 \u4e09\u8fde\u5199\u6b7b\uff08AIS=1 \u76f4\u63a5 exit 2 \u62d2\u542f\uff09",
+      "HIP_VISIBLE_DEVICES/ROCR_VISIBLE_DEVICES/CUDA_VISIBLE_DEVICES": "\u4e09\u4e2a\u90fd\u7edd\u4e0d\u8bbe\uff08\u5f00 MTP \u786c\u89c4\u5219\uff0c\u57fa\u811a\u672c L34-38 \u75c5\u6839\u5bf9\u7167\uff09",
+      "LD_LIBRARY_PATH": "/opt/rocm-7.2.4/lib\uff08slim torch \u7f3a\u4e4b import torch core dump=N13\uff1b\u7edd\u4e0d\u5199\u88f8 /opt/rocm=\u7ea2\u7ebf 2\uff09",
+      "OMP_NUM_THREADS": "1",
+      "TORCH_CUDA_ALLOW_TF32": "0",
+      "USE_LIBUV": "0",
+      "VLLM_AIS_PLE_FP8": "0\uff08BF16 checkpoint \u65e0 weight_scale\uff0c\u5f00\u7740=\u9759\u9ed8\u628a PLE \u91cf\u5316\u6210 fp8\uff0cN25\uff1b\u811a\u672c\u786c export \u4e0d\u53ef\u7701\u7565\uff09",
+      "VLLM_ALLOW_LONG_MAX_MODEL_LEN": "1",
+      "VLLM_ENABLE_CUDAGRAPH_GC": "1",
+      "VLLM_ENABLE_V1_MULTIPROCESSING": "0\uff08config/vllm.arm-local.conf 7 \u6761\u81c2\u7ea7\u7b56\u7565 env\uff0c\u4ec5 8101/8107/8109 source\uff09",
+      "VLLM_ROCM_QUICK_REDUCE_QUANTIZATION": "NONE\uff08QR=0 \u5b9a\u7a3f=\u51b3\u5b9a\u4e0d\u662f\u9057\u6f0f\uff1bQR=1 \u65f6\u4e09\u4ef6\u5957 FP/0/0 + QR_MAX_MB=64\uff09",
+      "VLLM_ROCM_USE_AITER": "0"
+    },
+    "extra_server_args": "--tensor-parallel-size 8 --model models/Qwen/Qwen3.8-Flash-Next-BF16 --port 8107 --gpu-memory-utilization 0.95 --max-model-len 262144 --max-num-seqs 8 --max-num-batched-tokens 8192 --load-format fastsafetensors --trust-remote-code --speculative-config {\"method\":\"mtp\",\"num_speculative_tokens\":3} --enable-auto-tool-choice --tool-call-parser qwen3_coder --reasoning-parser qwen3 --disable-custom-all-reduce --limit-mm-per-prompt.image 0 --limit-mm-per-prompt.video 0 --served-model-name qwen3.8-flash-next qwen3.8-flash-next-bf16"
+  },
+  "best_throughput": 296.86,
+  "canonical_id": "inference:qwen3.8-flash-next-bf16:mi250x:vllm:qwen4_exp:qwen4expforconditionalgeneration:0.1.dev1+g8a728663c.rocm724:bf16",
+  "confidence": 0.85,
+  "created_at": "2026-09-15T08:06:40.763514+00:00",
+  "engine": "vllm",
+  "entry": "launcher/favor/qwen3.8-flash-next_176b_bf16_vllm_rocm724_256k_8107_final_Qwen_mi250dx8.sh",
+  "env_path": "envs/vllm_master_rocm724",
+  "evidence_refs": [
+    "/home/qiba/ai/config/ports.conf PORT_AB_QWEN3_8_FLASH_NEXT \u5757",
+    "/home/qiba/ai/docs/MI250X-AITER-cDNA2-\u5438\u6536\u843d\u5730-2026-09-07.md",
+    "/home/qiba/ai/docs/MI250X-BF16-MTP\u4e09\u4ef6\u5957\u590d\u6838\u4e0eprefix-cache\u67b6\u7a7a-2026-09-05.md",
+    "/home/qiba/ai/docs/recipes/serving/8107-qwen38-flash-next-176b-bf16-vllm-tp8.md",
+    "/home/qiba/ai/docs/recipes/serving/8109-qwen38-flash-next-176b-bf16-vllm-splitkv.md",
+    "/home/qiba/ai/docs/research-notes/splitkv-8107-\u79fb\u690d-2026-09-07.md\uff08\u7ed3\u6784\u5224\u5b9a\u5168\u8bb0\u5f55\uff09",
+    "/home/qiba/ai/docs/\u6a21\u578b-\u811a\u672c-\u73af\u5883\u5bf9\u7167\u8868-2026-09-12.md",
+    "/home/qiba/ai/launcher/favor/qwen3.8-flash-next_176b_bf16_vllm_rocm724_256k_8107_final_Qwen_mi250dx8.sh",
+    "/home/qiba/ai/models/Qwen/launcher/qwen3.8-flash-next_176b_bf16_vllm_rocm724_256k_8107_Qwen_mi250dx8.sh",
+    "/home/qiba/ai/models/Qwen/launcher/qwen3.8-flash-next_176b_bf16_vllm_rocm724_256k_8107_final_Qwen_mi250dx8.sh",
+    "/home/qiba/ai/models/Qwen/launcher/qwen3.8-flash-next_176b_bf16_vllm_rocm724_256k_8109_Qwen_mi250dx8.sh",
+    "/home/qiba/ai/models/Qwen/launcher/qwen3.8-flash-next_176b_bf16_vllm_rocm724_256k_8109_Qwen_mi250dx8.sh\uff08\u5934\u6ce8\u91ca L5-L32\uff09"
+  ],
+  "exclusive_with": [
+    "8107-qwen38-flash-next-176b-q4kxl-llamacpp",
+    "8109-qwen38-flash-next-176b-bf16-vllm-splitkv",
+    "8103-deepseek-v4-flash-0731-284b-q8kxl-llamacpp",
+    "8108-glm-5.3-flash-320b-q8-0-llamacpp",
+    "8110-ornith-1.5-397b-q8-0-llamacpp",
+    "8112-deepseek-v4.1-flash-748b-q4km-llamacpp"
+  ],
+  "framework_name": "vllm",
+  "framework_version": "0.1.dev1+g8a728663c.rocm724",
+  "gpus": "mi250dx8",
+  "hardware": "mi250x",
+  "kernel_optimizations": [],
+  "last_profiled": "2026-09-15",
+  "lessons": [
+    {
+      "measured_impact": "160.14/260.81/296.86/257.28\uff082026-09-05 \u540c boot\uff09",
+      "statement": "\u53ef\u884c \u2260 \u5212\u7b97\u3001\u66f2\u7ebf\u975e\u5355\u8c03\uff1an=4 \u4e0e n=3 \u540c capacity=8 \u66fe\u88ab\u63a8\u65ad\u4e3a'\u514d\u8d39\u4e00\u6863'\uff0c\u5b9e\u6d4b\u5355\u6d41 \u221233%\u2014\u2014\u53ea\u770b\u5e76\u53d1\u4f1a\u4f4e\u4f30 ring \u4ee3\u4ef7"
+    },
+    {
+      "measured_impact": "knobs/vllm-mtp-spec-depth \u00a74\uff088111_final \u5934\u6ce8 L13 \u5f15 8110\uff1an=3 \u221224.9%\uff09",
+      "statement": "\u6700\u4f18\u6df1\u5ea6\u4e0d\u53ef\u8de8\u6a21\u578b\u642c\uff1a8110 \u8349\u7a3f\u6b65\u2248\u4e3b\u5e72\u8bfb\u91cf 42% \u6240\u4ee5 n=2 \u9876\uff1b\u672c\u81c2\u5355\u5934\u8fb9\u9645 ~2\u20133% \u624d\u6491\u5f97\u5230 3\uff1b\u4e14\u6570\u5b57\u522b\u8de8\u5f15\u64ce\u6284\uff08\u90a3\u662f llama.cpp MTP_N \u53e3\u5f84\uff09"
+    },
+    {
+      "measured_impact": "knobs/vllm-mtp-spec-depth \u00a77",
+      "statement": "\u6240\u6709\u5f00\u5173\u7684\u6700\u7ec8\u5224\u636e\u90fd\u662f\u7aef\u5230\u7aef ABAB\uff0c\u4e0d\u662f\u5f00\u5173\u81ea\u5df1\u7684\u65e5\u5fd7\uff1aMTP eager +54%\u2192graph \u540e +23.3%\uff1bQR \u5fae\u57fa\u51c6 2.9\u00d7\u2192\u7aef\u5230\u7aef \u22120.44%"
+    },
+    {
+      "measured_impact": "\u4e09\u4ef6\u5957\u590d\u6838 \u00a76",
+      "statement": "WARNING \u884c\u53ef\u80fd\u9a97\u4eba\uff1a'prefix cache \u88ab MTP \u67b6\u7a7a'\uff08kv_cache_utils \u8b66\u544a\uff09\u662f\u8bef\u5224\uff0c\u5b9e\u6d4b\u590d\u7528\u7387 70.5%\u219294.4% \u5171\u5b58\u9ed8\u8ba4\u5f00\uff1b\u6d4b\u6cd5\u987b\u540c\u5185\u5bb9\u8fde\u53d1 \u22653 \u6b21 + \u5f02\u5185\u5bb9\u5bf9\u7167\u7ec4"
+    },
+    {
+      "measured_impact": "knobs/quick-reduce-gfx90a \u00a73",
+      "statement": "fail-closed \u51c6\u5165\uff08--require \u800c\u975e --check\uff09\u624d\u8ba9'\u6211\u5f00\u4e86 QR'\u53ef\u8bc1\u4f2a\u2014\u20148107 \u5168\u90e8\u5386\u53f2\u65e5\u5fd7\u6052 Using ['PYNCCL'] \u6b63\u662f\u6ca1\u6709\u8be5\u65ad\u8a00\u7684\u5f62\u72b6"
+    },
+    {
+      "measured_impact": "8109\uff1a\u4e09\u72ec\u7acb\u8bc1\u636e\u94fe\u5224\u6b7b\uff08\u552f\u4e00\u8c03\u7528\u8005 / \u6a21\u578b\u4fa7 grep 0 \u547d\u4e2d / 17 \u4efd\u65e5\u5fd7 0 \u547d\u4e2d\uff09",
+      "statement": "\u79fb\u690d'\u63a5\u7ba1\u578b'\u4f18\u5316\u524d\u5148\u505a\u7ed3\u6784\u53ef\u8fbe\u6027\u5224\u5b9a\uff08\u8c01\u8c03\u7528\u8be5\u7b97\u5b50\u3001\u540e\u7aef\u7ed1\u5b9a\u3001MTP \u5f62\u72b6\u6761\u4ef6\uff09\uff0c\u518d\u8c08\u6536\u76ca\uff1b\u5426\u5219\u95e8\u5f00\u4e86\u4e5f\u662f\u7a7a\u64cd\u4f5c"
+    },
+    {
+      "measured_impact": "8107 \u5168\u90e8\u5386\u53f2\u65e5\u5fd7\u6052 Using ['PYNCCL'] \u6b63\u662f\u8fd9\u4e2a\u5f62\u72b6",
+      "statement": "\u5171\u4eab editable \u6811\u7684\u5199\u5165\u4e00\u5f8b opt-in + fail-closed \u51c6\u5165\uff08QR=1 \u7528 --require \u800c\u975e --check\uff1a\u672a\u6253\u8865\u4e01\u7684\u5e72\u51c0\u6811\u8fc7 check \u662f\u5047\u9633\u6027\uff0c\u4f1a\u9759\u9ed8\u8dd1 PYNCCL\uff09"
+    },
+    {
+      "measured_impact": "\u5d29\u8fc7\u7684\u4e24\u6b21 serve+MTP \u5168\u90e8\u663e\u5f0f\u8bbe\u4e86\u53ef\u89c1\u6027\uff1bROCR=6,7+HIP=6,7 \u5b9e\u6d4b\u7a7a\u96c6",
+      "statement": "GPU \u53ef\u89c1\u6027\u89c4\u5219\u968f'\u662f\u5426\u5f00 MTP'\u53cd\u8f6c\uff1a8107/8109 \u4e00\u4e2a\u90fd\u4e0d\u8bb8\u8bbe\uff1b8111/8113\uff08\u65e0 MTP\u3001\u4f4e\u7f16\u53f7\u5b50\u96c6\uff09\u8bbe HIP \u624d\u5b89\u5168\uff0c\u4e14\u7edd\u4e0d\u53e0\u52a0 ROCR\uff08\u91cd\u7f16\u53f7\u540e\u4e8c\u6b21\u7b5b\u9009\u51fa\u7a7a\u96c6\uff09"
+    }
+  ],
+  "model": "qwen3.8-flash-next-bf16",
+  "model_dir": "models/Qwen/Qwen3.8-Flash-Next-BF16",
+  "other_metrics": [
+    {
+      "name": "\u5355\u6d41 short\uff08SPEC=3\uff09",
+      "note": "2026-09-05 @560 W+batched 8192 \u540c\u6863",
+      "value": "88.6 t/s"
+    },
+    {
+      "name": "MTP \u6df1\u5ea6\u66f2\u7ebf Phase2",
+      "note": "\u5355\u6d41\u540c\u66f2\u7ebf 45.2/67.8/88.6/59.5\uff1bn=3 \u5728\u5355\u6d41\u4e0e\u5e76\u53d1\u540c\u65f6\u662f\u5cf0\uff0c\u66f2\u7ebf\u975e\u5355\u8c03\uff08CLAUDE \u00a79 \u8868\uff09",
+      "value": "n=1 160.14\uff08\u26a0\ufe0f200 W \u4e0d\u53ef\u8de8\u6bd4\uff09/ n=2 260.81 / n=3 296.86 / n=4 257.28 tok/s"
+    },
+    {
+      "name": "\u65e0 MTP \u57fa\u7ebf",
+      "note": "2026-09-04\uff0c\u57fa\u811a\u672c\u5934\u6ce8\u91ca L10",
+      "value": "40.8 t/s \u5355\u6d41\uff08graph/temp=0\uff09@250 W"
+    },
+    {
+      "name": "prefix cache \u590d\u7528\u7387",
+      "note": "\u4e09\u4ef6\u5957\u590d\u6838 \u00a76\uff1a\u66fe\u8bef\u5224'\u88ab MTP \u67b6\u7a7a'\uff1bTTFT \u7701 72%",
+      "value": "70.5%\u219294.4%\uff08\u4e0e MTP \u5171\u5b58\u3001\u9ed8\u8ba4\u5f00\uff09"
+    },
+    {
+      "name": "QR=1 @TP8",
+      "note": "trace \u8bc1\u660e\u4e0a\u573a 120,696 \u6b21\u4ecd\u65e0\u6536\u76ca\uff08\u5438\u6536\u843d\u5730 L313\uff09\u21d2 \u5b9a\u7a3f QR=0",
+      "value": "\u22120.44%"
+    },
+    {
+      "name": "moe-tuned \u79cd\u5b50\u8868",
+      "note": "2026-09-10 \u65bd\u5de5\u5355 \u00a7H\uff1b\u751f\u6548\u4f46\u66f4\u6162",
+      "value": "60.8\u219258.8\uff08\u22123%\uff09\u3001agg 289.0\u2192276.4\uff08\u22124%\uff09"
+    },
+    {
+      "name": "2026-09-10 \u590d\u6d4b",
+      "note": "\u4e0e 88.6 \u5dee 46% \u8d85\u8de8 boot \u03c3\u22484.6% \u53ef\u89e3\u91ca\u8303\u56f4\uff0c\u7591 cap\uff0c\u672a\u95ed\u5408\uff08bench/davetha-ab/results-20260910-045349.txt\uff09",
+      "value": "\u5355\u6d41 60.8 / agg@8 289.0\uff08cap \u672a\u6807\u6ce8\uff09"
+    }
+  ],
+  "patches": [
+    "patches/gfx90a/port_p1_c2_c3.py\uff08C2/C3 QR \u67b6\u6784\u95e8\u5728\u5f79\uff1b--with-p1 \u6545\u610f\u4e0d\u88c5\uff09",
+    "patches/vllm-dsa-gfx90a/README.md\uff08DSA \u7d22\u5f15\u5668 fp32 \u53c2\u8003\u7248\u6765\u6e90\u8bb0\u5f55\uff0ccommit 9349d08\uff0c\u8fd0\u884c\u65f6\u4e0d\u88ab launcher \u8c03\u7528\uff09",
+    "patches/qwen4exp/local-nogds-gds-for-tp-gt1.patch\uff08VLLM_FST_KEEP_NOGDS \u8bfb\u53d6\u65b9\uff09",
+    "patches/qwen4exp/local-ple-fp8-resident.patch\uff08PLE fp8 \u9a7b\u7559 + dtype \u62a4\u680f N25\uff09",
+    "src/hipais-shim\uff08LD_PRELOAD shim\uff1b7.2.4 \u7f3a hipAmdFileRead \u7684\u8f6c\u63a5\uff0cserve \u4fa7\u672c\u81c2\u9ed8\u8ba4\u4e0d\u7528 AIS\uff09"
+  ],
+  "pitfalls": [
+    {
+      "description": "\u53ef\u89c1\u6027\u4e09\u53d8\u91cf\u4e00\u4e2a\u90fd\u4e0d\u8bb8\u8bbe\uff08SPEC>0 \u786c\u89c4\u5219\uff09\uff1b\u624b\u6ed1\u8bbe\u4e86\u5c31\u7b49\u7740\u590d\u73b0'16 \u5206\u949f\u6302\u8d77'\u5047\u8c61\u2014\u2014\u90a3\u662f\u51b7 Triton autotune \u975e\u6b7b\u9501\u3002\u5bf9\u7167 8111 \u7528 HIP_VISIBLE_DEVICES \u9650 die \u662f TP4 \u65e0 MTP\uff0c\u4e24\u4ef6\u4e8b\u4e0d\u53ef\u4e92\u76f8\u6284",
+      "severity": "crash"
+    },
+    {
+      "description": "AIS=1 = exit 2 \u62d2\u542f\uff08\u4e0d\u662f\u5efa\u8bae\u522b\u5f00\uff09\uff1b\u7ed5\u5f00\u811a\u672c\u7ed9 serve \u5f00 AIS \u2192 5014 \u5d29",
+      "severity": "crash"
+    },
+    {
+      "description": "VLLM_AIS_PLE_FP8=0 \u4e0d\u53ef\u7701\u7565\uff1a\u5f00\u7740\u5bf9 BF16 checkpoint = \u65e0\u58f0\u628a PLE \u91cf\u5316\u6210 fp8\uff08\u6a21\u578b\u7167\u8d77\u8f93\u51fa\u7167\u901a\u987a\uff1b\u73b0 dtype \u62a4\u680f raise TypeError\uff09",
+      "severity": "regress"
+    },
+    {
+      "description": "\u81ea\u8bbe QR=1 \u7684\u663e\u5b58\u526f\u4f5c\u7528\uff1aQuickAllReduce \u6784\u9020\u5728\u663e\u5b58\u63a2\u6d4b\u524d\u5403 IPC \u7f13\u51b2 ~8-9 GiB/die\uff08\u4e24\u4e2a\u901a\u4fe1\u7ec4\u00d74 GiB \u9ed8\u8ba4 2 GiB qr_max\uff09\u2192 \u542f\u52a8\u95e8\u62a5 Free memory 54.94/63.98 \u6052\u5b9a\u7f3a 9 GiB\uff0c\u6781\u6613\u8bef\u5224\u6210'\u522b\u7684\u4f1a\u8bdd\u62a2\u5361'\uff1bQR=1 \u9700 QR_MAX_MB=64 + \u5efa\u8bae GPU_MEM_UTIL=0.85",
+      "severity": "crash"
+    },
+    {
+      "description": "QR=1 \u4f46\u65e5\u5fd7\u4ecd Using ['PYNCCL'] = \u8865\u4e01\u6f02\u79fb\uff1b\u7ed5\u8fc7\u811a\u672c\u76f4\u8dd1 python \u4f1a\u9759\u9ed8\u9000\u5316\u2014\u2014\u8dd1 port_p1_c2_c3.py --require\uff08\u4e0d\u662f --check\uff1a\u672a\u6253\u8865\u4e01\u7684\u5e72\u51c0\u6811 --check \u4e5f\u7b97\u8fc7\uff09",
+      "severity": "config"
+    },
+    {
+      "description": "\u6295\u673a\u771f\u4e0a\u573a\u5224\u636e = /metrics \u7684 spec_decode_num_drafts_total \u589e\u957f\uff08num_draft_tokens/num_drafts=n\uff09\uff1b\u770b 'Using \u2026' \u6784\u9020\u884c\u4f1a\u9a97\u4eba\uff1b\u672c\u81c2\u9ed8\u8ba4\u6052 PYNCCL",
+      "severity": "config"
+    },
+    {
+      "description": "md5 \u5bf9\u62cd\u7981\u6b62\u8de8\u914d\u7f6e\u5224\u5bf9\u9519\uff1a\u53ea\u6539 SPEC \u4e5f\u5728\u7b2c 327 \u5b57\u7b26\u5206\u53c9\uff08\u5927\u91cf\u7cbe\u786e\u5e76\u5217 top1\uff0c\u6279\u5f62\u72b6\u4e00\u53d8\u5373\u7ffb token\uff09\uff1b\u8de8\u914d\u7f6e\u6b63\u786e\u6027\u53ea\u8ba4 Phase1 \u5206\u6570\uff08\u5404\u6863\u5168 17/17\uff09",
+      "severity": "config"
+    },
+    {
+      "description": "\u9a7b\u7559\u5224\u636e\u53ea\u8ba4 Model loading took 43.x GiB\uff08sysfs \u52a0\u8f7d\u4e2d\u6052\u8bfb 10 MiB=N17\uff09\uff1bpkill -f \u7981\uff08setsid \u21d2 kill -TERM -$(cat logs/flash-next-8107.pid)\uff09",
+      "severity": "config"
+    },
+    {
+      "description": "cap \u53e3\u5f84\u4e0d\u53ef\u6df7\uff1an=1 \u7684 160.14 \u662f 200 W \u6863\u3001\u5176\u4f59 560 W\uff1b\u8de8 boot \u03c3\u22484.6%\uff0c\u00b12% \u4e0d\u5f53\u7ed3\u8bba",
+      "severity": "config"
+    },
+    {
+      "description": "vllm.arm-local.conf \u7684 7 \u6761\u7b56\u7565 env \u4e0e vLLM \u9ed8\u8ba4\u4e0d\u540c\uff0c\u53ea 8101/8107/8109 source\u2014\u2014\u522b blanket \u5230\u522b\u7684\u81c2",
+      "severity": "config"
+    },
+    {
+      "description": "\u6539\u884c\u4e3a=\u6539 src/vllm-master \u5e76 commit\uff08envs/ \u91cc\u53ea\u6709 editable finder\uff09\uff1b\u4e24\u4e2a\u63a8\u4e0d\u51fa\u53bb\u7684\u672c\u5730 commit 9349d08/af49926 \u9760 backup remote + bundle \u4fdd\u5e95",
+      "severity": "config"
+    },
+    {
+      "description": "SPEC>0\uff08MTP\uff09\u65f6\u8bbe\u4efb\u4f55 HIP/ROCR/CUDA_VISIBLE_DEVICES \u21d2 \u8d77\u670d\u5373\u5d29\u3001\u65e0\u5185\u6838\u9519\u8bef\uff08worker \u5728 get_kv_cache_spec \u56de\u5305\u65f6\u8fde\u5e26\u635f\u574f\uff09\uff1b8111 \u7684 HIP_VISIBLE_DEVICES=0,1,2,3 \u662f TP4 \u65e0 MTP \u7684\u53e6\u4e00\u5957\u89c4\u77e9\uff0c\u4e0d\u53ef\u4e92\u6284",
+      "severity": "crash"
+    },
+    {
+      "description": "slim torch \u7f3a LD_LIBRARY_PATH=/opt/rocm-7.2.4/lib \u76f4\u63a5 core dump\uff08N13\uff09\uff1b\u7edd\u4e0d\u78b0 /opt/rocm alternatives\uff08\u7ea2\u7ebf 2\uff0c\u4e24\u4ee3 libamdhip64 \u540c\u540d .so.7 \u9759\u9ed8\u6362\u5e93\uff09",
+      "severity": "crash"
+    },
+    {
+      "description": "SPEC 5\u20138 \u662f\u8d77\u670d\u5373\u5d29\u6b7b\u533a\uff08qsa_cache capacity=12\u2224416\uff0cn=5 \u5b9e\u6d4b\u5d29\uff09\uff1bn=4 \u8d77\u5f97\u6765\u4f46 ring \u96f6\u4f59\u91cf\uff08\u5355\u6d41 \u221233%\uff09\u2014\u2014\u53ef\u884c\u2260\u5212\u7b97",
+      "severity": "crash"
+    },
+    {
+      "description": "\u4e0d\u8bbe VLLM_ROCM_SPLITKV_PA_MAX_SEQS\uff1a\u95e8\u9650\u552f\u4e00\u771f\u503c=\u5185\u6838 DEFAULT_MAX_SEQS=64\uff0c\u811a\u672c\u518d\u5199\u4e00\u904d=\u5236\u9020\u7b2c\u4e8c\u4e2a\u771f\u503c\uff08beta \u5c01\u88c5\u66fe\u628a 64 \u6309\u56de 16 \u7ffb\u8f66\uff09",
+      "severity": "config"
+    },
+    {
+      "description": "\u5b9e\u9a8c\u5b8c\u5fc5\u987b port_splitkv_pa.py --revert \u4e0e probe_splitkv_reach.py --revert\uff0c\u628a editable \u6811\u8fd8\u539f\u6210\u4e0e git HEAD \u9010\u5b57\u8282\u4e00\u81f4\u5e76 git status \u81ea\u8bc1\u5e72\u51c0\u2014\u2014\u90a3\u68f5\u6811\u662f 8107 \u7684\u751f\u4ea7\u4ee3\u7801",
+      "severity": "config"
+    },
+    {
+      "description": "\u63a2\u9488/TP worker \u5171\u5199\u540c\u4e00\u8ba1\u6570\u6587\u4ef6\u4e92\u76f8\u8986\u76d6 \u21d2 '\u8ba1\u6570\u5668\u4ece 12000 \u6389\u56de 2000'\uff0809-08 \u5b9e\u6d4b\u6293\u8fc7\uff09\uff1b\u6309 .pid<PID>.json \u5206\u6587\u4ef6\u8bfb",
+      "severity": "config"
+    },
+    {
+      "description": "\u6539 SPEC \u6df1\u5ea6/\u5f00\u5173\u5373\u6362\u914d\u7f6e\uff1amd5 \u7981\u8de8\u914d\u7f6e\u5bf9\u62cd\uff08temp=0 \u6295\u673a\u4e0e\u975e\u6295\u673a\u4e0d\u9010\u5b57\u540c\uff09\uff1b\u540c boot \u6210\u5bf9\u91cd\u8dd1\u624d\u53ef\u6bd4\uff0c\u8de8 boot \u00b12% \u4e0d\u5f53\u7ed3\u8bba\uff08\u03c3\u22484.6%\uff09",
+      "severity": "config"
+    },
+    {
+      "description": "\u9a7b\u7559\u5224\u636e\u53ea\u8ba4 'Model loading took X GiB memory'\uff08\u52a0\u8f7d\u671f sysfs \u6052 ~10 MiB\uff0cN17\uff09\uff1b\u5c31\u7eea\u6536\u53e3 'Application startup complete'\uff1b\u6709 die \u88ab\u5360 exit 4 \u65f6\u7edd\u4e0d\u52a0\u6740\u4fe1\u53f7\u3001\u7b49\u6216\u6362\u65f6",
+      "severity": "config"
+    }
+  ],
+  "port": "8107",
+  "precision": "bf16",
+  "primary_metric_note": "\u53e3\u5f84\uff1aSE-Bench Phase2 \u805a\u5408\uff0cSPEC=3 @560 W + batched 8192\uff0c2.329 req/s\u300176/76\uff1bbench/se_bench_report_qwen38_flash_next_bf16_rocm724_tp8_mtp3_uncapped.json\uff08CLAUDE.md \u00a79\uff09\uff1b\u540c\u6863\u5355\u6d41 short 88.6 t/s",
+  "provenance": {
+    "details": "Seeded from the workstation recipe library docs/recipes/ (verified 2026-09-15); metric: e2e 296.86tok/s \u2014 \u53e3\u5f84\uff1aSE-Bench Phase2 \u805a\u5408\uff0cSPEC=3 @560 W + batched 8192\uff0c2.329 req/s\u300176/76\uff1bbench/se_bench_report_qwen38_flash_next_bf16_rocm724_tp8_mtp3_uncapped.json\uff08CLAUDE.md \u00a79\uff09\uff1b\u540c\u6863\u5355\u6d41 short 88.6 t/s",
+    "merged_from": [
+      "8107-qwen38-flash-next-176b-bf16-vllm-tp8",
+      "8109-qwen38-flash-next-176b-bf16-vllm-splitkv"
+    ],
+    "recipe_id": "8107-qwen38-flash-next-176b-bf16-vllm-tp8",
+    "seed_script": "scripts/seed_recipe_kb.py"
+  },
+  "recipe_id": "8107-qwen38-flash-next-176b-bf16-vllm-tp8+8109-qwen38-flash-next-176b-bf16-vllm-splitkv",
+  "remaining_gaps": [
+    {
+      "description": "60.8\uff0809-10\uff09vs 88.6\uff0809-05\uff09\u5355\u6d41\u5dee 46% \u672a\u95ed\u5408\uff08\u7591 cap\uff0c_final \u5934\u6ce8\u91ca\uff09",
+      "metrics": "\u5355\u6d41 t/s @ \u5bf9\u9f50 cap"
+    },
+    {
+      "description": "\u6df1\u5ea6\u4e0a\u63a2 n=9\uff08\u4f59\u91cf 3\uff09\u53ef\u884c\u4f46\u96f6\u5b9e\u6d4b",
+      "metrics": "Phase2 tok/s @n=9"
+    },
+    {
+      "description": "MAX_MODEL_LEN \u964d\u6863=\u5e38\u6570\u7a0e\u56de\u6536\u5b9e\u9a8c\u672a\u505a\uff08\u89c1 8301 \u914d\u65b9 \u00a79\uff09",
+      "metrics": "decode/TTFT @\u964d\u6863"
+    },
+    {
+      "description": "serve+AIS 5014 \u672a\u89e3\uff1b\u76f4\u8bfb\u663e\u5b58\u9700\u6c42\u76ee\u524d\u53ea\u80fd\u79bb\u7ebf run_q4e_ais_load.sh",
+      "metrics": "\u2014"
+    },
+    {
+      "description": "\u672c\u81c2\u4ece\u672a\u4ee5\u5dee\u5f02\u5316\u914d\u7f6e\u5355\u72ec\u6d4b\u8fc7\u541e\u5410\uff08\u6570\u5b57\u5168\u5f15 8107\uff09\uff1barm \u7559\u5b58\u610f\u4e49=\u7ed9\u4e0b\u4e00\u4e2a\u5e95\u5ea7\u590d\u7528 split-KV \u63a5\u7ba1\u95e8",
+      "metrics": "296.86 tok/s / \u5355\u6d41 88.6\uff0809-05 @560 W\uff0c8107 \u955c\u50cf\uff09"
+    },
+    {
+      "description": "cand_splitkv_pa_mq.py\uff08\u591a\u67e5\u8be2 MQ \u53d8\u4f53\u5019\u9009\u7a3f\uff09\u672a\u63a5\u7ebf\uff0c\u7559\u4f5c\u4e0b\u4e00\u6b65\u5b9e\u9a8c",
+      "metrics": "\u2014"
+    }
+  ],
+  "seeded_at": "2026-09-15T08:06:40+00:00",
+  "sessions": [
+    {
+      "actions_taken": [
+        "seeded from docs/recipes/8107-qwen38-flash-next-176b-bf16-vllm-tp8"
+      ],
+      "date": "2026-09-15",
+      "gain_pct": 0.0,
+      "session_id": "recipe-seed:8107-qwen38-flash-next-176b-bf16-vllm-tp8",
+      "stack_len": 5,
+      "throughput_after": 296.86,
+      "throughput_before": 0.0
+    },
+    {
+      "actions_taken": [
+        "seeded from docs/recipes/8109-qwen38-flash-next-176b-bf16-vllm-splitkv"
+      ],
+      "date": "2026-09-15",
+      "gain_pct": 0.0,
+      "session_id": "recipe-seed:8109-qwen38-flash-next-176b-bf16-vllm-splitkv",
+      "stack_len": 7,
+      "throughput_after": 296.86,
+      "throughput_before": 0.0
+    }
+  ],
+  "stack_fingerprint": {
+    "aiter_commit": "",
+    "rocm_version": "7.2.4",
+    "vllm_version": "0.1.dev1+g8a728663c.rocm724\uff08master editable \u2192 src/vllm-master\uff0cpin 8a728663c\uff1btorch 2.12.0+git6bbd260 slim\uff09"
+  },
+  "status": "active",
+  "tp": 8,
+  "updated_at": "2026-09-15T08:06:40.763514+00:00",
+  "version": 1,
+  "what_failed": [
+    {
+      "description": "TP8 \u5f00 QuickReduce",
+      "reason": "\u4e0a\u573a 12 \u4e07\u6b21\u5b9e\u6d4b \u22120.44%\uff1bQR \u6536\u76ca\u53ea\u5728 TP2(+4.7%)/TP4(+12.5~24.9%)\uff08\u5438\u6536\u843d\u5730 L313\uff09"
+    },
+    {
+      "description": "serve + AIS",
+      "reason": "cuFileBufRegister 5014 \u4ee5\u5d29\u4ee3\u964d\uff08\u629b Exception \u975e RuntimeError \u7ed5\u8fc7\u81ea\u52a8\u56de\u9000\uff09\uff1b\u4e09\u5757\u76d8\u4ea4\u53c9\u8bc1\u660e\u4e0e\u76d8\u65e0\u5173\u3001\u53ea\u5c5e api_server \u8fdb\u7a0b\u6811\uff0c\u672a\u89e3"
+    },
+    {
+      "description": "vLLM CUSTOM allreduce / one-shot IPC / NCCL_SYMM_MEM",
+      "reason": "CUSTOM \u5728 gfx90a \u9759\u9ed8\u7b97\u9519\uff08\u8f93\u51fa\u5168 !!!\uff0c\u771f\u62a4\u680f\u662f\u4e0a\u6e38\u5e73\u53f0\u95e8\uff09\uff1bone-shot \u4e94\u914d\u65b9\u5168\u8d25\uff1bSYMM_MEM \u6b63\u786e\u4f46\u66f4\u6162\u2014\u2014decode AR \u6700\u4f18\u5c31\u662f QR"
+    },
+    {
+      "description": "AITER MoE\uff08VLLM_ROCM_USE_AITER=1\uff09",
+      "reason": "CDNA2 \u7ec8\u6848\u4e0d\u53ef\u7528\uff1bRMSNorm \u4f18\u5148\u7ea7\u95e8\u4e0d\u67e5 arch\uff0c\u7f6e 1 \u4f1a\u771f\u8c03\u6ca1\u6709 gfx90a \u7801\u5bf9\u8c61\u7684\u6838\uff1bTRITON fused MoE \u5373\u6700\u4f18"
+    },
+    {
+      "description": "moe-tuned \u79cd\u5b50\u8868\u63a5\u9ed8\u8ba4",
+      "reason": "\u672c\u673a \u00a7H A/B \u22123%/\u22124%\uff08\u65e5\u5fd7\u786e\u8ba4\u547d\u4e2d\uff09\u21d2 \u9ed8\u8ba4\u4e0d\u63a5\uff0cVLLM_TUNED_CONFIG_FOLDER \u52ff\u8fdb conf\uff08\u95f8\u53e3 R3\uff09"
+    },
+    {
+      "description": "fp8-KV / EP",
+      "reason": "QSA \u786c\u8981\u6c42 BF16 \u4e3b KV\uff08\u663e\u5f0f raise\uff09\uff1bEP \u5b9e\u6d4b agg \u22126%\uff08\u65bd\u5de5\u5355 \u00a7H\uff09"
+    },
+    {
+      "description": "MTP n=5\u20138",
+      "reason": "qsa_cache.py:836 \u65ad\u8a00 416%capacity==0 \u6b7b\u533a\uff0c\u8d77\u670d\u5373\u5d29\uff1bn=4 \u8d77\u5f97\u6765\u4f46 ring \u96f6\u4f59\u91cf\u5355\u6d41 \u221233%\uff08\u53ef\u884c\u2260\u5212\u7b97\uff09"
+    },
+    {
+      "description": "\u5f00 MTP \u65f6\u8bbe\u4efb\u4f55 HIP/ROCR/CUDA_VISIBLE_DEVICES",
+      "reason": "\u89e6\u53d1 ROCm deprecated \u4e8c\u6b21\u8fc7\u6ee4\u8def\u5f84\uff0c\u5168\u4f53 worker \u5728 get_kv_cache_spec \u56de\u5305\u65f6\u8fde\u5e26\u635f\u574f\u3001\u65e0\u5185\u6838\u9519\u8bef\uff08\u57fa\u811a\u672c L34-38 \u75c5\u6839\u5bf9\u7167\uff1a\u5d29\u8fc7\u7684\u4e24\u6b21\u5168\u8bbe\u4e86\uff0c\u6210\u529f\u7ec4\u5168\u4e0d\u8bbe\uff09"
+    },
+    {
+      "description": "P1 \u95e8\u63a7 GEMV\uff08--with-p1\uff09",
+      "reason": "\u6545\u610f\u4e0d\u88c5\uff1a\u5bf9 qwen4_exp \u4ec5 +0.2%\uff0c\u4f4e\u4e8e\u566a\u58f0\u5e95\uff08patches/gfx90a README L18-20\uff09"
+    },
+    {
+      "description": "split-KV \u79fb\u690d\u5230 Flash-Next \u5e95\u5ea7\uff08SPLITKV=1\uff09",
+      "reason": "\u7a7a\u64cd\u4f5c\uff1a\u672c\u6a21\u578b full-attention \u8d70 QSA \u7a00\u758f\u540e\u7aef\uff08indexer_n_heads=4\u21d2use_qsa\uff0c\u7ed1 Qwen4ExpQSAFlashAttentionBackend\uff0c\u81ea\u5e26 _qsa_sparse_paged_gqa_splitk_kernel\uff09\uff0c\u4e0d\u8c03\u7528\u63a5\u7ba1\u5bc4\u751f\u7684 chunked_prefill_paged_decode\uff1b\u518d\u53e0 MTP SPEC=3 \u65f6 max_query_len=1+3=4\u22601 \u53c8\u88ab\u95e8\u62d2\u4e00\u6b21\u3002\u6536\u76ca\u53ea\u5728 ROCM_ATTN \u8d70 Triton \u56de\u9000\u7684\u6a21\u578b\uff088111/8301\uff09\u5151\u73b0"
+    },
+    {
+      "description": "VLLM_ROCM_USE_AITER=1",
+      "reason": "RMSNorm \u9677\u9631\uff08platforms/rocm.py:1109-1116 \u4f18\u5148\u7ea7\u95e8\u53ea\u770b env \u4e0d\u67e5 arch\uff09+ AITER MoE gfx90a \u7ec8\u6848\u4e0d\u53ef\u7528\uff08\u540c 8107 \u00a79\uff09"
+    },
+    {
+      "description": "CUSTOM allreduce / one-shot IPC / NCCL_SYMM_MEM",
+      "reason": "\u5206\u522b\uff1a\u9759\u9ed8\u8f93\u51fa !!! / \u4e94\u914d\u65b9\u5168\u8d25 / \u66f4\u6162\uff08\u540c 8107 \u00a79\uff09"
+    },
+    {
+      "description": "moe-tuned \u79cd\u5b50\u8868",
+      "reason": "\u672c\u673a\u540c\u5e95\u5ea7 A/B \u22123~\u22124%\uff0860.8\u219258.8\u3001289.0\u2192276.4\uff0c\u751f\u6548\u4f46\u66f4\u6162\uff09\uff0c\u9ed8\u8ba4 tile \u5df2\u8fd1\u6700\u4f18"
+    },
+    {
+      "description": "QR=1 \u5728\u672c\u5e95\u5ea7 TP8",
+      "reason": "TP8 \u5224\u8d1f\uff08trace \u8bc1\u660e\u4e0a\u573a 120,696 \u6b21\uff0c\u7aef\u5230\u7aef \u22120.44%\uff09\uff1b\u9ed8\u8ba4 QR=0 \u662f\u51b3\u5b9a\u4e0d\u662f\u9057\u6f0f\uff1bQR \u6536\u76ca\u53ea\u5728 TP\u22644"
+    },
+    {
+      "description": "ATOM / fp8-KV on QSA",
+      "reason": "gfx90a \u56db\u9053\u5899\u5224\u6b7b / \u663e\u5f0f raise\uff08\u540c 8107 \u00a79\uff09"
+    }
+  ],
+  "what_worked": [
+    {
+      "description": "MTP n=3 \u6295\u673a\uff08\u6743\u91cd\u81ea\u5e26 31 \u4e2a mtp.* \u5f20\u91cf\uff0cqwen4_exp\u2192qwen4_exp_mtp\u2192Qwen4ExpMTP\uff09",
+      "measured_impact": "Phase2 296.86 tok/s\u3001\u5355\u6d41 88.6 t/s\uff082026-09-05 @560W+8192\uff09\uff1b\u589e\u76ca graph \u540e +23.3%\uff08eager \u53e3\u5f84 +54%\uff09"
+    },
+    {
+      "description": "TP8 \u552f\u4e00\u53ef\u884c\u6863\uff1ahidden 2560/moe_intermediate 640/experts 512 \u53ea\u88ab 2/4/8 \u6574\u9664\uff0cBF16 360 GB \u5728 TP4=83.8 GiB/die>64",
+      "measured_impact": "TP\u22608 \u8d77\u4e0d\u6765\uff1bPP \u88ab model_state.py \u9650 1\uff08\u57fa\u811a\u672c L17-18\uff09"
+    },
+    {
+      "description": "master \u6811\uff08\u5168\u4ed3\u552f\u4e00\u6ce8\u518c Qwen4Exp/Qwen4ExpMTP \u7684 arch \u8868\uff1aregistry.py grep=5 \u5904 vs 0.28 wheel 0\uff09",
+      "measured_impact": "\u6362 0.28 wheel = \u8d77\u670d\u5373 arch not supported\uff08environments/vllm_master_rocm724 \u00a72\uff09"
+    },
+    {
+      "description": "C2/C3 QR \u67b6\u6784\u95e8\u8865\u4e01\u6253\u5728 master \u6811 + QR=1 \u5206\u652f\u8dd1 port_p1_c2_c3.py --require \u7684 fail-closed \u51c6\u5165\u95e8",
+      "measured_impact": "quick_all_reduce.py \u542b gfx90\u3001cuda_communicator.py \u542b _MI250_QR_WANTED\uff0809-15 \u5b9e\u67e5\u5728\u5f79\uff09\uff1b--require \u4fdd\u8bc1'\u5f00\u4e86'\u53ef\u8bc1\u4f2a"
+    },
+    {
+      "description": "--max-num-batched-tokens 8192 \u663e\u5f0f\u4f20\uff08\u5f00 MTP \u4e0d\u4f20\u4f1a\u88ab\u538b\u5230 2048 \u5e76 WARNING\uff09",
+      "measured_impact": "\u4e0e 296.86 \u57fa\u7ebf\u540c\u53e3\u5f84\uff1bWARNING \u6d88\u5931\u5373\u6863\u4f4d\u6b63\u786e\u65c1\u8bc1\uff08\u57fa\u811a\u672c L133-135\uff09"
+    },
+    {
+      "description": "--limit-mm-per-prompt \u7981\u591a\u6a21\u6001\u8f93\u5165\uff08\u5e26\u89c6\u89c9\u5854\u5305\u88c5 arch \u7684 profiling \u5f02\u6b65\u9519\u514d\u75ab\uff09",
+      "measured_impact": "\u5426\u5219 hipErrorInvalidKernelFile \u62d6\u5230\u4e0b\u4e00\u4e2a API \u8c03\u7528\u624d\u7206\uff08\u57fa\u811a\u672c L163-165\uff09"
+    },
+    {
+      "description": "\u516d\u9053\u524d\u7f6e\u65ad\u8a00\u5185\u7f6e launcher\uff08A0 \u6743\u91cd\u53ef\u8bfb / A5 \u6bcf die \u7a7a\u95f2\u226420 MiB / A6 \u7aef\u53e3\u672a\u5360 / A1\u2013A4 split-KV \u8865\u4e01\u51c6\u5165\uff09\uff0c\u5199\u5171\u4eab editable \u6811\u8bbe\u6210 opt-in\uff1a\u9ed8\u8ba4 SPLITKV=0 \u4e14 PROBE=0 \u5b8c\u5168\u4e0d\u78b0 src/vllm-master",
+      "measured_impact": "\u8d85\u9650\u62d2\u8d77\uff08exit 3/4/5\uff09\u66ff\u4ee3\u5e26\u75c5\u8d77\u670d\uff1b\u4e0e 8107 \u5171\u7528\u7684\u5728\u5f79\u6811\u96f6\u9ed8\u8ba4\u6270\u52a8"
+    },
+    {
+      "description": "sha \u4e0d\u53d8\u5f0f\u5224\u636e\uff1a\u7b2c 0 \u73af = \u6e90 rocm_splitkv_pa.py sha256 == \u88c5\u6811 sha256\uff08\u4e24\u5904\u76f8\u7b49\u5224\u5b9a\uff0c\u4e0d\u5199\u6b7b\u503c\uff09+ --check/--require fail-closed",
+      "measured_impact": "--revert \u540e\u9010\u5b57\u8282==git HEAD\uff0809-07 \u5b9e\u6d4b\uff0c\u7814\u7a76\u7b14\u8bb0 \u00a71\uff09"
+    },
+    {
+      "description": "\u5185\u7f6e stop \u5b50\u547d\u4ee4\uff1a\u53ea\u8ba4 PID \u6587\u4ef6\u663e\u5f0f PGID\uff0cTERM\u219280 s\u2192KILL\u2192\u518d\u7b49 90 s sysfs \u56de\u843d\uff1b\u65e7\u628a\u624b\u6539\u540d .dead/.stale-absent",
+      "measured_impact": "\u505c\u670d\u540e\u53ef\u590d\u6838 card1..8 \u56de\u843d\u4e0e\u7aef\u53e3\u91ca\u653e\uff0c\u4e0d\u8bef\u6740\u522b\u4eba\u8fdb\u7a0b"
+    },
+    {
+      "description": "PROBE \u8c03\u7528\u8ba1\u6570\u63a2\u9488\u628a'\u8def\u5f84\u4e0d\u7ecf\u8fc7(a)'\u4e0e'\u7ecf\u8fc7\u88ab\u95e8\u62d2(b)'\u53d8\u6210\u53ef\u6570\u8bc1\u636e\uff08\u6bcf\u8fdb\u7a0b .pid<PID>.json \u5206\u6587\u4ef6\uff09",
+      "measured_impact": "(a) \u5df2\u8bc1\u5b9e\uff1a\u552f\u4e00\u8c03\u7528\u8005=ROCM_ATTN :459\uff1bgrep qwen4_exp/ 0 \u547d\u4e2d\uff1b\u63a5\u7ba1\u65e5\u5fd7 0 \u547d\u4e2d\u2014\u2014\u4e09\u8bc1\u636e\u94fe"
+    }
+  ]
+}

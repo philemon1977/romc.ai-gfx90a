@@ -1,0 +1,49 @@
+{
+  "architectures": [
+    "Qwen3_5MoeForConditionalGeneration"
+  ],
+  "authority": "EXPERIENTIAL",
+  "best_config": {},
+  "best_throughput": 0.0,
+  "canonical_id": "inference:ornith-1.5-397b-fp8:unknown_gpu:vllm:qwen3_5_moe:qwen3_5moeforconditionalgeneration:0.28.0:fp8",
+  "conc": 64,
+  "confidence": 0.85,
+  "created_at": "2026-09-15T16:16:55.452424+00:00",
+  "ep": 1,
+  "evidence_refs": [],
+  "framework_name": "vllm",
+  "framework_version": "0.28.0",
+  "hardware": "unknown_gpu",
+  "image_digest": "rocm-ai/vllm:0.28.0-rocm7.2.4",
+  "isl": 1024,
+  "kernel_optimizations": [],
+  "last_profiled": "",
+  "lessons": [],
+  "max_model_len": 6144,
+  "model": "Ornith-1.5-397B-FP8",
+  "model_type": "qwen3_5_moe",
+  "osl": 1024,
+  "pitfalls": [],
+  "precision": "fp8",
+  "provenance": {
+    "details": {
+      "sid": "20260915T161654Z-c63294cb"
+    },
+    "generated_at": "2026-09-15T16:16:55.452029+00:00",
+    "generator": "t0_anchor",
+    "source": "hyperloom-inference-optimizer"
+  },
+  "remaining_gaps": [],
+  "rocm_version": "7.2.4",
+  "sessions": [],
+  "stack_fingerprint": {
+    "aiter_commit": "",
+    "rocm_version": "7.2.4",
+    "vllm_version": "0.28.0+rocm723"
+  },
+  "tp": 8,
+  "updated_at": "2026-09-15T16:16:55.452424+00:00",
+  "version": 1,
+  "what_failed": [],
+  "what_worked": []
+}

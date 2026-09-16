@@ -1,0 +1,20 @@
+{
+  "canonical_ids": [
+    "inference:deepseek-v4-flash-0731-gguf:mi250x:llama.cpp:unknown_model_type:unknown_arch:0.3.0-dev+a9e9c3c5f:ud-q8_k_xl",
+    "inference:deepseek-v4.1-flash-gguf:mi250x:llama.cpp:unknown_model_type:unknown_arch:0.4.0-dev+f37da57:q4_k_m",
+    "inference:glm-5.3-flash-gguf:mi250x:llama.cpp:unknown_model_type:unknown_arch:0.3.0-dev+629b50552:q8_0",
+    "inference:ornith-1.5-35b-a3b:mi250x:vllm:qwen3_5_moe:qwen3_5moeforconditionalgeneration:0.28.0+rocm723:bf16",
+    "inference:ornith-1.5-397b-gguf:mi250x:llama.cpp:unknown_model_type:unknown_arch:0.3.0-dev+a9e9c3c5f:q8_0",
+    "inference:qwen2.5-1.5b-instruct:mi250x:vllm:qwen2:qwen2forcausallm:0.28.0+rocm723:bf16",
+    "inference:qwen3.8-27b-abliterated-w8a8-gdnint8:mi250x:vllm:qwen3_5:qwen3_5forconditionalgeneration:0.28.0+rocm723:int8_w8a8",
+    "inference:qwen3.8-27b-fable-distill:mi250x:vllm:qwen3_5:qwen3_5forconditionalgeneration:0.1.dev1+g8a728663c.rocm724:bf16",
+    "inference:qwen3.8-27b-fable-distill:mi250x:vllm:qwen3_5:qwen3_5forconditionalgeneration:0.28.0+rocm723:bf16",
+    "inference:qwen3.8-27b:mi250x:vllm:qwen3_5:qwen3_5forconditionalgeneration:0.28.0+rocm723:bf16",
+    "inference:qwen3.8-flash-next-bf16:mi250x:vllm:qwen4_exp:qwen4expforconditionalgeneration:0.1.dev1+g8a728663c.rocm724:bf16",
+    "inference:qwen3.8-flash-next-gguf:mi250x:llama.cpp:unknown_model_type:unknown_arch:0.3.0-dev+a9e9c3c5f:ud-q4_k_xl"
+  ],
+  "hardware": "mi250x",
+  "rows": 12,
+  "seeded_at": "2026-09-15T08:06:40+00:00",
+  "source": "/home/qiba/ai/docs/recipes (serving arms)"
+}

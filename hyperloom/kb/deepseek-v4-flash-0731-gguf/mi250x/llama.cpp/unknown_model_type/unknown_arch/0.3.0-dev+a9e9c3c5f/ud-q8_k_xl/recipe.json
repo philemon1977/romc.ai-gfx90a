@@ -1,0 +1,252 @@
+{
+  "authority": "EXPERIENTIAL",
+  "best_config": {
+    "extra_envs": {
+      "GGML_CUDA_P2P": "1",
+      "HIP_VISIBLE_DEVICES": "0,1,2,3,4,5,6,7",
+      "OMP_NUM_THREADS": "24",
+      "OMP_WAIT_POLICY": "PASSIVE",
+      "ROCR_VISIBLE_DEVICES": "0,1,2,3,4,5,6,7\uff08llama.cpp \u81c2\u73b0\u5f79\u811a\u672c\u4e00\u5f8b HIP+ROCR \u53cc\u8bbe\u540c\u4e00 DEVS \u96c6\uff1b\u5168 0..7 \u5b50\u96c6\u4f4e\u7f16\u53f7\u8d77\u5e42\u7b49\u5b89\u5168\uff09"
+    },
+    "extra_server_args": "--split-mode layer --tensor-split 1,1,1,1,1,1,1,1 --n-gpu-layers 999 --fit off --load-mode dio -c 2097152\uff08=CTX_SLOT\u00d7NP\uff0c\u603b\u4e0a\u4e0b\u6587\uff1b\u6bcf slot \u5f97 -c/NP=1M\uff09 -np 2 -b 2048 -ub 256\uff08=max(NP\u00d7(NGRAM_MAX+1),256)\uff09 -t 24 -tb 24 --spec-type ngram-mod --spec-ngram-mod-n-min 16 --spec-ngram-mod-n-max 32 --spec-ngram-mod-n-match 24 --alias deepseek-v4-flash --host 0.0.0.0 --port 8103 REASONING=on\uff08\u5b9a\u7a3f\uff1a\u8d28\u91cf\u4f18\u5148\uff0c\u65e0 --reasoning* flag\uff1b\u6279\u91cf\u590d\u8ff0\u624d\u6574\u5957 off=--reasoning-budget 0\uff09"
+  },
+  "best_throughput": 22.1,
+  "canonical_id": "inference:deepseek-v4-flash-0731-gguf:mi250x:llama.cpp:unknown_model_type:unknown_arch:0.3.0-dev+a9e9c3c5f:ud-q8_k_xl",
+  "confidence": 0.85,
+  "created_at": "2026-09-15T08:06:40.751876+00:00",
+  "engine": "llamacpp",
+  "entry": "models/unsloth/launcher/deepseek-v4-flash-0731_284b_q8kxl_llamacpp_rocm72_1m_8103_unsloth_mi250dx8.sh",
+  "env_path": "envs/llama.cpp_gfx90a-2026.9.8/qwen4exp-mtp-rp",
+  "evidence_refs": [
+    "/home/qiba/ai/docs/recipes/serving/8103-deepseek-v4-flash-0731-284b-q8kxl-llamacpp.md",
+    "/home/qiba/ai/models/unsloth/launcher/deepseek-v4-flash-0731_284b_q8kxl_llamacpp_rocm72_1m_8103_unsloth_mi250dx8.sh",
+    "/home/qiba/ai/models/unsloth/launcher/deepseek-v4-flash-0731_284b_q8kxl_llamacpp_rocm72_1m_8103_unsloth_mi250dx8.sh",
+    "/home/qiba/ai/docs/DSV4-Flash-0731-\u672c\u673a\u53ef\u884c\u6027\u52d8\u5bdf-2026-09-05.md",
+    "/home/qiba/ai/docs/MI250X-llama.cpp-TP-RCCL-\u672c\u673a\u5b9e\u6d4b-2026-09-12.md",
+    "/home/qiba/ai/config/ports.conf",
+    "/home/qiba/ai/docs/\u6a21\u578b-\u811a\u672c-\u73af\u5883\u5bf9\u7167\u8868-2026-09-12.md"
+  ],
+  "exclusive_with": [
+    "8108-glm-5.3-flash-320b-q8-0-llamacpp",
+    "8110-ornith-1.5-397b-q8-0-llamacpp",
+    "8112-deepseek-v4.1-flash-748b-q4km-llamacpp",
+    "8107-qwen38-flash-next-176b-bf16-vllm-tp8",
+    "8107-qwen38-flash-next-176b-q4kxl-llamacpp",
+    "8109-qwen38-flash-next-176b-bf16-vllm-splitkv",
+    "8111-ornith-1.5-35b-a3b-bf16-vllm-tp4",
+    "8301-qwen38-27b-fable-distill-bf16-vllm-splitkv-ab",
+    "8302-qwen38-27b-fable-distill-bf16-vllm-dflash2"
+  ],
+  "framework_name": "llama.cpp",
+  "framework_version": "0.3.0-dev+a9e9c3c5f",
+  "gpus": "mi250dx8",
+  "hardware": "mi250x",
+  "kernel_optimizations": [],
+  "last_profiled": "2026-09-12",
+  "lessons": [
+    {
+      "measured_impact": "8108/8103 \u53cc\u6559\u8bad\uff08knobs/llamacpp-speculation \u00a71\uff1b\u811a\u672c L96\uff09",
+      "statement": "ngram \u7684 n_min \u662f\u4e22\u5f03\u95e8\u69db\u4e0d\u662f\u8349\u7a3f\u957f\u5ea6\u2014\u2014\u8349\u7a3f\u77ed\u4e8e n_min \u6574\u4e2a\u4f5c\u5e9f\uff0c\u6846\u67b6\u9ed8\u8ba4 48 \u5bf9\u6563\u6587\u51e0\u4e4e\u6c38\u8fdc\u8fbe\u4e0d\u5230\uff0c\u4e0d\u8c03\u5230 ~16 \u7b49\u4e8e\u6ca1\u5f00"
+    },
+    {
+      "measured_impact": "\u590d\u6d4b 59\u201362 s \u5c31\u7eea\uff08\u52d8\u5bdf \u00a76\uff09",
+      "statement": "'\u5224\u6b7b'\u53ef\u80fd\u662f\u8bef\u8bca\uff1a09-05 \u7684\u6302\u6b7b\u662f\u7ea2\u7ebf 5 \u73b0\u573a\u800c\u975e\u5bb9\u91cf\u95ee\u9898\uff1b\u5148\u6309\u6210\u672c\u6392\u5e8f\u505a\u5dee\u5206\u5b9e\u9a8c\uff08\u6362\u5c0f\u8f93\u5165 15s\u2192\u6362\u5f00\u5173 1-3min\u2192\u91cd\u7f16 10min+\uff0cR2\uff09\uff0c\u987a\u5e8f\u5168\u53cd\u4f1a\u767d\u70e7\u5f88\u4e45"
+    },
+    {
+      "measured_impact": "TP-RCCL \u00a77 \u6e90\u7801\u53d6\u8bc1",
+      "statement": "\u7f16\u8bd1\u671f\u5f00\u5173\uff08GGML_HIP_RCCL\uff09\u4e0e\u4e0d\u5b58\u5728\u7684 env\uff08LLAMA_SPLIT_MODE\uff09\u8fd0\u884c\u65f6 export \u65e0\u4efb\u4f55\u6548\u679c\uff1b\u4e09\u5c42\u6b21\uff08CMake/\u547d\u4ee4\u884c/\u8fd0\u884c\u671f env\uff09\u522b\u6df7"
+    },
+    {
+      "measured_impact": "envs \u76d8\u70b9 \u00a74",
+      "statement": "\u8de8 boot \u6f02\u79fb \u03c3\u22484.6%\uff0c\u00b12% \u7ea7\u5dee\u5f02\u4e0d\u5f97\u5f53\u7ed3\u8bba\uff1b\u5f15\u7528\u6570\u5b57\u5148\u5bf9\u9f50 cap \u4e0e\u5e95\u5ea7\uff08300W/560W\u30014die/8die \u4e0d\u53ef\u6df7\u8868\uff09"
+    },
+    {
+      "measured_impact": "R6\u3001\u52d8\u5bdf \u00a77",
+      "statement": "\u6d4b\u91cf\u53e3\u5f84\uff1areasoning \u6a21\u578b\u6d4b\u901f\u53ea\u7528\u670d\u52a1\u7aef timings \u6216 content+reasoning_content \u5408\u5e76\u8ba1\u6570\uff1b\u8ba1\u65f6\u6b63\u5219\u8981\u6392\u9664 prompt eval time \u884c\uff08\u5426\u5219 prefill \u6df7\u8fdb decode \u5747\u503c\u51fa\u8fc7 28/67 \u5047\u6570\uff09"
+    }
+  ],
+  "model": "deepseek-v4-flash-0731-gguf",
+  "model_dir": "models/unsloth/DeepSeek-V4-Flash-0731-GGUF",
+  "other_metrics": [
+    {
+      "name": "prefill",
+      "note": "2026-09-12\uff0c4 die/32k \u6863\uff08\u52d8\u5bdf \u00a76\uff09",
+      "value": "284.9\u2013285 t/s @756 tok"
+    },
+    {
+      "name": "ngram \u590d\u8ff0\u6863",
+      "note": "8 die/1M\u3001ngram 16/32/24\u3001\u5173\u601d\u8003\u53e3\u5f84\uff08\u811a\u672c L37-38\uff1b\u540c\u65e5\u52d8\u5bdf \u00a77 \u8bb0 60.38/geo 30.97\uff0c\u5dee ~2% \u566a\u58f0\u5185\uff09\uff1b\u4e09\u5f62\u6001\uff1a\u5206\u6790 22.19/\u4ee3\u7801 22.18/\u590d\u8ff0 61.54",
+      "value": "61.54 t/s\uff08+177%\uff0cacc .875\uff09"
+    },
+    {
+      "name": "\u51b7 1M prefill",
+      "note": "\u52d8\u5bdf \u00a77\uff1a1M \u53ea\u5728\u589e\u91cf\u8f93\u5165+\u524d\u7f00\u590d\u7528\u4e0b\u53ef\u7528",
+      "value": "\u224861 min"
+    },
+    {
+      "name": "\u52a0\u8f7d/\u5c31\u7eea",
+      "note": "\u7ea2\u7ebf 5 \u5f00\u5173\u5728\u4f4d\u65f6\uff08\u52d8\u5bdf \u00a76/\u00a77\uff09",
+      "value": "59\u201362 s"
+    },
+    {
+      "name": "dspark \u81c2",
+      "note": "acc 0.531/len 2.59\uff0c\u52ff\u7528\uff08\u811a\u672c L45\u3001\u52d8\u5bdf \u00a77\uff09",
+      "value": "13.81 t/s\uff08\u221238%\uff09"
+    },
+    {
+      "name": "tensor split\uff08RCCL \u624b\u5de5\u6863\uff09",
+      "note": "TP-RCCL \u00a75/\u00a75.1\uff0c\u975e\u9ed8\u8ba4",
+      "value": "pp512 1.72\u00d7 / pp32768 1.83\u00d7\uff1bdecode 0.30\u00d7\uff1b\u5c31\u7eea 1\u203213\u2033\u21927\u203205\u2033"
+    },
+    {
+      "name": "1M vs 32k",
+      "note": "2026-09-12 \u52d8\u5bdf \u00a77",
+      "value": "decode \u53ea \u22123%"
+    }
+  ],
+  "patches": [],
+  "pitfalls": [
+    {
+      "description": "\u7ea2\u7ebf 5\uff1a\u7f3a --fit off --load-mode dio\uff08\u5df2\u710a\u6b7b\u5728 ARGS\uff0c\u811a\u672c L211\uff09\u2192 >2 min \u65e0 listening on\u3001GPU util \u6052 0%\u3001dmesg SVM mapping failed/svm_range_restore_work hogged CPU\uff1b\u4e0e'\u6587\u4ef6<RAM'\u65e0\u5173\uff1b\u5224\u636e'\u5148\u67e5\u8fd9\u4e24\u5f00\u5173\u522b\u67e5\u76d8'",
+      "severity": "crash"
+    },
+    {
+      "description": "\u53d7\u9650\u6c99\u7bb1\u6253\u4e0d\u5f00 /dev/kfd \u65f6\u9759\u9ed8\u9000\u5316 CPU-only \u7a7a\u70e7 155 G\uff1a\u8d77\u670d 30 s \u540e\u5fc5\u987b grep -c 'failed to initialize ROCm' == 0 \u4e14 VRAM \u5728\u6da8\uff08\u811a\u672c\u5df2\u5185\u7f6e\u62e6\u6740\uff09",
+      "severity": "regress"
+    },
+    {
+      "description": "-c \u662f\u603b\u4e0a\u4e0b\u6587\u4e0d\u662f\u6bcf slot\uff1a\u6bcf slot \u5f97 -c/NP\uff1b\u8d77\u540e\u6838\u5bf9\u65e5\u5fd7 n_slots=2, n_ctx_slot=1048576\uff1b\u8d77\u4e0d\u6765\u6309 524288\u2192262144 \u964d\u6863\u5e76\u56de\u62a5\uff0c\u522b\u6084\u6539\u9ed8\u8ba4",
+      "severity": "config"
+    },
+    {
+      "description": "UBATCH \u5fc5\u987b \u2265 NP\u00d7(NGRAM_MAX+1)\uff0c\u4f4e\u4e8e\u5b83\u6295\u673a\u9a8c\u8bc1\u6279\u88ab\u5207\uff1bBATCH%UBATCH\u22600 \u88ab\u9759\u9ed8\u5939\u53d6\uff08\u811a\u672c L120-127/L173\uff09",
+      "severity": "config"
+    },
+    {
+      "description": "NGRAM_MIN=48\uff08\u6846\u67b6\u9ed8\u8ba4\uff09= \u6ca1\u5f00 ngram\u2014\u2014\u5b83\u662f\u4e22\u5f03\u95e8\u69db\u4e0d\u662f\u957f\u5ea6\uff0c\u5fc5\u987b 16\uff08GLM \u6559\u8bad\uff0c\u811a\u672c L96\uff09",
+      "severity": "regress"
+    },
+    {
+      "description": "\u7981 pkill -f\uff1bkill $! \u66fe\u628a nohup+numactl \u5305\u88c5\u8fdb\u7a0b PID \u5f53\u628a\u624b\uff0809-12 \u5b9e\u8e29\uff09\u21d2 \u53ea\u6309 logs/dsv4-flash-8103.pid kill -TERM -PGID\uff0c\u6392\u969c\u7528 ss -ltnp \u53cd\u67e5\u771f pid",
+      "severity": "config"
+    },
+    {
+      "description": "\u590d\u8ff0\u6863\u6d4b\u6cd5\uff1araw /completion \u65e0\u6a21\u677f instruct \u5faa\u73af echo = \u590d\u8bfb\u5047\u8c61\uff08'63 t/s \u957f\u6587'\uff09\uff1b\u6d4b\u5f62\u6001\u5fc5\u987b\u8d70 chat \u7aef\u70b9\uff08\u811a\u672c L43-44\uff09",
+      "severity": "config"
+    },
+    {
+      "description": "\u522b\u628a SPLIT_MODE \u9ed8\u8ba4\u6539 tensor\uff08\u5b9e\u9a8c\u53c2\u6570\u53d8\u751f\u4ea7\uff0cTP-RCCL \u00a78 \u660e\u4ee4\u7981\u6b62\uff09\uff1b\u522b export GGML_HIP_RCCL\uff08\u7f16\u8bd1\u671f\uff09/LLAMA_SPLIT_MODE\uff08\u4e0d\u5b58\u5728\uff09\u2014\u2014\u8fd0\u884c\u65f6 export = \u81ea\u6b3a\uff08\u00a77\uff09",
+      "severity": "regress"
+    },
+    {
+      "description": "\u8fdb\u7a0b\u6d88\u5931 \u2260 \u663e\u5b58\u7acb\u523b\u5f52\u8fd8\uff1bUnsloth Studio(:8888) \u6216\u522b\u7684\u4f1a\u8bdd\u53ef\u5360 die\u2014\u2014\u663e\u5b58\u9884\u68c0\u62a5\u4e0d\u8db3\u4f46 ss \u67e5\u4e0d\u5230\u670d\u52a1\u65f6\u5148 Studio Unload/fuser -v /dev/kfd",
+      "severity": "config"
+    },
+    {
+      "description": "\u6743\u91cd\u53f6\u5b50\u8f6f\u94fe \u2192 /mnt/stripe-3mix-3t2\uff0c\u6761\u5e26\u76d8\u6ca1\u6302\u8f7d\u9884\u68c0\u5373\u5931\u8d25",
+      "severity": "config"
+    }
+  ],
+  "port": "8103",
+  "precision": "ud-q8_k_xl",
+  "primary_metric_note": "\u53e3\u5f84\uff1a\u5355\u6d41 decode\uff0c8 die/1M ctx/np=1\u3001temp0\u3001560 W\uff08\u52d8\u5bdf \u00a77\uff1b\u5b9e\u6d4b 22.12\u201322.14\uff09\uff1bngram \u5728\u5206\u6790/\u4ee3\u7801\u6863\u96f6\u547d\u4e2d\u96f6\u7a0e\uff0c\u6545\u8be5\u6570\u5373\u5f53\u524d\u5b9a\u7a3f\u914d\u7f6e\u53e3\u5f84",
+  "provenance": {
+    "details": "Seeded from the workstation recipe library docs/recipes/ (verified 2026-09-12); metric: decode 22.1tok/s \u2014 \u53e3\u5f84\uff1a\u5355\u6d41 decode\uff0c8 die/1M ctx/np=1\u3001temp0\u3001560 W\uff08\u52d8\u5bdf \u00a77\uff1b\u5b9e\u6d4b 22.12\u201322.14\uff09\uff1bngram \u5728\u5206\u6790/\u4ee3\u7801\u6863\u96f6\u547d\u4e2d\u96f6\u7a0e\uff0c\u6545\u8be5\u6570\u5373\u5f53\u524d\u5b9a\u7a3f\u914d\u7f6e\u53e3\u5f84",
+    "recipe_id": "8103-deepseek-v4-flash-0731-284b-q8kxl-llamacpp",
+    "seed_script": "scripts/seed_recipe_kb.py"
+  },
+  "recipe_id": "8103-deepseek-v4-flash-0731-284b-q8kxl-llamacpp",
+  "remaining_gaps": [
+    {
+      "description": "NP=2 \u6863\u7aef\u5230\u7aef\u672a\u5b9e\u6d4b\uff08\u811a\u672c L32 \u660e\u8bf4\uff1bnp>1 \u65e0\u5e76\u53d1\u6570\u636e\uff0c\u540c arch 8112 \u5b9e\u6d4b np=2 \u805a\u5408 25.3 < \u5355\u6d41 29.9 \u5373 0.85\u00d7 \u4e32\u884c\u9000\u5316\uff09",
+      "metrics": "\u5e76\u53d1\u805a\u5408 tok/s vs \u5355\u6d41"
+    },
+    {
+      "description": "tensor split \u957f prefill \u53ea\u6d4b\u5230 pp32768=1.83\u00d7\uff0cCTX=1048576 \u4e00\u70b9\u672a\u5b9e\u6d4b\uff0861\u2192~34 min \u662f\u5916\u63a8\u4e0d\u80fd\u5f53\u7ed3\u8bba\uff09",
+      "metrics": "pp @1M"
+    },
+    {
+      "description": "MTP \u5934 future work\uff1a\u76ef\u672a\u5408\u5e76 PR \u5206\u652f mtp/borrow-target-tensors\u3001repin-27742-nextn",
+      "metrics": "arch \u6ce8\u518c\u540e\u53ef\u91cd\u6d4b"
+    },
+    {
+      "description": "KV \u5e38\u6570\u51fa\u5904\u65e5\u5fd7\u76ee\u5f55 logs/tp-comm-20260912-1232/ \u5df2\u88ab\u6e05\uff0c\u5224\u636e\u4ec5\u5269\u811a\u672c\u6ce8\u91ca\u5b58\u8bc1",
+      "metrics": "\u2014"
+    }
+  ],
+  "seeded_at": "2026-09-15T08:06:40+00:00",
+  "sessions": [
+    {
+      "actions_taken": [
+        "seeded from docs/recipes/8103-deepseek-v4-flash-0731-284b-q8kxl-llamacpp"
+      ],
+      "date": "2026-09-12",
+      "gain_pct": 0.0,
+      "session_id": "recipe-seed:8103-deepseek-v4-flash-0731-284b-q8kxl-llamacpp",
+      "stack_len": 0,
+      "throughput_after": 22.1,
+      "throughput_before": 0.0
+    }
+  ],
+  "stack_fingerprint": {
+    "aiter_commit": "",
+    "rocm_version": "7.2.4",
+    "vllm_version": ""
+  },
+  "status": "active",
+  "tp": 8,
+  "updated_at": "2026-09-15T08:06:40.751876+00:00",
+  "version": 1,
+  "what_failed": [
+    {
+      "description": "dspark \u6295\u673a",
+      "reason": "13.81 t/s\uff08\u221238%\uff09\uff0c\u8de8\u5934 dtype \u590d\u73b0\uff0809-05 IQ3+Q8_0 \u65e7\u6d4b \u221239%\uff09\u21d2 \u6210\u672c\u5728\u9a8c\u8bc1 4 token \u7684 MoE \u6b65\uff0c\u5bf9 DSV4 \u7a33\u56fa\uff08\u52d8\u5bdf \u00a77\uff09"
+    },
+    {
+      "description": "MTP \u5934",
+      "reason": "arch deepseek4_mtp_support \u5728\u672c\u673a 4 \u4e2a\u6784\u5efa\u3001deepseek-v4-flash-port \u5206\u652f\u3001unsloth master@477b844 \u5168\u90e8\u672a\u6ce8\u518c\uff08grep=0\uff09\uff1bdeepseek-v4-flash-port \u5b9e\u4e3a converter-only \u522b\u518d\u91cd\u5efa\uff08\u811a\u672c L47-51\uff09"
+    },
+    {
+      "description": "FP16/\u5168\u7cbe\u5ea6\u6863",
+      "reason": "284B\u00d72B\u2248529 GiB > 512 GiB \u603b\u663e\u5b58\uff1b\u4e14 decode M=1 \u662f GEMV \u4e0d\u5403 MFMA\uff0cfp16 \u53ea\u4f1a\u66f4\u6162\uff08\u811a\u672c L11-12\uff09"
+    },
+    {
+      "description": "vLLM \u8def\u7ebf",
+      "reason": "\u5361 indexer only supported on AITER \u786c\u95e8\uff08CLAUDE.md \u00a710\uff09\uff1b8103 \u4e0a fp8fp4/atom/dspark-int8 \u4e09\u6761\u81c2\u5df2\u5220\uff08\u5bf9\u7167\u8868\u8868B\uff09"
+    },
+    {
+      "description": "\u76d8\u4e0a\u591a\u91cf\u5316\u6863",
+      "reason": "decode \u4e0e\u91cf\u5316\u6863\u89e3\u8026\uff08\u5b57\u8282 \u221260% \u901f\u5ea6\u6253\u5e73\uff09\uff0c\u7528\u6237\u62cd\u677f\u7559\u4e00\u4e2a q8\uff08\u52d8\u5bdf \u00a78\uff09"
+    },
+    {
+      "description": "tensor split \u5f53\u9ed8\u8ba4",
+      "reason": "decode \u221270%\u3001\u51b7\u542f\u52a8 \u00d76\uff1b\u53ea\u4f5c deepseek4 \u957f prefill \u624b\u5de5\u6863\uff08TP-RCCL \u00a70/\u00a78\uff09"
+    },
+    {
+      "description": "09-05 '\u6df1 offload \u6302\u6b7b'\u539f\u5224",
+      "reason": "\u90a3\u662f\u7ea2\u7ebf 5 \u73b0\u573a\uff08SVM/memlock\uff09\u800c\u975e\u5bb9\u91cf\u95ee\u9898\uff0c\u590d\u6d4b 59\u201362 s \u5c31\u7eea\uff08\u52d8\u5bdf \u00a76 \u5224\u6b7b\u4fee\u6b63\uff09"
+    }
+  ],
+  "what_worked": [
+    {
+      "description": "\u7ea2\u7ebf 5 \u5f00\u5173 --fit off --load-mode dio\uff08O_DIRECT \u4e0d\u8fdb\u9875\u7f13\u5b58\uff0c\u7ed5\u5f00 KFD SVM \u5e38\u9a7b + ulimit -l=8 MiB \u6b7b\u8def\uff09\u2014\u201409-05 \u5224\u6b7b\u540e 09-12 \u7528\u5b83\u590d\u6d3b",
+      "measured_impact": "\u7f3a\u5f00\u5173 8 min \u96f6\u8fdb\u5c55 \u2192 \u8865\u540e 59\u201362 s \u5c31\u7eea\uff08\u52d8\u5bdf \u00a76 \u5224\u6b7b\u4fee\u6b63\uff1b\u7ea2\u7ebf 5\uff09"
+    },
+    {
+      "description": "ngram-mod 16/32/24\uff08\u65e0\u8349\u7a3f\u5934\u3001\u96f6\u547d\u4e2d\u96f6\u7a0e\u3001\u547d\u4e2d\u5373\u63d0\u901f\uff09",
+      "measured_impact": "\u590d\u8ff0\u6863 61.54 t/s\uff08+177%\uff09\uff1b\u5206\u6790/\u4ee3\u7801\u6863\u8986\u76d6 0 \u4e0d\u53d8\uff08\u811a\u672c L35-44\uff0c2026-09-12 A/B\uff09"
+    },
+    {
+      "description": "1M/slot \u00d72\uff1a\u6bcf\u52a0\u4e00\u6761 1M slot \u53ea +6.75 GiB KV\uff08KV \u5e38\u6570 6912 MiB/slot\uff09",
+      "measured_impact": "\u663e\u5b58\u4e0a\u9650 ~39 \u6761\uff1b-c \u7edd\u5bf9\u4e0a\u9650 33,554,432 \u5148\u5361\u5728 32 \u6761\uff08\u811a\u672c L18-26/L103\uff09"
+    },
+    {
+      "description": "qwen4exp-mtp-rp \u81ea\u8db3\u524d\u7f00\uff08RUNPATH \u56db\u683c\u5168\u547d\u4e2d\u91cd\u5efa\uff0c\u4e0d\u9700\u8981 LD_LIBRARY_PATH\uff09",
+      "measured_impact": "strings libllama.so \u542b deepseek4=91\uff1b\u65e7 qwen4exp-mtp \u515c\u5e95\u683c 09-09 \u8fc1\u79fb\u540e\u6307\u6b7b\u8def\u5f84\uff0c09-12 \u7ffb\u9ed8\u8ba4\uff08envs \u76d8\u70b9 \u00a74\uff09"
+    },
+    {
+      "description": "UD-Q8_K_XL\uff08FP8-attn + FP4-experts \u53cd\u91cf\u5316\u6863\uff09\u88c5\u4e0b 284B",
+      "measured_impact": "154.3 GiB / 8 die \u53ef\u8dd1\uff1bdecode \u4e0e\u91cf\u5316\u6863\u89e3\u8026\uff08\u52d8\u5bdf \u00a78\uff09"
+    }
+  ]
+}
