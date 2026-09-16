@@ -1,0 +1,74 @@
+# Magpie profiling 运行：dense INT8 模型、conc 64、抓 torch trace + TraceLens inference 归因
+#
+# 基线来自 harness 生成的已知可用配置
+#   session/.../runs/baseline/e420b1b3.../benchmark_vllm_20260914_173834/config.yaml
+# 与之的差异只有以下三处，均有意为之：
+#   1. NUM_PROMPTS 320 -> 64：profiling 会扰动延迟，且 trace 体积随步数增长。
+#      64 = conc 64 的整一个 wave，解码形状（conc 64 / ctx ~1024-2048）与 baseline 一致。
+#   2. RUN_EVAL 'true' -> 'false'：本次目标是 kernel 归因，不需要 gsm8k 精度门
+#      （该门在 baseline 上单独花掉约 40 分钟）。
+#   3. profiler.torch_profiler / tracelens 打开（tracelens 用 inference 模式，输出紧凑 roofline CSV）。
+#
+# 干净基线另有其数据：探针 B 的 conc 64 = 473.78 tok/s（未开 profiling）。
+benchmark:
+  framework: vllm
+  model: /mnt/stripe-3mix-3t2/models/davetha/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8
+  precision: bf16
+  run_mode: local
+  envs:
+    TP: 1
+    CONC: 64
+    ISL: 1024
+    OSL: 1024
+    RANDOM_RANGE_RATIO: 1
+    MAX_MODEL_LEN: 6144
+    VLLM_EXECUTE_MODEL_TIMEOUT_SECONDS: '1200'
+    PATH: /opt/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+    ROCR_VISIBLE_DEVICES: '0'
+    NUM_PROMPTS: 64
+    NUM_WARMUPS: 8
+    EXTRA_VLLM_ARGS: --trust-remote-code --language-model-only --quantization compressed-tensors
+      --safetensors-load-strategy eager --compilation-config {"cudagraph_mode":"FULL_DECODE_ONLY"}
+    VLLM_ROCM_USE_AITER: '1'
+    VLLM_ROCM_USE_AITER_LINEAR: '1'
+    VLLM_BIN: /usr/local/bin/vllm-wu1w
+    VLLM_CACHE_ROOT: /tmp/vllm-cache-hl
+    AITER_LOG_TUNED_CONFIG: '1'
+    MAGPIE_TRUST_REMOTE_CODE: '1'
+    BENCH_TRUST_REMOTE_CODE: '1'
+    HF_HUB_TRUST_REMOTE_CODE: '1'
+    RUN_EVAL: 'false'
+  gpu_selection:
+    auto: false
+  timeout_seconds: 7200
+  profiler:
+    gpu_monitor:
+      enabled: true
+      interval_sec: 2.0
+    system_profiler:
+      enabled: false
+    torch_profiler:
+      enabled: true
+    tracelens:
+      # 关掉：Magpie 的 tracelens-inference 启动路径会传
+      #   --profiler-config.capture_torch_profiler_dir
+      # 而 vLLM 0.28 的 ProfilerConfig 没有这个字段（pydantic 校验直接拒绝），
+      # server 因此起不来。见 tracelens_inference.py:551。
+      # 改为：本步只抓 trace；归因走 Magpie 受支持的 standalone gap analysis
+      #   （magpie benchmark --trace-dir <trace> --top-k N）。
+      enabled: false
+      analysis_mode: inference
+      analysis_stages:
+        - prefilldecode
+        - decode
+        - prefill
+      export_format: csv
+      num_steps: 32
+      perf_report_enabled: true
+      multi_rank_report_enabled: true
+      cli_timeout_seconds: 1800
+      auto_patch_runtime: false
+      restore_patches: true
+  gap_analysis:
+    enabled: false
+  inferencex_path: /home/qiba/ROCm.AI/hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966

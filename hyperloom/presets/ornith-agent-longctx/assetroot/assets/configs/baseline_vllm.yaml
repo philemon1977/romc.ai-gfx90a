@@ -1,0 +1,50 @@
+# Magpie baseline benchmark config for vLLM.
+# Used as the default vLLM benchmark config; the inference_optimizer
+# pipeline overrides `benchmark.model` and injects `benchmark.runner_type`
+# at runtime (see baseline_sglang.yaml header for the full rationale).
+
+benchmark:
+  framework: vllm
+  # benchmark_script: vllm_mi300x.sh  # uncomment to force a specific Magpie script
+  model: /models/Qwen-Qwen3-8B  # OVERRIDDEN at runtime; see header.
+  precision: bf16
+  run_mode: local
+
+  envs:
+    # Last-resort fallbacks only; the CLI always projects the resolved
+    # workload (flag > resume-state > default) into these envs before launch.
+    # Fallbacks only -- the CLI projects --tp/--conc/--isl/--osl/--max-model-len
+    # over these. Shaped for the agent lane: one stream, long context.
+    TP: 8
+    CONC: 1
+    ISL: 32768
+    OSL: 1024
+    RANDOM_RANGE_RATIO: 1
+    MAX_MODEL_LEN: 262144
+    # ROCR_VISIBLE_DEVICES injected at runtime by baseline.py
+    # (`0..TP-1`); export `ROCR_VISIBLE_DEVICES=...` to override.
+    # Graph capture is slow enough to trip vLLM's per-step timeout.
+    VLLM_EXECUTE_MODEL_TIMEOUT_SECONDS: "1200"
+    PATH: "/opt/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
+  gpu_selection:
+    auto: false                # executor pins via ROCR_VISIBLE_DEVICES at runtime
+
+  # Sized to THIS workload, not to the biggest model the file might ever serve.
+  # This number is load-bearing beyond a hang guard: when a session has no
+  # measured baseline cost, grid admission falls back to this backstop (plus the
+  # AgentX cap raise) and requires it per remaining round -- at 7200 that is
+  # 7800 x 2 = 4.33 h, which a 3 h budget can never satisfy, so the run declares
+  # enablement_stalled without ever measuring a baseline (session
+  # 20260915T161838Z-ba2694ea). One CONC=1 ISL=32768/OSL=1024 NUM_PROMPTS=10 pass
+  # here costs ~12-15 min plus a ~12 min boot, so 1800 s is a real 2x margin and
+  # keeps admission affordable.
+  timeout_seconds: 1800
+
+  profiler:
+    torch_profiler:
+      enabled: false
+    system_profiler:
+      enabled: false
+    tracelens:
+      enabled: false
