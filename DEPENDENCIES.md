@@ -120,9 +120,30 @@ python3 -c "import sqlite3;print('\n'.join(sqlite3.connect(
   'file:hyperloom/session/<模型>/<run>/storage/coordinator.db?mode=ro&uri=True').iterdump()))"
 ```
 
-**遗留 305 个文件（18.2 MB）读不到**：它们是 `root:root` 的 `0600`（hyperloom 在容器里以
-root 身份写入本工作区），当前用户无读权限，git 无法取哈希。其中包括**全部**
-`manifest.json`(8)、`state.json`(16)、`session_breakdown.json`(5)、`reports/final.json`(5)、
-`optimization_journal.json`(7)，以及各 specialist 的 `prompt.md`/`system_prompt.md`/
-`process.log`/`specialist_done.json` 与 3 个 `runtime/` 目录（`0700`）。
-放开读权限后即可补一次提交，命令见 `scripts/fix_session_perms.sh`。
+**权限遗留已清掉**：`hyperloom/session/` 下原有 305 个 `root:root 0600` 文件与 8 个 `0700`
+的 `runtime/` 目录（hyperloom 在容器里以 root 身份写入本工作区），git 读不到就无法取哈希。
+`scripts/fix_session_perms.sh --apply`（需 root，本 harness 的 sudo 被 no new privileges 挡住）
+放开读位后，其中 266 个"状态与结果"已补入库：8 个 `manifest.json`、16 个 `state.json`、
+5 个 `session_breakdown.json`、`reports/final.json`(5)、`optimization_journal.json`(7)、
+30 个 specialist 的 `prompt.md`/`system_prompt.md`/`process.log`/`specialist_done.json` 等。
+其余 2468 个文件全部落在 `runtime/`，见下一节——它们被**有意排除**，不是漏网。
+
+## 9. 安全边界：什么东西绝对不能进这个仓库
+
+本仓库是 **public**。下面是已经踩到过的线，写下来以免下一次 `git add hyperloom/session`
+顺手把它们推上去：
+
+| 位置 | 问题 | 处置 |
+|---|---|---|
+| `hyperloom/session/runtime/kernel-agent.env.sh` | `0644` 全局可读的运维 env 脚本，内含 `export ANTHROPIC_API_KEY=<48 字符真实密钥>` 与 `ANTHROPIC_BASE_URL` | `.gitignore` 排除整个 `hyperloom/session/**/runtime/`（提交 `236ba77`）；密钥值本身已核实**不在**任何已跟踪文件与任何历史提交中 |
+| `.env`（工作区根） | 本机镜像 tag 与后续可能加入的凭据 | 只提交 `.env.example`；`*.env` 一律不入库 |
+| `hyperloom/session/**/runtime/` 的其余内容 | `optimizer.lock`、`.audit.jsonl`、事件总线 spool、KB 预热缓存——工具活动状态，且 2419/2468 是 root `0600`，**无法逐一验密** | 同上排除；同等信息的文本形态已在 `*/emit.json`、`request.json`、`state.json` 里 |
+
+因此约定：**不要用 `git add hyperloom/session` 这种整目录写法**（虽然 `runtime/` 已被忽略，
+但这是给未来留的护栏）。要补 session 内容时用
+`git ls-files --others --exclude-standard -- hyperloom/session | xargs -d '\n' -r git add --`，
+提交前至少扫一遍凭据形态（`sk-ant-`/`ghp_`/`AKIA`/`PRIVATE KEY`）与本机那把密钥的指纹。
+
+另有一条与本节无关但容易踩空的 git 行为：遍历撞上不可进入的目录（此处是那 8 个 `0700`
+的 `runtime/`）会**中断该次递归**，表现为"只收到 1 个文件"而没有任何报错——这也是本仓库
+改用显式 pathspec 清单的原因。
