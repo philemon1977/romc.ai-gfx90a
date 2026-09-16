@@ -1,0 +1,7 @@
+==== pulling rocm/pytorch:rocm7.2.4_ubuntu24.04_py3.12_pytorch_release_2.9.1 @ 14:52:47 ====
+rocm7.2.4_ubuntu24.04_py3.12_pytorch_release_2.9.1: Pulling from rocm/pytorch
+Digest: sha256:7fe531fa185af260352fe7fbb3fa64ad749abe72adf0600a648c4692801b125a
+Status: Image is up to date for rocm/pytorch:rocm7.2.4_ubuntu24.04_py3.12_pytorch_release_2.9.1
+docker.io/rocm/pytorch:rocm7.2.4_ubuntu24.04_py3.12_pytorch_release_2.9.1
+==== pulling rocm/tensorflow:rocm7.14.1-ubuntu24.04-py3.12-tf2.20 @ 14:52:49 ====
+rocm7.14.1-ubuntu24.04-py3.12-tf2.20: Pulling from rocm/tensorflow

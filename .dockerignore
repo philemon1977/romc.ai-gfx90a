@@ -1,0 +1,6 @@
+logs/
+models/
+scripts/
+docker/
+README.md
+.env

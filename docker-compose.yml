@@ -1,0 +1,69 @@
+name: rocm-ai
+# ROCm.AI 多环境栈 —— 面向 8x AMD Instinct MI250 (gfx90a)
+# 交互式:  docker-compose run --rm pytorch
+# 冒烟测试: ./scripts/smoke.sh <pytorch|tensorflow|jax|vllm|all>
+# 指定 GPU: NVIDIA 风格的 HIP_VISIBLE_DEVICES, 如:
+#   docker-compose run --rm -e HIP_VISIBLE_DEVICES=0 pytorch
+
+x-gpu-common: &gpu-common
+  devices:
+    - /dev/kfd:/dev/kfd
+    - /dev/dri:/dev/dri
+  group_add:
+    - "44"    # video
+    - "993"   # render
+  cap_add:
+    - SYS_PTRACE
+  security_opt:
+    - seccomp=unconfined
+  ipc: host
+  shm_size: 16g
+  working_dir: /workspace
+  volumes:
+    - .:/workspace
+    - rocm-models:/models
+    - rocm-cache:/home/user/.cache
+
+services:
+  pytorch:
+    <<: *gpu-common
+    image: ${PYTORCH_IMAGE}
+    container_name: rocm-pytorch
+    stdin_open: true
+    tty: true
+    command: bash
+
+  tensorflow:
+    <<: *gpu-common
+    image: ${TF_IMAGE}
+    container_name: rocm-tensorflow
+    stdin_open: true
+    tty: true
+    command: bash
+
+  jax:
+    <<: *gpu-common
+    image: ${JAX_IMAGE}
+    container_name: rocm-jax
+    stdin_open: true
+    tty: true
+    command: bash
+
+  vllm:
+    <<: *gpu-common
+    image: ${VLLM_IMAGE}
+    container_name: rocm-vllm
+    stdin_open: true
+    tty: true
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/workspace
+      - ./models:/models:ro
+    # 默认起 OpenAI 兼容服务；进入交互: docker-compose run --rm vllm bash
+    command: vllm serve /models --served-model-name tiny-qwen
+             --gpu-memory-utilization 0.5 --max-model-len 4096
+
+volumes:
+  rocm-models:
+  rocm-cache:

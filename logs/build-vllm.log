@@ -1,0 +1,29 @@
+DEPRECATED: The legacy builder is deprecated and will be removed in a future release.
+            Install the buildx component to build images with BuildKit:
+            https://docs.docker.com/go/buildx/
+
+Sending build context to Docker daemon  12.42GB
+Step 1/6 : FROM rocm/pytorch:rocm7.2.4_ubuntu24.04_py3.12_pytorch_release_2.9.1
+ ---> 7fe531fa185a
+Step 2/6 : COPY envs/vllm-0.28.0-rocm7.2.4 /opt/envs/vllm
+ ---> 4cc4f78fac48
+Step 3/6 : ENV PATH=/opt/envs/vllm/bin:$PATH     VLLM_LOGGING_LEVEL=INFO     PYTHONUNBUFFERED=1
+ ---> Running in 8cc74e7e6cbc
+ ---> Removed intermediate container 8cc74e7e6cbc
+ ---> ba880b995a71
+Step 4/6 : RUN python -c "import vllm, torch; print('vllm', vllm.__version__, '| torch', torch.__version__)"
+ ---> Running in 444185cde52c
+vllm 0.28.0 | torch 2.12.0+git6bbd260
+ ---> Removed intermediate container 444185cde52c
+ ---> 4bf4703347ff
+Step 5/6 : EXPOSE 8000
+ ---> Running in 8618c60bce90
+ ---> Removed intermediate container 8618c60bce90
+ ---> eea0c17d02e5
+Step 6/6 : CMD ["bash"]
+ ---> Running in 2dbe5356f837
+ ---> Removed intermediate container 2dbe5356f837
+ ---> dbb793f598e9
+Successfully built dbb793f598e9
+Successfully tagged rocm-ai/vllm:0.28.0-rocm7.2.4
+BUILD_OK
