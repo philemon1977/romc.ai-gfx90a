@@ -169,12 +169,15 @@ def build() -> tuple[list, list, list, list, dict]:
     failed += [
         {
             "description": (
-                "K 轮（split-KV q=3 + MTP）128k 反而退到 161.2 ms（split-KV 单独是 42.7 ms）："
-                "stats 里 `scratch 102236160 超预算` ×210 —— q=3 把 scratch 放大 3 倍，撞默认 "
-                "32 MiB 预算后那些形状**退回 1-CTA 串行内核**（128k 下单步 508 ms）。"
-                "结论：放大 scratch 的形状必须同时抬 `VLLM_ROCM_SPLITKV_PA_MAX_SCRATCH_MIB`"
+                "K 轮（split-KV q=3 + MTP）128k 反而 161.2 ms（split-KV 单独 42.7 ms）。"
+                "**最初归因于 scratch 预算，已被 K3 证伪**：MAX_SCRATCH_MIB 抬到 192（K2）"
+                "再抬 MAX_TOTAL_MIB 到 1024（K3）之后，stats 里 scratch 类拒绝清零、"
+                "takeover=6597（q=3 的 decode 步确实被接管），128k 仍只降到 155.9 ms。"
+                "真正特征是 MTP 的每步代价随上下文爆炸：1k +57%（61 vs 38.8 ms/步）、"
+                "128k +936%（443 vs 42.7 ms/步）⇒ 那 ~400 ms 不在 attention 内核里；"
+                "首嫌 45 层 GDN 在每步 3 token 下的顺序状态推进，或草稿层注意力未走 split-KV 门"
             ),
-            "reason": "perf_regression_via_fallback",
+            "reason": "perf_regression_not_scratch",
         },
     ]
 
@@ -453,14 +456,32 @@ def main() -> int:
         "confidence": 0.9,
         "provenance": None,
     }
+    # Prune entries this session falsified: merge() only appends, so a wrong
+    # causal claim would otherwise live in the row next to its correction.
+    FALSIFIED_REASONS = {"perf_regression_via_fallback"}
+    pruned = 0
+    base_failed = []
+    for e in carry("what_failed"):
+        if isinstance(e, dict) and str(e.get("reason") or "") in FALSIFIED_REASONS:
+            pruned += 1
+            continue
+        base_failed.append(e)
+    if pruned:
+        carried_failed = base_failed
+    else:
+        carried_failed = None
+
     stats = {}
+    if carried_failed is not None:
+        stats["what_failed_pruned"] = pruned
     for field, additions in (
         ("what_worked", worked),
         ("what_failed", failed),
         ("pitfalls", pitfalls),
         ("lessons", lessons),
     ):
-        merged, added = merge(carry(field), additions)
+        base = carried_failed if (field == "what_failed" and carried_failed is not None) else carry(field)
+        merged, added = merge(base, additions)
         kwargs[field] = merged
         stats[field] = added
     gaps, added = merge(carry("remaining_gaps"), extra["gaps"])
@@ -496,6 +517,7 @@ def main() -> int:
     kwargs["extras"] = extras
 
     if _canon_eq(prior_lane, extra["lane"]) and not any(stats.values()) \
+            and not pruned \
             and row.get("status_note") == extras["status_note"] \
             and _canon_eq(row.get("best_config") or {}, extra["best_config"]):
         print(f"unchanged {ORNITH_CID} (version={row.get('version')})")

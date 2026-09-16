@@ -113,7 +113,7 @@
       "32k": 11050.2
     }
   },
-  "agent_lane_note_at": "2026-09-16T08:21:36.377391+00:00",
+  "agent_lane_note_at": "2026-09-16T09:29:46.141668+00:00",
   "architectures": [
     "Qwen3_5MoeForConditionalGeneration"
   ],
@@ -444,7 +444,7 @@
   "status": "experimental",
   "status_note": "gfx90a \u4e0a\u552f\u4e00\u80fd\u52a0\u8f7d\u672c checkpoint \u7684 vLLM \u8def\u7ebf\uff08\u8865\u4e01 001+002\uff0c\u7ecf VLLM_BIN \u5305\u88c5\u5668\u8fdb\u5165\u5b98\u65b9\u57fa\u51c6\u811a\u672c\uff09\u3002agent lane \u5df2\u5b9a\u91cf\uff1a\u5355\u6d41 1k 45.4ms/token\u3001TPOT \u968f\u4e0a\u4e0b\u6587\u7ebf\u6027 +3.95ms/1k\uff080.30% HBM \u5cf0\u503c \u21d2 kernel \u5899\uff09\uff0cMTP k=2 \u63d0\u901f 2.14x(1k)\u21923.40x(240k)\u3001\u771f\u5b9e\u5185\u5bb9 1.88x\u3002\u65e0 optimizer sealed baseline\uff0c\u6545 best_throughput \u4ecd\u4e3a 0.0",
   "tp": 8,
-  "updated_at": "2026-09-16T08:21:36.377615+00:00",
+  "updated_at": "2026-09-16T09:29:46.141863+00:00",
   "vendor_reference": {
     "artifact": ".tmp/kb_extract/qwen3_5_397b_reference.json",
     "date_updated": "2026-09-14",
@@ -472,7 +472,7 @@
       "--enable-expert-parallel / -dp 8 style MoE parallelism: architecture-level, but xGMI all-to-all cost on MI250X is unmeasured"
     ]
   },
-  "version": 16,
+  "version": 18,
   "what_failed": [
     {
       "description": "fp8 stock \u8def\u7ebf\uff1avllm serve \u5b50\u8fdb\u7a0b\u975e\u96f6\u9000\u51fa \u2014\u2014 \u9996\u4e2a fp8 linear apply \u5c31\u649e torch._scaled_mm \u5f15\u64ce\u7ea7\u95e8\uff08'only supported on CUDA devices with compute capability >= 9.0 or 8.9, or ROCm MI300+'\uff09\uff0cgfx90a \u65e0 FP8 \u77e9\u9635\u6838",
@@ -491,8 +491,8 @@
       "reason": "client_request_rejected"
     },
     {
-      "description": "K \u8f6e\uff08split-KV q=3 + MTP\uff09128k \u53cd\u800c\u9000\u5230 161.2 ms\uff08split-KV \u5355\u72ec\u662f 42.7 ms\uff09\uff1astats \u91cc `scratch 102236160 \u8d85\u9884\u7b97` \u00d7210 \u2014\u2014 q=3 \u628a scratch \u653e\u5927 3 \u500d\uff0c\u649e\u9ed8\u8ba4 32 MiB \u9884\u7b97\u540e\u90a3\u4e9b\u5f62\u72b6**\u9000\u56de 1-CTA \u4e32\u884c\u5185\u6838**\uff08128k \u4e0b\u5355\u6b65 508 ms\uff09\u3002\u7ed3\u8bba\uff1a\u653e\u5927 scratch \u7684\u5f62\u72b6\u5fc5\u987b\u540c\u65f6\u62ac `VLLM_ROCM_SPLITKV_PA_MAX_SCRATCH_MIB`",
-      "reason": "perf_regression_via_fallback"
+      "description": "K \u8f6e\uff08split-KV q=3 + MTP\uff09128k \u53cd\u800c 161.2 ms\uff08split-KV \u5355\u72ec 42.7 ms\uff09\u3002**\u6700\u521d\u5f52\u56e0\u4e8e scratch \u9884\u7b97\uff0c\u5df2\u88ab K3 \u8bc1\u4f2a**\uff1aMAX_SCRATCH_MIB \u62ac\u5230 192\uff08K2\uff09\u518d\u62ac MAX_TOTAL_MIB \u5230 1024\uff08K3\uff09\u4e4b\u540e\uff0cstats \u91cc scratch \u7c7b\u62d2\u7edd\u6e05\u96f6\u3001takeover=6597\uff08q=3 \u7684 decode \u6b65\u786e\u5b9e\u88ab\u63a5\u7ba1\uff09\uff0c128k \u4ecd\u53ea\u964d\u5230 155.9 ms\u3002\u771f\u6b63\u7279\u5f81\u662f MTP \u7684\u6bcf\u6b65\u4ee3\u4ef7\u968f\u4e0a\u4e0b\u6587\u7206\u70b8\uff1a1k +57%\uff0861 vs 38.8 ms/\u6b65\uff09\u3001128k +936%\uff08443 vs 42.7 ms/\u6b65\uff09\u21d2 \u90a3 ~400 ms \u4e0d\u5728 attention \u5185\u6838\u91cc\uff1b\u9996\u5acc 45 \u5c42 GDN \u5728\u6bcf\u6b65 3 token \u4e0b\u7684\u987a\u5e8f\u72b6\u6001\u63a8\u8fdb\uff0c\u6216\u8349\u7a3f\u5c42\u6ce8\u610f\u529b\u672a\u8d70 split-KV \u95e8",
+      "reason": "perf_regression_not_scratch"
     }
   ],
   "what_worked": [
