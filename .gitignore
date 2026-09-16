@@ -73,6 +73,14 @@ kernel_perf/
 #       agent 转录与 process.log、prompt 快照、integrate_patch 的 *.bak（改动前原文件）。
 # 剔除：每个候选一棵 vLLM worktree 及其 site-packages、AOT/inductor/triton 编译缓存
 #       （占 session 29 GB 里的 28.9 GB），以及半一致状态的 sqlite 事件库。
+#
+# 【安全】runtime/ 一律不入库，且这条不是可选的整洁性规则：
+#   hyperloom/session/runtime/kernel-agent.env.sh 是 0644 全局可读的运维 env 脚本，
+#   里面有 `export ANTHROPIC_API_KEY=<48 字符真实密钥>` 与 ANTHROPIC_BASE_URL。
+#   本仓库是 public，任何 `git add hyperloom/session` 的整目录写法都会把它推上去。
+#   其余 runtime/ 内容（optimizer.lock、*.audit.jsonl、事件总线 spool、KB 预热缓存）
+#   是工具的活动状态而非产出，其文本形态已在 */emit.json、state.json 里。
+/hyperloom/session/**/runtime/
 /hyperloom/session/**/wt3/
 /hyperloom/session/**/vcache/
 /hyperloom/session/**/boot/
