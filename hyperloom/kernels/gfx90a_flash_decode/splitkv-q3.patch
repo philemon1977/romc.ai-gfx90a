@@ -1,0 +1,226 @@
+--- a/v1/attention/ops/rocm_splitkv_pa.py
++++ b/v1/attention/ops/rocm_splitkv_pa.py
+@@ -97,6 +97,7 @@
+ ENV_MAX_SEQS = "VLLM_ROCM_SPLITKV_PA_MAX_SEQS"          # 接管上限：num_seqs*num_kv_heads ≤ 此值；默认见 DEFAULT_MAX_SEQS
+ ENV_MAX_BASE = "VLLM_ROCM_SPLITKV_PA_MAX_BASE_PROGRAMS"  # 旧名别名（等价 ENV_MAX_SEQS）
+ ENV_STATS_EVERY = "VLLM_ROCM_SPLITKV_PA_STATS_EVERY"     # 每 N 次判定落一次计数文件（0=不主动落）
++ENV_MAX_Q = "VLLM_ROCM_SPLITKV_PA_MAX_Q"               # 每序列 query 行数上限；默认 1（=现状）
+ ENV_TIGHT = "VLLM_ROCM_SPLITKV_PA_TIGHT_GRID"            # 1=紧上界(默认) 0=旧的 ceil(bound/PART_MIN)
+ 
+ BLOCK_N = 16          # 内层 tile：hd256 下只有 t16 能在 w4 时把 LDS 压到 16 KB（原型 §5）
+@@ -216,6 +217,7 @@
+     num_query_heads: tl.constexpr,
+     num_queries_per_kv: tl.constexpr,
+     num_queries_per_kv_padded: tl.constexpr,
++    Q_TOK: tl.constexpr,
+     block_table_stride: tl.int64,
+     query_stride_0: tl.int64,
+     query_stride_1: tl.int64,
+@@ -272,16 +274,25 @@
+ 
+     # ---- GQA：一个 kv 头对 num_queries_per_kv 个 q 头 ----
+     token_idx = tl.load(query_start_len_ptr + seq_idx)
+-    offs_h = tl.arange(0, num_queries_per_kv_padded)
+-    query_head_idx = kv_head_idx * num_queries_per_kv + offs_h
+-    head_mask = query_head_idx < (kv_head_idx + 1) * num_queries_per_kv
++    # M 维现在铺 (本步第几个 token, 该 kv 头的 q 头) 两种坐标。nqp=4、Q=3 时 12 行
++    # 仍落在原来的 16 行 padding 里 ⇒ **多两个 token 不多读一遍 KV**，这才是补丁的意义。
++    offs_r = tl.arange(0, num_queries_per_kv_padded)
++    tok_of_row = offs_r // num_queries_per_kv
++    head_in_grp = offs_r % num_queries_per_kv
++    query_head_idx = kv_head_idx * num_queries_per_kv + head_in_grp
++    head_mask = tok_of_row < Q_TOK
++    head_mask = head_mask & (query_head_idx < (kv_head_idx + 1) * num_queries_per_kv)
+     head_mask = head_mask & (query_head_idx < num_query_heads)
++    # 第 tok 个新 token 只能看到 ctx-Q+1+tok 个位置（投机步内的因果性）
++    row_lim = seq_len - Q_TOK + 1 + tok_of_row
++    # scratch 的"头"轴扩成 (tok, 绝对 q 头) 的平铺索引
++    flat_head = tok_of_row * num_query_heads + query_head_idx
+ 
+     offs_d = tl.arange(0, HEAD_SIZE_PADDED)
+     dim_mask = tl.where(offs_d < HEAD_SIZE, 1, 0).to(tl.int1)
+ 
+     Q = tl.load(
+-        query_ptr + token_idx * query_stride_0
++        query_ptr + (token_idx + tok_of_row)[:, None] * query_stride_0
+         + query_head_idx[:, None] * query_stride_1 + offs_d[None, :],
+         mask=dim_mask[None, :] & head_mask[:, None],
+         other=0.0,
+@@ -295,7 +306,10 @@
+ 
+     if True:
+         offs_n = tl.arange(0, BLOCK_N)
+-        n_full = (part_end - part_start) // BLOCK_N
++        # 本 program 内最紧的可见界 = 第一个新 token 的界；它之前对所有行同解 ⇒ 快循环
++        # 依然一列掩码都不加。差额（至多 Q-1 个 token）交给尾块处理。
++        part_end_safe = tl.minimum(part_end, seq_len - Q_TOK + 1)
++        n_full = tl.maximum(part_end_safe - part_start, 0) // BLOCK_N
+         for j in range(0, n_full):
+             abs_token_idx = part_start + j * BLOCK_N + offs_n
+             l_block_idx = abs_token_idx // PHYSICAL_BLOCK_SIZE
+@@ -335,7 +349,7 @@
+             acc += tl.dot(p.to(V.dtype), V)
+ 
+         # 尾块：越界 slot 是未写的 KV（可能 NaN），0*NaN 会毒化输出 ⇒ 载入与 score 都要 mask
+-        if (part_end - part_start) % BLOCK_N != 0:
++        if part_start + n_full * BLOCK_N < part_end:
+             abs_token_idx = part_start + n_full * BLOCK_N + offs_n
+             kv_load_mask = abs_token_idx < part_end
+             l_block_idx = abs_token_idx // PHYSICAL_BLOCK_SIZE
+@@ -364,8 +378,10 @@
+                         other=0.0, eviction_policy=EVICT)
+ 
+             qk = scale * tl.dot(Q, K)
+-            seq_mask = abs_token_idx < part_end
+-            S = tl.where(head_mask[:, None] & seq_mask[None, :], qk, float("-inf"))
++            # 逐行界：被 mask 掉的行整行写 es=0 / ml=-inf ⇒ reduce 侧自然忽略，
++            # 且这些 partition 是**写过**的（不像 part_start>=seq_len 那种提前 return）
++            seq_mask = (abs_token_idx < part_end) & (abs_token_idx[None, :] < row_lim[:, None])
++            S = tl.where(head_mask[:, None] & seq_mask, qk, float("-inf"))
+ 
+             m_j = tl.maximum(M, tl.max(S, axis=1))
+             p = tl.exp(S - m_j[:, None])
+@@ -381,12 +397,12 @@
+         # 归一化后写出（与 C++ tmp_out 同语义：局部 mean，配合 exp_sums/max_logits 再归并）
+         acc = acc / (L[:, None] + 1e-10)
+ 
+-    out_base = seq_idx * tmp_stride_0 + query_head_idx[:, None] * tmp_stride_1 \
++    out_base = seq_idx * tmp_stride_0 + flat_head[:, None] * tmp_stride_1 \
+         + part_idx * tmp_stride_2
+     tl.store(tmp_out_ptr + out_base + offs_d[None, :], acc.to(tmp_out_ptr.dtype.element_ty),
+              mask=dim_mask[None, :] & head_mask[:, None])
+ 
+-    es_base = seq_idx * es_stride_0 + query_head_idx * es_stride_1 + part_idx
++    es_base = seq_idx * es_stride_0 + flat_head * es_stride_1 + part_idx
+     tl.store(exp_sums_ptr + es_base, L, mask=head_mask)
+     tl.store(max_logits_ptr + es_base, M, mask=head_mask)
+ 
+@@ -412,13 +428,17 @@
+     PART_MIN: tl.constexpr,
+     MAX_PARTS: tl.constexpr,
+     ADAPT: tl.constexpr,
++    Q_TOK: tl.constexpr,
++    num_query_heads: tl.constexpr,
+     BLOCK_P: tl.constexpr,
+     BLOCK_D: tl.constexpr,
+     HEAD_SIZE: tl.constexpr,
+     HEAD_SIZE_PADDED: tl.constexpr,
+ ):
+     seq_idx = tl.program_id(0)
+-    head_idx = tl.program_id(1)
++    flat_head = tl.program_id(1)          # = tok * num_query_heads + head
++    tok = flat_head // num_query_heads
++    head_idx = flat_head % num_query_heads
+     d_blk = tl.program_id(2)
+ 
+     seq_len = tl.load(seq_lens_ptr + seq_idx)
+@@ -431,8 +451,8 @@
+     offs_d = d_blk * BLOCK_D + tl.arange(0, BLOCK_D)
+     d_mask = offs_d < HEAD_SIZE
+ 
+-    es_base = seq_idx * es_stride_0 + head_idx * es_stride_1
+-    tmp_base = seq_idx * tmp_stride_0 + head_idx * tmp_stride_1 + offs_d
++    es_base = seq_idx * es_stride_0 + flat_head * es_stride_1
++    tmp_base = seq_idx * tmp_stride_0 + flat_head * tmp_stride_1 + offs_d
+ 
+     m_run = tl.full([1], float("-inf"), dtype=tl.float32)
+     l_run = tl.zeros([1], dtype=tl.float32)
+@@ -458,7 +478,7 @@
+         m_run = m_new
+ 
+     out = acc / (l_run + 1e-10)
+-    tl.store(output_ptr + tl.load(query_start_len_ptr + seq_idx) * output_stride_0
++    tl.store(output_ptr + (tl.load(query_start_len_ptr + seq_idx) + tok) * output_stride_0
+              + head_idx * output_stride_1 + offs_d,
+              out.to(output_ptr.dtype.element_ty), mask=d_mask)
+ 
+@@ -591,8 +611,12 @@
+     """满足全部接管条件就发射 split-KV 两发内核并返回 True；否则返回 False（原路径不动）。"""
+     if not enabled():
+         return _reject(f"{ENV_ENABLE} 未开")
+-    if max_query_len != 1:
+-        return _reject(f"max_query_len={max_query_len}!=1")
++    # 原本这里写死 `max_query_len != 1` ⇒ MTP 一步 3 行 query 直接被拒，split-KV 与
++    # 投机解码永远不能叠加。现在放行到 VLLM_ROCM_SPLITKV_PA_MAX_Q（默认 1 = 旧行为）。
++    q_tok = int(max_query_len)
++    max_q = max(1, _env_int(ENV_MAX_Q, 1))
++    if q_tok < 1 or q_tok > max_q:
++        return _reject(f"max_query_len={q_tok} not in [1,{max_q}]")
+     if (sliding_window or 0) != 0:
+         return _reject(f"sliding_window={sliding_window}")
+     if sinks is not None:
+@@ -617,6 +641,11 @@
+     num_seqs = int(len(seq_lens))
+     num_query_heads = int(query.shape[1])
+     num_kv_heads = int(key_cache.shape[1])
++    if int(query.shape[0]) != num_seqs * q_tok:
++        # 每序列行数必须一致（稠密）：统一 decode 步就是这个形状
++        return _reject(f"query 行数 {int(query.shape[0])} != num_seqs*{q_tok}")
++    if (num_query_heads // max(1, num_kv_heads)) * q_tok > 64:
++        return _reject(f"tile 行数 {(num_query_heads // max(1, num_kv_heads)) * q_tok} > 64")
+     head_size = int(query.shape[2])
+     if num_kv_heads == 0 or num_query_heads % num_kv_heads != 0:
+         return _reject("q 头数不能被 kv 头数整除")
+@@ -674,20 +703,21 @@
+     # scratch 预算：partition 数超预算 ⇒ 抬高 PART_MIN（device 侧 floor 跟着抬，仍自洽）。
+     # 单流 32k + 紧上界 ⇒ 195×4×256×4B ≈ 0.8 MB，不触发。
+     max_scratch = max(_env_int(ENV_MAX_SCRATCH_MIB, 32), 1) * 1048576
+-    while (max_parts * num_seqs * num_query_heads * hd_pad * 4 > max_scratch
++    scratch_heads = num_query_heads * q_tok
++    while (max_parts * num_seqs * scratch_heads * hd_pad * 4 > max_scratch
+            and part_min < PART_MAX):
+         part_min *= 2
+         max_parts = (grid_upper_bound(bound, part_min) if tight
+                      else (bound + part_min - 1) // part_min)
+-    if max_parts * num_seqs * num_query_heads * hd_pad * 4 > max_scratch:
+-        return _reject(f"scratch {max_parts * num_seqs * num_query_heads * hd_pad * 4} 超预算")
++    if max_parts * num_seqs * scratch_heads * hd_pad * 4 > max_scratch:
++        return _reject(f"scratch {max_parts * num_seqs * scratch_heads * hd_pad * 4} 超预算")
+ 
+     device = query.device
+     try:
+         capturing = bool(torch.cuda.is_current_stream_capturing())
+     except Exception:
+         capturing = False
+-    buf = _get_scratch(num_seqs, num_query_heads, max_parts, hd_pad, device,
++    buf = _get_scratch(num_seqs, scratch_heads, max_parts, hd_pad, device,
+                        creating_ok=(not capturing))
+     if buf is None:
+         return _reject("capture 中缺 scratch")
+@@ -696,7 +726,9 @@
+     bt = block_table if block_table.dtype == torch.int32 else block_table.to(torch.int32)
+     scale = float(sm_scale) if sm_scale is not None else 1.0 / math.sqrt(head_size)
+     nqp = num_query_heads // num_kv_heads
+-    nqp_pad = max(triton.next_power_of_2(nqp), 16)
++    # tile 的 M 维 = 该 kv 头的 q 头数 x 本步 token 数；nqp=4/Q=3 -> 12 行，仍住在原来
++    # 的 16 行 padding 里（所以扫一遍 KV 服务 3 个 token 是免费的）
++    nqp_pad = max(triton.next_power_of_2(nqp * q_tok), 16)
+     x = int(key_cache.shape[4])
+ 
+     kernel_paged_attention_splitkv[(num_seqs, num_kv_heads, max_parts)](
+@@ -712,6 +744,7 @@
+         tmp_stride_0=tmp.stride(0), tmp_stride_1=tmp.stride(1), tmp_stride_2=tmp.stride(2),
+         es_stride_0=es.stride(0), es_stride_1=es.stride(1),
+         PART_MIN=part_min, MAX_PARTS=int(max_parts), ADAPT=adapt, BLOCK_N=BLOCK_N,
++        Q_TOK=q_tok,
+         PHYSICAL_BLOCK_SIZE=physical_block,
+         HEAD_SIZE=head_size, HEAD_SIZE_PADDED=hd_pad, x=x,
+         stride_k_cache_0=key_cache.stride(0), stride_k_cache_1=key_cache.stride(1),
+@@ -723,7 +756,8 @@
+     )
+ 
+     block_d = min(REDUCE_BLOCK_D, hd_pad)
+-    kernel_paged_attention_splitkv_reduce[(num_seqs, num_query_heads, hd_pad // block_d)](
++    kernel_paged_attention_splitkv_reduce[
++        (num_seqs, num_query_heads * q_tok, hd_pad // block_d)](
+         output_ptr=output, tmp_out_ptr=tmp, exp_sums_ptr=es, max_logits_ptr=ml,
+         seq_lens_ptr=seq_lens, query_start_len_ptr=query_start_loc,
+         max_ctx=bound,
+@@ -731,6 +765,7 @@
+         tmp_stride_0=tmp.stride(0), tmp_stride_1=tmp.stride(1), tmp_stride_2=tmp.stride(2),
+         es_stride_0=es.stride(0), es_stride_1=es.stride(1),
+         PART_MIN=part_min, MAX_PARTS=int(max_parts), ADAPT=adapt,
++        Q_TOK=q_tok, num_query_heads=num_query_heads,
+         BLOCK_P=min(max(triton.next_power_of_2(max_parts), 1), REDUCE_BLOCK_P),
+         BLOCK_D=block_d, HEAD_SIZE=head_size, HEAD_SIZE_PADDED=hd_pad,
+         num_warps=REDUCE_NUM_WARPS, num_stages=1,

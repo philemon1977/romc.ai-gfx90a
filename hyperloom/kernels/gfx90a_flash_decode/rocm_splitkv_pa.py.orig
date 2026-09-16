@@ -1,0 +1,762 @@
+# SPDX-License-Identifier: Apache-2.0
+"""MI250X(gfx90a) split-KV paged-attention decode —— serving 路径落地版。
+
+病根（已定档，不重新发现）
+--------------------------
+现役 `chunked_prefill_paged_decode.py` 的 `kernel_paged_attention_2d`：
+
+    :90-91     seq_idx = tl.program_id(0); kv_head_idx = tl.program_id(1)   ← grid 只有这两维
+    :152       for j in range(0, num_blocks):                               ← 单 program 串行扫全文
+    :461-466   grid = (num_seqs, num_kv_heads)
+
+用 Ornith-1.5-35B-A3B 真实参数（heads=16、kv_heads=2、TP4 ⇒ 每 rank 4 个 q 头 / 1 个 kv 头、
+hd=256、bf16、运行时 `block_size=528` 非 2 的幂 ⇒ 落 Triton）：单流 decode 时 grid=(1,1)=
+**1 个 program**，104 个 CU 用 1%。本模块把 grid 加第三维 partition，并补一个 log-sum-exp reduce。
+
+来源与验证状态
+--------------
+两个内核逐字来自已定档的原型 `bench/pa_splitkv.py`；寻址逻辑与现役内核 :158-179 同构，
+所以支持 `tile(16) != 物理 block(528)` 这种非 2 的幂布局。
+原型定稿 **576/576 格过独立 golden 裁判**（`bench/pa256_golden.py:golden()`，float32 手算，
+不经任何 vLLM 代码）：`cos ≥ 0.999997`、`max_rel ≤ 3.3e-3`；逐行数据见
+`docs/research-notes/splitkv-原型-2026-09-07.md` 附录 A.2。
+
+落地相对原型有**两处**实现差异（都不改数值语义，但必须由 `bench/pa_splitkv_check.py` 重新过裁判）：
+  D1  `part_start >= seq_len` 的提前 return 移到 Q load **之前** ⇒ graph 里的死 partition 不白读 Q。
+  D2  partition 大小**在 device 上按真实 seq_len 算**（见下"为什么必须这样"）。
+
+门控（默认**关**）
+-----------------
+`VLLM_ROCM_SPLITKV_PA=1` 才可能接管；以下条件**全部成立**才接管，任何一条不满足 ⇒ 返回 False，
+调用方继续走原 Triton 路径：
+
+    1. max_query_len == 1                    纯 decode（本原型没实现 prefill）
+    2. sliding_window == 0                   没开滑窗
+    3. sinks is None
+    4. alibi_slopes is None
+    5. kv_cache_dtype == "auto"              没 fp8/非默认 KV dtype
+    6. output_scale is None                  没 fp8 输出
+    7. is_block_table_ptr is False           不走裸指针 block table
+    8. query dtype ∈ {bf16, fp16}            原型只在 bf16 上验过
+    9. key_cache 是 5 维 + x*itemsize==16    原生 16B 打包布局
+   10. num_seqs * num_kv_heads <= 64          任务 A 实测定的（§1.6）；golden 验到 b=64
+   11. scratch 基座放得下（且不在 capture 中扩容）  见"scratch 生命周期"
+       （单流 32k ⇒ 基座 54 万个 fp32 ≈ 2.1 MB）
+   12. 原本会落 Triton（`use_custom` 为假）    由接管点保证：补丁挂在 `if use_custom: … elif 接管 … else:`
+
+生产常量（**稳健值**，不是逐形状 cherry-pick）
+--------------------------------------------
+`PART = clamp(pow2(ctx/192), 64, 512)`、`BLOCK_N=16`、`num_warps=4`、`tmp_out=f32`、`num_stages=2`。
+依据（原型 §4.4/§5/§6）：固定 PART=64 在 12 个形状上最差 **189 GB/s / ×28.2**；自适应启发式平均拿到
+逐形状最优的 93.7%。`num_warps<4` 寄存器溢出（spill 193/379 B/线程 ⇒ 5.5× 崩塌）；
+`BLOCK_N=128 @ hd256` 直接 `OutOfResources: 73728 > 65536`（LDS 顶满）⇒ 都不许试。
+
+⚠️ 为什么 partition 大小必须在 **device** 上算（D2）
+-------------------------------------------------
+decode 步被 CUDA graph 烤平：grid 形状与所有 constexpr 都来自 **capture 那一次**的主机取值，
+replay 时 Python 完全不执行。而 capture 时 `v1/worker/gpu_model_runner.py:2382` 把
+`max_seq_len` 置成 `max_model_len`、`seq_lens.fill_(1)`。⇒ 主机侧的 `PART(ctx)` 只能看到
+`max_model_len`（本部署 = 32768 ⇒ PART=256），replay 时 ctx=1024 也只有 4 个活 partition。
+
+所以 grid 的 z 维按**上界** `ceil(max_seq_len / PART_MIN)` 烤平，而**每 seq 真正用的 partition
+大小在内核里按 device 上的真实 `seq_len` 现算**（64/128/256/512 里挑），两者用同一公式：
+
+    ADAPT=1:  part = clamp_pow2_ge(seq_len // 192, PART_MIN, 512)
+              n_parts = ceil(seq_len / part)  ≤  ceil(max_seq_len / PART_MIN) = grid_z   ✅ 不越界
+    ADAPT=0:  part ≡ PART_MIN（退化成原型的"固定 PART"口径，用来对照 D2 到底值多少）
+
+代价：grid 里有 `grid_z - n_parts` 个空 partition，它们只做 1 次 load + return。
+
+⚠️ scratch 生命周期（为什么 capture 中新建 buffer 是隐患）
+--------------------------------------------------------
+partial 的三块 buffer 缓存在模块级 dict 里**长期持有**：CUDA graph replay 依赖这些指针在图的
+生命周期内不变。若在 capture 期间首次分配，那块内存属于 graph 私有池，之后 eager 调用再复用它
+就是未定义行为 ⇒ 这种情况直接**不接管**（返回 False 走原路径）。vLLM 在 capture 前会先用同一份
+metadata 做 warmup（`cudagraph_num_of_warmups=1`），所以正常起服路径会把 buffer 先建好。
+"""
+from __future__ import annotations
+
+import math
+import os
+
+import torch
+import triton
+import triton.language as tl
+
+from vllm.logger import init_logger
+
+logger = init_logger(__name__)
+
+# ─────────────────────────────── 门与旋钮 ───────────────────────────────
+ENV_ENABLE = "VLLM_ROCM_SPLITKV_PA"                    # =1 才开；默认关
+ENV_LOG_EVERY = "VLLM_ROCM_SPLITKV_PA_LOG_EVERY"       # 每 N 次接管再打一行 INFO（0=只打首次）
+ENV_STATS = "VLLM_ROCM_SPLITKV_PA_STATS"               # 把计数写进这个文件（离线核对用）
+ENV_MAX_SCRATCH_MIB = "VLLM_ROCM_SPLITKV_PA_MAX_SCRATCH_MIB"       # 单个 key 的预算
+ENV_MAX_TOTAL_MIB = "VLLM_ROCM_SPLITKV_PA_MAX_TOTAL_MIB"           # 全部 key 的总预算
+ENV_PART = "VLLM_ROCM_SPLITKV_PA_PART"                 # 0=自适应(默认)；64/128/256/512=钉死
+ENV_MAX_SEQS = "VLLM_ROCM_SPLITKV_PA_MAX_SEQS"          # 接管上限：num_seqs*num_kv_heads ≤ 此值；默认见 DEFAULT_MAX_SEQS
+ENV_MAX_BASE = "VLLM_ROCM_SPLITKV_PA_MAX_BASE_PROGRAMS"  # 旧名别名（等价 ENV_MAX_SEQS）
+ENV_STATS_EVERY = "VLLM_ROCM_SPLITKV_PA_STATS_EVERY"     # 每 N 次判定落一次计数文件（0=不主动落）
+ENV_TIGHT = "VLLM_ROCM_SPLITKV_PA_TIGHT_GRID"            # 1=紧上界(默认) 0=旧的 ceil(bound/PART_MIN)
+
+BLOCK_N = 16          # 内层 tile：hd256 下只有 t16 能在 w4 时把 LDS 压到 16 KB（原型 §5）
+NUM_WARPS = 4         # 硬下限（w<4 溢出 ⇒ 5.5× 崩塌）
+NUM_STAGES = 2
+REDUCE_BLOCK_P = 32
+REDUCE_BLOCK_D = 64
+REDUCE_NUM_WARPS = 4  # 原型 §5：reduce 的旋钮量不出差异，取默认
+EVICT = "evict_last"  # 与现役内核一致；原型 §5 证明改它无收益
+DEFAULT_MAX_SEQS = 64   # ← 门限的**唯一真值**（任务 A 定的，见 try_paged_decode 里的注释）
+PART_MIN_DEFAULT = 64
+PART_MAX = 512
+
+
+def _env_int(name, default=0):
+    try:
+        return int(os.environ.get(name, default))
+    except (TypeError, ValueError):
+        return default
+
+
+def enabled() -> bool:
+    """默认关。只有显式 `VLLM_ROCM_SPLITKV_PA=1` 才开。"""
+    return os.environ.get(ENV_ENABLE, "0").strip().lower() in ("1", "true", "yes", "on")
+
+
+_CU_CACHE = {"n": None}
+
+
+def num_compute_units() -> int:
+    if _CU_CACHE["n"] is None:
+        try:
+            _CU_CACHE["n"] = int(torch.cuda.get_device_properties(
+                torch.cuda.current_device()).multi_processor_count)
+        except Exception:
+            _CU_CACHE["n"] = 104
+    return _CU_CACHE["n"]
+
+
+def _part_host(L: int, part_min: int) -> int:
+    """device 侧 `part_of_len()` 的 Python 镜像。**必须逐条同解**（§2.3 的穷举格子会验它）。"""
+    q = max(int(L) // 192, 1)
+    part = min(max(1 << (q - 1).bit_length(), 64), PART_MAX)
+    return max(part, part_min)
+
+
+def grid_upper_bound(bound: int, part_min: int) -> int:
+    """`max_{1<=L<=bound} ceil(L / part(L))` —— 紧上界。
+
+    为什么原来那是**松了 2.7 倍**的上界：旧写法 `ceil(bound / PART_MIN)` 假设"整条上下文都用
+    最小 PART 切"，可 device 侧的 PART 是随 seq_len 涨的（`pow2(L/192)`），于是真实
+    `n_parts` 自限在 ~192 附近 —— 多开的那 300 多个 partition 每个都要"载入 seq_len→算
+    part→比较→return"，**在 CUDA graph 里这份开销每步都付、且不随 ctx 缩小**。
+    实测就是上轮那 0.256 ms/步 的常数税（§2.1）。
+
+    `part(L)` 是阶梯函数 ⇒ `ceil(L/part(L))` 在每个"part 恒定"的区间内单增，
+    极值只可能落在**区间右端点**或 `bound` 本身，所以枚举这些候选就够了（§2.3 再用
+    穷举扫描验一遍，不靠推理）。
+    """
+    bound = int(bound)
+    cands = {1, bound}
+    for q in (64, 128, 256, 512, part_min):
+        for e in (192 * q - 1, 192 * q, 192 * q + 191, 192 * (q + 1) - 1):
+            if 1 <= e <= bound:
+                cands.add(e)
+    return max(-(-L // _part_host(L, part_min)) for L in cands)
+
+
+def pick_part(ctx: int) -> int:
+    """`PART = clamp(pow2(ctx//192), 64, 512)` —— 让 partition 数 ≈ 2×CU（原型 §4.4 启发式）。
+
+    "钉成常量且钉大了"比不钉更糟：固定 PART=512 在 ctx=4096 上塌到 44.7 GB/s。
+    与内核里 D2 那条 device 侧公式**必须同解**，否则 grid 上界会小于真实 n_parts ⇒ 越界。
+    """
+    ctx = max(int(ctx), 1)
+    return min(max(1 << (max(ctx // 192, 1) - 1).bit_length(), 64), PART_MAX)
+
+
+# ─────────────────────────────── ① partial 内核 ───────────────────────────────
+@triton.jit
+def cdiv_fn(x, y):
+    return (x + y - 1) // y
+
+
+@triton.jit
+def part_of_len(seq_len, PART_MIN: tl.constexpr, ADAPT: tl.constexpr):
+    """device 侧算本 seq 用的 partition 大小；与 host 的 `pick_part` 同解。
+
+    ADAPT=0 ⇒ 恒等于 PART_MIN（= 原型的"固定 PART"口径，留作对照）。
+    ADAPT=1 ⇒ clamp(pow2(seq_len//192), PART_MIN, 512)，逐档比较（PART_MIN 只可能是 64/128/256/512）。
+    """
+    if ADAPT == 0:
+        return PART_MIN
+    q = seq_len // 192
+    part = 64
+    part = tl.where(q > 64, 128, part)
+    part = tl.where(q > 128, 256, part)
+    part = tl.where(q > 256, 512, part)
+    if PART_MIN > 64:
+        part = tl.maximum(part, PART_MIN)
+    return part
+
+
+@triton.jit
+def kernel_paged_attention_splitkv(
+    tmp_out_ptr,          # [num_seqs, num_query_heads, max_parts, HEAD_SIZE]  f32
+    exp_sums_ptr,         # [num_seqs, num_query_heads, max_parts]            f32
+    max_logits_ptr,       # [num_seqs, num_query_heads, max_parts]            f32
+    query_ptr,            # [num_tokens, num_query_heads, HEAD_SIZE]
+    key_cache_ptr,        # [num_blks, num_kv_heads, HEAD_SIZE // x, PHYS_BLK, x]
+    value_cache_ptr,      # [num_blks, num_kv_heads, HEAD_SIZE,     PHYS_BLK]
+    block_tables_ptr,     # [num_seqs, max_num_blocks_per_seq]
+    seq_lens_ptr,         # [num_seqs]
+    query_start_len_ptr,  # [num_seqs+1]
+    max_ctx,              # 本 grid 的上下文上界（= capture 时的 max_seq_len）；护栏用
+    scale,                # float32（已含 1/sqrt(head)）
+    num_query_heads: tl.constexpr,
+    num_queries_per_kv: tl.constexpr,
+    num_queries_per_kv_padded: tl.constexpr,
+    block_table_stride: tl.int64,
+    query_stride_0: tl.int64,
+    query_stride_1: tl.int64,
+    tmp_stride_0: tl.int64,
+    tmp_stride_1: tl.int64,
+    tmp_stride_2: tl.int64,
+    es_stride_0: tl.int64,
+    es_stride_1: tl.int64,
+    PART_MIN: tl.constexpr,
+    MAX_PARTS: tl.constexpr,
+    ADAPT: tl.constexpr,
+    BLOCK_N: tl.constexpr,
+    PHYSICAL_BLOCK_SIZE: tl.constexpr,
+    HEAD_SIZE: tl.constexpr,
+    HEAD_SIZE_PADDED: tl.constexpr,
+    x: tl.constexpr,
+    stride_k_cache_0: tl.int64,
+    stride_k_cache_1: tl.int64,
+    stride_k_cache_2: tl.int64,
+    stride_k_cache_3: tl.int64,
+    stride_k_cache_4: tl.int64,
+    stride_v_cache_0: tl.int64,
+    stride_v_cache_1: tl.int64,
+    stride_v_cache_2: tl.int64,
+    stride_v_cache_3: tl.int64,
+    EVICT: tl.constexpr,
+):
+    seq_idx = tl.program_id(0)
+    kv_head_idx = tl.program_id(1)
+    part_idx = tl.program_id(2)
+
+    seq_len = tl.load(seq_lens_ptr + seq_idx)
+    # 护栏：CUDA graph 的 padding 行可能带着上一 step 的陈旧 seq_len（甚至 > 本次上界）。
+    # 现役内核只会被它拖慢，但 split-KV 的 grid_z 是**按上界烤平**的 ⇒ 越界 seq_len 会读出
+    # exp_sums/tmp_out 之外。钳到上界：真实行恒满足 seq_len <= max_ctx ⇒ 这一钳是无操作，
+    # 只把"越界读"变成"少读几个 padding 行"（那些行的输出本来就丢弃）。
+    seq_len = tl.minimum(seq_len, max_ctx)
+    # ① **最便宜的死路先判**：part ≥ PART_MIN 恒成立 ⇒ part_idx*PART_MIN >= seq_len 时
+    #    这个 program 必死，可以**不查 query_start_loc、不算 part_of_len、不 load Q** 直接退。
+    #    （CUDA graph 把 grid_z 烤平，短上下文里绝大多数 program 走的就是这条路。）
+    if part_idx * PART_MIN >= seq_len:
+        return
+    part = part_of_len(seq_len, PART_MIN, ADAPT)
+    part_start = part_idx * part
+    if part_start >= seq_len:
+        return
+    # ② 兜底：**最后一个 partition 一路吃到 seq_len**。
+    #    有了它，"grid_z 够不够"就**不再是正确性条件**，只是性能问题 —— 万一上界被算松/算紧，
+    #    最坏退化成"最后一个 program 串行扫剩余"（慢），而**不是**静默漏读 KV（错）。
+    #    这条是上一轮 capture seq_len=1 那个静默算错的同族防线。
+    part_end = tl.minimum(part_start + part, seq_len)
+    if part_idx == MAX_PARTS - 1:
+        part_end = seq_len
+
+    # ---- GQA：一个 kv 头对 num_queries_per_kv 个 q 头 ----
+    token_idx = tl.load(query_start_len_ptr + seq_idx)
+    offs_h = tl.arange(0, num_queries_per_kv_padded)
+    query_head_idx = kv_head_idx * num_queries_per_kv + offs_h
+    head_mask = query_head_idx < (kv_head_idx + 1) * num_queries_per_kv
+    head_mask = head_mask & (query_head_idx < num_query_heads)
+
+    offs_d = tl.arange(0, HEAD_SIZE_PADDED)
+    dim_mask = tl.where(offs_d < HEAD_SIZE, 1, 0).to(tl.int1)
+
+    Q = tl.load(
+        query_ptr + token_idx * query_stride_0
+        + query_head_idx[:, None] * query_stride_1 + offs_d[None, :],
+        mask=dim_mask[None, :] & head_mask[:, None],
+        other=0.0,
+    )
+
+    block_table_offset = seq_idx * block_table_stride
+
+    M = tl.full([num_queries_per_kv_padded], float("-inf"), dtype=tl.float32)
+    L = tl.zeros([num_queries_per_kv_padded], dtype=tl.float32)
+    acc = tl.zeros([num_queries_per_kv_padded, HEAD_SIZE_PADDED], dtype=tl.float32)
+
+    if True:
+        offs_n = tl.arange(0, BLOCK_N)
+        n_full = (part_end - part_start) // BLOCK_N
+        for j in range(0, n_full):
+            abs_token_idx = part_start + j * BLOCK_N + offs_n
+            l_block_idx = abs_token_idx // PHYSICAL_BLOCK_SIZE
+            p_block_idx = tl.load(block_tables_ptr + block_table_offset + l_block_idx)
+            internal_offsets = abs_token_idx % PHYSICAL_BLOCK_SIZE
+
+            k_offset = (
+                p_block_idx[None, :] * stride_k_cache_0
+                + kv_head_idx * stride_k_cache_1
+                + (offs_d[:, None] // x) * stride_k_cache_2
+                + internal_offsets[None, :] * stride_k_cache_3
+                + (offs_d[:, None] % x) * stride_k_cache_4
+            )
+            v_offset = (
+                p_block_idx[:, None] * stride_v_cache_0
+                + kv_head_idx * stride_v_cache_1
+                + offs_d[None, :] * stride_v_cache_2
+                + internal_offsets[:, None] * stride_v_cache_3
+            )
+            K = tl.load(key_cache_ptr + k_offset, mask=dim_mask[:, None],
+                        other=0.0, eviction_policy=EVICT)
+            V = tl.load(value_cache_ptr + v_offset, mask=dim_mask[None, :],
+                        other=0.0, eviction_policy=EVICT)
+
+            qk = scale * tl.dot(Q, K)
+            S = tl.where(head_mask[:, None], qk, float("-inf"))
+
+            m_j = tl.maximum(M, tl.max(S, axis=1))
+            p = tl.exp(S - m_j[:, None])
+            p = tl.where(m_j[:, None] == float("-inf"), 0.0, p)
+            l_j = tl.sum(p, axis=1)
+            alpha = tl.exp(M - m_j)
+            alpha = tl.where(float("-inf") == M, 0.0, alpha)
+            acc = acc * alpha[:, None]
+            L = L * alpha + l_j
+            M = m_j
+            acc += tl.dot(p.to(V.dtype), V)
+
+        # 尾块：越界 slot 是未写的 KV（可能 NaN），0*NaN 会毒化输出 ⇒ 载入与 score 都要 mask
+        if (part_end - part_start) % BLOCK_N != 0:
+            abs_token_idx = part_start + n_full * BLOCK_N + offs_n
+            kv_load_mask = abs_token_idx < part_end
+            l_block_idx = abs_token_idx // PHYSICAL_BLOCK_SIZE
+            p_block_idx = tl.load(block_tables_ptr + block_table_offset + l_block_idx,
+                                  mask=kv_load_mask, other=0)
+            internal_offsets = abs_token_idx % PHYSICAL_BLOCK_SIZE
+
+            k_offset = (
+                p_block_idx[None, :] * stride_k_cache_0
+                + kv_head_idx * stride_k_cache_1
+                + (offs_d[:, None] // x) * stride_k_cache_2
+                + internal_offsets[None, :] * stride_k_cache_3
+                + (offs_d[:, None] % x) * stride_k_cache_4
+            )
+            v_offset = (
+                p_block_idx[:, None] * stride_v_cache_0
+                + kv_head_idx * stride_v_cache_1
+                + offs_d[None, :] * stride_v_cache_2
+                + internal_offsets[:, None] * stride_v_cache_3
+            )
+            K = tl.load(key_cache_ptr + k_offset,
+                        mask=dim_mask[:, None] & kv_load_mask[None, :],
+                        other=0.0, eviction_policy=EVICT)
+            V = tl.load(value_cache_ptr + v_offset,
+                        mask=dim_mask[None, :] & kv_load_mask[:, None],
+                        other=0.0, eviction_policy=EVICT)
+
+            qk = scale * tl.dot(Q, K)
+            seq_mask = abs_token_idx < part_end
+            S = tl.where(head_mask[:, None] & seq_mask[None, :], qk, float("-inf"))
+
+            m_j = tl.maximum(M, tl.max(S, axis=1))
+            p = tl.exp(S - m_j[:, None])
+            p = tl.where(m_j[:, None] == float("-inf"), 0.0, p)
+            l_j = tl.sum(p, axis=1)
+            alpha = tl.exp(M - m_j)
+            alpha = tl.where(float("-inf") == M, 0.0, alpha)
+            acc = acc * alpha[:, None]
+            L = L * alpha + l_j
+            M = m_j
+            acc += tl.dot(p.to(V.dtype), V)
+
+        # 归一化后写出（与 C++ tmp_out 同语义：局部 mean，配合 exp_sums/max_logits 再归并）
+        acc = acc / (L[:, None] + 1e-10)
+
+    out_base = seq_idx * tmp_stride_0 + query_head_idx[:, None] * tmp_stride_1 \
+        + part_idx * tmp_stride_2
+    tl.store(tmp_out_ptr + out_base + offs_d[None, :], acc.to(tmp_out_ptr.dtype.element_ty),
+             mask=dim_mask[None, :] & head_mask[:, None])
+
+    es_base = seq_idx * es_stride_0 + query_head_idx * es_stride_1 + part_idx
+    tl.store(exp_sums_ptr + es_base, L, mask=head_mask)
+    tl.store(max_logits_ptr + es_base, M, mask=head_mask)
+
+
+# ─────────────────────────────── ② reduce 内核 ───────────────────────────────
+# 单遍 online 合并（边扫 partition 边 rescale），避免把 tmp_out 读两遍（原型 §1）。
+@triton.jit
+def kernel_paged_attention_splitkv_reduce(
+    output_ptr,           # [num_tokens, num_query_heads, HEAD_SIZE]
+    tmp_out_ptr,
+    exp_sums_ptr,
+    max_logits_ptr,
+    seq_lens_ptr,
+    query_start_len_ptr,
+    max_ctx,              # 与 partial 同一个上界钳位（两发必须同解，否则 n_parts 会算错）
+    output_stride_0: tl.int64,
+    output_stride_1: tl.int64,
+    tmp_stride_0: tl.int64,
+    tmp_stride_1: tl.int64,
+    tmp_stride_2: tl.int64,
+    es_stride_0: tl.int64,
+    es_stride_1: tl.int64,
+    PART_MIN: tl.constexpr,
+    MAX_PARTS: tl.constexpr,
+    ADAPT: tl.constexpr,
+    BLOCK_P: tl.constexpr,
+    BLOCK_D: tl.constexpr,
+    HEAD_SIZE: tl.constexpr,
+    HEAD_SIZE_PADDED: tl.constexpr,
+):
+    seq_idx = tl.program_id(0)
+    head_idx = tl.program_id(1)
+    d_blk = tl.program_id(2)
+
+    seq_len = tl.load(seq_lens_ptr + seq_idx)
+    seq_len = tl.minimum(seq_len, max_ctx)      # 与 partial 同一条钳位 ⇒ 两发公式**同解**
+    # 与 partial **同一公式** ⇒ n_parts 必然 ≤ grid 的 z 维上界；再夹一次 MAX_PARTS：
+    # 上界若被算紧，这里也**绝不会去读没写过的 partition**（partial 那边由兜底 partition 覆盖）。
+    n_parts = tl.minimum(cdiv_fn(seq_len, part_of_len(seq_len, PART_MIN, ADAPT)), MAX_PARTS)
+
+    offs_p = tl.arange(0, BLOCK_P)
+    offs_d = d_blk * BLOCK_D + tl.arange(0, BLOCK_D)
+    d_mask = offs_d < HEAD_SIZE
+
+    es_base = seq_idx * es_stride_0 + head_idx * es_stride_1
+    tmp_base = seq_idx * tmp_stride_0 + head_idx * tmp_stride_1 + offs_d
+
+    m_run = tl.full([1], float("-inf"), dtype=tl.float32)
+    l_run = tl.zeros([1], dtype=tl.float32)
+    acc = tl.zeros([BLOCK_D], dtype=tl.float32)
+
+    for p0 in range(0, n_parts, BLOCK_P):
+        pp = p0 + offs_p
+        pm = pp < n_parts
+        ml = tl.load(max_logits_ptr + es_base + pp, mask=pm, other=float("-inf"))
+        es = tl.load(exp_sums_ptr + es_base + pp, mask=pm, other=0.0)
+
+        t = tl.load(tmp_out_ptr + tmp_base[None, :] + pp[:, None] * tmp_stride_2,
+                    mask=pm[:, None] & d_mask[None, :], other=0.0).to(tl.float32)
+
+        m_new = tl.maximum(m_run, tl.max(ml, axis=0))
+        m_safe = tl.where(m_new == float("-inf"), 0.0, m_new)
+        scale_old = tl.where(m_run == float("-inf"), 0.0, tl.exp(m_run - m_safe))
+        scale_p = tl.where(ml == float("-inf"), 0.0, tl.exp(ml - m_safe))
+        w = es * scale_p
+
+        acc = acc * scale_old + tl.sum(t * w[:, None], axis=0)
+        l_run = l_run * scale_old + tl.sum(w, axis=0)
+        m_run = m_new
+
+    out = acc / (l_run + 1e-10)
+    tl.store(output_ptr + tl.load(query_start_len_ptr + seq_idx) * output_stride_0
+             + head_idx * output_stride_1 + offs_d,
+             out.to(output_ptr.dtype.element_ty), mask=d_mask)
+
+
+# ─────────────────────────────── scratch：单一递增基座 + 视图 ───────────────────────────────
+# 为什么不是"每个 key 一块 buffer"：vLLM 会为 ~35 个 decode batch 尺寸各 capture 一张图，
+# 每尺寸一块的话累计要吃掉上百 MiB（实测撞到总预算后，后面的 batch 尺寸就静默退回 Triton，
+# 于是"哪些图走了新内核"变成按 capture 顺序决定的偶然结果 —— 这种不确定性绝不能留）。
+# 现在：所有形状共用**一块一维 fp32 基座**，按需翻倍增长；每个 key 只是基座上的一个 view。
+#   * 同一时刻只有一个图在 replay、同一步里各层顺序执行 ⇒ 复用同一块 scratch 是安全的。
+#   * 基座换新的时候，旧基座**保留在 _BASE["hist"] 里不释放** —— 已经烤进图的指针必须一直有效。
+#   * capture 期间若需要扩容 ⇒ 返回 None（拒绝接管），因为那块内存会落进 graph 私有池。
+_BASE = {"flat": None, "n": 0, "hist": [], "bytes": 0}
+_SCRATCH: dict = {}
+
+
+def _scratch_bytes():
+    return _BASE["bytes"]
+
+
+def _get_scratch(num_seqs, num_query_heads, max_parts, hd_pad, device, *, creating_ok):
+    """取（或在基座上开）partial 用的三块 view；`creating_ok=False` 且放不下 ⇒ None。"""
+    key = (int(num_seqs), int(num_query_heads), int(max_parts), int(hd_pad),
+           device.type, device.index)
+    buf = _SCRATCH.get(key)
+    if buf is not None:
+        return buf
+    n_tmp = num_seqs * num_query_heads * max_parts * hd_pad
+    n_stat = num_seqs * num_query_heads * max_parts
+    need = n_tmp + 2 * n_stat
+    if _BASE["n"] < need:
+        if not creating_ok:
+            return None
+        cap = need if _BASE["n"] == 0 else max(need, _BASE["n"] + need // 2)
+        # 单位统一成**字节**再比（写成"元素数 vs 字节"会把预算虚报成 1/4，本会话真踩了：
+        # b=16/hd=256 明明只要 32 MiB，却被"上限 96 MiB"拒了）
+        total_cap_bytes = max(_env_int(ENV_MAX_TOTAL_MIB, 192), 1) * 1048576
+        if cap * 4 > total_cap_bytes:
+            logger.warning("MI250X split-KV: 基座要 %.1f MiB > 上限 %d MiB ⇒ 本形状不接管",
+                           cap * 4 / 1048576.0, total_cap_bytes // 1048576)
+            return None
+        if _BASE["flat"] is not None:
+            # 老图还指着旧基座 ⇒ 永不释放（只是不再使用它开新 view）
+            _BASE["hist"].append(_BASE["flat"])
+        _BASE["flat"] = torch.empty(cap, dtype=torch.float32, device=device)
+        _BASE["n"] = cap
+        _BASE["bytes"] = cap * 4 + sum(t.numel() for t in _BASE["hist"]) * 4
+        logger.info("MI250X split-KV: scratch 基座扩到 %d fp32 (%.2f MiB，含历史保留 "
+                    "%.2f MiB)，缓存项 %d 个", cap, cap * 4 / 1048576.0,
+                    sum(t.numel() for t in _BASE["hist"]) * 4 / 1048576.0,
+                    len(_SCRATCH) + 1)
+    flat = _BASE["flat"]
+    tmp = flat[:n_tmp].view(num_seqs, num_query_heads, max_parts, hd_pad)
+    es = flat[n_tmp:n_tmp + n_stat].view(num_seqs, num_query_heads, max_parts)
+    ml = flat[n_tmp + n_stat:n_tmp + 2 * n_stat].view(num_seqs, num_query_heads, max_parts)
+    _SCRATCH[key] = (tmp, es, ml)
+    return _SCRATCH[key]
+
+
+# ─────────────────────────────── 接管判定 + 发射 ───────────────────────────────
+_stats = {"takeover": 0, "reject": 0, "first_logged": False, "reject_by_reason": {},
+          "last_launch": None}
+_LOGGED_KEYS = set()      # 每个不同 (形状, grid, PART) 首次接管各打一行 INFO
+
+
+def _reject(why: str) -> bool:
+    _stats["reject"] += 1
+    r = _stats["reject_by_reason"]
+    r[why] = r.get(why, 0) + 1
+    _maybe_dump()
+    return False
+
+
+def _maybe_dump():
+    """每 N 次判定（**接管与拒绝都算**）把计数写进 VLLM_ROCM_SPLITKV_PA_STATS。
+
+    为什么拒绝路径也要落：`max_query_len>1` 的**每一次**判定都会走到 `_reject`，而统一
+    decode 步在 CUDA graph 里根本不执行 Python ⇒ **拒绝计数就是"非统一 decode 步 × 层数"
+    的直接读数**。除以 full_attention 层数（Ornith=10）即混合/预填充步数，这是任务 A 要的
+    "混合批占比"的唯一现成数据源。
+    """
+    n = _stats["takeover"] + _stats["reject"]
+    every = _env_int(ENV_STATS_EVERY, 0)
+    if every and n % every == 0:
+        _dump_stats()
+
+
+def stats() -> dict:  # noqa: E302
+    """给 bench / 起服自检读的接管计数（"上场"证据，不是"构造成功"证据）。"""
+    return dict(takeover=_stats["takeover"], reject=_stats["reject"],
+                reject_by_reason=dict(_stats["reject_by_reason"]),
+                enabled=enabled(), cu=num_compute_units(), scratch=len(_SCRATCH),
+                max_seqs=_env_int(ENV_MAX_SEQS, _env_int(ENV_MAX_BASE, DEFAULT_MAX_SEQS)),
+                last_launch=dict(_stats.get("last_launch") or {}))
+
+
+def _dump_stats():
+    """把计数落到 **每进程一个文件**。
+
+    ⚠️ 这里原来直接写 `ENV_STATS` 那一个固定路径 ⇒ TP4 的 4 个 worker 进程**共写同一文件**，
+    每次 dump 都是 `open(w)` 整体覆盖 ⇒ 读到的值是"最后写的那个 worker"的，跨快照比大小
+    会出现 `12000 → 2000` 这种**单调计数器居然变小**的荒谬现象（本会话 14:33 实测抓到）。
+    混合批占比是本轮最重要的数，仪器本身在说谎就必须先修仪器，而不是先去解释那个数。
+    现在：文件名带 pid + 原子替换（temp + os.replace），读侧永远拿到某个进程的完整快照；
+    要全场合计就把各 pid 文件相加（同一步每层都会被调 ⇒ 每进程计数近似相等，
+    用**任一进程**算占比即可，不必求和）。
+    """
+    path = os.environ.get(ENV_STATS, "")
+    if not path:
+        return
+    try:
+        base, ext = os.path.splitext(path)
+        pid_path = f"{base}.pid{os.getpid()}{ext or ''}"
+        tmp = pid_path + ".tmp"
+        d = stats()
+        d["pid"] = os.getpid()
+        with open(tmp, "w", encoding="utf-8") as f:
+            f.write(repr(d) + "\n")
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(tmp, pid_path)          # 原子 ⇒ 读侧不会看到半截文件
+    except OSError:
+        pass
+
+
+def try_paged_decode(*, query, output, key_cache, value_cache, block_table,
+                     query_start_loc, seq_lens, max_seq_len, max_query_len,
+                     kv_cache_dtype, sliding_window, alibi_slopes, sinks, sm_scale,
+                     is_block_table_ptr=False, output_scale=None) -> bool:
+    """满足全部接管条件就发射 split-KV 两发内核并返回 True；否则返回 False（原路径不动）。"""
+    if not enabled():
+        return _reject(f"{ENV_ENABLE} 未开")
+    if max_query_len != 1:
+        return _reject(f"max_query_len={max_query_len}!=1")
+    if (sliding_window or 0) != 0:
+        return _reject(f"sliding_window={sliding_window}")
+    if sinks is not None:
+        return _reject("sinks is not None")
+    if alibi_slopes is not None:
+        return _reject("alibi_slopes is not None")
+    if kv_cache_dtype != "auto":
+        return _reject(f"kv_cache_dtype={kv_cache_dtype!r}")
+    if output_scale is not None:
+        return _reject("output_scale is not None")
+    if is_block_table_ptr:
+        return _reject("is_block_table_ptr")
+    if query.dtype not in (torch.bfloat16, torch.float16):
+        return _reject(f"query.dtype={query.dtype}")
+    if key_cache.dim() != 5:
+        return _reject(f"key_cache.dim()={key_cache.dim()}")
+    if key_cache.shape[4] * key_cache.element_size() != 16:
+        return _reject("key_cache 非 16B 打包布局")
+    if int(key_cache.shape[3]) != int(value_cache.shape[3]):
+        return _reject("K/V 物理 block 不一致")
+
+    num_seqs = int(len(seq_lens))
+    num_query_heads = int(query.shape[1])
+    num_kv_heads = int(key_cache.shape[1])
+    head_size = int(query.shape[2])
+    if num_kv_heads == 0 or num_query_heads % num_kv_heads != 0:
+        return _reject("q 头数不能被 kv 头数整除")
+    # **原型只验到 batch=1**（§7.1），本会话离线裁判验到 b=16 ⇒ 默认只在基线 program 数
+    # ≤16 时接管：batch 自己就能把 104 个 CU 铺得差不多时，再切 partition 只剩额外一发。
+    # 阈值是**可调门**而不是常量：测拐点时显式设 64，默认 16（=本会话离线裁判验过的范围）。
+    # 默认 64（**2026-09-08 任务 A 实测定的**，原来是写死的 16）。依据见
+    # docs/research-notes/splitkv-拐点与税收-2026-09-08.md §1.6：
+    #   ctx=4096  speedup ×1.91(b=1) → 1.30(16) → 1.23(32) → 1.09(64)   ← 衰减但始终 >1.05
+    #   ctx=30720 speedup ×7.36(b=1) → 3.01(16) → 2.24(32)              ← 长上下文根本没过拐点
+    #   且两臂 scratch超预算=0、grid基数>上限=0 ⇒ 不是预算/门造的假拐点
+    # 正确性侧：golden 已验到 b=64（含长度不齐、含 1-token 行），见 §1.2 的 72/0。
+    max_base = _env_int(ENV_MAX_SEQS, _env_int(ENV_MAX_BASE, DEFAULT_MAX_SEQS))
+    if num_seqs * num_kv_heads > max_base:
+        return _reject(f"grid 基数 {num_seqs}x{num_kv_heads} > 上限 {max_base}")
+    if head_size > 512:
+        return _reject(f"head_size={head_size}")
+
+    physical_block = int(value_cache.shape[3])
+    ctx = int(max_seq_len or 0)
+    if ctx <= 0:
+        return _reject("max_seq_len<=0")
+
+    fixed = _env_int(ENV_PART, 0)
+    adapt = 0 if fixed else 1
+    part_min = fixed if fixed else PART_MIN_DEFAULT
+    if part_min & (part_min - 1) or part_min < 64 or part_min > PART_MAX:
+        return _reject(f"PART={part_min} 非法（须 64/128/256/512）")
+
+    # ── grid 的 z 维必须按**静态上界**开，不能按本次 max_seq_len ──────────────
+    # 实测（本会话，2026-09-07 12:33 起服日志）：CUDA graph capture 传进来的 `max_seq_len`
+    # 是 **1**（`build_for_cudagraph_capture` 之后 `seq_lens.fill_(1)`，metadata 的
+    # max_seq_len 也跟着是 1），而 replay 时真实 seq_len 会长到 3 万。若按 capture 时的
+    # max_seq_len 开 grid ⇒ grid=(1,1,1)、PART=64 ⇒ **只attend 前 64 个 token**，输出全错。
+    # 静态上界取 `block_table 的列数 × 物理 block`：block_table 是持久缓冲
+    # `[max_num_reqs, max_num_blocks_per_req]`（v1/worker/block_table.py:105），
+    # 列数恒 = ceil(max_model_len/物理block) ⇒ 这个上界与 batch/步数无关，capture 与
+    # replay 同解，且必然 ≥ 任何真实 seq_len。
+    if block_table.dim() != 2:
+        return _reject(f"block_table.dim()={block_table.dim()}")
+    capacity = int(block_table.shape[1]) * physical_block
+    bound = max(capacity, ctx)          # 防御：万一哪天 block_table 被切窄，也不能漏 token
+
+    hd_pad = triton.next_power_of_2(head_size)
+    # grid 的 z 维 = **上界**（capture 时烤平，之后不再变）。
+    # 任务 B：默认用**紧上界**（只开真正会被用到的 partition 数）；
+    # `VLLM_ROCM_SPLITKV_PA_TIGHT_GRID=0` 退回旧口径 `ceil(bound/PART_MIN)`，
+    # ⇒ 同一份二进制、同一次起服流程下做 before/after 对照，不靠"上次那个数"。
+    tight = _env_int(ENV_TIGHT, 1)
+    max_parts = (grid_upper_bound(bound, part_min) if tight
+                 else (bound + part_min - 1) // part_min)
+    # 覆盖性自检：紧上界必须真的盖住 bound。**盖不住就拒绝接管，绝不静默少读。**
+    if grid_upper_bound(bound, part_min) > max_parts:
+        return _reject("grid 覆盖不了 bound")
+    # scratch 预算：partition 数超预算 ⇒ 抬高 PART_MIN（device 侧 floor 跟着抬，仍自洽）。
+    # 单流 32k + 紧上界 ⇒ 195×4×256×4B ≈ 0.8 MB，不触发。
+    max_scratch = max(_env_int(ENV_MAX_SCRATCH_MIB, 32), 1) * 1048576
+    while (max_parts * num_seqs * num_query_heads * hd_pad * 4 > max_scratch
+           and part_min < PART_MAX):
+        part_min *= 2
+        max_parts = (grid_upper_bound(bound, part_min) if tight
+                     else (bound + part_min - 1) // part_min)
+    if max_parts * num_seqs * num_query_heads * hd_pad * 4 > max_scratch:
+        return _reject(f"scratch {max_parts * num_seqs * num_query_heads * hd_pad * 4} 超预算")
+
+    device = query.device
+    try:
+        capturing = bool(torch.cuda.is_current_stream_capturing())
+    except Exception:
+        capturing = False
+    buf = _get_scratch(num_seqs, num_query_heads, max_parts, hd_pad, device,
+                       creating_ok=(not capturing))
+    if buf is None:
+        return _reject("capture 中缺 scratch")
+    tmp, es, ml = buf
+
+    bt = block_table if block_table.dtype == torch.int32 else block_table.to(torch.int32)
+    scale = float(sm_scale) if sm_scale is not None else 1.0 / math.sqrt(head_size)
+    nqp = num_query_heads // num_kv_heads
+    nqp_pad = max(triton.next_power_of_2(nqp), 16)
+    x = int(key_cache.shape[4])
+
+    kernel_paged_attention_splitkv[(num_seqs, num_kv_heads, max_parts)](
+        tmp_out_ptr=tmp, exp_sums_ptr=es, max_logits_ptr=ml,
+        query_ptr=query, key_cache_ptr=key_cache, value_cache_ptr=value_cache,
+        block_tables_ptr=bt, seq_lens_ptr=seq_lens, query_start_len_ptr=query_start_loc,
+        max_ctx=bound,
+        scale=scale,
+        num_query_heads=num_query_heads, num_queries_per_kv=nqp,
+        num_queries_per_kv_padded=nqp_pad,
+        block_table_stride=bt.stride(0),
+        query_stride_0=query.stride(0), query_stride_1=query.stride(1),
+        tmp_stride_0=tmp.stride(0), tmp_stride_1=tmp.stride(1), tmp_stride_2=tmp.stride(2),
+        es_stride_0=es.stride(0), es_stride_1=es.stride(1),
+        PART_MIN=part_min, MAX_PARTS=int(max_parts), ADAPT=adapt, BLOCK_N=BLOCK_N,
+        PHYSICAL_BLOCK_SIZE=physical_block,
+        HEAD_SIZE=head_size, HEAD_SIZE_PADDED=hd_pad, x=x,
+        stride_k_cache_0=key_cache.stride(0), stride_k_cache_1=key_cache.stride(1),
+        stride_k_cache_2=key_cache.stride(2), stride_k_cache_3=key_cache.stride(3),
+        stride_k_cache_4=key_cache.stride(4),
+        stride_v_cache_0=value_cache.stride(0), stride_v_cache_1=value_cache.stride(1),
+        stride_v_cache_2=value_cache.stride(2), stride_v_cache_3=value_cache.stride(3),
+        EVICT=EVICT, num_warps=NUM_WARPS, num_stages=NUM_STAGES,
+    )
+
+    block_d = min(REDUCE_BLOCK_D, hd_pad)
+    kernel_paged_attention_splitkv_reduce[(num_seqs, num_query_heads, hd_pad // block_d)](
+        output_ptr=output, tmp_out_ptr=tmp, exp_sums_ptr=es, max_logits_ptr=ml,
+        seq_lens_ptr=seq_lens, query_start_len_ptr=query_start_loc,
+        max_ctx=bound,
+        output_stride_0=output.stride(0), output_stride_1=output.stride(1),
+        tmp_stride_0=tmp.stride(0), tmp_stride_1=tmp.stride(1), tmp_stride_2=tmp.stride(2),
+        es_stride_0=es.stride(0), es_stride_1=es.stride(1),
+        PART_MIN=part_min, MAX_PARTS=int(max_parts), ADAPT=adapt,
+        BLOCK_P=min(max(triton.next_power_of_2(max_parts), 1), REDUCE_BLOCK_P),
+        BLOCK_D=block_d, HEAD_SIZE=head_size, HEAD_SIZE_PADDED=hd_pad,
+        num_warps=REDUCE_NUM_WARPS, num_stages=1,
+    )
+
+    _stats["takeover"] += 1
+    _maybe_dump()
+    _stats["last_launch"] = dict(num_seqs=num_seqs, num_kv_heads=num_kv_heads,
+                                 max_parts=max_parts, part_min=part_min, adapt=adapt,
+                                 num_query_heads=num_query_heads, head_size=head_size,
+                                 physical_block=physical_block, ctx=ctx, bound=bound,
+                                 tight_grid=tight, capturing=capturing)
+    every = _env_int(ENV_LOG_EVERY, 0)
+    log_key = (num_seqs, num_kv_heads, max_parts, part_min, adapt)
+    if log_key not in _LOGGED_KEYS:
+        _LOGGED_KEYS.add(log_key)
+        logger.info(
+            "MI250X split-KV paged-decode **已接管**：grid=(seqs=%d, kv_heads=%d, parts=%d) "
+            "PART_MIN=%d ADAPT=%d BLOCK_N=%d warps=%d stages=%d tmp=f32 "
+            "| heads/rank=%d hd=%d 物理block=%d max_seq_len=%d static_bound=%d "
+            "TIGHT_GRID=%d | 门 %s=1",
+            num_seqs, num_kv_heads, max_parts, part_min, adapt, BLOCK_N, NUM_WARPS,
+            NUM_STAGES, num_query_heads, head_size, physical_block, ctx, bound, tight,
+            ENV_ENABLE)
+    elif every and _stats["takeover"] % every == 0:
+        logger.info("MI250X split-KV 累计接管 %d 次（reject=%d）",
+                    _stats["takeover"], _stats["reject"])
+        _dump_stats()
+    return True
