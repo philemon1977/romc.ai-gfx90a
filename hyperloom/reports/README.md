@@ -23,3 +23,20 @@
 ## 历史文件
 
 `github-issue-{1,2,3}-*.md`、`mission-final-20260914.md` 是早期产出，写作时未按模型分账：#1504 的现场是 dense INT8 session，但同一类失败也命中过 Ornith MoE session；#1505 的现场是 dense。阅读时以本索引的归属为准。
+
+## 读这些报告时的路径说明
+
+报告是当时在那台 8×MI250 上写的，正文里夹着若干**只在该机器上存在**的路径。它们不是产出的替代品——结论、数字、配置、补丁都在本目录里，路径只是取证出处：
+
+| 报告里出现的路径 | 在仓库里的对应物 |
+|---|---|
+| `session/<模型>/<run>/…` | **不入库**（每个候选一棵 vLLM worktree + AOT 编译缓存，约 29 GB）。结论已整理进本目录；run 的 `manifest.json` / `session_breakdown.json` 关键内容在报告正文有摘录 |
+| `envs/vllm/…`、`/home/qiba/ai/envs/wu1w*/…` | **不入库**的 Python 环境（12 GB 级）。重建见 `scripts/bootstrap.sh envs` 与 `docker/Dockerfile.vllm-local`，版本锁定见 `DEPENDENCIES.md` |
+| `hyperloom/envs/vllm-fa/`、`hyperloom/logs/`、`hyperloom/.tmp/` | 同上：工具现场，不入库 |
+| `hyperloom/patches/*/vllm/**` | 不入库的已构建 overlay（其 `.so` 与上游 wheel 逐字节相同）。改动本体是 `hyperloom/patches/*/*.patch`，重建用 `scripts/build_fp8_emulation_overlay.sh` |
+| `module_gemm_a8w8.gfx90a-*.so`、`torch_trace/*.pt.trace.json.gz` | **已入库**，走 Git LFS；轻量克隆后需 `git lfs pull` 取回 |
+| `scripts-local/…`、`kernels/…`、`kb/…`、`presets/…`、`patches-local/…` | **已入库**，路径一致 |
+
+`profiling/benchmark_vllm_20260915_051456/torch_trace/` 里的 trace 用
+[Magpie TraceLens](https://github.com/AMD-AGI/Magpie) 后处理，即可复现
+`profiling-decode-attribution.md` 的归因表；`profiling/gap*/gap_analysis/*.csv` 是它的展开结果。
