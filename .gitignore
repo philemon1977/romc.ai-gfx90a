@@ -1,0 +1,98 @@
+# ============================================================================
+# ROCm.AI @ 8x MI250 (gfx90a) — 仓库范围策略
+#
+# 本仓库提交：文档 / 配置 / 脚本 / 测试 / 补丁源码 / 知识库 / 报告与实测数据。
+# 本仓库不提交（可由 scripts/bootstrap.sh 与 scripts/build_*.sh 重建，或体积无意义）：
+#   - Python 虚拟环境      envs/, hyperloom/envs/          (~26 GB)
+#   - 模型权重             models/                         (~1 GB, 第三方资产)
+#   - 第三方代码副本       amd-skills/, hyperloom/hyperloom/, kernelforge/,
+#                          hyperloom/bin/, *.dist-info/     (见 DEPENDENCIES.md)
+#   - optimizer 运行现场   hyperloom/session/              (~29 GB, 含 worktree/编译缓存)
+#   - 临时与缓存           .tmp/, hyperloom/.tmp/, hyperloom/.cache/  (~33 GB)
+#   - 重复的库存二进制     hyperloom/patches/*/vllm/**      (与上游 wheel 逐字节相同)
+# 需要保留的二进制（aiter 修复产物、profiler trace）走 Git LFS，见 .gitattributes。
+# ============================================================================
+
+# --- 本地工具链（git-lfs 等，由 bootstrap 安装到此） -------------------------
+/.tools/
+
+# --- 环境与依赖 --------------------------------------------------------------
+/envs/
+/hyperloom/envs/
+/venv/
+/.venv/
+*.egg-info/
+build/
+dist/
+
+# --- 模型权重与数据集（第三方资产，用 scripts/fetch_models.sh 拉取） ----------
+/models/
+*.safetensors
+*.gguf
+*.ckpt
+*.pth
+*.pt
+
+# --- 第三方代码：见 DEPENDENCIES.md + scripts/bootstrap.sh --------------------
+/amd-skills/
+/hyperloom/hyperloom/
+/hyperloom/kernelforge/
+/hyperloom/bin/
+/hyperloom/*.dist-info/
+/hyperloom/.agents/
+/hyperloom/.claude/
+/hyperloom/.cursor/
+/hyperloom/.cache/
+
+# --- Hyperloom optimizer 运行现场（worktree / AOT 编译缓存 / triton dump） ----
+/hyperloom/session/
+/hyperloom/logs/
+/.tmp/
+/hyperloom/.tmp/
+torch_compile_cache/
+.cache/
+**/wt/
+**/wt2/
+**/worktree/
+**/scratch/
+**/pristine/
+**/verify/
+*.hsaco
+*.ttir
+*.ttgir
+*.llir
+*.amdgcn
+*.best_config
+kernel_perf/
+
+# --- Python 运行垃圾 ---------------------------------------------------------
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# --- 机密与本机配置（提交 .env.example，实际 .env 不入库） --------------------
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*_token
+*credentials*
+
+# --- 编辑器等 ----------------------------------------------------------------
+.DS_Store
+*.swp
+.idea/
+.vscode/
+
+# --- 补丁目录：只保留补丁源码与启动器，丢弃整棵已构建 overlay ----------------
+# hyperloom/patches/<name>/vllm/** 是从 site-packages 拷来的完整 vLLM 树，
+# 其中的 .so 经 sha256 校验与上游 wheel 逐字节相同，Python 侧改动全部在 .patch 里。
+/hyperloom/patches/**
+!/hyperloom/patches/*/
+!/hyperloom/patches/*/*.patch
+!/hyperloom/patches/*/README.md
+!/hyperloom/patches/*/bin/
+!/hyperloom/patches/*/bin/*
