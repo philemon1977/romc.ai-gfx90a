@@ -1,0 +1,45 @@
+{
+  "architectures": [
+    "Qwen3_5MoeForConditionalGeneration"
+  ],
+  "model_type": "qwen3_5_moe",
+  "text_config": {
+    "dtype": "bfloat16"
+  },
+  "quantization_config": {
+    "quant_method": "compressed-tensors",
+    "format": "pack-quantized",
+    "config_groups": {
+      "group_0": {
+        "targets": [
+          "Linear"
+        ],
+        "input_activations": null,
+        "weights": {
+          "num_bits": 4,
+          "type": "int",
+          "symmetric": true,
+          "strategy": "group",
+          "group_size": 128,
+          "dynamic": false,
+          "actorder": null
+        }
+      }
+    },
+    "ignore": [
+      "lm_head",
+      "model.visual.*",
+      "mtp.*",
+      "*mlp.gate",
+      "*mlp.gate.linear",
+      "*shared_expert_gate*",
+      "*.shared_expert.*",
+      "*.linear_attn.*",
+      "*.self_attn.*",
+      "re:.*embed_tokens.*",
+      "re:.*norm.*",
+      "re:.*conv.*"
+    ],
+    "quantization_status": "compressed"
+  }
+}

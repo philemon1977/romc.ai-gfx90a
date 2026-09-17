@@ -22,8 +22,15 @@ def _enabled() -> bool:
 
 
 def _apply(module) -> None:
-    from mi250_moe_gemv import invoke_gemv_wna16
-    import mi250_moe_gemv as _m
+    # 内核模块可选：mi250_moe_gemv_gs 是 group_size 泛化版（由 block_shape[1] 决定），
+    # 默认用它以便同时支持 gs=128 (Ornith) 与 gs=32 (DSV4.1 CT-int4)。
+    import importlib
+    _modname = os.environ.get("MI250_MOE_GEMV_MODULE", "mi250_moe_gemv_gs")
+    _m = importlib.import_module(_modname)
+    invoke_gemv_wna16 = _m.invoke_gemv_wna16
+    print(f"[MI250_MOE_GEMV] kernel module = {_modname} "
+          f"(gs from block_shape: {'generic' if _modname.endswith('_gs') else 'fixed 128'})",
+          flush=True)
     _m._orig_call = module.invoke_fused_moe_wna16_triton_kernel
 
     # ★ 关键：apply() 的签名里有 topk_ids（第 6 个位置参数），暂存下来给我们的内核直接用，

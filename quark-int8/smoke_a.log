@@ -1,0 +1,68 @@
+[smoke] src checkpoint: 26 tensors in 2 shards
+)[0m
+[32m
+[QUARK-INFO]: Found 2 safetensors files to process[0m
+[32m
+[QUARK-INFO]: Processing 1/2: model-00001-of-00002.safetensors[0m
+[32m
+[QUARK-INFO]: Loading model-00001-of-00002.safetensors...[0m
+[32m
+[QUARK-INFO]: Saved model-00001-of-00002.safetensors (0.1MB)[0m
+[32m
+[QUARK-INFO]: Processing 2/2: model-00002-of-00002.safetensors[0m
+[32m
+[QUARK-INFO]: Loading model-00002-of-00002.safetensors...[0m
+[32m
+[QUARK-INFO]: Weight converter: model.language_model.layers.0.mlp.experts.down_proj -> ['model.language_model.layers.0.mlp.experts.0.down_proj.weight', 'model.language_model.layers.0.mlp.experts.1.down_proj.weight', 'model.language_model.layers.0.mlp.experts.2.down_proj.weight', 'model.language_model.layers.0.mlp.experts.3.down_proj.weight', 'model.language_model.layers.0.mlp.experts.4.down_proj.weight', 'model.language_model.layers.0.mlp.experts.5.down_proj.weight', 'model.language_model.layers.0.mlp.experts.6.down_proj.weight', 'model.language_model.layers.0.mlp.experts.7.down_proj.weight'][0m
+[32m
+[QUARK-INFO]: Weight converter: model.language_model.layers.0.mlp.experts.gate_up_proj -> ['model.language_model.layers.0.mlp.experts.0.gate_proj.weight', 'model.language_model.layers.0.mlp.experts.0.up_proj.weight', 'model.language_model.layers.0.mlp.experts.1.gate_proj.weight', 'model.language_model.layers.0.mlp.experts.1.up_proj.weight', 'model.language_model.layers.0.mlp.experts.2.gate_proj.weight', 'model.language_model.layers.0.mlp.experts.2.up_proj.weight', 'model.language_model.layers.0.mlp.experts.3.gate_proj.weight', 'model.language_model.layers.0.mlp.experts.3.up_proj.weight', 'model.language_model.layers.0.mlp.experts.4.gate_proj.weight', 'model.language_model.layers.0.mlp.experts.4.up_proj.weight', 'model.language_model.layers.0.mlp.experts.5.gate_proj.weight', 'model.language_model.layers.0.mlp.experts.5.up_proj.weight', 'model.language_model.layers.0.mlp.experts.6.gate_proj.weight', 'model.language_model.layers.0.mlp.experts.6.up_proj.weight', 'model.language_model.layers.0.mlp.experts.7.gate_proj.weight', 'model.language_model.layers.0.mlp.experts.7.up_proj.weight'][0m
+[32m
+[QUARK-INFO]: Weight converter: model.language_model.layers.1.mlp.experts.down_proj -> ['model.language_model.layers.1.mlp.experts.0.down_proj.weight', 'model.language_model.layers.1.mlp.experts.1.down_proj.weight', 'model.language_model.layers.1.mlp.experts.2.down_proj.weight', 'model.language_model.layers.1.mlp.experts.3.down_proj.weight', 'model.language_model.layers.1.mlp.experts.4.down_proj.weight', 'model.language_model.layers.1.mlp.experts.5.down_proj.weight', 'model.language_model.layers.1.mlp.experts.6.down_proj.weight', 'model.language_model.layers.1.mlp.experts.7.down_proj.weight'][0m
+[32m
+[QUARK-INFO]: Weight converter: model.language_model.layers.1.mlp.experts.gate_up_proj -> ['model.language_model.layers.1.mlp.experts.0.gate_proj.weight', 'model.language_model.layers.1.mlp.experts.0.up_proj.weight', 'model.language_model.layers.1.mlp.experts.1.gate_proj.weight', 'model.language_model.layers.1.mlp.experts.1.up_proj.weight', 'model.language_model.layers.1.mlp.experts.2.gate_proj.weight', 'model.language_model.layers.1.mlp.experts.2.up_proj.weight', 'model.language_model.layers.1.mlp.experts.3.gate_proj.weight', 'model.language_model.layers.1.mlp.experts.3.up_proj.weight', 'model.language_model.layers.1.mlp.experts.4.gate_proj.weight', 'model.language_model.layers.1.mlp.experts.4.up_proj.weight', 'model.language_model.layers.1.mlp.experts.5.gate_proj.weight', 'model.language_model.layers.1.mlp.experts.5.up_proj.weight', 'model.language_model.layers.1.mlp.experts.6.gate_proj.weight', 'model.language_model.layers.1.mlp.experts.6.up_proj.weight', 'model.language_model.layers.1.mlp.experts.7.gate_proj.weight', 'model.language_model.layers.1.mlp.experts.7.up_proj.weight'][0m
+[32m
+[QUARK-INFO]: Saved model-00002-of-00002.safetensors (0.2MB)[0m
+[32m
+[QUARK-INFO]: File-to-file quantization completed. Output saved to /work/mini_int8[0m
+[smoke] gate scale shape (32,) down scale shape (64,)
+[smoke] expert0 gate_proj: max abs err 0.01318 (rel 0.0039)
+[smoke] exported quantization_config.global_quant_config = {
+ "input_tensors": {
+  "dtype": "int8",
+  "is_dynamic": true,
+  "qscheme": "per_channel",
+  "ch_axis": -1,
+  "group_size": null,
+  "block_size": null,
+  "symmetric": true,
+  "round_method": "half_even",
+  "scale_type": "float",
+  "scale_format": null,
+  "scale_calculation_mode": null,
+  "mx_element_dtype": null,
+  "observer_cls": "PerChannelMinMaxObserver",
+  "is_scale_quant": false,
+  "enable_buffer_reuse": false,
+  "max_input_numel": 4194304
+ },
+ "output_tensors": null,
+ "weight": {
+  "dtype": "int8",
+  "is_dynamic": false,
+  "qscheme": "per_channel",
+  "ch_axis": 0,
+  "group_size": null,
+  "block_size": null,
+  "symmetric": true,
+  "round_method": "half_even",
+  "scale_type": "float",
+  "scale_format": null,
+  "scale_calculation_mode": null,
+  "mx_element_dtype": null,
+  "observer_cls"
+[smoke] tensors + config OK
+[smoke] linear scheme: QuarkW8A8Int8 QuantKey(i8,scale(f32,static,per_channel),symmetric) QuantKey(i8,scale(f32,dynamic,per_token),symmetric)
+[smoke] moe scheme: QuarkW8A8Int8
+[smoke] excluded-layer query returned: (QuantKey(dtype=torch.int8, scale=ScaleDesc(dtype=torch.float32, static=True, group_shape=GroupShape(row=-1, col=1)), scale2=None, symmetric=True), QuantKey(dtype=torch.int8, scale=ScaleDesc(dtype=torch.float32, static=False, group_shape=GroupShape(row=1, col=-1)), scale2=None, symmetric=True), <class 'vllm.model_executor.layers.quantization.quark.schemes.quark_w8a8_int8.QuarkW8A8Int8'>)
+[smoke] vLLM QuarkConfig OK
+SMOKE-A PASS

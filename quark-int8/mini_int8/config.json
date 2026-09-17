@@ -1,0 +1,99 @@
+{
+    "architectures": [
+        "Qwen3_5MoeForConditionalGeneration"
+    ],
+    "dtype": "bfloat16",
+    "model_type": "qwen3_5_moe",
+    "text_config": {
+        "dtype": "bfloat16",
+        "hidden_size": 64,
+        "num_hidden_layers": 2,
+        "num_experts": 8,
+        "num_experts_per_tok": 2,
+        "moe_intermediate_size": 32,
+        "model_type": "qwen3_5_moe_text"
+    },
+    "vision_config": {
+        "model_type": "qwen3_5_moe_vision",
+        "hidden_size": 64,
+        "depth": 1
+    },
+    "quantization_config": {
+        "global_quant_config": {
+            "input_tensors": {
+                "dtype": "int8",
+                "is_dynamic": true,
+                "qscheme": "per_channel",
+                "ch_axis": -1,
+                "group_size": null,
+                "block_size": null,
+                "symmetric": true,
+                "round_method": "half_even",
+                "scale_type": "float",
+                "scale_format": null,
+                "scale_calculation_mode": null,
+                "mx_element_dtype": null,
+                "observer_cls": "PerChannelMinMaxObserver",
+                "is_scale_quant": false,
+                "enable_buffer_reuse": false,
+                "max_input_numel": 4194304
+            },
+            "output_tensors": null,
+            "weight": {
+                "dtype": "int8",
+                "is_dynamic": false,
+                "qscheme": "per_channel",
+                "ch_axis": 0,
+                "group_size": null,
+                "block_size": null,
+                "symmetric": true,
+                "round_method": "half_even",
+                "scale_type": "float",
+                "scale_format": null,
+                "scale_calculation_mode": null,
+                "mx_element_dtype": null,
+                "observer_cls": "PerChannelMinMaxObserver",
+                "is_scale_quant": false,
+                "enable_buffer_reuse": false,
+                "max_input_numel": 4194304
+            },
+            "bias": null,
+            "target_device": null
+        },
+        "exclude": [
+            "lm_head",
+            "model.language_model.layers.0.mlp.gate",
+            "model.language_model.layers.0.mlp.shared_expert.down_proj",
+            "model.language_model.layers.0.mlp.shared_expert.gate_proj",
+            "model.language_model.layers.0.mlp.shared_expert.up_proj",
+            "model.language_model.layers.0.mlp.shared_expert_gate",
+            "model.language_model.layers.0.self_attn.k_proj",
+            "model.language_model.layers.0.self_attn.o_proj",
+            "model.language_model.layers.0.self_attn.q_proj",
+            "model.language_model.layers.0.self_attn.v_proj",
+            "model.language_model.layers.1.linear_attn.convNd",
+            "model.language_model.layers.1.linear_attn.in_proj_a",
+            "model.language_model.layers.1.linear_attn.in_proj_qkv",
+            "model.language_model.layers.1.linear_attn.in_proj_z",
+            "model.language_model.layers.1.linear_attn.out_proj",
+            "model.visual.blocks.0.attn.proj",
+            "mtp.layers.0.mlp.experts.0.gate_proj"
+        ],
+        "algo_config": null,
+        "softmax_quant_spec": null,
+        "quant_method": "quark",
+        "layer_type_quant_config": {},
+        "layer_quant_config": {},
+        "kv_cache_quant_config": {},
+        "kv_cache_post_rope": false,
+        "quant_mode": "eager_mode",
+        "version": "0.12.post1",
+        "export": {
+            "kv_cache_group": [],
+            "min_kv_scale": 0.0,
+            "pack_method": "reorder",
+            "weight_format": "real_quantized",
+            "weight_merge_groups": null
+        }
+    }
+}
