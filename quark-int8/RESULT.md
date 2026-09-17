@@ -562,3 +562,45 @@ sha256 `f6a703059003ed8ed4d64aef9f72a74b1cef4ab7093d8efc4697d48356f77854`，634 
 ~ROCm.AI/quark-int8$ /home/qiba/ai/envs/vllm_0.28.0_rocm72/bin/python aiter_a8w8_ingraph_shapes.py
 # 会按图内口径逐 shape 重测，并合成超集表；末尾自带命中/对照自检（应 54/54 与 0/54）
 ```
+
+### 7novies. MTP 与"前缀缓存失效"的根因追查（2026-09-18）——旧结论被更正
+
+**结论**：在 **native vLLM 0.28.0 + 256K/seqs16** 上，**开 MTP 并不会让前缀缓存失效**。
+实测（`--enable-prefix-caching` + SPEC=5，prompt≈2825 tok）：
+`prefix_cache_queries +5616 / hits +2176`，而 **2176 = (2825//544 − 1) × 544**
+⇒ 命中正好是"满块数 − EAGLE 丢的那一块"，是**正常的 EAGLE/MTP 代价**；
+暖请求 TTFT **2.96 s → 0.49 s（6.0×）**。
+
+**代价才是真问题**：`--enable-prefix-caching` 会把混合 GDN 模型强推进 mamba `align` 模式
+（`model_executor/models/config.py:602-629`），税很重 —— 同一 prompt 下 decode
+**107.80 → 82.20 t/s（−23.7%，n=3 spread 2.6%）**、冷 TTFT 0.91 → 2.96 s（n=1 待重复）。
+（该臂 `/metrics` 步时分解内部不自洽：steps+accepted ≠ 生成 token 数 ⇒ 不采信其 step ms/accept%。）
+
+**机制三层（file:line）**：
+1. 配置层：开前缀缓存 ⇒ `mamba_cache_mode` none→'align'、`mamba_block_size` 由 `max_model_len` 改为 `block_size`；
+   align 的语义是"只在某个 scheduler step 的末 token 且位置为 block_size 整数倍时才留状态快照"（`config/cache.py:141-148`）。
+2. 模式层：高效档 `'all'`（每块边界都留快照）**Qwen3.5 直接 NotImplemented**（`models/qwen3_5.py:320-326`）。
+3. 投机层：`use_eagle()` 对 mtp 为真、对 ngram 为假（`config/speculative.py:1477-1481`）；防"草稿污染末块"要对 KV 组做
+   末块 drop，而 **Qwen3.5 没有任何组被标 `is_eagle_group`**（该标记只在 DeepSeek-V4 特例置位）⇒ 兜底把**所有组**都标上
+   （`v1/core/kv_cache_coordinator.py:107-113`），mamba 组又被排除在该 drop 的 margin 之外（同文件 814-819）。
+
+**为什么别的模型开 MTP 不坏**：纯注意力模型没有 mamba 组 ⇒ 既没有 align/状态快照约束，也不存在"递归状态无法按 token 回滚"，
+EAGLE 丢末块对 append-only KV 正确且只损失 1 块。坏只在 **hybrid/recurrent + 投机** 的组合上。
+
+**为什么当年量到 hits=0**：那是 **docker nightly 0.29.1rc1 + 640K/seqs2** 口径；两个版本之间
+`_warn_if_unannotated_eagle_mamba` 已被移除/改名 ⇒ 结论不可外推。受影响的旧文本已更正（8115/8116 启动脚本头注释 + ledger L36）。
+
+**能否解决**：① 上游正路——给 Qwen3.5 实现 `mamba_cache_mode='all'`（大工程）；
+② 外科手术——让 mamba 组参与 EAGLE 末块语义（小改，但递归状态回滚语义有静默算错风险，必须先独立数值验证）；
+③ 现役绕过——单流关掉前缀缓存（107.8 t/s），要跨请求复用时按 workload 权衡（复用粒度 544 token/块）。
+
+### 7decies. 事故与规程：两会话共用 8117 导致互杀（2026-09-18）
+
+并行会话同跑同一个 launcher ⇒ **同一 PID 文件 `logs/ornith397b-8117.pid` 与同分钟日志名互相覆盖**：
+对方 20:46 启动后覆盖了 PID 文件（我的 arm2 服务被对方停服逻辑杀掉、且对方的 `>` 重定向截断了同一份日志），
+我 20:54:59 按共享 PID 文件停服时**误杀对方服务（pid 637790）**。我 arm2 的探针因此打到了对方的服务上（queries +0）⇒ **该臂数据作废**。
+
+**机制化修复**（不靠自觉）：`quark-int8/_guard.sh`
+- 本会话实验用**专用端口 8127**（已登记 `config/ports.conf`）⇒ PID 文件/日志名天然隔离；
+- 起服前**硬门**：存在任何其它 `api_server` 进程、或任一 die 显存 <62 GiB ⇒ 直接退出并报告，绝不"腾地方"；
+- 停服**只杀本会话 PID 文件记录过的 pid**，且杀前核对 `/proc/<pid>/cmdline` 里的 `--port` 是本会话端口。
