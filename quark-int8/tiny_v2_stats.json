@@ -1,0 +1,16 @@
+{
+  "global": {
+    "layers": 0,
+    "forwards": 0,
+    "subbatches": 0,
+    "unique": 0,
+    "cold_used": 0,
+    "pool_hit": 0,
+    "miss": 0,
+    "evict": 0,
+    "bytes_freed": 0,
+    "bytes_copied": 0,
+    "copy_seconds": 0.0
+  },
+  "sample_layers": {}
+}

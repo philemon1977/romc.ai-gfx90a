@@ -1,0 +1,52 @@
+=== Ornith-1.5-397B MXFP4 (W4A16) + MTP speculative decoding / TP8 on 8x MI250X ===
+started 2026-09-16T14:23:36Z
+--- engine facts ---
+(Worker_TP5 pid=828) WARNING 09-16 14:21:29 [kv_cache_utils.py:2211] Speculative decoding (method=mtp) is enabled but no KV cache group could be identified as the draft model's, so every group -- incl
+(Worker_TP4 pid=797) WARNING 09-16 14:21:29 [kv_cache_utils.py:2211] Speculative decoding (method=mtp) is enabled but no KV cache group could be identified as the draft model's, so every group -- incl
+(Worker_TP6 pid=859) WARNING 09-16 14:21:30 [kv_cache_utils.py:2211] Speculative decoding (method=mtp) is enabled but no KV cache group could be identified as the draft model's, so every group -- incl
+(Worker_TP7 pid=890) WARNING 09-16 14:21:30 [kv_cache_utils.py:2211] Speculative decoding (method=mtp) is enabled but no KV cache group could be identified as the draft model's, so every group -- incl
+(Worker_TP0 pid=684) WARNING 09-16 14:21:30 [kv_cache_utils.py:2211] Speculative decoding (method=mtp) is enabled but no KV cache group could be identified as the draft model's, so every group -- incl
+(Worker_TP1 pid=704) WARNING 09-16 14:21:30 [kv_cache_utils.py:2211] Speculative decoding (method=mtp) is enabled but no KV cache group could be identified as the draft model's, so every group -- incl
+(EngineCore pid=527) WARNING 09-16 14:22:36 [kv_cache_utils.py:2211] Speculative decoding (method=mtp) is enabled but no KV cache group could be identified as the draft model's, so every group -- incl
+(EngineCore pid=527) INFO 09-16 14:22:36 [kv_cache_utils.py:2370] GPU KV cache size: 1,024,455 tokens, Maximum concurrency for 32,768 tokens per request: 31.26x
+(EngineCore pid=527) INFO 09-16 14:23:28 [core.py:379] init engine (profile, create kv cache, warmup model) took 228.31 s
+(EngineCore pid=527) WARNING 09-16 14:23:30 [vllm.py:2139] max_num_scheduled_tokens is set to 2048 based on the speculative decoding settings. This may lead to suboptimal performance. Consider increas
+--- health ---
+health OK
+--- chat completion (greedy, 512 tokens) ---
+oE inference is often memory-bandwidth bound because different tokens activate different experts, leading to poor batching efficiency and lots of memory access
+- INT4 reduces the amount of data that needs to be transferred from memory to compute units
+- This can significantly speed up MoE inference which is often bottlenecked by memory bandwidth rather than compute
+- Reduced memory traffic = faster inference, especially in the decode phase
+
+3. **Cost reduction for deployment:**
+- Lower memory requirements mean cheaper hardware
+- Can fit larger models on single GPU or fewer GPUs
+
+**INT4 Quantization costs/challenges:**
+
+1. **Accuracy/quality degradation:**
+- 4-bit quantization introduces quantization error
+- MoE models can be particularly sensitive because:
+  - The router/gate needs precise
+usage: {'prompt_tokens': 31, 'total_tokens': 543, 'completion_tokens': 512, 'prompt_tokens_details': None, 'completion_tokens_details': None}
+--- decode throughput (256 tokens, greedy) ---
+generated 256 tokens in 35.78s -> 7.16 tok/s (single request, MTP on)
+sample:   <think> The user is asking about a fairly technical topic in deep learning systems: how 4-bit weight quantization reduces memory bandwidth pressure specifical
+--- speculative decoding metrics ---
+vllm:spec_decode_num_drafts_total{engine="0",model_name="Ornith-1.5-397B-MXFP4-W4A16"} 427.0
+vllm:spec_decode_num_draft_tokens_total{engine="0",model_name="Ornith-1.5-397B-MXFP4-W4A16"} 427.0
+vllm:spec_decode_num_accepted_tokens_total{engine="0",model_name="Ornith-1.5-397B-MXFP4-W4A16"} 341.0
+--- quality (mean token NLL) ---
+[v3-mxfp4-mtp] mean token NLL over 163 tokens: 1.9868  (perplexity 7.29)
+--- GPU memory ---
+card0 used 61.5/68.7 GB
+card1 used 61.5/68.7 GB
+card2 used 61.6/68.7 GB
+card3 used 61.5/68.7 GB
+card4 used 61.3/68.7 GB
+card5 used 61.5/68.7 GB
+card6 used 61.4/68.7 GB
+card7 used 61.4/68.7 GB
+ used 0.0/0.0 GB
+=== done ===

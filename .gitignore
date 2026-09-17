@@ -137,3 +137,13 @@ heartbeat.json
 !/hyperloom/patches/*/README.md
 !/hyperloom/patches/*/bin/
 !/hyperloom/patches/*/bin/*
+
+# --- quark-int8 实验产物（按本仓策略不入库：模型权重 / 构建产物 / 缓存 / 日志）----
+# 可重建：aiter JIT 的 .so（555M）、triton 缓存（77M）、CK 例程编译产物
+# 体积无意义：tiny_* 是 4 个 273–282M 的临时测试 checkpoint
+/quark-int8/tiny_*/
+/quark-int8/aiter_jit_build/
+/quark-int8/triton_cache/
+/quark-int8/.triton/
+/quark-int8/logs/
+/quark-int8/ck_int4/*.gfx90a

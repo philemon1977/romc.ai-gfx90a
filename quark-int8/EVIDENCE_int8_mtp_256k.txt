@@ -1,0 +1,27 @@
+=== Ornith-1.5-397B Quark INT8 / vLLM TP8 on 8x MI250X (gfx90a) ===
+started 2026-09-16T14:56:26Z
+--- waiting for /health ---
+health OK after 10s
+--- model list ---
+{"object":"list","data":[{"id":"Ornith-mtp","object":"model","created":1789570586,"owned_by":"vllm","root":"/mnt/kioxia-cm6-3t8/ai/models/ornith-ai/Ornith-1.5-397B-Quark-Int8-Attn","parent":null,"max_model_len":262144,"permission":[{"id":"modelperm-8fbdd37529924c11","object":"model_permission","created":1789570586,"allow_create_engine":false,"allow_sampling":true,"allow_logprobs":true,"allow_searc
+--- chat completion (greedy) ---
+The user is asking me to explain in one Chinese sentence about the AMD Instinct MI250X's memory capacity and architecture codename.
+
+Let me recall what I know about the AMD Instinct MI250X:
+
+- The AMD Instinct MI250X is based on the CDNA
+usage: {'prompt_tokens': 31, 'total_tokens': 95, 'completion_tokens': 64, 'prompt_tokens_details': None, 'completion_tokens_details': None}
+--- completion throughput (256 tokens) ---
+generated 256 tokens in 6.41s -> 39.96 tok/s (single request)
+sample:   <think> The user is asking about INT8 weight-only quantization and how it reduces memory bandwidth pressure during LLM (Large Language Model) decoding. Let me think through this carefully and provid
+--- GPU memory after serving ---
+card0 used 66.1/68.7 GB
+card1 used 66.1/68.7 GB
+card2 used 65.9/68.7 GB
+card3 used 66.1/68.7 GB
+card4 used 65.9/68.7 GB
+card5 used 66.1/68.7 GB
+card6 used 66.1/68.7 GB
+card7 used 66.1/68.7 GB
+ used 0.0/0.0 GB
+=== done ===

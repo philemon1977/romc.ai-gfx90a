@@ -1,0 +1,13 @@
+{
+  "req1": {
+    "label": "req1-cold",
+    "prompt_tokens": 232565,
+    "seconds": 173.14383363723755
+  },
+  "req2": {
+    "label": "req2-warm",
+    "prompt_tokens": 232565,
+    "seconds": 17.234550952911377
+  },
+  "ratio": 0.09953892432011388
+}

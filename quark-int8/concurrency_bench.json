@@ -1,0 +1,38 @@
+[
+  {
+    "concurrency": 1,
+    "wall_s": 7.0304365158081055,
+    "total_tokens": 67,
+    "aggregate_tok_s": 9.529991466297846,
+    "mean_ttft_s": 1.34065580368042,
+    "mean_latency_s": 7.029657363891602,
+    "tokens_per_req": 67
+  },
+  {
+    "concurrency": 4,
+    "wall_s": 8.436942100524902,
+    "total_tokens": 268,
+    "aggregate_tok_s": 31.765063314032513,
+    "mean_ttft_s": 1.0062758326530457,
+    "mean_latency_s": 8.404070615768433,
+    "tokens_per_req": 67
+  },
+  {
+    "concurrency": 8,
+    "wall_s": 19.317081689834595,
+    "total_tokens": 531,
+    "aggregate_tok_s": 27.48862424076371,
+    "mean_ttft_s": 1.841752141714096,
+    "mean_latency_s": 19.18555048108101,
+    "tokens_per_req": 66.375
+  },
+  {
+    "concurrency": 16,
+    "wall_s": 27.65795350074768,
+    "total_tokens": 1068,
+    "aggregate_tok_s": 38.61457066847439,
+    "mean_ttft_s": 2.229996547102928,
+    "mean_latency_s": 27.50700856745243,
+    "tokens_per_req": 66.75
+  }
+]

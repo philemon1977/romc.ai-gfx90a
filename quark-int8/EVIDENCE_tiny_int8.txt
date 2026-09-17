@@ -1,0 +1,4 @@
+INFO 09-16 10:24:52 [int8.py:164] Using TRITON Int8 MoE backend out of potential backends: ['TRITON', 'HUMMING', 'CPU'].
+INFO 09-16 10:24:52 [default_loader.py:430] Loading weights took 0.50 seconds
+INFO 09-16 10:26:17 [core.py:379] init engine (profile, create kv cache, warmup model) took 83.43 s
+{"id":"cmpl-98438a60ff5ff5da","object":"text_completion","created":1789554394,"model":"tiny-int8","choices":[{"index":0,"text":"發現卫国僵硬 لاتExper ZoalsMachine aziendali","logprobs":null,"finish_reason":"length","stop_reason":null,"token_ids":null,"prompt_logprobs":null,"prompt_token_ids":null,"routed_experts":null}],"service_tier":null,"system_fingerprint":"vllm-0.29.1rc1.dev47+gdc36fcce9-9161850e","usage":{"prompt_tokens":1,"total_tokens":9,"completion_tokens":8,"prompt_tokens_details":null,"completion_tokens_details":null},"kv_transfer_params":null,"ec_transfer_params":null,"metrics":null}
