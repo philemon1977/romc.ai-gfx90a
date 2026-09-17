@@ -11,6 +11,7 @@ tokens" — the two causes of a TPS gap that a raw tok/s number cannot tell apar
 Usage: step_probe.py PORT TAG SPEC [mode=count|explain] [maxtok=256]
 """
 import json
+import os
 import re
 import statistics
 import sys
@@ -27,6 +28,7 @@ EXPLAIN = ("Explain in detail why int4 quantization reduces memory bandwidth pre
            "during decoding, covering weights and KV cache.")
 COUNT = "Count slowly from one to ninety, writing each number in words on its own line."
 PROMPT = COUNT if MODE == "count" else EXPLAIN
+MODEL = os.environ.get("MODEL", "ornith")   # 2026-09-18：原硬编码 ornith ⇒ 换模型必 404
 
 
 def counters():
@@ -39,7 +41,7 @@ def counters():
 
 
 def one():
-    body = json.dumps({'model': 'ornith', 'prompt': PROMPT, 'max_tokens': MAXTOK,
+    body = json.dumps({'model': MODEL, 'prompt': PROMPT, 'max_tokens': MAXTOK,
                        'temperature': 0, 'ignore_eos': True}).encode()
     req = urllib.request.Request(f'http://127.0.0.1:{PORT}/v1/completions', data=body,
                                  headers={'Content-Type': 'application/json'})
