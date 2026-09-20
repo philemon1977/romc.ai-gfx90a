@@ -53,9 +53,6 @@ BEST_CONFIG = {
         "MI250_SPARSE_SPLITK": "0",
         "FASTSAFETENSORS_UNIFIED_MEM": "1",
         "MI250_FST_MAX_BATCH_MB": "1920",
-        "VLLM_ROCM_QUICK_REDUCE_MIN_SIZE_BYTES_MB": "(留空=关；QR 待验证)",
-        "VLLM_ROCM_QUICK_REDUCE_QUANTIZATION": "(留空=关；只允许 FP)",
-        "VLLM_ROCM_QUICK_REDUCE_CAST_BF16_TO_FP16": "(留空=关)",
     },
     "extra_server_args": "--tensor-parallel-size 8 --max-model-len 32768",
 }
@@ -286,7 +283,12 @@ def row() -> dict:
             "rocm_version": "7.2.3",
             "kernel_optimizations": KERNEL_OPTIMIZATIONS,
             "status": "active",
-            "status_note": "32k 定稿档；256k 待测，1M 未达成",
+            "status_note": (
+                "在役基线（不是收敛值）：32k 档可用、事实召回 6/6；256k 待测、1M 未达成。"
+                "对照 roofline T_mem(mi250x) 859 tok/s 目前只有 6.9% ⇒ 主要杠杆尚未收回，"
+                "未验证项与已知边界见 remaining_gaps。QR 三条 env 一律留空（未启用），"
+                "split-K 默认关（MI250_SPARSE_SPLITK=0）。"
+            ),
         },
     )
 

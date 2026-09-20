@@ -11,9 +11,6 @@
       "MI250_MOE_GEMV": "1",
       "MI250_MOE_GEMV_MODULE": "mi250_moe_gemv_gs",
       "MI250_SPARSE_SPLITK": "0",
-      "VLLM_ROCM_QUICK_REDUCE_CAST_BF16_TO_FP16": "(\u7559\u7a7a=\u5173)",
-      "VLLM_ROCM_QUICK_REDUCE_MIN_SIZE_BYTES_MB": "(\u7559\u7a7a=\u5173\uff1bQR \u5f85\u9a8c\u8bc1)",
-      "VLLM_ROCM_QUICK_REDUCE_QUANTIZATION": "(\u7559\u7a7a=\u5173\uff1b\u53ea\u5141\u8bb8 FP)",
       "VLLM_ROCM_USE_AITER": "0",
       "VLLM_ROCM_USE_AITER_MOE": "0"
     },
@@ -156,10 +153,10 @@
     "vllm_version": "0.3.1.dev85+gdee37d891.rocm723"
   },
   "status": "active",
-  "status_note": "32k \u5b9a\u7a3f\u6863\uff1b256k \u5f85\u6d4b\uff0c1M \u672a\u8fbe\u6210",
+  "status_note": "\u5728\u5f79\u57fa\u7ebf\uff08\u4e0d\u662f\u6536\u655b\u503c\uff09\uff1a32k \u6863\u53ef\u7528\u3001\u4e8b\u5b9e\u53ec\u56de 6/6\uff1b256k \u5f85\u6d4b\u30011M \u672a\u8fbe\u6210\u3002\u5bf9\u7167 roofline T_mem(mi250x) 859 tok/s \u76ee\u524d\u53ea\u6709 6.9% \u21d2 \u4e3b\u8981\u6760\u6746\u5c1a\u672a\u6536\u56de\uff0c\u672a\u9a8c\u8bc1\u9879\u4e0e\u5df2\u77e5\u8fb9\u754c\u89c1 remaining_gaps\u3002QR \u4e09\u6761 env \u4e00\u5f8b\u7559\u7a7a\uff08\u672a\u542f\u7528\uff09\uff0csplit-K \u9ed8\u8ba4\u5173\uff08MI250_SPARSE_SPLITK=0\uff09\u3002",
   "tp": 8,
-  "updated_at": "2026-09-20T22:48:28.177474+00:00",
-  "version": 4,
+  "updated_at": "2026-09-20T22:50:51.001045+00:00",
+  "version": 5,
   "what_failed": [
     {
       "description": "sparse-attention split-K\uff08MI250_SPARSE_SPLITK=8\uff09\u7aef\u5230\u7aef\u51c0\u8d1f\uff1akernel \u7ea7 7.2x \uff08attention 861 -> 142 us\uff09\u4f46 NCCL 141 -> 255 us\u3001elementwise/copy \u8c03\u7528 1332 -> 3439/step",
