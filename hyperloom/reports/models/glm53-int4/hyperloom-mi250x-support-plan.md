@@ -130,3 +130,34 @@ Hyperloom / Magpie 都是**第三方、不入库**（CLAUDE.md §4/§6）。上�
 - KB 的 `glm-5.3-ct-int4-w4a16/mi250x/` 配方行（用 `scripts/seed_recipe_kb.py` 生成 + `verify_recipe_kb.py` 校验）。
 - 可选的"上游更干净"路线：给 Magpie 新增 `vllm_mi250x.sh` 并把 mi250x 加进 `MAGPIE_BUILTIN_SCRIPTS`，
   再把 `_gpu_runner_type` 的折叠去掉。
+## 10. 第 2、3 项完成记录（2026-09-21 19:3x）
+
+### 第 3 项：真 `mi250x` runner（不再借 mi300x 的壳）
+
+| 动作 | 落点 |
+|---|---|
+| 新增 MI250X 基准脚本 | `hyperloom/patches-local/magpie-scripts/vllm_mi250x.sh`（172 行，`bash -n` 通过；从 mi300x 版派生，**四处必要差异都写了依据**：① AITER 默认关（gfx90a MoE 路径不可用）② 本机 gfx90a 补丁 env（MI250_MOE_GEMV / DSV41_IDX_AITER_KERNEL / FST / expandable_segments）③ `--gpu-memory-utilization` 改读变量（mi300x 版写死 0.95）④ `HF_HUB_OFFLINE=1`） |
+| 注册进 Magpie | `MAGPIE_BUILTIN_SCRIPTS` 增加 `"vllm_mi250x.sh"`（applier 内做） |
+| Magpie 自身 arch 映射 | `image_selector.py` 的 arch→runner 表加 `"gfx90a": "mi250x"` |
+| 撤掉折叠 | `_gpu_runner_type` 恢复为只折叠 mi325x/mi308x ⇒ `runner(mi250x) = mi250x` |
+
+固化：`hyperloom/patches-local/apply_mi250x_runner.py`（**必须在容器内跑**，Magpie 装在容器 dist-packages），
+与 `apply_mi250x_identity.py`（宿主机跑，管 Hyperloom 自身）。两者都实测**幂等**，且**在重跑 install.sh 之后仍存活**
+（install.sh 会动 Magpie，所以顺序固定为：install.sh → apply_mi250x_runner.py → apply_mi250x_identity.py → 起服）。
+
+**上线验证（决定性）**：新会话日志/进程显示基线跑的是 `bash benchmarks/vllm_mi250x.sh`（不是 mi300x 版），
+且服务进程环境里 `RUNNER_TYPE=mi250x`、`VLLM_ROCM_USE_AITER=0`、`VLLM_ROCM_USE_AITER_MOE=0`、
+`MI250_MOE_GEMV=1`、`DSV41_IDX_AITER_KERNEL=1`、`FASTSAFETENSORS_ODIRECT=1`、`HF_HUB_OFFLINE=1` **全部生效**。
+
+### 第 2 项：KB 配方行——结论是"工具自己会写，但源头有个坑"
+
+- **GLM-5.3-CT-Int4-W4A16 的 `mi250x` 行由 Hyperloom 自己落**：实测 `hyperloom/kb/glm-5.3-ct-int4-w4a16/mi250x/vllm/.../w4a16/recipe.json`
+  存在，`canonical_id` 含 `:mi250x:`，`provenance.details.sid` 指向当轮会话。当前是 `t0_anchor`（`best_throughput=0.0`，
+  等 run 出结果才填 `best_config`/`what_worked`）。⇒ 同一模型在 **mi300x 与 mi250x 各一行**，这正是我们要的
+  "按真实硬件口径记账"。
+- **`seed_recipe_kb.py` 覆盖不到本模型**：它的数据源是配方库抽取（`serving_A/B/C.json`），覆盖 qwen3.8 系 / ornith /
+  deepseek-v4 系 / `glm-5.3-flash-gguf`（llama.cpp Q8）共 **12 行 mi250x**，**没有** CT-INT4-W4A16 这一支。
+  故本轮**没有执行实际写入**（避免在会话运行中重写别人的行）；`--dry-run` 输出已留档于本节。
+- **真问题（已修）**：行的 `image_digest` 之前记的是 `.env` 里过时的 `rocm-ai/vllm:0.28.0-rocm7.2.4`。
+  已把 `.env` 的 `HYPERLOOM_IMAGE` 改成实际镜像 `rocm-ai/vllm:glm53-int4-hl`；复核新会话写出的行：
+  `hardware=mi250x`、`image=rocm-ai/vllm:glm53-int4-hl` ✓。

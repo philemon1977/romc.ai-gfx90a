@@ -8,7 +8,8 @@
 
 四处改动（每处都带来源注释，见 2026-09-21 的 hyperloom-mi250x-support-plan.md）：
   1) common/gpu_identity.py        加 ("mi250x", ("gfx90a", 104)) 身份行
-  2) inference_optimizer/gpu_types.py   _gpu_runner_type 把 mi250x 折叠到 mi300x（不 fork Magpie）
+  2) inference_optimizer/gpu_types.py   确保 _gpu_runner_type **不**把 mi250x 折叠到 mi300x
+     （Magpie 侧的 vllm_mi250x.sh 由 apply_mi250x_runner.py 打进容器）
   3) inference_optimizer/gpu_types.py   _GFX_TO_RUNNER["gfx90a"] = "mi250x"（torch 探测兜底）
   4) orchestrator/kernel/roofline_ceiling.py   _MI250X_PEAK_TFLOPS + HW_SPECS["mi250x"]
 
@@ -20,8 +21,10 @@ import re
 import sys
 
 IDENT_ROW = '    "mi250x": ("gfx90a", 104),'
-FOLD_OLD = '    if normalized in ("mi325x", "mi308x"):'
-FOLD_NEW = '    if normalized in ("mi325x", "mi308x", "mi250x"):'
+# 2026-09-21 晚：runner 不再折叠——Magpie 侧已补 vllm_mi250x.sh（见 apply_mi250x_runner.py），
+# 所以 mi250x 是一个**真实的** runner 标签。这一步把早先的折叠改回去（幂等：已是目标态则跳过）。
+FOLD_OLD = '    if normalized in ("mi325x", "mi308x", "mi250x"):'
+FOLD_NEW = '    if normalized in ("mi325x", "mi308x"):'
 ARCH_ROW = '    "gfx90a": "mi250x",   # MI250X：每 GCD 一个 device（本机 8 GCD = 8 device）'
 PEAK_BLOCK = [
     '_MI250X_PEAK_TFLOPS: dict[str, float] = {',
@@ -82,7 +85,7 @@ def main():
         ("身份行", "    \"mi300x\": (\"gfx942\", 304),", IDENT_ROW + '\n    "mi300x": ("gfx942", 304),', '"mi250x": ("gfx90a", 104)'),
     ])
     results += patch(pkg / "inference_optimizer" / "gpu_types.py", [
-        ("runner 折叠", FOLD_OLD, FOLD_NEW, '"mi308x", "mi250x"'),
+        ("runner 不折叠", FOLD_OLD, FOLD_NEW, '("mi325x", "mi308x")'),
         ("arch 兜底", '    "gfx942": "mi300x",', ARCH_ROW + '\n    "gfx942": "mi300x",', '"gfx90a": "mi250x"'),
     ])
     results += patch(pkg / "orchestrator" / "kernel" / "roofline_ceiling.py", [
