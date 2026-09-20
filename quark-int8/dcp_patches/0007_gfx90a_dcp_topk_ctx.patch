@@ -1,0 +1,67 @@
+--- a/v1/attention/ops/rocm_aiter_mla_sparse.py
++++ b/v1/attention/ops/rocm_aiter_mla_sparse.py
+@@ -1222,6 +1222,17 @@
+     return min(num_batched_tokens, max_num_seqs * (1 + num_spec))
+ 
+ 
++# DCP top-K 合并所需的上下文：由 attention 后端在 __init__ 里写入（那里
++# get_current_vllm_config() 可用），op 侧只读。见 DCP_A_NOTES.md 缺陷①。
++_DCP_TOPK_CTX = {"world": 1, "rank": 0, "interleave": 1}
++
++
++def set_dcp_topk_ctx(dcp_world_size: int, dcp_rank: int, interleave: int) -> None:
++    _DCP_TOPK_CTX["world"] = int(dcp_world_size)
++    _DCP_TOPK_CTX["rank"] = int(dcp_rank)
++    _DCP_TOPK_CTX["interleave"] = int(interleave)
++
++
+ def _dcp_merge_topk_if_needed(
+     logits: torch.Tensor,
+     topk_indices: torch.Tensor,
+@@ -1233,15 +1244,13 @@
+     # _merge_dcp_topk_global；而 DCP 下 index-K 也是分片的，所以这里选出的 top-K
+     # 是**本 rank 的本地位置**。注意力侧按全局 id 过滤 ⇒ 除 rank0 外有效槽全为 0
+     # ⇒ 内核读到空（out=0、lse=-inf）⇒ 输出确定性乱码。
+-    # dcp 参数就地取，不改 op 签名（改签名要连带动 fake/注册/调用方三处）。
+-    from vllm.config import get_current_vllm_config
+-
+-    parallel_config = get_current_vllm_config().parallel_config
+-    dcp_world_size = int(parallel_config.decode_context_parallel_size)
++    # dcp 参数从模块级 ctx 取（**不能**在这里调 get_current_vllm_config()：
++    # 本 op 在 breakable-cudagraph 上下文里执行，config 上下文未设 ⇒
++    # 实测 AssertionError: Current vLLM config is not set）。
++    dcp_world_size = int(_DCP_TOPK_CTX["world"])
+     if dcp_world_size <= 1:
+         return
+ 
+-    from vllm.distributed import get_dcp_group
+     # 复用 0002 已写好并通过审查的实现（Triton pack + torch stable-topk）。
+     from vllm.model_executor.layers.sparse_attn_indexer import (
+         _merge_dcp_topk_global_gfx90a,
+@@ -1251,9 +1260,9 @@
+         logits,
+         topk_indices,
+         topk_tokens,
+-        get_dcp_group().rank_in_group,
++        int(_DCP_TOPK_CTX["rank"]),
+         dcp_world_size,
+-        int(parallel_config.cp_kv_cache_interleave_size),
++        int(_DCP_TOPK_CTX["interleave"]),
+         row_starts,
+     )
+ 
+--- a/v1/attention/backends/mla/rocm_aiter_mla_sparse.py
++++ b/v1/attention/backends/mla/rocm_aiter_mla_sparse.py
+@@ -951,6 +952,12 @@
+             self.dcp_rank = get_dcp_group().rank_in_group
+         else:
+             self.dcp_rank = 0
++        # 把 DCP top-K 合并需要的三个参数交给 indexer op：请求路径上
++        # get_current_vllm_config() 不可用（op 在 breakable-cudagraph 上下文里执行，
++        # 实测 AssertionError: Current vLLM config is not set），所以在这里写入。
++        from vllm.v1.attention.ops.rocm_aiter_mla_sparse import set_dcp_topk_ctx
++
++        set_dcp_topk_ctx(self.dcp_world_size, self.dcp_rank, self.cp_interleave)
+         # GLM-5.3 无 sinks（config 无键、deepseek_v2.py 全文无 sinks）；其它模型若
+         # 同时开 sinks 与 DCP，本 rank 折一次 sink 会让全局分母多算 ⇒ 直接拒绝，
+         # 别让它静默算错（正确做法是分片内核不折 sink、合并后再折，见 DCP_A_NOTES.md）。

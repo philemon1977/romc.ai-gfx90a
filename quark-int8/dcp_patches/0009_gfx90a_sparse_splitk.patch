@@ -1,0 +1,100 @@
+--- a/v1/attention/ops/rocm_aiter_mla_sparse.py
++++ b/v1/attention/ops/rocm_aiter_mla_sparse.py
+@@ -4007,6 +4016,64 @@
+         print(f"[MLA-DBG] {tag} probe failed: {e!r}", flush=True)
+ 
+ 
++# ============================================================================
++# ★ 2026-09-21 split-K（gfx90a 专用）：把 decode 的稀疏注意力并行度从"每查询一个
++#   head-block"提到 S 倍，实测 7.2x（M=1）、2.4x（M=4），且与 S=1 逐位一致。
++#
++# 依据（quark-int8/sparse_attn_splitk_*.py 的实测）：
++#   · 现有内核在 M=1 时 grid=(1, cdiv(H,16))=8 个 program ⇒ 104 CU 的机器上几乎空转；
++#   · gfx90a 走的是 Fallback path for un-tuned architectures，没有 split-K；
++#   · decode 专用内核 _rocm_sparse_attn_decode_ragged_triton 断言 448+64 维（DSV4 形状），
++#     与我们的 512+64 不兼容 ⇒ 不能靠改调它来提速；
++#   · S 次 launch 无效（实测 0.95x，M=4 时 0.13x）⇒ 必须一次 launch、把 (query,split) 当作行；
++#     采查询优先行序 r = i*S + s 时，源 ragged_indices 无需重排，只需新 indptr + 重复 q。
++#   · 合并式：w_s = softmax_s(lse_s)、out = sum_s w_s*out_s（与 DCP 跨 rank 合并同形；
++#     内核口径 out=acc/l、lse=m+log(l) ⇒ exp(lse) 即未归一化质量）。
++# 开关：MI250_SPARSE_SPLITK=8（默认 0=关闭，行为与今天逐位一致）；
++#       MI250_SPARSE_SPLITK_MAXM 限制只在 decode 小 batch 启用（大 M 网格本就够宽）。
++# ============================================================================
++_SPARSE_SPLITK = int(os.environ.get("MI250_SPARSE_SPLITK", "0") or 0)
++_SPARSE_SPLITK_MAXM = int(os.environ.get("MI250_SPARSE_SPLITK_MAXM", "8") or 8)
++_splitk_bufs: dict = {}
++
++
++def _splitk_buf(M, S, H, D, device):
++    """cudagraph 安全的静态缓冲（按形状缓存；图内不允许变尺寸）。"""
++    key = (M, S, H, D, str(device))
++    b = _splitk_bufs.get(key)
++    if b is None:
++        b = {
++            "q": torch.empty(M * S, H, D, device=device, dtype=torch.bfloat16),
++            "indptr": torch.empty(M * S + 1, device=device, dtype=torch.int32),
++            "lse": torch.empty(M * S, H, device=device, dtype=torch.float32),
++        }
++        _splitk_bufs[key] = b
++    return b
++
++
++def _splitk_make_indptr(src_indptr, S, dst):
++    """[M+1] -> [M*S+1]：每查询切 S 段（行序 i*S+s），尾部段钳到行尾（可为空段，lse=-inf）。"""
++    starts0 = src_indptr[:-1].to(torch.int64)
++    ends0 = src_indptr[1:].to(torch.int64)
++    chunk = (ends0 - starts0 + S - 1) // S
++    s = torch.arange(S, device=src_indptr.device, dtype=torch.int64)[None, :]
++    starts = torch.minimum(starts0[:, None] + chunk[:, None] * s, ends0[:, None])
++    M = starts0.numel()
++    dst[: M * S] = starts.reshape(-1).to(torch.int32)
++    dst[M * S] = src_indptr[-1]
++    return dst
++
++
++def _splitk_merge(out_s, lse_s, M, S, out, lse):
++    """LSE 合并（fp32）：out = sum_s softmax_s(lse)*out_s；lse = logsumexp_s(lse)。"""
++    H, D = out.shape[1], out.shape[2]
++    lse3 = lse_s.view(M, S, H).float()
++    w = torch.softmax(lse3, dim=1)
++    acc = torch.sum(out_s.view(M, S, H, D).float() * w[:, :, :, None], dim=1)
++    out.copy_(acc.to(out.dtype))
++    lse.copy_(torch.logsumexp(lse3, dim=1))
++    return out, lse
++
+ def rocm_sparse_attn_prefill(
+     q: torch.Tensor,
+     kv: torch.Tensor,
+@@ -4067,6 +4134,31 @@
+             return
+ 
+     if ragged_indices is not None and ragged_indptr is not None:
++        S = _SPARSE_SPLITK
++        M = q.shape[0]
++        if S > 1 and M <= _SPARSE_SPLITK_MAXM and output_lse is not None:
++            H, D = q.shape[1], q.shape[2]
++            b = _splitk_buf(M, S, H, D, q.device)
++            b["q"].view(M, S, H, D).copy_(q.detach().unsqueeze(1).expand(M, S, H, D))
++            _splitk_make_indptr(ragged_indptr, S, b["indptr"])
++            # 注意：低层函数**返回** out（内部 empty_like(q)），不能读预分配缓冲（2026-09-21 实测踩过）
++            out_s = _rocm_sparse_attn_prefill_ragged_triton(
++                q=b["q"],
++                kv=kv.squeeze(1),
++                indices=ragged_indices,
++                indptr=b["indptr"],
++                scale=scale,
++                attn_sink=None if attn_sink is None else attn_sink[:H],
++                nope_head_dim=nope_head_dim,
++                rope_head_dim=rope_head_dim,
++                lse=b["lse"],
++            )
++            merged = torch.empty(M, H, D, device=q.device, dtype=q.dtype)
++            lse_m = torch.empty(M, H, device=q.device, dtype=torch.float32)
++            _splitk_merge(out_s, b["lse"], M, S, merged, lse_m)
++            output.copy_(merged[..., : output.shape[-1]].to(output.dtype))
++            output_lse.copy_(lse_m)
++            return
+         output_chunk = _rocm_sparse_attn_prefill_ragged_triton(
+             q=q,
+             kv=kv.squeeze(1),
+--- a/v1/attention/backends/mla/rocm_aiter_mla_sparse.py

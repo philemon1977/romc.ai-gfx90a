@@ -49,5 +49,43 @@ split-K：断言 `out_s = _rocm_sparse_attn_prefill_ragged_triton(` 被捕获）
 | # | 动作 | 产出 |
 |---|---|---|
 | a | 对齐补丁队列 + 写 `quark-int8/verify_patches.py`：断言 ①tree == base+patches（逐文件）②GEMV 三处哈希一致 ③QR marker/赋值行正确 ④split-K 默认关 | 一条命令给出"补丁是否自洽" |
+
+## 五、收尾结果与更正（2026-09-21 07:xx，动作 a 的落地）
+
+### 5.1 更正：本文第二节第 1 条的「rc=2」归因是错的
+原文写「队列里 6 个补丁走 `patch -p1 --batch` 全 rc=2（多文件 hunk、目标文件没就位）」。
+**现象记录对了，归因错了。** 真因是 `patch -i <相对路径>` 把 `-i` 的路径按 **cwd（临时树）**
+解析 ⇒ 「补丁文件本身找不到」⇒ rc=2，与补丁内容、hunk 形状都无关。修法一行：`-i str(p.resolve())`。
+更正后 0001..0009 全部 rc=0。留痕而非静默改写。
+
+### 5.2 动作 a 完成：队列已与线上树对齐（0007/0008/0009）
+三片由 `quark-int8/dcp_patches/make_patch789.py` **机械生成**（先重放 base+0001..0006 得中间态，
+再按 hunk 内容嗅探分片；归属不唯一的 hunk 硬失败），并自证：
+
+| 片 | 内容 | hunks |
+|---|---|---|
+| `0007_gfx90a_dcp_topk_ctx.patch` | 缺陷① parity：ops 模块级 `_DCP_TOPK_CTX` + 后端 `__init__` 写入 | ops 3 + backend 1 |
+| `0008_gfx90a_dcp_debug_switch.patch` | `MI250_DCP_DEBUG` 取证打印（默认关）+ `import os` | backend 3 |
+| `0009_gfx90a_sparse_splitk.patch` | sparse split-K（`MI250_SPARSE_SPLITK`，默认 0=关） | ops 2 |
+
+自证结果：`base + 0001..0009 == 线上树`，逐文件 sha256 相等 ——
+ops `168d0ba0c339` / backend `a68741014ac1` / indexer `8dc3afb0700a`。
+门禁：`python3 quark-int8/verify_patches.py`（① 逐字节对拍 ② GEMV 四处副本哈希 ③ split-K 默认关
+④ QR marker）当前**全部通过**。
+
+### 5.3 为什么选「追加 0007/0008/0009」而不是「重生成 0001..0006」
+重生成器会把队列变成树的**镜像**：① 这条判据从此恒真，失去「有人在树上手工改过」的检测能力；
+而且 `_DCP_TOPK_CTX` 是 09-20 20:33 之后才做的修复，重生成会把它并进某一旧片里，归属被静默改写。
+追加式让漂移变成**有日期、可复核**的记账（本次即为一例），代价只是重放多三步。
+
+### 5.4 尚未覆盖的盲区（本次新发现，需记账）
+① 只校验队列记账的 3 个文件。树上另有 5 个文件在 09-20 被改且**没有 base 原件**：
+`model_executor/model_loader/weight_utils.py`（19:40，FST 装载速度）与
+`models/deepseek_v41/{amd/vl_model.py, common/engram.py, common/engram_fp8.py, compressor.py}`（06:17–07:30）。
+⇒ 本门对它们**无判别力**。补法：补 `base/*.orig` + 补丁，或明确声明不属本队列。
+
+### 5.5 仍未做
+- 动作 b（QR 落地方式定案）：需要起服验证，等卡。
+- 动作 c 的「清理树里历史冗余文件」：未动（属早前会话产物，清理前先确认无引用）。
 | b | QR 落地方式定案（进镜像 / 起服前 applier） | 消除镜像-运行态漂移 |
 | c | 清理历史冗余文件并更新 `dcp_patches/README.md` 的真值说明 | 复现路径唯一 |

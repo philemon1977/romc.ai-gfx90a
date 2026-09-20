@@ -1,0 +1,70 @@
+--- a/v1/attention/backends/mla/rocm_aiter_mla_sparse.py
++++ b/v1/attention/backends/mla/rocm_aiter_mla_sparse.py
+@@ -1,6 +1,7 @@
+ # SPDX-License-Identifier: Apache-2.0
+ # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
+ 
++import os  # DCP 调试开关 MI250_DCP_DEBUG 用（默认关，零开销）
+ from dataclasses import dataclass
+ from typing import TYPE_CHECKING, ClassVar
+ 
+@@ -1050,6 +1057,28 @@
+             lse = AiterMLAHelper.get_mla_unpadded_o(
+                 self.num_heads, lse.unsqueeze(-1)
+             ).squeeze(-1)
++            if os.environ.get("MI250_DCP_DEBUG", "") not in ("", "0"):
++                _m = getattr(self, "_dcp_dbg_out", 0)
++                if _m < 3:
++                    self._dcp_dbg_out = _m + 1
++                    _used = int(attn_metadata.paged_kv_indptr[num_tokens].item())
++                    _flat = attn_metadata.paged_kv_indices[:_used]
++                    _fin = torch.isfinite(lse)
++                    _ninf = int((~_fin).sum().item())
++                    print(
++                        "[DCPDBG out] rank=%d out_absmean=%.4e out_absmax=%.4e "
++                        "lse finite=%d/%d lse[min,max]=%s/%s 本rank用到的槽=%d 其中-1=%d"
++                        % (
++                            self.dcp_rank,
++                            float(output.abs().mean().item()),
++                            float(output.abs().max().item()),
++                            int(_fin.sum().item()), int(lse.numel()),
++                            ("%.3f" % float(lse[_fin].min().item())) if bool(_fin.any().item()) else "nan",
++                            ("%.3f" % float(lse[_fin].max().item())) if bool(_fin.any().item()) else "nan",
++                            _used, int((_flat < 0).sum().item()),
++                        ),
++                        flush=True,
++                    )
+             return output, lse
+ 
+         # AITER's nonpersistent return-LSE dispatch has discrete head kernels.
+@@ -1250,6 +1279,30 @@
+                 attn_metadata.paged_kv_indices,
+                 attn_metadata.topk_tokens,
+             )
++            if os.environ.get("MI250_DCP_DEBUG", "") not in ("", "0"):
++                _n = getattr(self, "_dcp_dbg_n", 0)
++                if _n < 3:
++                    self._dcp_dbg_n = _n + 1
++                    _rows = local_slots.shape[0]
++                    _vc = _valid_counts[:_rows]
++                    _ip = attn_metadata.paged_kv_indptr[: _rows + 1]
++                    _lens = (_ip[1:] - _ip[:-1]).to(torch.int32)
++                    _over = int((_vc > _lens).sum().item())
++                    _negtail = int((local_slots[:, : int(_lens.max().item()) if _rows else 0] < 0).sum().item()) if _rows else 0
++                    print(
++                        "[DCPDBG idx] rank=%d q_rows=%d num_actual=%d rows=%d "
++                        "valid[min/max/sum]=%d/%d/%d lens[min/max]=%d/%d "
++                        "valid>len 行数=%d 行内-1空洞=%d block_size=%d interleave=%d dcp=%d"
++                        % (
++                            self.dcp_rank, q.shape[0], attn_metadata.num_actual_tokens,
++                            _rows,
++                            int(_vc.min().item()), int(_vc.max().item()), int(_vc.sum().item()),
++                            int(_lens.min().item()), int(_lens.max().item()),
++                            _over, _negtail,
++                            attn_metadata.block_size, self.cp_interleave, self.dcp_world_size,
++                        ),
++                        flush=True,
++                    )
+         else:
+             triton_convert_req_index_to_global_index(
+                 attn_metadata.req_id_per_token,
