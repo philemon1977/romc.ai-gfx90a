@@ -32,9 +32,11 @@ QR = pathlib.Path(VLLM) / "distributed" / "device_communicators" / "quick_all_re
 CC = pathlib.Path(VLLM) / "distributed" / "device_communicators" / "cuda_communicator.py"
 
 QR_OLD = '            supported_archs = ["gfx94", "gfx95"]'
+# 注意：每个元素必须带逗号！曾因三个相邻字面量漏逗号被 Python 隐式拼接成一行，
+# 导致 supported_archs 赋值整行变成注释、QR 静默不启用（2026-09-21 实测踩到）。
 QR_NEW = [
-    '            # MI250X(gfx90a) C2: FP(lossless) 模式在 CDNA2 可用且与 NCCL 逐位一致；'
-    '            # 只加 gfx90，其余量化模式在 gfx90a 上静默算错（前人实测，勿开）。'
+    '            # MI250X(gfx90a) C2: FP(lossless) 模式在 CDNA2 可用且与 NCCL 逐位一致；',
+    '            # 只加 gfx90，其余量化模式在 gfx90a 上静默算错（前人实测，勿开）。',
     '            supported_archs = ["gfx90", "gfx94", "gfx95"]',
 ]
 CC_OLD = "        if use_custom_allreduce and self.world_size > 1 and current_platform.is_rocm():"
