@@ -1,0 +1,55 @@
+# 端到端测量原文（本机 quark-int8/logs/ 被 .gitignore 排除，故在此留档）
+
+采集时间：2026-09-20 23:02 – 2026-09-21 00:10（同一台机、同一脚本、同一配置：
+DCP=8 / TP8 / int4 / MAX_MODEL_LEN=32768 / CG=8 / MBT=2048 / MNS=32 / PORT=8122）。
+对应报告：`moe-gemv-scale-hoist.md`。原始日志在 /home/qiba/ROCm.AI/quark-int8/logs/。
+
+说明：探针口径 `aggregate` 含 TTFT；`单流均值` 是各请求解码速率均值。
+########## quark-int8/logs/conc_v3_0920.log
+=== 并发扫描 eager=0 cg=8 mbt=2048 max_num_seqs=32 conc=1,4,8,16,32 23:02:29 ===
+READY 23:08:32
+(EngineCore pid=538) INFO 09-20 15:06:57 [kv_cache_utils.py:2404] GPU KV cache size: 326,016 tokens, Maximum concurrency for 32,768 tokens per request: 9.95x
+  prompt=202     TTFT=   3.39s 解码= 9.78 tok/s 出 14 token (总 4.72s)
+  prompt=826     TTFT=   1.11s 解码= 9.33 tok/s 出 14 token (总 2.50s)
+  M=1   ( 1 路) 64 token 用时   9.3s ⇒ 聚合   6.92 tok/s  单流均值  8.88  成功 1/1
+  M=4   ( 4 路) 64 token 用时  10.1s ⇒ 聚合  20.43 tok/s  单流均值  7.30  成功 4/4
+  M=8   ( 8 路) 64 token 用时  12.1s ⇒ 聚合  42.23 tok/s  单流均值  6.27  成功 8/8
+  M=16  (16 路) 64 token 用时  23.9s ⇒ 聚合  34.45 tok/s  单流均值  3.23  成功 16/16
+  M=32  (32 路) 64 token 用时  29.0s ⇒ 聚合  58.59 tok/s  单流均值  2.80  成功 32/32
+=== 并发扫描 DONE 23:10:12 ===
+
+########## quark-int8/logs/conc_v3tuned_both_0920.log
+=== 并发扫描 eager=0 cg=8 mbt=2048 max_num_seqs=32 conc=1,4,8,16,32 23:12:41 ===
+READY 23:18:54
+(EngineCore pid=538) INFO 09-20 15:17:12 [kv_cache_utils.py:2404] GPU KV cache size: 322,560 tokens, Maximum concurrency for 32,768 tokens per request: 9.84x
+  prompt=202     TTFT=   3.63s 解码=10.04 tok/s 出 14 token (总 4.92s)
+  prompt=826     TTFT=   1.10s 解码= 9.60 tok/s 出 14 token (总 2.46s)
+  M=1   ( 1 路) 64 token 用时   9.1s ⇒ 聚合   7.00 tok/s  单流均值  9.01  成功 1/1
+  M=4   ( 4 路) 64 token 用时   9.5s ⇒ 聚合  21.73 tok/s  单流均值  7.30  成功 4/4
+  M=8   ( 8 路) 64 token 用时  11.4s ⇒ 聚合  40.64 tok/s  单流均值  6.78  成功 8/8
+  M=16  (16 路) 64 token 用时  24.2s ⇒ 聚合  27.81 tok/s  单流均值  3.07  成功 16/16
+  M=32  (32 路) 64 token 用时  28.7s ⇒ 聚合  59.08 tok/s  单流均值  2.90  成功 32/32
+=== 并发扫描 DONE 23:20:33 ===
+
+########## quark-int8/logs/conc_v3_dcp0_0920.log
+=== 并发扫描 eager=0 cg=8 mbt=2048 max_num_seqs=32 conc=1 23:30:26 ===
+READY 23:36:08
+(EngineCore pid=538) INFO 09-20 15:34:47 [kv_cache_utils.py:2404] GPU KV cache size: 64,176 tokens, Maximum concurrency for 32,768 tokens per request: 1.96x
+  prompt=202     TTFT=   3.19s 解码=10.71 tok/s 出 14 token (总 4.41s)
+  prompt=826     TTFT=   0.77s 解码= 7.66 tok/s 出 14 token (总 2.47s)
+  M=1   ( 1 路) 64 token 用时   4.3s ⇒ 聚合   3.25 tok/s  单流均值  5.59  成功 1/1
+=== 并发扫描 DONE 23:36:28 ===
+
+########## quark-int8/logs/conc_mtp2_0920.log
+=== 并发扫描 eager=0 cg=8 mbt=2048 max_num_seqs=32 conc=1,4,8,16,32 23:59:37 ===
+READY 00:06:40
+(EngineCore pid=766) INFO 09-20 16:05:28 [kv_cache_utils.py:2404] GPU KV cache size: 173,184 tokens, Maximum concurrency for 32,768 tokens per request: 5.29x
+  prompt=202     TTFT=   3.37s 解码= 7.63 tok/s 出 41 token (总 8.61s)
+  prompt=826     TTFT=   1.15s 解码= 8.41 tok/s 出 37 token (总 5.42s)
+  M=1   ( 1 路) 64 token 用时   7.1s ⇒ 聚合   5.66 tok/s  单流均值  8.05  成功 1/1
+  M=4   ( 4 路) 64 token 用时   9.7s ⇒ 聚合  16.89 tok/s  单流均值  5.82  成功 4/4
+  M=8   ( 8 路) 64 token 用时  17.4s ⇒ 聚合  17.45 tok/s  单流均值  3.17  成功 8/8
+  M=16  (16 路) 64 token 用时  22.0s ⇒ 聚合  29.68 tok/s  单流均值  2.88  成功 16/16
+  M=32  (32 路) 64 token 用时  36.3s ⇒ 聚合  35.71 tok/s  单流均值  1.67  成功 32/32
+=== 并发扫描 DONE 00:08:35 ===
+

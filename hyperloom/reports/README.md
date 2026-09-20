@@ -8,6 +8,7 @@
 &nbsp;&nbsp;&nbsp;同文件 C 一节是**用 harness 自身路径对同一修复的再测量**（444.86→512.55，+15.2%）＋ harness 精度门（gsm8k 0.9674 未变）。
 &nbsp;&nbsp;&nbsp;**+17.6% 与 +15.2% 是一项修复、两把尺子，不可相加，也不是两笔成果。**<br>
 &nbsp;&nbsp;&nbsp;⑦ `a8w8-tuning-PAUSED.md` —— A（aiter a8w8 调优，13,760 项）**已按指示暂停**；442 MB 构建缓存保留在容器层，恢复/校验清单在该文件 |
+| `models/glm53-int4/` | `GLM-5.3-CT-Int4-W4A16`（`GlmMoeDsaForCausalLM`，78 层 = 3 dense + 75 稀疏 MoE，256 专家 top-8，gs=32） | **MoE**，CT INT4 W4A16，402 GB（每 rank 52.9 GiB），**DCP=8 / TP8 / 32K** | ① `moe-gemv-scale-hoist.md` —— **MoE decode GEMV 的真因是 group scale 的逐元素 gather**（不是 ALU、不是归约）：把 scale 提到 k 循环外后 gemm1 **8.7×**／gemm2 **5.0×**（生产分片形状），端到端**单流 6.4–6.8 → 9.6–10.7 tok/s**、**并发 32 聚合 33.8 → 59.1 tok/s**，事实召回 6/6 ② 同文记录两条负结论：**DCP=0 不快**、**MTP 投机净亏**（接受长度 1.18–1.67 但每步多跑一个完整 MTP 层，KV 池腰斩）③ 定位教训：`rocprofv3` 与本配置在 RCCL 初始化处死锁；`torch.profiler` 在 driver 进程看不到 worker 的 kernel |
 | `models/ornith-35b-a3b-moe/` | `Ornith-1.5-35B-A3B`（`Qwen3_5MoeForConditionalGeneration`） | **MoE**，未量化 bf16，68 GB，A3B（激活 3B） | 失败根因＝vLLM MoE 后端选择，非 ISA 问题 |
 | `shared/` | 与模型无关 | 编排层缺陷、预算算术、容器/机架观测方法 | #1504 / #1505 / #1506 的归因 |
 

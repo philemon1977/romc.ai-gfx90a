@@ -18,6 +18,24 @@ Runtime layout (pinned from vllm .../fused_moe/oracle/int_wna16.py:1630, compres
     B_scale: [E, N, K//group]    group = 128 for this checkpoint
     A     : bf16 [M, K] (gemm1) / [M*topk, K] (gemm2)
 Gate: MI250_MOE_GEMV=1 (default 0 -> upstream kernel untouched).
+
+★★ 2026-09-20 v3（scale 提出循环）—— 4 倍量级的修正，取代 v1/v2 的写法 ★★
+微基准（quark-int8/moe_gemv_diag.py，单 GCD，真实 checkpoint 布局 [E,N,K//2]）：
+    全量 v1/v2          1674.5 us   60.1 GB/s
+    去掉 scale 乘法       378.2 us  266.2 GB/s   <- 4.4x，说明瓶颈是 scale 的取用
+    去掉 nibble 提取      1663.9 us   60.5 GB/s   <- nibble 解码几乎免费
+    纯 load（同访存模式）  112-162 us 620-898 GB/s <- 访存模式本身能到 900 GB/s
+被证伪的两个猜测（留痕，别再走一遍）：
+  ① "tl.sum(axis=1) 每个 k 步都跨 lane 归约是主因" —— 二维累加器版（v2）只快 1.01x；
+  ② "纯 ALU 受限" —— 实测 0.9 Tops/s，仅 fp32 峰值的 4%。
+真因：v1 的 scale 下标是逐元素的 kk//GROUP（kk = k0 + 2c + j），Triton 无法向量化，
+每个 k 步退化成 [BLOCK_N, BLOCK_K//2] 次 2 字节 gather（BLOCK_K=64 时 2048 次取指，
+其中只有 2 个不同地址），把访存指令数放大约 16 倍。
+v3：BLOCK_K = G_PER_STEP*GROUP，三维累加器 [BLOCK_N, G_PER_STEP, GROUP//2]，循环内不碰
+scale；每步收尾归约一次第三维、只乘 [BLOCK_N, G_PER_STEP] 的 scale 切片。
+实测（同一次 sweep）：gemm1 1694.5 -> 412.3 us（4.1x），gemm2 891.1 -> 208.5 us（4.3x），
+对拍 fp32 参考 0.14%（与 v1/v2 同级，即精度不变）。
+开关：MI250_MOE_GEMV_KERNEL=v3（默认）/ v1。
 """
 from __future__ import annotations
 
@@ -31,6 +49,8 @@ GROUP = 128  # default (Ornith / CT gs=128); the real value is read from
              # block_shape[1] at call time so gs=32 checkpoints work too
 _ENABLE = os.environ.get("MI250_MOE_GEMV", "0").strip() not in ("0", "", "false", "False")
 _DEBUG = os.environ.get("MI250_MOE_GEMV_DEBUG", "0").strip() not in ("0", "", "false", "False")
+# v3 = scale 提出 k 循环（gemm1 4.1x / gemm2 4.3x）；设 MI250_MOE_GEMV_KERNEL=v1 可退回旧内核
+_V3 = os.environ.get("MI250_MOE_GEMV_KERNEL", "v3").strip().lower() not in ("v1", "1", "old")
 _seen = {"takeover": 0, "skip": 0}
 # apply() 里有现成的 topk_ids；暂存下来即可，完全不需要从 sorted 布局反推（那一层是上一个失败的原因）
 _current = {"ids": None}
@@ -58,18 +78,99 @@ def _gemv_moe_k(X, W, S, O, IDS, WTS, M, K, N, TOPK,
     offs_k2 = tl.arange(0, BLOCK_K // 2)
     acc = tl.zeros((BLOCK_N,), dtype=tl.float32)
     for k0 in range(0, K, BLOCK_K):
-        sc = tl.load(S + e * N * (K // GROUP) + offs_n * (K // GROUP) + (k0 // GROUP))
         wb = tl.load(W + e * N * (K // 2) + offs_n[:, None] * (K // 2) + (k0 // 2 + offs_k2)[None, :])
         wb = wb.to(tl.int32)
         part = tl.zeros((BLOCK_N,), dtype=tl.float32)
+        # ★ gfx90a 修正（gs=32 泛化）：scale 必须**逐 k 元素**取 `k // GROUP`，
+        #   不能每个 BLOCK_K 只取一个 `k0 // GROUP`。原写法只在 BLOCK_K == GROUP
+        #   （Ornith gs=128 配 BLOCK_K=128）时才对；本模型 gs=32 时一个 BLOCK_K=128
+        #   跨 4 个 group，另外 3/4 的 k 会乘错 scale ⇒ MoE 输出整体失真 ⇒ 生成退化
+        #   （实测：17*19 只吐 "	 **	 **..."）。上游参考内核也是按元素取
+        #   `offs_k // group_size`，这里对齐。
         for j in tl.static_range(2):
+            kk = k0 + offs_k2 * 2 + j
+            sc = tl.load(
+                S + e * N * (K // GROUP) + offs_n[:, None] * (K // GROUP)
+                + (kk // GROUP)[None, :]
+            )
             nib = ((wb >> (4 * j)) & 0xF) - 8
-            xj = tl.load(X + t * K + k0 + (offs_k2 * 2 + j))
-            part += tl.sum(nib.to(tl.float32) * xj[None, :].to(tl.float32), axis=1)
-        acc += part * sc.to(tl.float32)
+            xj = tl.load(X + t * K + kk)
+            part += tl.sum(
+                nib.to(tl.float32) * xj[None, :].to(tl.float32) * sc.to(tl.float32),
+                axis=1,
+            )
+        acc += part
     if APPLY_W:
         acc = acc * tl.load(WTS + pid_p)
     tl.store(O + pid_p * N + offs_n, acc.to(O.dtype.element_ty))
+
+
+@triton.jit
+def _gemv_moe_v3(X, W, S, O, IDS, WTS, M, K, N, TOPK,
+                 APPLY_W: tl.constexpr, GROUP: tl.constexpr, G_PER_STEP: tl.constexpr,
+                 BLOCK_N: tl.constexpr):
+    """v3：BLOCK_K = G_PER_STEP * GROUP；循环内完全不碰 scale。
+
+    三维累加器 [BLOCK_N, G_PER_STEP, GROUP//2]，每个 k 步收尾把第三维归约掉、只乘一次
+    [BLOCK_N, G_PER_STEP] 的 scale 切片（同一行内这 G 个值在内存里连续，可向量化）。
+    见文件头 ★★ 段：这一改动实测 gemm1 4.1x / gemm2 4.3x。
+    """
+    pid_p = tl.program_id(0)
+    pid_n = tl.program_id(1)
+    t = pid_p // TOPK
+    e = tl.maximum(tl.load(IDS + pid_p), 0)   # padding 行可能是 -1：钳制以免负偏移
+    HALF: tl.constexpr = GROUP // 2           # 每 group 的字节数（gs=32 -> 16）
+    offs_n = pid_n * BLOCK_N + tl.arange(0, BLOCK_N)
+    offs_g = tl.arange(0, G_PER_STEP)
+    offs_h = tl.arange(0, HALF)
+    row_w = offs_n[:, None, None] * (K // 2)
+    acc = tl.zeros((BLOCK_N,), dtype=tl.float32)
+    for k0 in range(0, K, G_PER_STEP * GROUP):
+        acc3 = tl.zeros((BLOCK_N, G_PER_STEP, HALF), dtype=tl.float32)
+        for j in tl.static_range(2):
+            wb = tl.load(W + e * N * (K // 2) + row_w
+                         + (k0 // 2 + offs_g[None, :, None] * HALF + offs_h[None, None, :]))
+            xj = tl.load(X + t * K + (k0 + offs_g[:, None] * GROUP + offs_h[None, :] * 2 + j))
+            acc3 += (((wb.to(tl.int32) >> (4 * j)) & 0xF) - 8).to(tl.float32) \
+                * xj[None, :, :].to(tl.float32)
+        sg = tl.load(S + e * N * (K // GROUP) + offs_n[:, None] * (K // GROUP)
+                     + (k0 // GROUP + offs_g)[None, :])
+        acc += tl.sum(tl.sum(acc3, axis=2) * sg.to(tl.float32), axis=1)
+    if APPLY_W:
+        acc = acc * tl.load(WTS + pid_p)
+    tl.store(O + pid_p * N + offs_n, acc.to(O.dtype.element_ty))
+
+
+def _v3_cfg(K, N, group, is_gemm2, pairs=8):
+    """按形状选 (BLOCK_N, G_PER_STEP, num_warps)；(0,0,0) 表示 v3 不可用。
+
+    两套实测（moe_gemv_v3_bench.py 全 N；moe_gemv_prod_bench.py 生产分片形状）：
+      · 全 N（N=4096，网格 512 program）：BN=64 G=8 w=4 最优，275 GB/s；
+      · 生产分片（N_local=512/768 ⇒ 网格只剩 128/192 个 program，严重欠占用）：
+        **BN=16 G=8 w=1** 最优 —— gemm1 45.2 us（v1 是 391.4 us，8.7x）、
+        gemm2 26.5 us（v1 是 132.9 us，5.0x）。小 BLOCK_N 换来更多 program，
+        比"每 program 干得多"重要得多。
+      · pairs>128（M>16）时 BN=64 G=4 w=1 反超 3%（pairs=256: 499.7 vs 515.1 us）。
+    """
+    gps = 8
+    while gps > 1 and ((gps * group > K) or (K % (gps * group))):
+        gps //= 2
+    if K % (gps * group):
+        return 0, 0, 0
+    if N > 1024:                      # 未分片（每 rank 持全部 N）：按全 N 那份调优
+        for bn in (64, 128, 32):
+            if bn <= N and N % bn == 0:
+                return bn, gps, 4
+        return 0, 0, 0
+    if pairs > 128:
+        gps = min(gps, 4)
+        pref = (64, 32, 16)
+    else:
+        pref = (16, 32, 64)
+    for bn in pref:
+        if bn <= N and N % bn == 0:
+            return bn, gps, 1
+    return 0, 0, 0
 
 
 @triton.jit
@@ -211,17 +312,34 @@ def invoke_gemv_wna16(
         return False
 
     group = int(block_shape[1])
-    BLOCK_N = 128
-    # BLOCK_K must be a multiple of `group` (one scale per group per k-step) and
-    # a power of two; 128 works for gs=128 and gs=32 alike (128 % 32 == 0).
-    BLOCK_K = max(group, 128)
-    if BLOCK_K % group != 0 or BLOCK_K & (BLOCK_K - 1) != 0:
-        return False
-
     out = C.view(-1, N)[:pairs]
     if zero_tail:
         out[num_valid:].zero_()          # padding 行：上游写 0，这里对齐
     dummy = ids if wts is None else wts
+
+    # ★ v3（scale 提出 k 循环）优先；形状不满足时退回 v1
+    if _V3:
+        bn, gps, nw = _v3_cfg(K, N, group, bool(mul_routed_weight), pairs)
+        if bn:
+            grid = (num_valid, N // bn)
+            _gemv_moe_v3[grid](
+                A, B, B_scale, out, ids, dummy, M, K, N, top_k,
+                APPLY_W=(wts is not None), GROUP=group, G_PER_STEP=gps,
+                BLOCK_N=bn, num_warps=nw,
+            )
+            _seen["takeover"] += 1
+            if _DEBUG and _seen["takeover"] % 200 == 1:
+                print(f"[MI250_MOE_GEMV] v3 takeover={_seen['takeover']} skip={_seen['skip']} "
+                      f"M={M} K={K} N={N} pairs={pairs} gs={group} BN={bn} G={gps} w={nw} "
+                      f"apply_w={wts is not None}", flush=True)
+            return True
+
+    BLOCK_N = 128
+    # BLOCK_K 必须是 2 的幂；scale 已按逐元素 `k // group` 取，所以 BLOCK_K 与
+    # group 是否整除**不再**是正确性前提（但保持 128 以沿用同一份调优）。
+    BLOCK_K = max(group, 128)
+    if BLOCK_K % group != 0 or BLOCK_K & (BLOCK_K - 1) != 0:
+        return False
     grid = (num_valid, N // 128)
     _gemv_moe_k[grid](
         A, B, B_scale, out, ids, dummy, M, K, N, top_k,
@@ -230,6 +348,6 @@ def invoke_gemv_wna16(
     )
     _seen["takeover"] += 1
     if _DEBUG and _seen["takeover"] % 200 == 1:
-        print(f"[MI250_MOE_GEMV] takeover={_seen['takeover']} skip={_seen['skip']} "
+        print(f"[MI250_MOE_GEMV] v1 takeover={_seen['takeover']} skip={_seen['skip']} "
               f"M={M} K={K} N={N} pairs={pairs} gs={group} apply_w={wts is not None}", flush=True)
     return True
