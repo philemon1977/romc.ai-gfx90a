@@ -252,5 +252,109 @@ class _PatchFinder(importlib.abc.MetaPathFinder):
         return None
 
 
+# ============================================================================
+# worker 内 torch.profiler（2026-09-21）
+# 为什么需要：vLLM v1 把模型跑在**独立 worker 进程**里，driver 进程的 torch.profiler
+# 只能看到 8.8 us 的 hipDeviceSynchronize（实测）。rocprofv3 又在 RCCL 初始化处死锁，
+# 所以唯一的定位手段是**在 worker 进程内**挂钩。默认关闭（MI250_PROF_WORKER 未设时零影响）。
+#
+# 用法（在一次性容器里，env 由 docker run -e 传入）：
+#   MI250_PROF_WORKER=1 MI250_PROF_SKIP=10 MI250_PROF_STEPS=8 MI250_PROF_OUT=/work/prof
+#   ⇒ 抓第 10..17 次 execute_model，各 rank 写 worker_rank<N>.txt
+# ============================================================================
+import time as _time  # noqa: E402
+
+PROF_TARGET = "vllm.v1.worker.gpu_model_runner"
+_PROF_ON = os.environ.get("MI250_PROF_WORKER", "0").strip().lower() in _ENV_ON
+_prof = {"n": 0, "p": None, "skip": 0, "steps": 0}
+
+
+def _prof_step(self, orig, args, kwargs):
+    _prof["n"] += 1
+    n = _prof["n"]
+    if n == _prof["skip"]:
+        from torch.profiler import ProfilerActivity, profile
+        _prof["p"] = profile(activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA])
+        _prof["p"].__enter__()
+        print(f"[MI250_PROF] 开始抓：execute_model #{n}，之后 {_prof['steps']} 步", flush=True)
+    t0 = _time.perf_counter()
+    out = orig(self, *args, **kwargs)
+    dt = _time.perf_counter() - t0
+    if _prof["p"] is not None:
+        print(f"[MI250_PROF] step#{n} {dt * 1000:.1f} ms", flush=True)
+    if _prof["p"] is not None and n == _prof["skip"] + _prof["steps"] - 1:
+        try:
+            import torch
+            _prof["p"].__exit__(None, None, None)
+            rank = torch.distributed.get_rank() if torch.distributed.is_initialized() else 0
+            outdir = os.environ.get("MI250_PROF_OUT", "/work/prof")
+            os.makedirs(outdir, exist_ok=True)
+            path = os.path.join(outdir, "worker_rank%d.txt" % rank)
+            ka = _prof["p"].key_averages()
+            with open(path, "w") as fh:
+                fh.write("# execute_model #%d..#%d (共 %d 步)\n"
+                         % (_prof["skip"], _prof["skip"] + _prof["steps"] - 1, _prof["steps"]))
+                fh.write(ka.table(sort_by="cuda_time_total", row_limit=60))
+            # 文本表会截断 kernel 名 ⇒ 同时写 JSON（精确可聚合）
+            import json as _json
+            with open(os.path.join(outdir, "worker_rank%d.json" % rank), "w") as jh:
+                _json.dump({"skip": _prof["skip"], "steps": _prof["steps"],
+                            "kernels": [{"name": e.key,
+                                         "cuda_us": getattr(e, "self_device_time_total", None) or getattr(e, "cuda_time_total", 0.0),
+                                         "cpu_us": getattr(e, "self_cpu_time_total", None) or getattr(e, "cpu_time_total", 0.0),
+                                         "calls": e.count}
+                                        for e in ka]}, jh)
+            print(f"[MI250_PROF] rank{rank} 已写 {path}", flush=True)
+        except Exception as exc:  # noqa: BLE001
+            print(f"[MI250_PROF] 写表失败: {exc!r}", flush=True)
+        finally:
+            _prof["p"] = None
+    return out
+
+
+def _apply_prof(module):
+    cls = getattr(module, "GPUModelRunner", None)
+    if cls is None or getattr(cls, "_mi250_prof", False):
+        return
+    _prof["skip"] = int(os.environ.get("MI250_PROF_SKIP", "10"))
+    _prof["steps"] = int(os.environ.get("MI250_PROF_STEPS", "8"))
+    orig = cls.execute_model
+
+    def execute_model(self, *a, **kw):
+        return _prof_step(self, orig, a, kw)
+
+    cls.execute_model = execute_model
+    cls._mi250_prof = True
+    print(f"[MI250_PROF] 已在 worker 内挂钩 execute_model（skip={_prof['skip']} "
+          f"steps={_prof['steps']}）", flush=True)
+
+
+class _ProfFinder(importlib.abc.MetaPathFinder):
+    def find_spec(self, fullname, path=None, target=None):
+        if fullname != PROF_TARGET:
+            return None
+        for finder in list(sys.meta_path):
+            if finder is self or not hasattr(finder, "find_spec"):
+                continue
+            spec = finder.find_spec(fullname, path, target)
+            if spec is None or spec.loader is None:
+                continue
+            orig_exec = spec.loader.exec_module
+
+            def exec_module(mod, _orig=orig_exec):
+                _orig(mod)
+                try:
+                    _apply_prof(mod)
+                except Exception as exc:  # noqa: BLE001
+                    print(f"[MI250_PROF] patch failed: {exc!r}", flush=True)
+
+            spec.loader.exec_module = exec_module
+            return spec
+        return None
+
+
 if _enabled():
     sys.meta_path.insert(0, _PatchFinder())
+if _PROF_ON:
+    sys.meta_path.insert(0, _ProfFinder())
+

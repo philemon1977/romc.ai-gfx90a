@@ -28,6 +28,10 @@ if [ "$BUSY" != "0" ]; then
 fi
 [ -n "$KTRACE" ] || KTRACE=0
 [ -n "$MI250_DCP" ] || MI250_DCP=8
+[ -n "$MI250_PROF_WORKER" ] || MI250_PROF_WORKER=0
+[ -n "$MI250_PROF_SKIP" ] || MI250_PROF_SKIP=10
+[ -n "$MI250_PROF_STEPS" ] || MI250_PROF_STEPS=8
+[ -n "$MI250_PROF_OUT" ] || MI250_PROF_OUT=/work/prof
 mkdir -p /home/qiba/ROCm.AI/quark-int8/ktrace
 if [ "$KTRACE" = "1" ]; then
   EP=(--entrypoint /opt/rocm/bin/rocprofv3)
@@ -52,6 +56,12 @@ exec docker run --rm --name glm-prof "${EP[@]}" \
   -v "$MOE_TUNED_DIR:/moe-tuned:ro" \
   -v /home/qiba/ROCm.AI/quark-int8:/work \
   -e MI250_DCP="$MI250_DCP" \
+  -e MI250_PROF_WORKER="$MI250_PROF_WORKER" \
+  -e MI250_PROF_SKIP="$MI250_PROF_SKIP" \
+  -e MI250_PROF_STEPS="$MI250_PROF_STEPS" \
+  -e MI250_PROF_OUT="$MI250_PROF_OUT" \
+  -e MI250_SPARSE_DBG="${MI250_SPARSE_DBG:-}" \
+  -e MI250_SPARSE_DBG_N="${MI250_SPARSE_DBG_N:-60}" \
   -e VLLM_ENGINE_READY_TIMEOUT_S=3600 \
   -e VLLM_SPARSE_INDEXER_MAX_LOGITS_MB=256 \
   -e DSV41_IDX_AITER_KERNEL=1 \

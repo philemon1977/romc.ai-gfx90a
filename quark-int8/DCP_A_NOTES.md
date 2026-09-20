@@ -517,3 +517,61 @@ vLLM 能正确解析（日志 `Resolved architecture: DeepseekV32MTPModel`，che
   GPU 0% 占用、worker 232% CPU 空转、rocprofv3 自己的 signal handler 也挂住 ⇒ 疑与 RCCL 初始化冲突。
 - `torch.profiler` 在 driver 进程里**看不到任何 kernel**（只有 8.8 us 的 hipDeviceSynchronize），
   因为 vLLM v1 把模型跑在独立 worker 进程 ⇒ 要 profile 必须注入 worker 进程（sitecustomize 钩子）。
+## 🔍 剩下 95% 在哪：worker 内 profiler 的 decode 窗口归属（2026-09-21 02:30）
+
+### 手段（两条路都试过，只有这条通）
+- ❌ `rocprofv3 --kernel-trace`：图模式与 eager 两次都在**装载结束、引擎初始化**处死锁（GPU 0%、worker
+  232% CPU 空转、连它自己的 signal handler 都挂住）⇒ 疑与 RCCL/多进程初始化冲突。
+- ❌ driver 进程内的 `torch.profiler`：只有 8.8 µs 的 hipDeviceSynchronize —— vLLM v1 把模型跑在**独立
+  worker 进程**里 ⇒ 什么都看不到。
+- ✅ **worker 内注入**：`moe_gemv/sitecustomize.py` 里加 env 门控钩子（`MI250_PROF_WORKER=1`），
+  在 worker 进程内挂钩 `GPUModelRunner.execute_model`，抓第 skip..skip+steps 步，各 rank 写
+  `worker_rank<N>.{txt,json}`。配套 `quark-int8/analyze_worker_prof.py` 聚合、
+  `scripts_local/glm_prof.sh` 起一次性容器。默认关闭，对生产零影响。
+
+### decode 窗口（ctx=8192、M=1、skip=25、8 步；8 个 rank 的 GPU 工作量 185–190 ms/步，高度一致）
+
+| kernel | ms/步 | 占比 | 调用/步 | 单次 |
+|---|---|---|---|---|
+| `_sparse_attn_prefill_ragged_kernel`（DSA 稀疏注意力） | **67.2** | **36.0%** | **78**（每层 1 次） | 861 µs |
+| `ncclDevKernel_Generic_4`（TP all-reduce + DCP 通信） | **36.3** | **19.4%** | 257 | 141 µs |
+| `triton_w4a16_gemm_kernel`（上游 WNA16，非专家 MoE 部分） | **35.3** | **18.9%** | 261 | 135 µs |
+| hipBLASLt `Cijk_...MT64x16x16` | 11.7 | 6.2% | 75 | 155 µs |
+| **我们的 `_gemv_moe_v3`** | **3.3** | **1.8%** | 75 | 45 µs |
+| MoE 路由/topk/align 等杂项合计 | 11.0 | 5.9% | 642 | |
+
+⇒ **MoE GEMV 这条线已经吃完**（1.8%）。下一个 4 倍只能在**稀疏注意力内核**、**每层集合通信**、
+**非专家的 W4A16 GEMM** 三处找。
+
+### ⚠️ 更正留痕（我先说错了一次）
+第一次 profile 抓的 8 步窗口里混进了 **prefill 分块**（MBT=2048 切 8192 的 prompt ⇒ 4 个分块步），
+于是我把 `_sparse_attn_prefill_ragged_kernel` 占 52.7% 读成"decode 在跑 prefill 形状的内核"，
+并据此怀疑是 DCP 行数 bug。**这个推论是错的**：
+- 窗口墙钟 160–169 ms/步、且含 `vllm::unified_mla_attention_with_output`（635 ms）——那条在纯 decode
+  窗口里**根本不出现**，说明它属于 prefill；
+- 换 skip=25 的**纯 decode 窗口**后，该内核仍有 **78 次/步**（每层一次），但这是 DCP 下 DSA 的
+  decode 稀疏注意力内核本身（名字里的 prefill 是历史命名），不是"把 prefill 塞进 decode"。
+- ctx=512 的插桩跑里它只被调 6 次/整个 run ⇒ **疑似只有上下文超过 index_topk(2048) 才走稀疏路径**
+  （短上下文走 dense）。这条阈值假设还没专门验证，别当结论用。
+
+### 由此得到的可用判断
+- **单流 TPS 与上下文强相关**：ctx≈800 时实测 10 tok/s（≈98 ms/步），ctx=8192 时 ≈4 tok/s（≈250 ms/步）
+  —— 差异主要来自这个稀疏注意力内核（以及随之增加的通信）。报告单流 TPS 必须写明上下文长度。
+- `ncclDevKernel` 257 次/步、单次 141 µs 偏慢（78 层的 all-reduce + DCP 通信都在里面），是第二个可下手处。
+- `triton_w4a16_gemm_kernel` 261 次/步（≈3.3 次/层）是**非专家**的 int4 GEMM（共享专家/稠密层/lm_head），
+  同样是 M=1 形状 —— 与 v3 修的是同一类病，值得按同样思路过一遍。
+### ⚠️ 发现：仓库里的 .patch 比线上树旧（待收尾）
+
+验证方法：把 `dcp_patches/base/ops.py.orig` 依次打上 0001/0005（唯一两个触及 ops 的补丁），与线上树 diff。
+结果：**只有一处差异**，在 `rocm_aiter_sparse_attn_indexer` 附近——树上是模块级 `_DCP_TOPK_CTX`
+（`set_dcp_topk_ctx` 由后端 `__init__` 写入），而补丁生成出来的是在 op 里调
+`get_current_vllm_config()` 的旧版本。
+
+来源：本会话早些时候为修 `AssertionError: Current vLLM config is not set`（op 在 breakable-cudagraph
+上下文里执行）时**只改了树、没回写 make_patch*.py** ⇒ 克隆仓库按 README 打补丁会得到**会报错的旧版**。
+收尾动作（未做，留给下一步）：把该 hunk 写回生成器并重跑 `make_patch*.py`，或直接新增 0007 补丁。
+在此之前，**以线上树为准**（`/home/qiba/ai/patches/gfx90a/ct_w4a16_dsv41_n0918/tree/`）。
+
+另：本次为定位插在 ops 文件里的 `_sparse_dbg` 探针已**全部移除**并再次 diff 确认（除上述已知 hunk 外零差异）；
+诊断手段记在这里备查（env 门控、默认关闭）：在 `rocm_sparse_attn_prefill` / `rocm_sparse_attn_decode`
+入口打一行 `traceback.extract_stack()` 的调用链 + 形状，用 `MI250_SPARSE_DBG=1` 打开、`MI250_SPARSE_DBG_N` 限次数。
