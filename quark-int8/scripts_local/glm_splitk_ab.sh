@@ -13,7 +13,7 @@ echo "== arm S=${S} $(date +%T) =="
 echo "   邻居 pid=${NEIGH_PID:-无}  $(ps -p ${NEIGH_PID:-0} -o etime=,args= --no-headers 2>/dev/null | cut -c1-70)"
 rocm-smi --showmeminfo vram 2>/dev/null | grep -a "VRAM Total Used" | awk '{printf "   起服前 GPU%d %.2f GiB\n", NR-1, $NF/1073741824}'
 
-GPU_MEM_UTIL=0.92 CPU_SHARES=256 MI250_SPARSE_SPLITK="${S}" \
+GPU_MEM_UTIL="${GPU_MEM_UTIL:-0.92}" CPU_SHARES="${CPU_SHARES:-1024}" MI250_SPARSE_SPLITK="${S}" \
 DCP_SIZE=8 MAX_MODEL_LEN=32768 MAX_NUM_BATCHED_TOKENS=2048 MAX_NUM_SEQS=32 \
 ENFORCE_EAGER=0 MAX_CUDAGRAPH_CAPTURE_SIZE=8 PORT=${PORT} FORCE=1 \
   bash quark-int8/scripts_local/glm_dcp_boot.sh 2>&1 | tail -3
