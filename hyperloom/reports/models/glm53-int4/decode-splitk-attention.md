@@ -111,3 +111,31 @@
 | 1 | 把 split-K 的合并写进**单个 kernel**（把 ~6 次启动/层压到 1 次） | 本表第 3 条（+2107 内核/步） | 让 −6.7% 的内核收益真正落到墙钟 |
 | 2 | 攻通信：查 all-reduce 后端与 RCCL 配置，减少 78 层×~3 次集合通信 | 本表第 2 条；S=0 下已占 19.4%，S=8 下 **37.6%** | 单项最大（若 141→40 us，可省 ~25 ms/步） |
 | 3 | 之后再评 split-K（1+2 做好后，它才可能正收益） | 三者相加才是完整的账 | — |
+## 15. all-reduce 后端：候选里有 4 条快路，实际只拿到 PYNCCL（2026-09-21 05:2x）
+
+### 事实（日志原文，两次独立启动）
+
+    potential backends: [FLASHINFER_PCIE_IPC, FLASHINFER, NCCL_SYMM_MEM, QUICK_REDUCE,
+                         AITER_CUSTOM, CUSTOM, SYMM_MEM, PYNCCL]
+    Using [PYNCCL] all-reduce backends (in dispatch order) for group tp:0
+    Using [PYNCCL] all-reduce backends (in dispatch order) for group dcp:0
+
+⇒ **`tp:0` 与 `dcp:0` 两个组都退到了列表最后一位 PYNCCL（朴素 RCCL 包装）**；
+`QUICK_REDUCE`（专为小消息）、`AITER_CUSTOM`、`CUSTOM`、`SYMM_MEM` 全部未被选中。
+这与 profile 里"每步 257 次集合通信、单次 141 us（S=8 时 255 us）"互相印证：
+小消息路径没走上快路。
+
+### 证伪：不是我们关 AITER 造成的
+
+我最初的假设是"为绕开 gfx90a 上不可用的 AITER MoE，我们把 VLLM_ROCM_USE_AITER 设成 0，连 AR 一起关了"。
+**实测证伪**：把 `VLLM_ROCM_USE_AITER=1`（同时保持 `VLLM_ROCM_USE_AITER_MOE=0`）后，
+日志里 `tp:0`/`dcp:0` 仍然是 `Using [PYNCCL]` ⇒ AITER 开关不是原因。
+（这次启动被用户新规矩"不能抢卡"叫停，但 AR 选择发生在 worker 初始化阶段、日志已落盘 ⇒ 结论有效，
+且**没有为此再用一次卡**。）
+
+### 下一步（纯 CPU 可做，不需要卡）
+
+读 vLLM 的 `cuda_communicator.py` / 各 backend 的 `available()` 条件，逐条查清 QUICK_REDUCE / CUSTOM /
+AITER_CUSTOM / SYMM_MEM 被拒的原因（大概率是：CUSTOM 的 C++ 内核是 CUDA 专用、QUICK_REDUCE 需要对称内存、
+AITER_CUSTOM 需要 gfx942/950 的 aiter AR）。查清后再决定是否有"改一个开关就能走快路"的机会；
+任何验证性的起服都要先取得用户许可。
