@@ -161,3 +161,37 @@ Hyperloom / Magpie 都是**第三方、不入库**（CLAUDE.md §4/§6）。上�
 - **真问题（已修）**：行的 `image_digest` 之前记的是 `.env` 里过时的 `rocm-ai/vllm:0.28.0-rocm7.2.4`。
   已把 `.env` 的 `HYPERLOOM_IMAGE` 改成实际镜像 `rocm-ai/vllm:glm53-int4-hl`；复核新会话写出的行：
   `hardware=mi250x`、`image=rocm-ai/vllm:glm53-int4-hl` ✓。
+## 11. V4 对拍（2026-09-21 19:5x）——防"数字更好看但更假"
+
+用**工具自己的函数**（`load_model_meta` + `compute_theoretical_peak_output_tok_per_sec`）在同一个 ModelMeta 上算两个口径：
+
+    ModelMeta: weight_bytes=430.9 GB(401.3 GiB) | active_weight_bytes=79.88 GB/token | layers=78
+               kv_heads=64 head_dim=192 weight_dtype=0.5B | experts=256 top8 expert_w=362.4 GB
+               hidden=6144 moe_intermediate=2048
+    roofline T_mem(mi250x) @num_gpus=8 isl=osl=1024 conc=32 =   859.0 tok/s   [BW 13.1 TB/s]
+    roofline T_mem(mi300x) @同参数                              =  2779.3 tok/s   [BW 42.4 TB/s]
+    比值 mi250x/mi300x = 0.309
+
+**判据通过**：比值 0.309 与 `HW_SPECS` 的带宽比完全一致（1638/5300 = 0.309）。
+若 `mi250x` 没被查到，`_memory_bound_*` 会直接 `return 0.0`、或两口径完全相同（比值 1.000）——
+现在既非 0 也非 1.000 ⇒ **表确实生效了，不是假通过**。
+
+### 本机实测 vs roofline
+
+| 场景 | 实测 | 占 mi250x roofline |
+|---|---|---|
+| 单流 @ctx≈800 | 10.2 tok/s | **1.19%** |
+| 并发 8 | 41.4 tok/s | 4.82% |
+| 并发 32 | 59.5 tok/s | **6.93%** |
+
+⇒ 距离**访存下限**还有 ~14×（并发 32 档）。这与之前的 kernel 级 profile 互相印证：
+单步的瓶颈不在权重流（访存），而在稀疏注意力内核（36%）、每层集合通信（19%）与非专家 W4A16 GEMM（19%）。
+**"到不了 30 tok/s" 因此有了第三种、也是更硬的表述**：不是带宽不够，而是每步的层内串行开销吃掉了 93% 的访存预算。
+
+### 一个待澄清的口径差异（如实记录，未下结论）
+
+工具算出的 `active_weight_bytes = 79.88 GB/token`，与我独立推导的"每 token 活跃专家权重（未分片）≈ 11.8 GB"
+差了约 **6.8×**（11.8 GB = 78 层 x 8 专家 x 18.87 MB，含 gate/up/down，int4 0.5 B/元素）。
+这不影响上面的**比值判据**（同一个 ModelMeta 下比较），但会影响**绝对天花板**该怎么读。
+待查：`load_model_meta` 里 `active_weight_bytes` 的确切语义（是否含注意力/稠密权重、是否按专家读取代价放大）。
+在有结论之前，绝对数字（859 tok/s）只作为**上限的量级参考**，不作为可达目标。
