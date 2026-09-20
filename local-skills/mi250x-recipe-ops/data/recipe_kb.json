@@ -1,10 +1,12 @@
 {
   "env_hint": "KNOWLEDGE_LOCAL_ROOT=/home/qiba/ROCm.AI/hyperloom/kb",
-  "generated_at": "2026-09-16T09:29:46+00:00",
+  "generated_at": "2026-09-20T22:48:51+00:00",
   "kb_root": "/home/qiba/ROCm.AI/hyperloom/kb",
   "recipe_dirs": [
     "deepseek-v4-flash-0731-gguf/mi250x/llama.cpp/unknown_model_type/unknown_arch/0.3.0-dev+a9e9c3c5f/ud-q8_k_xl",
     "deepseek-v4.1-flash-gguf/mi250x/llama.cpp/unknown_model_type/unknown_arch/0.4.0-dev+f37da57/q4_k_m",
+    "glm-5.3-ct-int4-w4a16/mi250x/vllm/glm_moe_dsa/glmmoedsaforcausallm/0.3.1.dev85+gdee37d891/w4a16",
+    "glm-5.3-ct-int4-w4a16/mi300x/vllm/glm_moe_dsa/glmmoedsaforcausallm/0.3.1.dev85+gdee37d891/w4a16",
     "glm-5.3-flash-gguf/mi250x/llama.cpp/unknown_model_type/unknown_arch/0.3.0-dev+629b50552/q8_0",
     "ornith-1.5-35b-a3b/mi250x/vllm/qwen3_5_moe/qwen3_5moeforconditionalgeneration/0.28.0+rocm723/bf16",
     "ornith-1.5-397b-fp8/mi250x/vllm/qwen3_5_moe/qwen3_5moeforconditionalgeneration/0.28.0/fp8",
@@ -61,6 +63,44 @@
     },
     {
       "authority": "EXPERIENTIAL",
+      "best_throughput": 59.5,
+      "canonical_id": "inference:glm-5.3-ct-int4-w4a16:mi250x:vllm:glm_moe_dsa:glmmoedsaforcausallm:0.3.1.dev85+gdee37d891:w4a16",
+      "confidence": 0.8,
+      "counts": {
+        "lessons": 3,
+        "pitfalls": 5,
+        "remaining_gaps": 5,
+        "what_failed": 4,
+        "what_worked": 3
+      },
+      "dir": "glm-5.3-ct-int4-w4a16/mi250x/vllm/glm_moe_dsa/glmmoedsaforcausallm/0.3.1.dev85+gdee37d891/w4a16",
+      "framework_version": "0.3.1.dev85+gdee37d891",
+      "hardware": "mi250x",
+      "model": "GLM-5.3-CT-Int4-W4A16",
+      "precision": "w4a16",
+      "status": "active"
+    },
+    {
+      "authority": "EXPERIENTIAL",
+      "best_throughput": 0.0,
+      "canonical_id": "inference:glm-5.3-ct-int4-w4a16:mi300x:vllm:glm_moe_dsa:glmmoedsaforcausallm:0.3.1.dev85+gdee37d891:w4a16",
+      "confidence": 0.85,
+      "counts": {
+        "lessons": 0,
+        "pitfalls": 0,
+        "remaining_gaps": 0,
+        "what_failed": 0,
+        "what_worked": 0
+      },
+      "dir": "glm-5.3-ct-int4-w4a16/mi300x/vllm/glm_moe_dsa/glmmoedsaforcausallm/0.3.1.dev85+gdee37d891/w4a16",
+      "framework_version": "0.3.1.dev85+gdee37d891",
+      "hardware": "mi300x",
+      "model": "GLM-5.3-CT-Int4-W4A16",
+      "precision": "w4a16",
+      "status": null
+    },
+    {
+      "authority": "EXPERIENTIAL",
       "best_throughput": 50.8,
       "canonical_id": "inference:glm-5.3-flash-gguf:mi250x:llama.cpp:unknown_model_type:unknown_arch:0.3.0-dev+629b50552:q8_0",
       "confidence": 0.85,
@@ -103,11 +143,11 @@
       "canonical_id": "inference:ornith-1.5-397b-fp8:mi250x:vllm:qwen3_5_moe:qwen3_5moeforconditionalgeneration:0.28.0:fp8",
       "confidence": 0.9,
       "counts": {
-        "lessons": 9,
+        "lessons": 12,
         "pitfalls": 13,
-        "remaining_gaps": 12,
+        "remaining_gaps": 16,
         "what_failed": 5,
-        "what_worked": 14
+        "what_worked": 17
       },
       "dir": "ornith-1.5-397b-fp8/mi250x/vllm/qwen3_5_moe/qwen3_5moeforconditionalgeneration/0.28.0/fp8",
       "framework_version": "0.28.0",

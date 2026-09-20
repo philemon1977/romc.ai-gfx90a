@@ -26,3 +26,26 @@
 - `seed_manifest.json` 是本次播种的 cid 清单。
 - 注意：`/home/qiba/ROCm.AI/hyperloom/session/knowledge/` 是早前容器会话（root
   属主）写的旧根，与本库无关，勿混用。
+
+## 两个写入者（2026-09-21 补）
+
+本库里的 recipe 行有**三个来源**，别把其中一个当成全部：
+
+| 来源 | 覆盖 | 入口 |
+|---|---|---|
+| 服务臂播种 | `docs/recipes` 抽出的 12 条（llama.cpp / vLLM 在役臂），`seed_manifest.json` 记的就是这些 | `scripts/seed_recipe_kb.py` |
+| Hyperloom 自己在跑 | 优化器 CLOSE 时写的槽位（从 t0_anchor 起） | Hyperloom 本体 |
+| 本会话实测回填 | GLM-5.3-CT-Int4-W4A16 / mi250x（Hyperloom 建的槽位原是空壳） | `scripts/note_glm53_int4_kb.py` |
+
+- `verify_recipe_kb.py` 只要求磁盘上的行可读、可 search；**行数可以多于
+  `seed_manifest.json`**（实测 18 vs 12），多出来的是后两者写的。
+- 两个写 recipe 的脚本都必须用 `LocalRecipeStore.put_recipe`（不要手写 `recipe.json`），
+  否则 `history/vN.json` 归档与 `version` 会脱节。
+- 手写最易踩的两处 schema 坑（2026-09-21 实际踩过）：`remaining_gaps` 的条目必须是
+  dict（`description`/`metrics`），写字符串会被**静默丢弃**；`kernel_optimizations` 是定长
+  dataclass（`kernel_id`/`source_file`/`micro_speedup`/`e2e_gain_pct`/`e2e_tput`/`decision`/
+  `e2e_decision`/`integrated`/`ts`），键名不对会得到一串全零条目。
+- 曾经踩过的权限坑：Hyperloom 容器以 root 写的槽位是 `root:root 0600`，宿主（uid 1000）
+  读不到 ⇒ `local_store.search()` 直接抛 `LocalRecipeStoreError`，校验失败。修法：容器内
+  以 root `chown -R 1000:1000` + `chmod 644`。
+

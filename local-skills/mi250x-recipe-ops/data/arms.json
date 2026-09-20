@@ -3209,7 +3209,7 @@
       ]
     }
   ],
-  "generated_at": "2026-09-16T09:29:46+00:00",
+  "generated_at": "2026-09-20T22:48:51+00:00",
   "hardware": "8x MI250X gfx90a, ROCm 7.2.4, power cap 560W/module",
   "source": "/home/qiba/ai/docs/recipes/serving"
 }
