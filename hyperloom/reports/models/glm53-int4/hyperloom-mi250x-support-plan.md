@@ -188,10 +188,27 @@ Hyperloom / Magpie 都是**第三方、不入库**（CLAUDE.md §4/§6）。上�
 单步的瓶颈不在权重流（访存），而在稀疏注意力内核（36%）、每层集合通信（19%）与非专家 W4A16 GEMM（19%）。
 **"到不了 30 tok/s" 因此有了第三种、也是更硬的表述**：不是带宽不够，而是每步的层内串行开销吃掉了 93% 的访存预算。
 
-### 一个待澄清的口径差异（如实记录，未下结论）
+### 口径澄清（已查清，修正我先前的"6.8x 差异"）
 
-工具算出的 `active_weight_bytes = 79.88 GB/token`，与我独立推导的"每 token 活跃专家权重（未分片）≈ 11.8 GB"
-差了约 **6.8×**（11.8 GB = 78 层 x 8 专家 x 18.87 MB，含 gate/up/down，int4 0.5 B/元素）。
-这不影响上面的**比值判据**（同一个 ModelMeta 下比较），但会影响**绝对天花板**该怎么读。
-待查：`load_model_meta` 里 `active_weight_bytes` 的确切语义（是否含注意力/稠密权重、是否按专家读取代价放大）。
-在有结论之前，绝对数字（859 tok/s）只作为**上限的量级参考**，不作为可达目标。
+我先前以为 `active_weight_bytes` 只算专家权重、与我的 11.8 GB 差 6.8x。**读源码后确认是我错**：
+
+    # roofline_ceiling.py::_compute_expert_decomposition()
+    expert_bytes_per_layer = num_experts * 3 * hidden * moe_inter * expert_bpe
+    total_expert_bytes  = moe_layers * expert_bytes_per_layer
+    active_expert_bytes = (experts_per_tok / num_experts) * total_expert_bytes
+    active_weight_bytes = (weight_bytes - total_expert_bytes) + active_expert_bytes
+
+代入本模型：75 层 x 256 专家 x 3x6144x2048x0.5B = **362.4 GB**（专家总计）；非专家 = 430.9 - 362.4 = **68.55 GB**；
+活跃专家 = (8/256) x 362.4 = **11.32 GB** ⇒ 合计 **79.88 GB**，与工具输出逐位吻合。
+⇒ 语义是"**每 token 需要触碰的权重字节（未分片）**"：非专家权重全读 + 只读激活的专家。**不是异常**。
+连带一个有意义的事实：**非专家权重（注意力/稠密 FFN/嵌入/lm_head）占了每 token 权重 IO 的 86%**（68.55/79.88），
+而 MoE 活跃专家只占 14% —— 这解释了为什么"把 MoE GEMV 优化到位"之后单流只涨了 45% 就停了。
+
+### 每 rank 实测量交叉检验（避免把"每 token 摊销"误读成带宽）
+
+- 每 rank 每步权重 IO = 79.88 GB / 8 = **9.99 GB**（与权重分片一致）
+- 并发 32 档实测 59.5 tok/s ⇒ **0.538 s/步**（32 token/步）
+- ⇒ 每 rank 实测权重带宽 = 9.99 GB / 0.538 s ≈ **18.6 GB/s = 每 GCD 峰值(1638)的 1.1%**
+
+⇒ 结论不变且更强：**单步里 99% 的时间不在"搬权重"上**。roofline 高 14x 不是模型乐观，而是我们的执行
+被稀疏注意力内核(36%)、每层集合通信(19%)、非专家 W4A16 GEMM(19%) 这类"非访存"开销占满。
