@@ -87,3 +87,46 @@ Hyperloom / Magpie 都是**第三方、不入库**（CLAUDE.md §4/§6）。上�
 2. V6 小模型端到端 + V3/V4（确认 runner 与 roofline 真的生效）；
 3. KB 行 + V5；
 4. （可选）若要把 runner 也做成真 `mi250x` 标签，再补 Magpie 的 `vllm_mi250x.sh` patch。
+---
+
+## 9. 实施记录（2026-09-21 19:0x，**已实施并验证**）
+
+### 审计阶段改掉的两处（原方案有错）
+
+1. **CU 数不是 110 而是 104**：`torch.cuda.get_device_properties(0).multi_processor_count == 104`（本卡 SKU
+   `AMD Instinct MI250X / MI250`，Card SKU D65210V）。厂商 47.9 TFLOP/s per OAM 是按 110 CU 计的，
+   属另一 SKU。**连带修正**：因为 104 = 8x13，`gpu_partition` 的 `cu_total % partitions == 0` 对 **8 分区（CPX）成立**
+   （原方案按 110 推出的"CPX 会失败"是错的；110 才不整除 8）。16/32 分区仍不行。
+2. **真正的 runner 折叠点是 `_gpu_runner_type()` 而不是 `_GFX_TO_RUNNER`**：前者才是 state.gpu_type →
+   Magpie runner 标签的规范化函数（`cli/__init__.py:2177/2463`、`conc_sweep.py:1336` 调用）。
+   实际改动：`if normalized in ("mi325x", "mi308x", "mi250x")` ⇒ 折叠到 mi300x。
+   `_GFX_TO_RUNNER["gfx90a"] = "mi250x"` 也加了，但那是 torch 探测兜底路径（`_autodetect_gpu_type` 的第二条路）。
+
+### 落地的改动（3 个文件 4 处）
+
+| 文件 | 改动 |
+|---|---|
+| `hyperloom/common/gpu_identity.py` | `"mi250x": ("gfx90a", 104)`（含来源注释） |
+| `hyperloom/inference_optimizer/gpu_types.py` | `_gpu_runner_type` 折叠 mi250x→mi300x；`_GFX_TO_RUNNER["gfx90a"]="mi250x"` |
+| `hyperloom/orchestrator/kernel/roofline_ceiling.py` | `_MI250X_PEAK_TFLOPS`（fp32 22.6 / bf16·fp16 181.0，按 104 CU×64×2×1.7GHz 与 CDNA2 的 8x MFMA 倍率推导）+ `HW_SPECS["mi250x"]`（每 GCD：64 GiB / 1638 GB/s） |
+
+固化方式：`hyperloom/patches-local/apply_mi250x_identity.py`（**幂等 applier**，第三方代码不入库；无 pristine 树可 diff，
+故以"缺什么补什么、可重复执行"等价表达 patch）。已实测可重复执行（第二次全部报 already）。
+
+### 验证结果
+
+| 项 | 结果 |
+|---|---|
+| V1 静态断言（6 条 + 自动探测） | **ALL PASS**；额外收获：`rocm-smi` 自动探测现在直接返回 `mi250x`（产品名含 "MI250X"）⇒ 不传 flag 也对 |
+| V1 数值口径 | T_mem: mi250x 13.1 TB/s vs mi300x 42.4 TB/s ⇒ **比值 0.309（低 3.2x）**；与实测单 GCD 纯 load 620–898 GB/s（每 GCD 峰值的 38–55%）自洽 |
+| V2 CLI 接受性 | `--gpu-type mi250x` 被接受，报错从 "invalid choice" 变成环境变量缺失（隔离测试未 source .env，符合判据） |
+| IR-2 | `INSTALL_RC=0`，且**三处改动未被 install.sh 覆盖**（已复验） |
+| IR-1 | PASS（8 卡各 10 MiB） |
+| 上线复验 | 新会话日志出现 `gpu_type=mi250x`，runner 折叠为 mi300x，baseline 正常起服务 |
+
+### 尚未做（按需）
+
+- V3–V6 的完整版（等这次 12h 跑出 baseline 数字后对拍 roofline；小模型端到端 smoke）。
+- KB 的 `glm-5.3-ct-int4-w4a16/mi250x/` 配方行（用 `scripts/seed_recipe_kb.py` 生成 + `verify_recipe_kb.py` 校验）。
+- 可选的"上游更干净"路线：给 Magpie 新增 `vllm_mi250x.sh` 并把 mi250x 加进 `MAGPIE_BUILTIN_SCRIPTS`，
+  再把 `_gpu_runner_type` 的折叠去掉。
