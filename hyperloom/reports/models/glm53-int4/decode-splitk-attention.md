@@ -139,3 +139,37 @@
 AITER_CUSTOM / SYMM_MEM 被拒的原因（大概率是：CUSTOM 的 C++ 内核是 CUDA 专用、QUICK_REDUCE 需要对称内存、
 AITER_CUSTOM 需要 gfx942/950 的 aiter AR）。查清后再决定是否有"改一个开关就能走快路"的机会；
 任何验证性的起服都要先取得用户许可。
+## 16. all-reduce 快路为何全被拒：逐条读源码的判决（2026-09-21 05:4x，纯 CPU）
+
+| 后端 | 在本机不可用的原因（源码级） | 可解? |
+|---|---|---|
+| `FLASHINFER` / `FLASHINFER_PCIE_IPC` | flashinfer 未安装（CUDA 专用），日志明写 "FlashInfer All Reduce is disabled because flashinfer is not available" | ✗ 结构性 |
+| `SYMM_MEM`（torch 对称内存） | 构造条件含 `current_platform.is_cuda()` ⇒ **CUDA 专用** | ✗ 结构性 |
+| `QUICK_REDUCE` | 源码注释与检查 `_rocm_arch_available()`：**只支持 ROCm MI300 系列**；禁用原因只打 DEBUG（所以服务日志里看不到） | ✗ 结构性（除非移植） |
+| `AITER_CUSTOM` | `rocm_aiter_ops.is_custom_all_reduce_enabled()` = `_AITER_ENABLED and _CUSTOM_ALL_REDUCE_ENABLED`；**实测**把 `VLLM_ROCM_USE_AITER=1` 后仍是 PYNCCL ⇒ 与我们的开关无关 | ✗ 结构性（MI300 系） |
+| `CUSTOM` | ROCm 上**不被** P2P 那条挡（该条含 `not current_platform.is_rocm()`），但前面还有 `fully_connected` / size 门；8 GCD 的 XGMI 全连接探测可能判否。日志里**未出现**对应 warning ⇒ 未定论 | **? 唯一可能有戏的一条** |
+| `NCCL_SYMM_MEM` | 需 `is_symmetric_memory_enabled()` + world_size 在 `custom_ar_preferred_ranges` | ? 可用 env 试探 |
+
+### ★ 最重要的发现：`dcp:0` 组**注定拿不到任何快路**
+
+`CudaCommunicator.__init__` 开头就按**组名**硬关（`cuda_communicator.py:48-62`）：
+
+    if unique_name.split(":")[0] != "tp":
+        use_custom_allreduce = False        # 连带 AITER_CUSTOM / QUICK_REDUCE / CUSTOM
+        use_torch_symm_mem = False; use_flashinfer_*= False; use_aiter_allreduce = False
+
+⇒ 只有 `tp:*` 组能享受快路，**`dcp:0` 只能走 PYNCCL（朴素 RCCL）**。
+而我们的 DCP 实现**每层都要在 dcp 组上做一次 all-gather + LSE 合并**（78 次/步），
+于是"TP all-reduce + DCP all-gather"= 每层两次集合通信，其中一次注定在慢路上。
+
+这与第 11/14 节的实测完全吻合：S=0 时通信 36.3 ms/步（19.4%）、S=8 时 65.5 ms/步（37.6%）、
+单次 141→255 us 明显偏慢。
+
+### 由此得到的、**不需要移植任何东西**的方向
+
+1. **减少 DCP 侧通信**：评估 DCP=8 → 4/2 的实际代价（每层通信次数与数据量都降一半/四分之三），
+   代价是每 rank 的 KV 变多、KV 池变小 ⇒ 需要实测权衡；
+2. **降低 DCP 合并频率**：例如每 N 层合并一次（近似，须验证质量），或把 LSE 合并与 KV 分片收集合并成一次；
+3. CUSTOM / NCCL_SYMM_MEM 两条"可能有戏"的路，值得用一次性容器做**判定性探测**（不需要端到端起服）。
+
+⚠️ 以上任何涉及 GPU 的验证都必须先取得用户许可（见 CLAUDE.md 第 1 节新规矩）。
