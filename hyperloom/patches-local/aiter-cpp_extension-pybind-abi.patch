@@ -1,0 +1,91 @@
+--- /home/qiba/aiter-gfx90a/backup/cpp_extension.py.orig	2026-09-03 09:30:11.989551253 +0800
++++ /mnt/nvme2t-samsung/ai/envs/vllm_0.28.0_rocm72/lib/python3.12/site-packages/aiter/jit/utils/cpp_extension.py	2026-09-03 09:30:12.224552091 +0800
+@@ -1620,6 +1620,75 @@
+             torch.ops.load_library(filepath)
+ 
+ 
++# --- gfx90a JIT/pybind ABI alignment (aiter-gfx90a patch, 2026-09-03) ---------------------------
++# pybind11 keeps its C++-type <-> Python-type registry in one interpreter-global object whose
++# name embeds PYBIND11_INTERNALS_VERSION.  Two extension modules compiled against *different*
++# internals versions therefore cannot see each other's registered types at all.
++#
++# AITER ships prebuilt modules (module_aiter_core.so, module_moe_opus.so, the ck2stages GEMM
++# modules, ...) compiled against the pybind11 bundled *inside torch* (internals v11) and hands
++# torch tensors to those bindings as `aiter_tensor_t` objects created by module_aiter_core.
++# On gfx94x/gfx95x every needed module is prebuilt, so this never matters.  On gfx90a the
++# modules have to be JIT-rebuilt here, and appending the standalone pip `pybind11` include
++# (>= 3.1 -> internals v12) *ahead* of torch's -isystem dirs compiled them against v12 ->
++# every call then fails with "incompatible function arguments" although the signature matches
++# (the arg types are simply from a foreign registry).  Pick the include tree whose internals
++# version agrees with torch's, so JIT modules stay ABI-compatible with the prebuilt ones.
++def _pybind11_internals_version(include_root: Optional[str]) -> Optional[int]:
++    """Read the default PYBIND11_INTERNALS_VERSION of a pybind11 include tree."""
++    if not include_root:
++        return None
++    header = os.path.join(include_root, "pybind11", "detail", "internals.h")
++    try:
++        with open(header, encoding="utf-8", errors="ignore") as fh:
++            for line in fh:
++                match = re.match(r"\s*#\s*define\s+PYBIND11_INTERNALS_VERSION\s+(\d+)", line)
++                if match:
++                    return int(match.group(1))
++    except OSError:
++        return None
++    return None
++
++
++def _pybind11_include_roots() -> Tuple[Optional[str], Optional[str]]:
++    """(torch-bundled include root, pip pybind11 include root) -- either may be None."""
++    torch_root = None
++    try:
++        import torch
++
++        torch_root = os.path.join(os.path.dirname(torch.__file__), "include")
++        if not os.path.isdir(os.path.join(torch_root, "pybind11")):
++            torch_root = None
++    except Exception:
++        torch_root = None
++    pip_root = None
++    try:
++        import pybind11
++
++        pip_root = pybind11.get_include()
++    except Exception:
++        pip_root = None
++    return torch_root, pip_root
++
++
++def _aligned_pybind11_include() -> Optional[str]:
++    """pybind11 include dir that matches the internals ABI of the already-loaded extensions."""
++    torch_root, pip_root = _pybind11_include_roots()
++    torch_ver = _pybind11_internals_version(torch_root)
++    pip_ver = _pybind11_internals_version(pip_root)
++    if torch_ver is not None and pip_ver is not None and torch_ver != pip_ver:
++        warnings.warn(
++            f"pip pybind11 ({pip_root}) uses PYBIND11_INTERNALS_VERSION {pip_ver}, but the "
++            f"prebuilt aiter/torch extensions use {torch_ver} ({torch_root}). Building JIT "
++            f"modules against the pip tree would make aiter_tensor_t and friends invisible to "
++            f"them, so the torch-bundled headers are used instead. Upgrade/downgrade the "
++            f"'pybind11' package to internals v{torch_ver} to silence this.",
++            stacklevel=2,
++        )
++        return torch_root
++    return pip_root or torch_root
++
++
+ def _write_ninja_file_to_build_library(
+     path,
+     name,
+@@ -1659,9 +1728,9 @@
+     # which means pybind11 related build flags must from torch now
+     common_cflags = []
+     if is_python_module:
+-        import pybind11
+-
+-        extra_include_paths.append(pybind11.get_include())
++        pb_include = _aligned_pybind11_include()
++        if pb_include is not None:
++            extra_include_paths.append(pb_include)
+         common_cflags += [f"{x}" for x in _get_pybind11_abi_build_flags()]
+         common_cflags += [f"{x}" for x in _get_glibcxx_abi_build_flags()]
+ 

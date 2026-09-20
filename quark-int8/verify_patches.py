@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """补丁自洽自检（2026-09-21）。
 
-已可靠：② GEMV 三处副本哈希 ③ split-K 默认关闭 ④ QR C2/C3 marker。
+已可靠：② GEMV 四处副本哈希 ③ split-K 默认关闭 ④ QR C2/C3 marker。
 **未收干净：① 树 vs base+补丁队列** —— 现用 patch -p1 整包应用会 rc=2（补丁含多文件 hunk，
 目标文件没全部就位），因此那一节的 DRIFT 数字是假象。正确做法：把每个补丁触及的**所有**文件
 都先按 base 就位，再**按文件粒度** `patch <file> < patch`，最后逐文件对拍。
@@ -68,8 +68,8 @@ def main():
     for rel, st, note in res:
         print("   [%s] %-52s %s" % (st, rel, note))
         bad += (st == "DRIFT")
-    print("② GEMV 三处副本哈希")
-    for f in ("mi250_moe_gemv_gs.py", "mi250_moe_gemv_v3.py", "sitecustomize.py"):
+    print("② GEMV 四处副本哈希")
+    for f in ("mi250_moe_gemv_gs.py", "mi250_moe_gemv_v2.py", "mi250_moe_gemv_v3.py", "sitecustomize.py"):
         t, r = sha(tree.parent / "moe_gemv" / f), sha(repo / f)   # moe_gemv 在补丁根目录，不在 tree/ 内
         ok = t == r and t != "MISSING"
         print("   [%s] %-24s tree=%s repo=%s" % ("PASS" if ok else "FAIL", f, t, r))
