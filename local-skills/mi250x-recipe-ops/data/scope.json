@@ -770,7 +770,7 @@
   },
   "T3": {
    "invalidated_by": "任一轴变化；且**跨 boot 绝对值不可混**（σ≈4.6%）。",
-   "lives_in": "references/30-arms.md + data/arms.json",
+   "lives_in": "references/30-arms-detail.md + data/arms.json",
    "name": "组合层",
    "rule": "绑定 (engine版本 × rocm × torch × 模型 × 量化 × 拓扑) 的完整组合，通常是一条服务臂或一次实测。"
   }
