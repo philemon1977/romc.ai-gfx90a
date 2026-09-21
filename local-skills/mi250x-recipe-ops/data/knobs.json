@@ -1,545 +1,813 @@
 {
-  "generated_at": "2026-09-21T05:02:48+00:00",
-  "knobs": [
+ "generated_at": "2026-09-21",
+ "knobs": [
+  {
+   "applies_to": {
+    "preset": "generic-vllm"
+   },
+   "commands": [
+    "envs/vllm_master_rocm724/bin/python - <<'PY'\nimport os, torch\ntorch._C._cuda_init()                      # 判据：抛异常=不可计算（别看 device_count）\nprint(\"count:\", torch.cuda.device_count())\nfor i in range(torch.cuda.device_count()):\n    p = torch.cuda.get_device_properties(i)\n    print(i, p.name, f\"bus={p.pci_bus_id if hasattr(p,'pci_bus_id') else '?'}\")\nPY\n# 分别跑：不带变量 / 只 HIP_VISIBLE_DEVICES=6,7 / ROCR_VISIBLE_DEVICES=6,7 叠加（第三组是复现 §1 空集用的）",
+    "unset HIP_VISIBLE_DEVICES ROCR_VISIBLE_DEVICES CUDA_VISIBLE_DEVICES   # 起服即崩/回包损坏且 SPEC>0 时的处置，然后重起",
+    "env | grep VISIBLE   # 排 “No CUDA GPUs are available”"
+   ],
+   "consumed_by": [
+    "8101-qwen38-27b-fable-distill-bf16-vllm-tp2",
+    "8107-qwen38-flash-next-176b-bf16-vllm-tp8",
+    "8109-qwen38-flash-next-176b-bf16-vllm-splitkv",
+    "8111-ornith-1.5-35b-a3b-bf16-vllm-tp4",
+    "8113-qwen38-27b-bf16-vllm-tp2",
+    "8114-qwen38-27b-int8-w8a8-vllm-tp1-dflash12",
+    "8203-qwen2.5-1.5b-bf16-vllm-smoke",
+    "8301-qwen38-27b-fable-distill-bf16-vllm-splitkv-ab",
+    "8302-qwen38-27b-fable-distill-bf16-vllm-dflash2"
+   ],
+   "decision_rules": [
+    "No CUDA GPUs are available（danger-full-access 下也报）⇒ 十有八九是 HIP 与 ROCR 叠加过二次过滤 ⇒ env | grep VISIBLE；对照 8101 三组实测（L30-43）：HIP=6,7 → count 2、PCI bus 142/147 ✅；ROCR+HIP ❌ 空集；CUDA+HIP ✅ 无害",
+    "起服即崩 / worker 回包损坏且无内核错误（8107/8109 且 SPEC>0）⇒ 设了任何一个可见性变量 ⇒ unset 三个再起；所有成功组（offline ×{eager,graph} ×{AIS,bounce} + 两臂）都不设",
+    "起服“卡 16 分钟”⇒ 不是死锁：冷 Triton 缓存下草稿内核 autotune（8107 头注已更正旧误判）⇒ 等；看日志有无 autotune 活动",
+    "mem_info_vram_used 落点与预期 die 不符 ⇒ 忘了 PCI 顺序（HIP0/1=31/34=M1…；“名 m3 实 M2”）⇒ 按 CLAUDE §3 映射表核 PCI，别看脚本名",
+    "沙箱内一切“无 GPU” ⇒ 不是可见性：workspace-write 开不了 /dev/kfd ⇒ 用 _cuda_init() 判定（§0）",
+    "ROCR 单独设的行为本机未实测（现役规则直接禁止叠加，无需求）"
+   ],
+   "hard_rules": [
+    "🛑 vLLM + 开 MTP（8107/8109，SPEC>0）：HIP/ROCR/CUDA_VISIBLE_DEVICES 一个都不许设——崩过的两次 serve+MTP 全部显式设了 HIP_VISIBLE_DEVICES=0..7，触发 “CUDA_VISIBLE_DEVICES on ROCm is deprecated” 的二次过滤路径，全体 worker 在 get_kv_cache_spec 回包时连带损坏且无内核错误（8107 基脚本 L34-38 病根对照矩阵）",
+    "vLLM 无 MTP 要限 die：只设 HIP_VISIBLE_DEVICES，绝不叠加 ROCR——ROCR 先过滤并重编号 0..N-1，HIP 再在短表上二次筛选：ROCR=6,7 + HIP=6,7 ⇒ 越界空集 ⇒ RuntimeError: No CUDA GPUs are available（与沙箱拦 /dev/kfd 同症状，极易误判成权限问题）",
+    "8101/8301 不 source config/gpu_mi250x_*.conf——该 conf 把 HIP 与 ROCR 两个变量都导出，凡 source 它又用绝对 die 号的 vLLM 脚本都踩同一颗雷（8101 L39-40 原文）",
+    "判“到底给了哪几张卡”禁用 torch.cuda.device_count()（受限沙箱下照样返回 8 = PCI 枚举计数）；判据 = torch._C._cuda_init() 成不抛（CLAUDE.md §0.1 实测）；llama.cpp 侧用 llama-server --list-devices；vLLM 侧旁证 = launcher 回显 + card{1..8}/device/mem_info_vram_used（bytes）",
+    "llama.cpp 的 HIP+ROCR 双设形态禁止抄去 vLLM 高编号 die（6,7 类）＝空集事故；8111/8113/8114/8203 现状无碍只因低编号子集幂等，若要换高编号 die 先把 8101 的 unset ROCR 行抄上",
+    "不擅改 GPU conf 标签：文件名编号按 PCI 排、真实 HIP 序不同（M1,M1,M0,M0,M3,M3,M2,M2），CLAUDE §3 挂为对外命名语义的待决项；本旋钮现役解绕 = 不 source 该 conf + 显式 unset ROCR"
+   ],
+   "id": "vllm-gpu-visibility-and-mtp",
+   "kind": "knob",
+   "knob_names": [
+    "HIP_VISIBLE_DEVICES",
+    "ROCR_VISIBLE_DEVICES",
+    "CUDA_VISIBLE_DEVICES",
+    "DEVS（launcher 变量，HIP 的别名）"
+   ],
+   "settled_values": {
+    "8107/8109（vLLM + MTP，SPEC>0）": "三个可见性变量一个都不设，全 8 die 都该被看见",
+    "8203": "不设（TP1 自然落 device 0）；文件名 mi250x_0 是记账不是开关",
+    "CUDA_VISIBLE_DEVICES": "ROCm 上的废弃别名；单独设无害（vLLM _sync_hip_cuda_env_vars 同层复制），与 MTP 叠加时有害（走二次过滤路径）",
+    "HIP_VISIBLE_DEVICES（8101，无 MTP 限 die）": "${DEVS:-6,7}，并显式 unset ROCR_VISIBLE_DEVICES 防继承（8301/8302 同形态，6,7）",
+    "HIP_VISIBLE_DEVICES（8111）": "0,1,2,3 —— TP4 限半机是设计（die4-7 留给别的模型），本臂无投机",
+    "HIP_VISIBLE_DEVICES（8113）": "0,1",
+    "HIP_VISIBLE_DEVICES（8114）": "0（单 die 臂）；换 die = HIP_VISIBLE_DEVICES=<n> bash <脚本>",
+    "ROCR_VISIBLE_DEVICES（llama.cpp 臂 8103/8107-q4kxl/8110/8112）": "现役脚本一律与 HIP 双设同一 DEVS 集；该写法安全的前提是子集低编号起（重编号 0..N-1 后与 HIP 二次筛选幂等）"
+   },
+   "sources": [
+    "models/TeichAI/launcher/…_8101_teichai_mi250dx2_m3.sh L30-43（三组对照实测，逐字）",
+    "models/Qwen/launcher/…8107…sh L34-44 与 …_8109_….sh L41-42/L251（MTP 病根与硬规则）",
+    "docs/MI250X-hipFile-AIS-部署手册.md N23（可见性=ROCm 起服一级雷区）",
+    "CLAUDE.md §0.1（device_count 骗人）、§3（HIP index 权威映射）",
+    "models/*/launcher/*llamacpp*.sh（8103/8107-q4kxl/8110/8112 的 HIP+ROCR 双设形态）"
+   ],
+   "status": "active",
+   "title_or_why": "HIP/ROCR/CUDA_VISIBLE_DEVICES —— vLLM 侧“什么时候必须设、什么时候必须不设”：规则随引擎与是否开 MTP 反转，本机最易误判的故障（No CUDA GPUs are available / 起服即崩 / 16 分钟假挂起）一半出在这三个变量的组合上",
+   "verified": "2026-09-15"
+  },
+  {
+   "applies_to": {
+    "preset": "generic-llamacpp"
+   },
+   "commands": [
+    "sudo dmesg -T | tail -15                                  # ① 有没有 SVM mapping failed / svm_range_restore_work\nP=$(cat logs/<model-key>-<port>.pid)                      # ② 消费者有没有在收：read_bytes 增量（不是设备级读盘！）\nfor i in 1 2; do grep -E 'read_bytes|rchar' /proc/$P/io; awk '{print \"minflt=\"$10}' /proc/$P/stat; sleep 10; done\nsudo perf trace -e mmap,mmap2 -p $P                       # ③ 可选：mmap 风暴的直接证据（perf 不可用时用 ①②）"
+   ],
+   "consumed_by": [
+    "8103-deepseek-v4-flash-0731-284b-q8kxl-llamacpp",
+    "8107-qwen38-flash-next-176b-q4kxl-llamacpp",
+    "8108-glm-5.3-flash-320b-q8-0-llamacpp",
+    "8110-ornith-1.5-397b-q8-0-llamacpp",
+    "8112-deepseek-v4.1-flash-748b-q4km-llamacpp"
+   ],
+   "decision_rules": [
+    "六十秒确诊三步（09-08 现场签名）：① dmesg 有 SVM mapping failed / svm_range_restore_work hogged CPU；② 进程 read_bytes 增量 ≈0 而 iostat 仍几百 MB/s；③ minflt 几十/s（20 ms/页 ≈2 MB/s）＋ 8 卡 GPU util 恒 0% ＋ 主线程 R/D 交替、stime 占绝大多数、栈停 libhsa-runtime64 ⇒ 中招；补两开关后 38 s 到 listening on（同次挂 8 分钟零进展）",
+    "日志冻在 done_getting_tensors 之后、无 listening on ⇒ 先查这两个开关，别查盘、别怀疑构建（CLAUDE.md 红线 5）",
+    "差分实验按成本排序做（R2）：换小输入（15 s）→ 换配置开关（1–3 min）→ 换版本重编（10 min+）；09-05 顺序全反白烧很久",
+    "同构建同盘跑 4.5 G 小 GGUF 15 s listening 且真出 token ⇒ 机器与构建全好（排除法 #7）；dd iflag=direct 2.4 GB/s ⇒ 盘无罪（#1）",
+    "前兆旁证：日志 done_getting_tensors: token_embd.weight (q8_0) (and 1380 others) cannot be used with preferred buffer type ROCm_Host, using CPU instead（全记录 §4.1）"
+   ],
+   "hard_rules": [
+    "红线 5：这两个开关是可用前提不是优化项；中招与体积/RAM 无关——09-08 用 111 GiB 权重（宿主 RAM 251.7 GiB）实测照样中招，“模型 < 宿主 RAM”不是豁免理由（红线 5 已据此更正触发条件）",
+    "机理链：--fit on 先跑一趟试算加载（日志 load_mode = none）+ mmap 路把 296 GiB 页缓存注册成 KFD SVM 常驻，而本机 ulimit -l = 8 MiB 且 amdgpu no_system_mem_limit=N ⇒ 内核逐段拒绝，每次缺页 20 ms、有效消费 ≈2 MB/s（dmesg: SVM mapping failed, exceeds resident system memory limit ×N）",
+    "判“读没读进去”用进程 read_bytes 与 minflt，别看 iostat——设备级读数几百 MB/s 是 read_ahead_kb=128 的内核投机预取，无人消费（R1，全记录 §5）",
+    "-ngl 0 不能当对照组：125 G RAM 上载 318 G 本就不成立，属废对照（R3）",
+    "已否证别再走：HSA_* 环境变量（三轮全挂，ΔSVM=0）、换 ROCm 用户态版本重编（6.4.4 vs 7.2.4 同挂）、怀疑盘/加 iostat 观测",
+    "根治路径（提 memlock ulimit -l unlimited / no_system_mem_limit=1）本机从未测过（全记录 §4.3），未验证别当结论；要验就同权重比对 /proc/$P/io 与 dmesg，别拿别的模型结论外推"
+   ],
+   "id": "llamacpp-fit-off-load-mode-dio",
+   "kind": "knob",
+   "knob_names": [
+    "--fit",
+    "--load-mode（-lm）",
+    "-lzm（engram lazy 读，8112，已证与 -lm dio 不冲突）",
+    "HSA_USERPTR_FOR_PAGED_MEM / HSA_ENABLE_SDMA / HSA_USE_SVM（三轮实测全挂，已否证）"
+   ],
+   "settled_values": {
+    "--fit": "off —— 任何全量 offload 到 GPU 的 GGUF 必带，与体积无关；5 条 llama.cpp 臂全部硬编码在 ARGS 里（不是 ${VAR:-} 旋钮，删掉就中招）",
+    "--load-mode": "dio —— O_DIRECT 不进页缓存 ⇒ 没有可被注册成 KFD SVM 的文件页 ⇒ 绕开整条死路；读盘 ~2.5 GB/s（同盘 dd iflag=direct 基线 2.4 GB/s，已打满）",
+    "与 -sm tensor 的组合": "tensor 档下 --fit off 是必需而非可选（llama_params_fit is not implemented for SPLIT_MODE_TENSOR, abort）",
+    "触发判据": "-ngl 全载后 >2 min 不见 listening on 就查这两个开关（8108 的判据写作 >5 min，取严的 2 min）"
+   },
+   "sources": [
+    "CLAUDE.md §7（红线 5 摘要条）、§11 红线 5（09-08 触发条件更正全文）",
+    "docs/MI250X-GLM-5.3-Flash-本机运行全记录-2026-09-05.md §4.1（机理）/§4.2（九步排除法）/§4.3（未验证的根治）/§5（现场签名表）/§9.5（R1/R4）",
+    "models/unsloth/launcher/deepseek-v4-flash-0731_284b_q8kxl_llamacpp_rocm72_1m_8103_unsloth_mi250dx8.sh L210-211",
+    "models/unsloth/launcher/qwen3.8-flash-next_176b_q4kxl_llamacpp_rocm72_mtp_256k_8107_unsloth_mi250dx4.sh L109-115",
+    "models/bartowski/launcher/ornith1.5_397b_q8_0_llamacpp_rocm72_256k_8110_bartowski_mi250dx8.sh L320、models/vcruz305/launcher/deepseek-v4.1-flash_748b_q4km_llamacpp_rocm72_256k_8112_vcruz305_mi250dx8.sh L334"
+   ],
+   "status": "active",
+   "title_or_why": "llama.cpp 全载 GGUF 必带 --fit off --load-mode dio（红线 5）：少了这两个开关，本机任何大 GGUF 都会变成“看起来像盘慢”的加载假死——这不是优化项，是可用前提",
+   "verified": "2026-09-15"
+  },
+  {
+   "applies_to": {
+    "preset": "generic-llamacpp"
+   },
+   "commands": [
+    "8108 agent 定稿形态：--spec-type ngram-mod,draft-mtp + MTP_N=2 + NGRAM 16/64/24",
+    "8107 定稿形态：draft-mtp（self-contained Q8_0 头）+ DRAFT_N_MAX=2",
+    "8103 定稿形态：SPEC=ngram（16/32/24）+ REASONING=on，复述收益走客户端 {\"thinking\":false}",
+    "判活核对：日志找 'creating MTP draft context against the target model'（MTP）与 'draft acceptance = X (a/b), mean len = L'（ngram）"
+   ],
+   "consumed_by": [
+    "8103-deepseek-v4-flash-0731-284b-q8kxl-llamacpp",
+    "8107-qwen38-flash-next-176b-q4kxl-llamacpp",
+    "8108-glm-5.3-flash-320b-q8-0-llamacpp",
+    "8110-ornith-1.5-397b-q8-0-llamacpp"
+   ],
+   "decision_rules": [
+    "加深判据（唯一日志判据 + 8110 补全）：draft acceptance 的 mean len L 贴着 n_max+1 才值得加深，且同时满足“草稿步成本 ≪ 主干步成本”——纯 MTP n=2 的 len/(n_max+1)=83% 在 8107 划算、在 8110 已是 −24.9%，差在草稿成本 2–3% vs 42%",
+    "组合语义 = “免费的优先、花钱的兜底”，不是增益叠加：优先级表把所有 NGRAM_* 排在 DRAFT_* 前（speculative.cpp:2617-2629），谁的草稿先非空谁上；ngram 纯 CPU 查历史零 GPU 成本，MTP/nextn 每跑一次 ≈ +17 ms ≈ 1/3 个整模型 forward（:1419-1421）",
+    "判 MTP 真上场：日志出现 creating MTP draft context against the target model（别只信参数）",
+    "判 ngram 真上场：日志出现 draft acceptance 行 + 对照组用不同内容——8110 曾因同 prompt 连发三次量出 mean len 29.88/acc 0.90 的自造假象；“同内容 65 vs 异内容 33”差一倍即是识破点（下载 §6）；8112 同款坑：测 pp 每次换内容（prefix cache 会吃掉）",
+    "已否证：8103 dspark 13.81 t/s（−38%，成本在验证 4 token 的 MoE 步，与头大小无关，勘察 §7）；8103 MTP 头 arch 未注册（三处 grep=0，盯未合并 PR 别再重建 converter-only 分支）；8108 只用 ngram 不带 MTP geo 36.8 vs 组合 50.8（代码档差 37%，§D）；8108 加深 n=4/5/8、8110 加深 n=3/4 均亏"
+   ],
+   "hard_rules": [
+    "8112（deepseek41）不在 scope：该 arch 不支持任何 --spec-type，加了白烧（其脚本 L44）",
+    "NGRAM_MIN 是丢弃门槛不是草稿长度：草稿短于 n_min 整个作废（common/speculative.cpp:380/842/1254）",
+    "禁止在 ngram 开着的生产配置上做深度选型——会把 n=1/n=2 差异抹平成假“打平”（下载 §7.5 结论 2）",
+    "深度最优不可跨模型搬：GLM 峰在 n=2、Ornith 峰在 n=2 但 n=3 即 −24.9%、vLLM 侧 8107-BF16 到 n=3 见顶（另一套机理，别混用）；n=2 在 GLM/Ornith 都对但推理依据完全不同（草稿成本 1/3 forward vs 42% 主干读量），别把结论连因移植",
+    "raw /completion 测出的“63 t/s 长文”是复读假象（无模板 instruct 循环 echo）⇒ 测形态必须走 chat（勘察同款判词）",
+    "计时正则必须排除 prompt eval time 行，否则 prefill 混进 decode 均值（出过 28/67 假数，勘察 §7）",
+    "reasoning 模型测速只用服务端 timings 或 content+reasoning_content 合并计数（R6）；max_tokens 给小把预算烧进思考、content 空串——不是坏模型",
+    "longform 关 ngram 是质量决策：temp>0 时 llama.cpp 投机不保证分布等价（逐位比对、首个不匹配即截断，非拒绝采样），ngram 草稿从历史原文抄 ⇒ 文风回拽风险；agent 负载 temp=0 与非投机逐字相同 ⇒ 放心开"
+   ],
+   "id": "llamacpp-speculation",
+   "kind": "knob",
+   "knob_names": [
+    "--spec-type（draft-mtp | ngram-mod | 组合）",
+    "--spec-draft-n-max（MTP_N）",
+    "--spec-ngram-mod-n-min（NGRAM_MIN）",
+    "--spec-ngram-mod-n-max（NGRAM_MAX）",
+    "--spec-ngram-mod-n-match（NGRAM_MATCH）",
+    "launcher 侧：SPEC(8103) / USE_MTP / USE_NGRAM / MTP_N / NGRAM_*(8107/8108/8110)",
+    "REASONING（8103 测速前置）"
+   ],
+   "settled_values": {
+    "8103": "SPEC=ngram（16/32/24）+ REASONING=on（关思考口径：分析 22.19 覆盖 0 / 代码 22.18 覆盖 0 / 复述 61.54 +177%；开思考默认态全程零命中 ⇒ 复述收益走客户端 {\"thinking\":false}；脚本 L35-44、勘察 §7）",
+    "8107 GGUF": "draft-mtp（self-contained Q8_0 头）DRAFT_N_MAX=2（37.5 → 61.1 t/s +63%，acc .80/len 2.60 @32k；256k 定稿 geo 60.06；脚本 L15、对照表 A）",
+    "8108 agent 画像": "--spec-type ngram-mod,draft-mtp + MTP_N=2 + NGRAM 16/64/24（三形态 geo：纯 MTP n2 35.1 → 加 ngram 41.6：代码 +17%、复述 +42%、分析 ≈0 零税；n4 档 geo 38.5 只在纯复述赢；出处 §D、agent 头注 1）",
+    "8108 longform 画像": "纯 draft-mtp n=2，故意关 ngram（分析档 acc=0.66/len=2.32 ⇒ ngram 命中≈0，30.41 vs 30.5 噪声内，留着只剩簿记成本；且属质量决策见 hard_rules）",
+    "8110": "ngram-mod,draft-mtp + MTP_N=2 + 16/32/24（自导头，见配方 llamacpp-mtp-only-export；五腿：关 ngram 时 MTP +40.2%（33.09→46.39），开 ngram 时只剩 +19.8% ⇒ 收益高度重叠；n2→n3 −24.9% 净亏；重导 §7.5）",
+    "NGRAM_MIN": "调到 ~16（框架默认 48 ⇒ 散文/一般文本几乎永远达不到，不调等于没开 ngram）"
+   },
+   "sources": [
+    "models/unsloth/launcher/glm5.3-flash_320b_q8_0_llamacpp_rocm72_1m_8108_agent_unsloth_mi250dx8.sh（头注 1-4）与 …_longform_….sh（关 ngram 三条理由）",
+    "docs/MI250X-CLAUDE-下沉细节-2026-09-06.md §D（8108 双 profile 全量 A/B）",
+    "docs/MI250X-GLM-5.3-Flash-本机运行全记录-2026-09-05.md §6.6（9 行 MMQ 悬崖、优先级表）、§6.7（ngram 定稿 + 1M）",
+    "docs/DSV4-Flash-0731-本机可行性勘察-2026-09-05.md §7（8103：ngram 三形态 / dspark −38% / MTP 头取证）",
+    "docs/Ornith-397B-MTP草稿头-重导-2026-09-11.md §7.5（五腿 A/B 唯一可信口径）",
+    "docs/下载-ModelScope-Ornith-1.5-397B-Q8_0-与8110底座-2026-09-09.md §6/§11（自欺假象、深度四档）",
+    "models/unsloth/launcher/qwen3.8-flash-next_176b_q4kxl_llamacpp_rocm72_mtp_256k_8107_unsloth_mi250dx4.sh L14-24（MTP 头与 -np 约束）"
+   ],
+   "status": "active",
+   "title_or_why": "llama.cpp 投机解码旋钮（--spec-type / MTP_N / NGRAM_*）——画像决定开关，深度不可跨模型搬：同一组投机开关在“分析/代码/复述”三形态上结论互相矛盾，拧错方向要么白烧算力、要么把文风拽坏",
+   "verified": "2026-09-15"
+  },
+  {
+   "applies_to": {
+    "preset": "generic-vllm"
+   },
+   "commands": [
+    "SPEC=2 bash models/Qwen/launcher/qwen3.8-flash-next_176b_bf16_vllm_rocm724_256k_8107_final_Qwen_mi250dx8.sh   # 8107/8109 换深度（0=整段不传 flag）",
+    "SPEC=dflash DFLASH_K=8 bash models/TeichAI/launcher/qwen3.8_27b_bf16_Fable_Distill_vllm_rocm724_256k_8101_teichai_mi250dx2_m3.sh   # 8101 三选一（dflash 需 z-lab 草稿头；mtp 用主 checkpoint 的 mtp.*）",
+    "N_SPEC=8 bash models/davetha/launcher/qwen3.8_27b_int8_abliterated_vllm_rocm72_128k_8114_dflash12_davetha_mi250x_0.sh   # 8114 改草稿深度"
+   ],
+   "consumed_by": [
+    "8107-qwen38-flash-next-176b-bf16-vllm-tp8",
+    "8109-qwen38-flash-next-176b-bf16-vllm-splitkv",
+    "8101-qwen38-27b-fable-distill-bf16-vllm-tp2",
+    "8301-qwen38-27b-fable-distill-bf16-vllm-splitkv-ab",
+    "8302-qwen38-27b-fable-distill-bf16-vllm-dflash2",
+    "8114-qwen38-27b-int8-w8a8-vllm-tp1-dflash12",
+    "8111-ornith-1.5-35b-a3b-bf16-vllm-tp4",
+    "8113-qwen38-27b-bf16-vllm-tp2",
+    "8203-qwen2.5-1.5b-bf16-vllm-smoke"
+   ],
+   "consumed_by_note": [
+    "8111-ornith-1.5-35b-a3b-bf16-vllm-tp4：不接投机，仅为记录",
+    "8113-qwen38-27b-bf16-vllm-tp2：不接投机",
+    "8203-qwen2.5-1.5b-bf16-vllm-smoke：不接投机"
+   ],
+   "decision_rules": [
+    "深度曲线（Flash-Next TP8，同 560 W + batched 8192，2026-09-05，CLAUDE §9）：n=1 160.14（⚠️200 W 档不可跨比）/ 单流 45.2；n=2 260.81 / 67.8；n=3 296.86 定稿 / 88.6；n=4 257.28↓ / 59.5↓↓ ⇒ n=3 在单流与并发上同时是峰，曲线非单调",
+    "上探只该试 n=9（余量 3）；未实测：n=9 的任何数字",
+    "深度最优不可跨模型搬（草稿成本占比决定）：8111_final 头注 L13——8110 草稿步 ≈ 主干读量 42%，n=2 就是顶（n=3 −24.9%，出自五腿重导 §7.5 ABBA 口径）；8107 单头边际 ~2–3%，撑得到 3；结论方向成立（草稿贵→深度浅），数字别跨引擎抄",
+    "8101 同类证据：MTP（自回归草稿，K 个草稿=串行 K 次前向）在 gfx90a 上 K=2 净亏 0.73~0.93×，K=1 是唯一正收益档；DFlash（block-diffusion 并行草稿，一次前向出 8 候选）能吃到 K=8 ×2.7~4.6",
+    "测法口径：tok/s = tokens/step × steps/s 两因子独立；按 usage.completion_tokens 算（按 SSE chunk 数会低估约 6×，bench/spec_ab.py 规矩）；warmup 后每档 ≥3 次取中位；必须自然散文（ignore_eos 硬凑的退化文风把 tokens/step 打到 <2，8114 曾因此误判）",
+    "真上场判据：/metrics 的 spec_decode_num_drafts_total 增长、num_draft_tokens/num_drafts = n（8114 实测 4464/372=12.0，09-14 复现）",
+    "MTP 与 prefix cache 共存（曾被 kv_cache_utils.py:2160 的 WARNING 骗过）：实测复用率 70.5%→94.4%、命中恒为 400 的倍数、TTFT 省 72% ⇒ 共存、默认开（三件套复核 §6，09-05）；测法硬规矩：同内容连发 ≥3 次 + 等长不同内容对照组（发 2 次=假阴性）",
+    "开 MTP 时不传 --max-num-batched-tokens 8192，vLLM 会把 max_num_scheduled_tokens 压到 2048 并 WARNING——那条 WARNING 消失即档位正确的旁证（8107 基脚本 L133-135）",
+    "与 QR 旋钮的相互作用：graph 会把微基准口径的收益吃掉（8107 MTP 增益 eager +54% → graph 后 +23.3%；QR 在 TP8 微基准 2.9× → 端到端 −0.44%）⇒ 所有开关的最终判据都是端到端 ABAB，不是开关自己的日志",
+    "接受长度参考：8114 自然散文 pos0 75.6% → pos11 1.8%（fork 的 BF16 草稿 pos0≈72%，本机不低）；8101 DFlash 接受 3.51/8 ⇒ 出词 4.51 tok/步",
+    "良性日志行：'Speculative decoding (method=mtp) … no KV cache group … draft model'（8107 起 MTP 必打，不影响计数器判据）；'not found tuned config in a8w8_tuned_gemm.csv'（8114，属正确行为）"
+   ],
+   "effect_by_scope": [
     {
-      "commands": [
-        "envs/vllm_master_rocm724/bin/python - <<'PY'\nimport os, torch\ntorch._C._cuda_init()                      # 判据：抛异常=不可计算（别看 device_count）\nprint(\"count:\", torch.cuda.device_count())\nfor i in range(torch.cuda.device_count()):\n    p = torch.cuda.get_device_properties(i)\n    print(i, p.name, f\"bus={p.pci_bus_id if hasattr(p,'pci_bus_id') else '?'}\")\nPY\n# 分别跑：不带变量 / 只 HIP_VISIBLE_DEVICES=6,7 / ROCR_VISIBLE_DEVICES=6,7 叠加（第三组是复现 §1 空集用的）",
-        "unset HIP_VISIBLE_DEVICES ROCR_VISIBLE_DEVICES CUDA_VISIBLE_DEVICES   # 起服即崩/回包损坏且 SPEC>0 时的处置，然后重起",
-        "env | grep VISIBLE   # 排 “No CUDA GPUs are available”"
+     "effect": "beneficial",
+     "evidence": "docs/recipes/knobs/vllm-mtp-spec-depth.md",
+     "value": "SPEC=3 定稿 Phase2 296.86 tok/s",
+     "when": {
+      "arch": [
+       "qwen4exp"
       ],
-      "decision_rules": [
-        "No CUDA GPUs are available（danger-full-access 下也报）⇒ 十有八九是 HIP 与 ROCR 叠加过二次过滤 ⇒ env | grep VISIBLE；对照 8101 三组实测（L30-43）：HIP=6,7 → count 2、PCI bus 142/147 ✅；ROCR+HIP ❌ 空集；CUDA+HIP ✅ 无害",
-        "起服即崩 / worker 回包损坏且无内核错误（8107/8109 且 SPEC>0）⇒ 设了任何一个可见性变量 ⇒ unset 三个再起；所有成功组（offline ×{eager,graph} ×{AIS,bounce} + 两臂）都不设",
-        "起服“卡 16 分钟”⇒ 不是死锁：冷 Triton 缓存下草稿内核 autotune（8107 头注已更正旧误判）⇒ 等；看日志有无 autotune 活动",
-        "mem_info_vram_used 落点与预期 die 不符 ⇒ 忘了 PCI 顺序（HIP0/1=31/34=M1…；“名 m3 实 M2”）⇒ 按 CLAUDE §3 映射表核 PCI，别看脚本名",
-        "沙箱内一切“无 GPU” ⇒ 不是可见性：workspace-write 开不了 /dev/kfd ⇒ 用 _cuda_init() 判定（§0）",
-        "ROCR 单独设的行为本机未实测（现役规则直接禁止叠加，无需求）"
-      ],
-      "hard_rules": [
-        "🛑 vLLM + 开 MTP（8107/8109，SPEC>0）：HIP/ROCR/CUDA_VISIBLE_DEVICES 一个都不许设——崩过的两次 serve+MTP 全部显式设了 HIP_VISIBLE_DEVICES=0..7，触发 “CUDA_VISIBLE_DEVICES on ROCm is deprecated” 的二次过滤路径，全体 worker 在 get_kv_cache_spec 回包时连带损坏且无内核错误（8107 基脚本 L34-38 病根对照矩阵）",
-        "vLLM 无 MTP 要限 die：只设 HIP_VISIBLE_DEVICES，绝不叠加 ROCR——ROCR 先过滤并重编号 0..N-1，HIP 再在短表上二次筛选：ROCR=6,7 + HIP=6,7 ⇒ 越界空集 ⇒ RuntimeError: No CUDA GPUs are available（与沙箱拦 /dev/kfd 同症状，极易误判成权限问题）",
-        "8101/8301 不 source config/gpu_mi250x_*.conf——该 conf 把 HIP 与 ROCR 两个变量都导出，凡 source 它又用绝对 die 号的 vLLM 脚本都踩同一颗雷（8101 L39-40 原文）",
-        "判“到底给了哪几张卡”禁用 torch.cuda.device_count()（受限沙箱下照样返回 8 = PCI 枚举计数）；判据 = torch._C._cuda_init() 成不抛（CLAUDE.md §0.1 实测）；llama.cpp 侧用 llama-server --list-devices；vLLM 侧旁证 = launcher 回显 + card{1..8}/device/mem_info_vram_used（bytes）",
-        "llama.cpp 的 HIP+ROCR 双设形态禁止抄去 vLLM 高编号 die（6,7 类）＝空集事故；8111/8113/8114/8203 现状无碍只因低编号子集幂等，若要换高编号 die 先把 8101 的 unset ROCR 行抄上",
-        "不擅改 GPU conf 标签：文件名编号按 PCI 排、真实 HIP 序不同（M1,M1,M0,M0,M3,M3,M2,M2），CLAUDE §3 挂为对外命名语义的待决项；本旋钮现役解绕 = 不 source 该 conf + 显式 unset ROCR"
-      ],
-      "id": "vllm-gpu-visibility-and-mtp",
-      "kind": "knob",
-      "knob_names": [
-        "HIP_VISIBLE_DEVICES",
-        "ROCR_VISIBLE_DEVICES",
-        "CUDA_VISIBLE_DEVICES",
-        "DEVS（launcher 变量，HIP 的别名）"
-      ],
-      "scope": [
-        "8101-qwen38-27b-fable-distill-bf16-vllm-tp2",
-        "8107-qwen38-flash-next-176b-bf16-vllm-tp8",
-        "8109-qwen38-flash-next-176b-bf16-vllm-splitkv",
-        "8111-ornith-1.5-35b-a3b-bf16-vllm-tp4",
-        "8113-qwen38-27b-bf16-vllm-tp2",
-        "8114-qwen38-27b-int8-w8a8-vllm-tp1-dflash12",
-        "8203-qwen2.5-1.5b-bf16-vllm-smoke",
-        "8301-qwen38-27b-fable-distill-bf16-vllm-splitkv-ab",
-        "8302-qwen38-27b-fable-distill-bf16-vllm-dflash2"
-      ],
-      "settled_values": {
-        "8107/8109（vLLM + MTP，SPEC>0）": "三个可见性变量一个都不设，全 8 die 都该被看见",
-        "8203": "不设（TP1 自然落 device 0）；文件名 mi250x_0 是记账不是开关",
-        "CUDA_VISIBLE_DEVICES": "ROCm 上的废弃别名；单独设无害（vLLM _sync_hip_cuda_env_vars 同层复制），与 MTP 叠加时有害（走二次过滤路径）",
-        "HIP_VISIBLE_DEVICES（8101，无 MTP 限 die）": "${DEVS:-6,7}，并显式 unset ROCR_VISIBLE_DEVICES 防继承（8301/8302 同形态，6,7）",
-        "HIP_VISIBLE_DEVICES（8111）": "0,1,2,3 —— TP4 限半机是设计（die4-7 留给别的模型），本臂无投机",
-        "HIP_VISIBLE_DEVICES（8113）": "0,1",
-        "HIP_VISIBLE_DEVICES（8114）": "0（单 die 臂）；换 die = HIP_VISIBLE_DEVICES=<n> bash <脚本>",
-        "ROCR_VISIBLE_DEVICES（llama.cpp 臂 8103/8107-q4kxl/8110/8112）": "现役脚本一律与 HIP 双设同一 DEVS 集；该写法安全的前提是子集低编号起（重编号 0..N-1 后与 HIP 二次筛选幂等）"
-      },
-      "sources": [
-        "models/TeichAI/launcher/…_8101_teichai_mi250dx2_m3.sh L30-43（三组对照实测，逐字）",
-        "models/Qwen/launcher/…8107…sh L34-44 与 …_8109_….sh L41-42/L251（MTP 病根与硬规则）",
-        "docs/MI250X-hipFile-AIS-部署手册.md N23（可见性=ROCm 起服一级雷区）",
-        "CLAUDE.md §0.1（device_count 骗人）、§3（HIP index 权威映射）",
-        "models/*/launcher/*llamacpp*.sh（8103/8107-q4kxl/8110/8112 的 HIP+ROCR 双设形态）"
-      ],
-      "status": "active",
-      "title_or_why": "HIP/ROCR/CUDA_VISIBLE_DEVICES —— vLLM 侧“什么时候必须设、什么时候必须不设”：规则随引擎与是否开 MTP 反转，本机最易误判的故障（No CUDA GPUs are available / 起服即崩 / 16 分钟假挂起）一半出在这三个变量的组合上",
-      "verified": "2026-09-15"
+      "model": [
+       "Qwen/Qwen3.8-Flash-Next-BF16"
+      ]
+     }
     },
     {
-      "commands": [
-        "sudo dmesg -T | tail -15                                  # ① 有没有 SVM mapping failed / svm_range_restore_work\nP=$(cat logs/<model-key>-<port>.pid)                      # ② 消费者有没有在收：read_bytes 增量（不是设备级读盘！）\nfor i in 1 2; do grep -E 'read_bytes|rchar' /proc/$P/io; awk '{print \"minflt=\"$10}' /proc/$P/stat; sleep 10; done\nsudo perf trace -e mmap,mmap2 -p $P                       # ③ 可选：mmap 风暴的直接证据（perf 不可用时用 ①②）"
-      ],
-      "decision_rules": [
-        "六十秒确诊三步（09-08 现场签名）：① dmesg 有 SVM mapping failed / svm_range_restore_work hogged CPU；② 进程 read_bytes 增量 ≈0 而 iostat 仍几百 MB/s；③ minflt 几十/s（20 ms/页 ≈2 MB/s）＋ 8 卡 GPU util 恒 0% ＋ 主线程 R/D 交替、stime 占绝大多数、栈停 libhsa-runtime64 ⇒ 中招；补两开关后 38 s 到 listening on（同次挂 8 分钟零进展）",
-        "日志冻在 done_getting_tensors 之后、无 listening on ⇒ 先查这两个开关，别查盘、别怀疑构建（CLAUDE.md 红线 5）",
-        "差分实验按成本排序做（R2）：换小输入（15 s）→ 换配置开关（1–3 min）→ 换版本重编（10 min+）；09-05 顺序全反白烧很久",
-        "同构建同盘跑 4.5 G 小 GGUF 15 s listening 且真出 token ⇒ 机器与构建全好（排除法 #7）；dd iflag=direct 2.4 GB/s ⇒ 盘无罪（#1）",
-        "前兆旁证：日志 done_getting_tensors: token_embd.weight (q8_0) (and 1380 others) cannot be used with preferred buffer type ROCm_Host, using CPU instead（全记录 §4.1）"
-      ],
-      "hard_rules": [
-        "红线 5：这两个开关是可用前提不是优化项；中招与体积/RAM 无关——09-08 用 111 GiB 权重（宿主 RAM 251.7 GiB）实测照样中招，“模型 < 宿主 RAM”不是豁免理由（红线 5 已据此更正触发条件）",
-        "机理链：--fit on 先跑一趟试算加载（日志 load_mode = none）+ mmap 路把 296 GiB 页缓存注册成 KFD SVM 常驻，而本机 ulimit -l = 8 MiB 且 amdgpu no_system_mem_limit=N ⇒ 内核逐段拒绝，每次缺页 20 ms、有效消费 ≈2 MB/s（dmesg: SVM mapping failed, exceeds resident system memory limit ×N）",
-        "判“读没读进去”用进程 read_bytes 与 minflt，别看 iostat——设备级读数几百 MB/s 是 read_ahead_kb=128 的内核投机预取，无人消费（R1，全记录 §5）",
-        "-ngl 0 不能当对照组：125 G RAM 上载 318 G 本就不成立，属废对照（R3）",
-        "已否证别再走：HSA_* 环境变量（三轮全挂，ΔSVM=0）、换 ROCm 用户态版本重编（6.4.4 vs 7.2.4 同挂）、怀疑盘/加 iostat 观测",
-        "根治路径（提 memlock ulimit -l unlimited / no_system_mem_limit=1）本机从未测过（全记录 §4.3），未验证别当结论；要验就同权重比对 /proc/$P/io 与 dmesg，别拿别的模型结论外推"
-      ],
-      "id": "llamacpp-fit-off-load-mode-dio",
-      "kind": "knob",
-      "knob_names": [
-        "--fit",
-        "--load-mode（-lm）",
-        "-lzm（engram lazy 读，8112，已证与 -lm dio 不冲突）",
-        "HSA_USERPTR_FOR_PAGED_MEM / HSA_ENABLE_SDMA / HSA_USE_SVM（三轮实测全挂，已否证）"
-      ],
-      "scope": [
-        "8103-deepseek-v4-flash-0731-284b-q8kxl-llamacpp",
-        "8107-qwen38-flash-next-176b-q4kxl-llamacpp",
-        "8108-glm-5.3-flash-320b-q8-0-llamacpp",
-        "8110-ornith-1.5-397b-q8-0-llamacpp",
-        "8112-deepseek-v4.1-flash-748b-q4km-llamacpp"
-      ],
-      "settled_values": {
-        "--fit": "off —— 任何全量 offload 到 GPU 的 GGUF 必带，与体积无关；5 条 llama.cpp 臂全部硬编码在 ARGS 里（不是 ${VAR:-} 旋钮，删掉就中招）",
-        "--load-mode": "dio —— O_DIRECT 不进页缓存 ⇒ 没有可被注册成 KFD SVM 的文件页 ⇒ 绕开整条死路；读盘 ~2.5 GB/s（同盘 dd iflag=direct 基线 2.4 GB/s，已打满）",
-        "与 -sm tensor 的组合": "tensor 档下 --fit off 是必需而非可选（llama_params_fit is not implemented for SPLIT_MODE_TENSOR, abort）",
-        "触发判据": "-ngl 全载后 >2 min 不见 listening on 就查这两个开关（8108 的判据写作 >5 min，取严的 2 min）"
-      },
-      "sources": [
-        "CLAUDE.md §7（红线 5 摘要条）、§11 红线 5（09-08 触发条件更正全文）",
-        "docs/MI250X-GLM-5.3-Flash-本机运行全记录-2026-09-05.md §4.1（机理）/§4.2（九步排除法）/§4.3（未验证的根治）/§5（现场签名表）/§9.5（R1/R4）",
-        "models/unsloth/launcher/deepseek-v4-flash-0731_284b_q8kxl_llamacpp_rocm72_1m_8103_unsloth_mi250dx8.sh L210-211",
-        "models/unsloth/launcher/qwen3.8-flash-next_176b_q4kxl_llamacpp_rocm72_mtp_256k_8107_unsloth_mi250dx4.sh L109-115",
-        "models/bartowski/launcher/ornith1.5_397b_q8_0_llamacpp_rocm72_256k_8110_bartowski_mi250dx8.sh L320、models/vcruz305/launcher/deepseek-v4.1-flash_748b_q4km_llamacpp_rocm72_256k_8112_vcruz305_mi250dx8.sh L334"
-      ],
-      "status": "active",
-      "title_or_why": "llama.cpp 全载 GGUF 必带 --fit off --load-mode dio（红线 5）：少了这两个开关，本机任何大 GGUF 都会变成“看起来像盘慢”的加载假死——这不是优化项，是可用前提",
-      "verified": "2026-09-15"
+     "effect": "negative",
+     "evidence": "docs/recipes/serving/8121-…md §9",
+     "value": "接受长度 1.18–1.67 看似可用，但每步多跑一个完整 MTP 层且 KV 池腰斩 ⇒ 净亏；本臂 SPEC_CONFIG 保持空",
+     "when": {
+      "arch": [
+       "glm_moe_dsa"
+      ]
+     }
     },
     {
-      "commands": [
-        "8108 agent 定稿形态：--spec-type ngram-mod,draft-mtp + MTP_N=2 + NGRAM 16/64/24",
-        "8107 定稿形态：draft-mtp（self-contained Q8_0 头）+ DRAFT_N_MAX=2",
-        "8103 定稿形态：SPEC=ngram（16/32/24）+ REASONING=on，复述收益走客户端 {\"thinking\":false}",
-        "判活核对：日志找 'creating MTP draft context against the target model'（MTP）与 'draft acceptance = X (a/b), mean len = L'（ngram）"
-      ],
-      "decision_rules": [
-        "加深判据（唯一日志判据 + 8110 补全）：draft acceptance 的 mean len L 贴着 n_max+1 才值得加深，且同时满足“草稿步成本 ≪ 主干步成本”——纯 MTP n=2 的 len/(n_max+1)=83% 在 8107 划算、在 8110 已是 −24.9%，差在草稿成本 2–3% vs 42%",
-        "组合语义 = “免费的优先、花钱的兜底”，不是增益叠加：优先级表把所有 NGRAM_* 排在 DRAFT_* 前（speculative.cpp:2617-2629），谁的草稿先非空谁上；ngram 纯 CPU 查历史零 GPU 成本，MTP/nextn 每跑一次 ≈ +17 ms ≈ 1/3 个整模型 forward（:1419-1421）",
-        "判 MTP 真上场：日志出现 creating MTP draft context against the target model（别只信参数）",
-        "判 ngram 真上场：日志出现 draft acceptance 行 + 对照组用不同内容——8110 曾因同 prompt 连发三次量出 mean len 29.88/acc 0.90 的自造假象；“同内容 65 vs 异内容 33”差一倍即是识破点（下载 §6）；8112 同款坑：测 pp 每次换内容（prefix cache 会吃掉）",
-        "已否证：8103 dspark 13.81 t/s（−38%，成本在验证 4 token 的 MoE 步，与头大小无关，勘察 §7）；8103 MTP 头 arch 未注册（三处 grep=0，盯未合并 PR 别再重建 converter-only 分支）；8108 只用 ngram 不带 MTP geo 36.8 vs 组合 50.8（代码档差 37%，§D）；8108 加深 n=4/5/8、8110 加深 n=3/4 均亏"
-      ],
-      "hard_rules": [
-        "8112（deepseek41）不在 scope：该 arch 不支持任何 --spec-type，加了白烧（其脚本 L44）",
-        "NGRAM_MIN 是丢弃门槛不是草稿长度：草稿短于 n_min 整个作废（common/speculative.cpp:380/842/1254）",
-        "禁止在 ngram 开着的生产配置上做深度选型——会把 n=1/n=2 差异抹平成假“打平”（下载 §7.5 结论 2）",
-        "深度最优不可跨模型搬：GLM 峰在 n=2、Ornith 峰在 n=2 但 n=3 即 −24.9%、vLLM 侧 8107-BF16 到 n=3 见顶（另一套机理，别混用）；n=2 在 GLM/Ornith 都对但推理依据完全不同（草稿成本 1/3 forward vs 42% 主干读量），别把结论连因移植",
-        "raw /completion 测出的“63 t/s 长文”是复读假象（无模板 instruct 循环 echo）⇒ 测形态必须走 chat（勘察同款判词）",
-        "计时正则必须排除 prompt eval time 行，否则 prefill 混进 decode 均值（出过 28/67 假数，勘察 §7）",
-        "reasoning 模型测速只用服务端 timings 或 content+reasoning_content 合并计数（R6）；max_tokens 给小把预算烧进思考、content 空串——不是坏模型",
-        "longform 关 ngram 是质量决策：temp>0 时 llama.cpp 投机不保证分布等价（逐位比对、首个不匹配即截断，非拒绝采样），ngram 草稿从历史原文抄 ⇒ 文风回拽风险；agent 负载 temp=0 与非投机逐字相同 ⇒ 放心开"
-      ],
-      "id": "llamacpp-speculation",
-      "kind": "knob",
-      "knob_names": [
-        "--spec-type（draft-mtp | ngram-mod | 组合）",
-        "--spec-draft-n-max（MTP_N）",
-        "--spec-ngram-mod-n-min（NGRAM_MIN）",
-        "--spec-ngram-mod-n-max（NGRAM_MAX）",
-        "--spec-ngram-mod-n-match（NGRAM_MATCH）",
-        "launcher 侧：SPEC(8103) / USE_MTP / USE_NGRAM / MTP_N / NGRAM_*(8107/8108/8110)",
-        "REASONING（8103 测速前置）"
-      ],
-      "scope": [
-        "8103-deepseek-v4-flash-0731-284b-q8kxl-llamacpp",
-        "8107-qwen38-flash-next-176b-q4kxl-llamacpp",
-        "8108-glm-5.3-flash-320b-q8-0-llamacpp",
-        "8110-ornith-1.5-397b-q8-0-llamacpp"
-      ],
-      "settled_values": {
-        "8103": "SPEC=ngram（16/32/24）+ REASONING=on（关思考口径：分析 22.19 覆盖 0 / 代码 22.18 覆盖 0 / 复述 61.54 +177%；开思考默认态全程零命中 ⇒ 复述收益走客户端 {\"thinking\":false}；脚本 L35-44、勘察 §7）",
-        "8107 GGUF": "draft-mtp（self-contained Q8_0 头）DRAFT_N_MAX=2（37.5 → 61.1 t/s +63%，acc .80/len 2.60 @32k；256k 定稿 geo 60.06；脚本 L15、对照表 A）",
-        "8108 agent 画像": "--spec-type ngram-mod,draft-mtp + MTP_N=2 + NGRAM 16/64/24（三形态 geo：纯 MTP n2 35.1 → 加 ngram 41.6：代码 +17%、复述 +42%、分析 ≈0 零税；n4 档 geo 38.5 只在纯复述赢；出处 §D、agent 头注 1）",
-        "8108 longform 画像": "纯 draft-mtp n=2，故意关 ngram（分析档 acc=0.66/len=2.32 ⇒ ngram 命中≈0，30.41 vs 30.5 噪声内，留着只剩簿记成本；且属质量决策见 hard_rules）",
-        "8110": "ngram-mod,draft-mtp + MTP_N=2 + 16/32/24（自导头，见配方 llamacpp-mtp-only-export；五腿：关 ngram 时 MTP +40.2%（33.09→46.39），开 ngram 时只剩 +19.8% ⇒ 收益高度重叠；n2→n3 −24.9% 净亏；重导 §7.5）",
-        "NGRAM_MIN": "调到 ~16（框架默认 48 ⇒ 散文/一般文本几乎永远达不到，不调等于没开 ngram）"
-      },
-      "sources": [
-        "models/unsloth/launcher/glm5.3-flash_320b_q8_0_llamacpp_rocm72_1m_8108_agent_unsloth_mi250dx8.sh（头注 1-4）与 …_longform_….sh（关 ngram 三条理由）",
-        "docs/MI250X-CLAUDE-下沉细节-2026-09-06.md §D（8108 双 profile 全量 A/B）",
-        "docs/MI250X-GLM-5.3-Flash-本机运行全记录-2026-09-05.md §6.6（9 行 MMQ 悬崖、优先级表）、§6.7（ngram 定稿 + 1M）",
-        "docs/DSV4-Flash-0731-本机可行性勘察-2026-09-05.md §7（8103：ngram 三形态 / dspark −38% / MTP 头取证）",
-        "docs/Ornith-397B-MTP草稿头-重导-2026-09-11.md §7.5（五腿 A/B 唯一可信口径）",
-        "docs/下载-ModelScope-Ornith-1.5-397B-Q8_0-与8110底座-2026-09-09.md §6/§11（自欺假象、深度四档）",
-        "models/unsloth/launcher/qwen3.8-flash-next_176b_q4kxl_llamacpp_rocm72_mtp_256k_8107_unsloth_mi250dx4.sh L14-24（MTP 头与 -np 约束）"
-      ],
-      "status": "active",
-      "title_or_why": "llama.cpp 投机解码旋钮（--spec-type / MTP_N / NGRAM_*）——画像决定开关，深度不可跨模型搬：同一组投机开关在“分析/代码/复述”三形态上结论互相矛盾，拧错方向要么白烧算力、要么把文风拽坏",
-      "verified": "2026-09-15"
-    },
-    {
-      "commands": [
-        "SPEC=2 bash models/Qwen/launcher/qwen3.8-flash-next_176b_bf16_vllm_rocm724_256k_8107_final_Qwen_mi250dx8.sh   # 8107/8109 换深度（0=整段不传 flag）",
-        "SPEC=dflash DFLASH_K=8 bash models/TeichAI/launcher/qwen3.8_27b_bf16_Fable_Distill_vllm_rocm724_256k_8101_teichai_mi250dx2_m3.sh   # 8101 三选一（dflash 需 z-lab 草稿头；mtp 用主 checkpoint 的 mtp.*）",
-        "N_SPEC=8 bash models/davetha/launcher/qwen3.8_27b_int8_abliterated_vllm_rocm72_128k_8114_dflash12_davetha_mi250x_0.sh   # 8114 改草稿深度"
-      ],
-      "decision_rules": [
-        "深度曲线（Flash-Next TP8，同 560 W + batched 8192，2026-09-05，CLAUDE §9）：n=1 160.14（⚠️200 W 档不可跨比）/ 单流 45.2；n=2 260.81 / 67.8；n=3 296.86 定稿 / 88.6；n=4 257.28↓ / 59.5↓↓ ⇒ n=3 在单流与并发上同时是峰，曲线非单调",
-        "上探只该试 n=9（余量 3）；未实测：n=9 的任何数字",
-        "深度最优不可跨模型搬（草稿成本占比决定）：8111_final 头注 L13——8110 草稿步 ≈ 主干读量 42%，n=2 就是顶（n=3 −24.9%，出自五腿重导 §7.5 ABBA 口径）；8107 单头边际 ~2–3%，撑得到 3；结论方向成立（草稿贵→深度浅），数字别跨引擎抄",
-        "8101 同类证据：MTP（自回归草稿，K 个草稿=串行 K 次前向）在 gfx90a 上 K=2 净亏 0.73~0.93×，K=1 是唯一正收益档；DFlash（block-diffusion 并行草稿，一次前向出 8 候选）能吃到 K=8 ×2.7~4.6",
-        "测法口径：tok/s = tokens/step × steps/s 两因子独立；按 usage.completion_tokens 算（按 SSE chunk 数会低估约 6×，bench/spec_ab.py 规矩）；warmup 后每档 ≥3 次取中位；必须自然散文（ignore_eos 硬凑的退化文风把 tokens/step 打到 <2，8114 曾因此误判）",
-        "真上场判据：/metrics 的 spec_decode_num_drafts_total 增长、num_draft_tokens/num_drafts = n（8114 实测 4464/372=12.0，09-14 复现）",
-        "MTP 与 prefix cache 共存（曾被 kv_cache_utils.py:2160 的 WARNING 骗过）：实测复用率 70.5%→94.4%、命中恒为 400 的倍数、TTFT 省 72% ⇒ 共存、默认开（三件套复核 §6，09-05）；测法硬规矩：同内容连发 ≥3 次 + 等长不同内容对照组（发 2 次=假阴性）",
-        "开 MTP 时不传 --max-num-batched-tokens 8192，vLLM 会把 max_num_scheduled_tokens 压到 2048 并 WARNING——那条 WARNING 消失即档位正确的旁证（8107 基脚本 L133-135）",
-        "与 QR 旋钮的相互作用：graph 会把微基准口径的收益吃掉（8107 MTP 增益 eager +54% → graph 后 +23.3%；QR 在 TP8 微基准 2.9× → 端到端 −0.44%）⇒ 所有开关的最终判据都是端到端 ABAB，不是开关自己的日志",
-        "接受长度参考：8114 自然散文 pos0 75.6% → pos11 1.8%（fork 的 BF16 草稿 pos0≈72%，本机不低）；8101 DFlash 接受 3.51/8 ⇒ 出词 4.51 tok/步",
-        "良性日志行：'Speculative decoding (method=mtp) … no KV cache group … draft model'（8107 起 MTP 必打，不影响计数器判据）；'not found tuned config in a8w8_tuned_gemm.csv'（8114，属正确行为）"
-      ],
-      "hard_rules": [
-        "🛑 深度 5–8 是死区：n=5 实测起服即崩（机理 qsa_cache.py:836 断言 416 % capacity == 0，capacity=12 ∤ 416），别试 6/7/8；可行域 n=0 / 1–4 / 9–12 / 29–32",
-        "n=4 起得来但不划算：ring 零余量（span=4+n 须 < capacity=8，n=4 恰好相等）⇒ 单流 −33% 而 Phase2 只 −13%——只看并发会低估 ring 代价；“可行 ≠ 划算”（“n=4 与 n=3 同 capacity=8 是免费一档”的推断被实测推翻）",
-        "硬前置：8107/8109 开 MTP（SPEC>0）绝不设任何 HIP/ROCR/CUDA_VISIBLE_DEVICES（→ 配方 vllm-gpu-visibility-and-mtp）",
-        "8101 的 MTP 坑：n_predict 取顶层 mtp_num_hidden_layers 而该字段只在 text_config（=1）⇒ 顶层 getattr→None，必须显式给 num_speculative_tokens（上游 bug，别依赖 n_predict）",
-        "禁止跨配置 md5 对拍判对错：本仓多臂实测 temp=0 下投机与非投机不逐字同（并列 top1 翻面 + 归约换序级联）⇒ 正确性只认 Phase1 分数 + 抽查",
-        "改深度 = 换配置：同 boot 成对重跑才能进对比表；跨 boot 的 ±2% 不当结论（σ≈4.6%）",
-        "看 'Using …' 构造行会骗人——真上场判据只认 /metrics 计数器"
-      ],
-      "id": "vllm-mtp-spec-depth",
-      "kind": "knob",
-      "knob_names": [
-        "SPEC",
-        "MTP_K",
-        "DFLASH_K",
-        "N_SPEC",
-        "SPEC_TOKENS",
-        "--speculative-config（CLI 落点，num_speculative_tokens）"
-      ],
-      "scope": [
-        "8107-qwen38-flash-next-176b-bf16-vllm-tp8",
-        "8109-qwen38-flash-next-176b-bf16-vllm-splitkv",
-        "8101-qwen38-27b-fable-distill-bf16-vllm-tp2",
-        "8301-qwen38-27b-fable-distill-bf16-vllm-splitkv-ab",
-        "8302-qwen38-27b-fable-distill-bf16-vllm-dflash2",
-        "8114-qwen38-27b-int8-w8a8-vllm-tp1-dflash12",
-        "8111-ornith-1.5-35b-a3b-bf16-vllm-tp4（不接投机，仅为记录）",
-        "8113-qwen38-27b-bf16-vllm-tp2（不接投机）",
-        "8203-qwen2.5-1.5b-bf16-vllm-smoke（不接投机）"
-      ],
-      "settled_values": {
-        "N_SPEC（8114）": "12 定稿（dflash，配 \"cudagraph_mode\":\"FULL_DECODE_ONLY\"；脚本 L72 + PR41 复现配方 §5）",
-        "SPEC/DFLASH_K/MTP_K（8101）": "默认 off；dflash = {\"method\":\"dflash\",\"model\":models/z-lab/Qwen3.8-27B-DFlash2,\"num_speculative_tokens\":K}（K 默认 8）；mtp 不给 model、自动用主 checkpoint 的 mtp.*（K 默认 1，必须显式给 num_speculative_tokens）",
-        "SPEC/SPEC_TOKENS（8301/8302）": "8301 默认 0 / SPEC_TOKENS 7；8302 默认 SPEC=1、钉 n=3（dflash，接受长度 2.67、上限 4 ≈ 吃饱）",
-        "SPEC（8107/8109）": "默认 3、定稿 n=3（2026-09-05 同 560 W + batched 8192：Phase2 296.86 tok/s、单流 short 88.6）；SPEC=0 整段不传 flag；落 CLI = --speculative-config {\"method\":\"mtp\",\"num_speculative_tokens\":N}（qwen4_exp 权重自带 31 个 mtp.* 张量）"
-      },
-      "sources": [
-        "CLAUDE.md §9（SPEC 曲线全表）、§10（可行域/死区/ring 机理）",
-        "docs/MI250X-BF16-MTP三件套复核与prefix-cache架空-2026-09-05.md §6/§7/§8",
-        "models/Qwen/launcher/…8107…sh L28-40 与 …_8107_final_….sh L9-25",
-        "models/TeichAI/launcher/…_8101_teichai_mi250dx2_m3.sh L107-167（dflash/mtp 双形态与实测表）",
-        "models/davetha/launcher/…_8114_….sh L72（N_SPEC=12 定稿）+ docs/MI250X-PR41-Qwen38-27B-INT8-dflash-本机复现-2026-09-14.md §5",
-        "models/ornith-ai/launcher/…8111_final….sh L13（“深度最优不可跨模型搬”引 8110）；bench/ornith_mtp_depth_ab.sh 头注"
-      ],
-      "status": "active",
-      "title_or_why": "SPEC —— vLLM 侧投机解码深度旋钮（MTP n / DFlash K，可行域非单调）：深度不是越大越好也不是单调的——曲线在 n=3 见顶、5–8 是起服即崩的死区、“可行≠划算”，且最优深度不可跨模型搬",
-      "verified": "2026-09-15"
-    },
-    {
-      "commands": [
-        "VLLM_TUNED_CONFIG_FOLDER=\"${AI_HOME}/config/moe-tuned\" bash <某launcher>   # 单次前缀赋值（自然随环境传给 python 子进程），勿写进 conf",
-        "LOG=\"$(ls -t logs/flash-next/server-8107-*.log | head -1)\"; grep -a \"Using configuration from\" \"$LOG\"   # 命中用户表\ngrep -a \"Using default MoE config\" \"$LOG\"   # 回退内置/默认（未接或未命中该形状）"
-      ],
-      "decision_rules": [
-        "判负数据（同底座 A/B，2026-09-10，8107 Flash-Next BF16 TP8、SPEC=3、graph，施工单 §H）：a0 默认无表 = 单流 60.8 t/s / agg@8 289.0；a1 种子表（N16 全桶）= 58.8（−3%）/ 276.4（−4%）；日志确实打出 'Using configuration from …E=512,N=80…json' ⇒ 生效但更慢，不是“没拾取”；cap 未在该表标注——引用时注意与 §9 的 560 W 定稿数不同 boot 不同口径",
-        "davetha 的 +18%（int4_w4a16 单卡 358.9→425.4；TP2 +9%）属另一形状 + 另一量化（单卡 N=512），不可移植（CLAUDE §10 同款结论）⇒ 本机默认 tile 已接近最优",
-        "生效判据（日志两行，*_once 级每 worker 只出现一次）：命中用户表 = 'Using configuration from <path>'；回退 = 'Using default MoE config'；判“值不值”只认同 boot ABAB 端到端（±2% 不算差异，σ≈4.6%）——a1 就是靠“日志命中 + 数字变差”两步定性，少任一步会写成“没生效”",
-        "取用逻辑（fused_moe.py:1133 起）：用户目录优先于内置；文件名自算 E=<专家数>,N=<分片后中间维>,device_name=<sanitize(卡名)>.json，本机卡名口径 = AMD_Instinct_MI250X_MI250；bf16 表无后缀、int4 走 int4_w4a16、fp8 走 fp8_w8a8,block_shape=[...] 族",
-        "现役模型缺口：Flash-Next TP8 E=512,N=80（TP4 N=160）、Ornith 系 E=256,N=256/128——vLLM 自带 E=512 表 0 张是 MI250X 的；种子表从 davetha N=128/512 结构按 N=80 粗装配（BLOCK_N 须整除 80 ⇒ 实际用 16，§B 修正过“64/32 也行”的算术错误）",
-        "真要压过默认 tile 的唯一正路 = 自产表：src/mi210-vllm-qwen3next/moe-tuning/ + benchmark_moe.py --tune，约 17 min/档（vllm.conf 注释口径）",
-        "与 QR 别串数据：两者都判负但层面不同——种子表端到端 −3~−4%，QR 在 TP8 尺寸 −0.44%"
-      ],
-      "hard_rules": [
-        "不许把该开关 blanket 进统一层/多臂默认：写回 config/vllm.conf 会被 tools/audit_conf_wiring.py R3 闸口直接拦红（09-13 曾接进统一层 = 让 8107/8109 每次起服默认吃 −3~−4%，已回退，记录 docs/决策落地-D1D3D4D6D7-2026-09-13.md §D3）",
-        "两个“tuned config”不是一套门，别混：VLLM_TUNED_CONFIG_FOLDER 喂 vLLM 自己的 Triton fused-MoE（本配方主题，判负）；a8w8_tuned_gemm.csv 是 AITER CK gemm_a8w8 的查表（只在 wu1w-int8 语境），'not found tuned config' 是正确行为不是警告，不要去“补表”（INT8-GFX90A.md 明说，8114 §6 逐字复现）",
-        "dense 臂（8101/8113/8114/8301/8302/8203，E=0）挂此旋钮无意义，别挂",
-        "删 config/moe-tuned/ 之前：先在目标臂上产出自调表并过同 boot ABAB，再谈接线"
-      ],
-      "id": "vllm-fused-moe-tile-seeds",
-      "kind": "knob",
-      "knob_names": [
-        "VLLM_TUNED_CONFIG_FOLDER（前缀赋值即可，勿在 conf 里 export）"
-      ],
-      "scope": [
-        "8107-qwen38-flash-next-176b-bf16-vllm-tp8",
-        "8109-qwen38-flash-next-176b-bf16-vllm-splitkv",
-        "8111-ornith-1.5-35b-a3b-bf16-vllm-tp4（要接先自测）"
-      ],
-      "settled_values": {
-        "VLLM_TUNED_CONFIG_FOLDER": "默认不接（任何臂都不该在默认路径上设；config/vllm.conf 特意不 export）；想再试就单次前缀赋值 VLLM_TUNED_CONFIG_FOLDER=\"${AI_HOME}/config/moe-tuned\" bash <某launcher>",
-        "config/moe-tuned/ 表本体": "存在、可用、默认不接——davetha 研究的落盘资产 + 闸口 R3 存在的实物锚点，不删；粗装配种子已证明不够格"
-      },
-      "sources": [
-        "config/vllm.conf（“种子表默认不接”注释块，含 09-13 接错又回退的记录）",
-        "docs/davetha-wu1w-gfx90a-落地施工单-2026-09-10.md §B（取用逻辑/命名口径）与 §H（判负数据 a0/a1）",
-        "CLAUDE.md §10（🆕 2026-09-10 落地条：接表 60.8→58.8、289.0→276.4）",
-        "tools/audit_conf_wiring.py（R3 拦 blanket）；config/moe-tuned/（表本体 + make_seed.py + README）"
-      ],
-      "status": "experimental",
-      "title_or_why": "VLLM_TUNED_CONFIG_FOLDER —— fused-MoE tile 种子表：本机判负、默认不接；davetha 的 +18% 种子表移植到 8107 后实测 −3%/−4%，表文件还留在仓库里，接法与判负依据必须随文件走",
-      "verified": "2026-09-15"
-    },
-    {
-      "commands": [
-        "QR=1 bash models/Qwen/launcher/qwen3.8-flash-next_176b_bf16_vllm_rocm724_256k_8107_final_Qwen_mi250dx8.sh   # 8107：会先跑 --require 断言；起不来先读 §4 显存账",
-        "grep -a \"QUICK_REDUCE\" \"$(cat logs/qwen3.8-flash-next-8107.logpath)\"   # 事后核对（只证构造）",
-        "python3 bench/qr_memory_probe.py   # 显存账复算工具（ws=8）"
-      ],
-      "decision_rules": [
-        "收益表（全部带 world size 与口径，别外推，CLAUDE §10、8111 头注、AITER 落地文档 L313）：TP2（稠密 27B）单流 +4.7%/并发 +2.0%；TP4（Ornith）单流 +12.5%/并发4 +24.9%；TP4（Qwen27B）单流 +20.6%；TP8（Flash-Next）−0.44% 判负（trace 计数 120,696 次证明真上场了，端到端就是无收益；出处 docs/MI250X-AITER-cDNA2-吸收落地-2026-09-07.md L313）⇒ QR 只在 TP4 及以下有收益，8107/8109 默认 QR=0 是决定不是遗漏",
-        "显存账（8107 实测，bench/qr_memory_probe.py ws=8）：qr_max_size 默认取 ops.qr_max_size() = 2 GiB ⇒ QuickAllReduce 构造吃 4.00 GiB/die（2 GiB 本地静态 IPC 缓冲 + 对端窗口映射），Flash-Next 有 tp:0 与 ep:0 两个通信组 ⇒ ≈8–9 GiB/die；构造发生在 vLLM 探测可用显存之前 ⇒ util=0.95 启动门直接失败，报 Free memory on device cuda:N (54.94/63.98 GiB)——这 9 GiB 恒定，极易误判成“别的会话在抢卡”；设 MAX_SIZE_BYTES_MB=64 后实测只吃 0.13 GiB/die（可用比例 0.9867，过 0.95 门）",
-        "微基准 vs 端到端：QR 在 TP8 微基准 2.9× → 端到端 −0.44%（graph 会把微基准口径收益吃掉）⇒ 最终判据是端到端 ABAB"
-      ],
-      "hard_rules": [
-        "“三个 env + 一个补丁”才等于开了：必须配 patches/gfx90a/port_p1_c2_c3.py 的 C2（arch 白名单加 gfx90a）+ C3（qr_comm 条件加 or _MI250_QR_WANTED）——gfx90a 上光设 env 历史上从没真上场过（platforms/rocm.py 的 gfx94|gfx95 门 → parallel.py:1057 强制 disable，只打 logger.debug 看不见）",
-        "不要动平台门、不要摘 --disable-custom-all-reduce（那只关 ca_comm；CUSTOM 在 gfx90a 静默算错、输出全 !!!；MI250_ALLOW_CA 只存在于容器补丁，原生 env 0 命中）",
-        "时序红线：C3 的 _MI250_QR_WANTED 是模块级求值 ⇒ 所有 env 必须在 python 进程启动前设好，起服后再改无效",
-        "8107/8109 用 port_p1_c2_c3.py --require 做 fail-closed 准入（不通过 exit 2 拒启），不用 --check——--check 只问“有没有坏”，未打补丁的干净树也算过；没这条断言 QR=1 会静默跑 PYNCCL（8107 全部历史日志恒 Using ['PYNCCL'] 正是这个形状）",
-        "数值口径副作用：w=2 与 NCCL 逐位一致（FP lossless）；w≥4 是浮点求和重排：平均误差与 NCCL 相等（0.231 ULP、优劣对称 19/62/19，非脏数据），但 temp=0 逐 token 输出会变 ⇒ 开 QR 的臂旧基线全部作废、必须成对重跑才可比（CLAUDE §10）",
-        "日志 Using ['QUICK_REDUCE', …] 只证构造、不证上场；上场判据只有 Kineto trace 的 kernel 名或 ABAB 对拍；md5 对拍禁止跨配置判对错",
-        "撤 = QR=0 即回 PYNCCL 基线口径；补丁本身不动（master 树常驻在役，见 patch 配方）"
-      ],
-      "id": "quick-reduce-gfx90a",
-      "kind": "knob",
-      "knob_names": [
-        "QR（launcher 变量 0|1）",
-        "VLLM_ROCM_QUICK_REDUCE_QUANTIZATION",
-        "VLLM_ROCM_QUICK_REDUCE_CAST_BF16_TO_FP16",
-        "VLLM_ROCM_QUICK_REDUCE_MIN_SIZE_BYTES_MB",
-        "VLLM_ROCM_QUICK_REDUCE_MAX_SIZE_BYTES_MB",
-        "QR_QUANT、QR_MAX_MB（8107/8109 子旋钮）"
-      ],
-      "scope": [
-        "8107-qwen38-flash-next-176b-bf16-vllm-tp8",
-        "8109-qwen38-flash-next-176b-bf16-vllm-splitkv",
-        "8101-qwen38-27b-fable-distill-bf16-vllm-tp2",
-        "8111-ornith-1.5-35b-a3b-bf16-vllm-tp4",
-        "8113-qwen38-27b-bf16-vllm-tp2",
-        "8301-qwen38-27b-fable-distill-bf16-vllm-splitkv-ab",
-        "8302-qwen38-27b-fable-distill-bf16-vllm-dflash2",
-        "8203-qwen2.5-1.5b-bf16-vllm-smoke",
-        "8114-qwen38-27b-int8-w8a8-vllm-tp1-dflash12"
-      ],
-      "settled_values": {
-        "8101": "钉死 NONE（09-12 按“维持现状不改行为”写死；要真开：命令级预置 VLLM_ROCM_QUICK_REDUCE_QUANTIZATION=FP bash $0——脚本注释里 QR_QUANT=FP 那行对 8101 无效，本臂没有 QR 门）",
-        "8111/8113/8301/8302": "QR 开（脚本在 source conf 之后直接 export FP/0/0，conf 的 NONE 顶不掉）",
-        "8203/8114": "关（TP1 本无 allreduce 可减，中性；conf 补空 NONE/0/0）",
-        "QR（8107/8109 默认）": "QR=0（默认 PYNCCL = 全部 §9 基线口径）——是决定不是遗漏（TP8 判负）",
-        "VLLM_ROCM_QUICK_REDUCE_CAST_BF16_TO_FP16": "0——默认 True 会改 dtype，污染 temp=0 对拍",
-        "VLLM_ROCM_QUICK_REDUCE_MAX_SIZE_BYTES_MB（QR_MAX_MB）": "64，必须显式设否则 QR=1 根本起不来（§4 显存账）；依据：最大 allreduce = prefill 8192×2560×2B=41.9 MB，decode 只有 5 KB；再小会把 prefill 的 allreduce 挡在 QR 之外",
-        "VLLM_ROCM_QUICK_REDUCE_MIN_SIZE_BYTES_MB": "0（最关键）——默认最小消息门 ≥2 MB，而 decode 的 allreduce 只有 4–10 KB，不设 = QR 从没被调用过",
-        "VLLM_ROCM_QUICK_REDUCE_QUANTIZATION": "FP（C3 触发条件就是它 != NONE；NONE = 显式关，是 config/vllm.conf 的全机默认）"
-      },
-      "sources": [
-        "CLAUDE.md §10（QuickReduce 条、方法论条）、§9 基线口径",
-        "models/Qwen/launcher/…8107_Qwen_mi250dx8.sh L70-112（QR=0|1 门与显存账的原始记录）",
-        "config/vllm.conf（三 env 的“必要条件”注释块 + 默认 NONE 的决定性理由）",
-        "patches/gfx90a/port_p1_c2_c3.py 头注（C2/C3 装什么、故意不装什么）",
-        "docs/MI250X-AITER-cDNA2-吸收落地-2026-09-07.md L313（TP8 −0.44% 判负）",
-        "bench/qr_memory_probe.py（显存账复算工具）"
-      ],
-      "status": "active",
-      "title_or_why": "QR / QuickReduce 三件套（gfx90a 上的 decode allreduce 开关）：vLLM 在 gfx90a 上唯一有效的自研 allreduce 通路，但“设了 env ≠ 上场”——三个 env 缺一不可、必须配 C2/C3 补丁、且只在 TP2/TP4 有收益",
-      "verified": "2026-09-15"
-    },
-    {
-      "commands": [
-        "# 手工档（只用于 deepseek4 长预填/批量灌入；前提：RCCL 前缀，且自己给对 CTX/NGL）：\nenvs/llama.cpp_gfx90a-2026.9.8/qwen4exp-mtp-rccl/bin/…\nSPLIT_MODE=tensor bash models/unsloth/launcher/deepseek-v4-flash-0731_284b_q8kxl_llamacpp_rocm72_1m_8103_unsloth_mi250dx8.sh",
-        "test/tp-sm-tensor/comm_evidence.sh   # 通信上场铁证：RCCL 自报 via P2P/direct pointer"
-      ],
-      "decision_rules": [
-        "A/B（同构建同 boot，llama-bench p512/tg128 r=3，560 W，2026-09-12）：8103 DSV4-Flash（deepseek4）prefill 258.54 → 445.58 t/s = 1.72× ✅、decode 22.19 → 6.73 = 0.30× ❌；8110 Ornith-397B（qwen35moe）prefill 539.81 → 533.47 = 0.99× 持平（±0%）、decode 32.84 → 9.72 = 0.30× ❌ ⇒ tensor ≠ 通用加速，预填红利只有 deepseek4 吃得到",
-        "长上下文红利不衰减反而略增（deepseek4）：pp8192 1.89×、pp32768 1.83×（layer 侧随长度 258→228→194，比值不缩）⇒ 不是“只有短 prompt 才赚”；1M 冷预填按 1.8× 粗估 ~61 min → ~34 min，但 pp32768 之后未测 ⇒ 外推不能当结论，要定档得在 CTX=1048576 实测一点",
-        "机理：tensor 每层每 token 都要 allreduce，而本机 8-rank 环掺 SYS 腿（§3 拓扑修正——“8 die 两两 1 跳 xGMI”旧前提是错的）；layer 模式跨 die 只搬 1 token × hidden 的激活，decode 成本被 HBM 上的权重 GEMV 支配",
-        "arch 门速查（黑名单制，default 放行）：glm5next/qwen4exp 显式禁用；deepseek41 不在名单但本前缀未链 RCCL ⇒ tensor 路无码（现判负不动默认）；deepseek4/qwen35moe/gemma4 放行，只有 deepseek4 有真实收益",
-        "8103 脚本 L80-85：走 tensor 两条前置缺一不可（arch 门放行 + 构建链了 RCCL）；-sm layer 是脚本默认；对照锚点没漂：8103 layer 臂 22.19 对上 CLAUDE §10 记的 22.1",
-        "RCCL 能在 MI250 llama.cpp 上工作：ROCm 7.2.4 的 rccl 重编（-DGGML_HIP_RCCL=ON）即可，ncclCommInitAll 成功、8 rank 环全部 via P2P/direct pointer、零回退；GGML_CUDA_P2P 管的是 layer 那条 cudaMemcpyPeerAsync 走不走 IF 直连，不是 allreduce、不等于开了 RCCL（:608 VMM 授权在本机是死代码，GGML_HIP_NO_VMM=ON）；GGML_HIP_UMD_P2P 在本构建不存在（strings 核实）"
-      ],
-      "hard_rules": [
-        "❌ 不把任何 launcher 默认改成 SPLIT_MODE=tensor：decode −70%（0.30×）、服务端就绪 1′13″→7′05″（×6），交互服务不可接受",
-        "❌ 不在 launcher 里 export GGML_HIP_RCCL 或 LLAMA_SPLIT_MODE——前者是 CMake 编译期、运行时 export 完全无效；后者根本不存在（实测全部 getenv(\"LLAMA_*\") 只有 LLAMA_TRACE/LLAMA_DSV4_COMPRESS_DEBUG/LLAMA_GRAPH_RESULT_DEBUG；SPLIT_MODE 只是本仓 shell 变量）；export = 自欺",
-        "❌ 不在 launcher 里 export GGML_CUDA_ALLREDUCE=nccl：实验参数变生产默认，且未链 RCCL 时 nccl/internal/none 三个名字全塌 butterfly",
-        "❌ 不为 8108（glm5next）/8107（qwen4exp）编 RCCL：llm_arch_supports_sm_tensor() 黑名单显式禁用，加载期就报错，编了也用不到",
-        "❌ 不试 --split-mode row：所有臂死路——device ROCm0 does not support split buffers（本分支无 split.cu ⇒ 不导出 ggml_backend_split_buffer_type，nm -D 命中 0，llama-model.cpp:1114 必抛）；与硬件/xGMI 无关",
-        "❌ 不用 ROCm 7.2.4 之外的 rccl 链 ggml：混代 .so.7 = 红线 2（用 ROCm 10 的 rccl 是错的）",
-        "🛑 通信“上场”只信铁证：RCCL 自报 via P2P/direct pointer（test/tp-sm-tensor/comm_evidence.sh）",
-        "tensor 模式下 --fit off 是必需：common_fit_params: llama_params_fit is not implemented for SPLIT_MODE_TENSOR, abort",
-        "“改一行黑名单就好”已实测证伪（8108 删 case 重编 → GGML_ASSERT(!suffix_fallback.empty())；换成占位则稍后静默崩）：要替 arch 整套命名补“名字→切分轴”表并数值验收 = 一次移植工程，已放弃并还原源码（全记录 §8.0）"
-      ],
-      "id": "llamacpp-tp-rccl-split-mode",
-      "kind": "knob",
-      "knob_names": [
-        "--split-mode（layer|tensor|row；launcher 侧 SPLIT_MODE）",
-        "--tensor-split",
-        "GGML_HIP_RCCL（CMake 编译期开关）",
-        "GGML_CUDA_P2P（运行期 env）",
-        "GGML_CUDA_ALLREDUCE=nccl|internal|none（运行期 env，仅 tensor 模式生效）",
-        "GGML_HIP / GGML_HIP_MMQ_MFMA / GRAPHS / NO_VMM（CMake 编译期）",
-        "OMP_WAIT_POLICY=PASSIVE（运行期）"
-      ],
-      "scope": [
-        "8103-deepseek-v4-flash-0731-284b-q8kxl-llamacpp",
-        "8107-qwen38-flash-next-176b-q4kxl-llamacpp",
-        "8108-glm-5.3-flash-320b-q8-0-llamacpp",
-        "8110-ornith-1.5-397b-q8-0-llamacpp",
-        "8112-deepseek-v4.1-flash-748b-q4km-llamacpp"
-      ],
-      "settled_values": {
-        "GGML_CUDA_P2P": "保留在默认里但不宣称收益：8108 实测 ±0.3%（= 0），只是免费；做对照组时 P2P=0",
-        "SPLIT_MODE=tensor（手工档）": "只用于 deepseek4 长预填/批量灌入，做成第二个 profile 不替换默认；前提 = RCCL 前缀（envs/llama.cpp_gfx90a-2026.9.8/qwen4exp-mtp-rccl）+ 自己给对 CTX/NGL + --fit off 必需",
-        "生产口径": "--split-mode layer + 全量 offload + 红线 5 两开关（--fit off --load-mode dio）+ GGML_CUDA_P2P=1 常开；构建保持 GGML_HIP_RCCL=OFF（现役两个前缀就是它）"
-      },
-      "sources": [
-        "docs/MI250X-llama.cpp-TP-RCCL-本机实测-2026-09-12.md §0（判词）/§1（构建）/§3（拓扑修正）/§4（arch 门）/§5/§5.1/§5.2（A/B）/§7（生产口径+三层次表）/§8（不要做清单）",
-        "CLAUDE.md §10 首条（同结论摘要）",
-        "tools/build_llamacpp_gfx90a_rccl.sh、envs/llama.cpp_gfx90a-2026.9.8/qwen4exp-mtp-rccl",
-        "models/unsloth/launcher/deepseek-v4-flash-0731_284b_q8kxl_llamacpp_rocm72_1m_8103_unsloth_mi250dx8.sh L71-85（SPLIT_MODE/TENSOR_SPLIT 旋钮与其两条前置门注释）",
-        "models/unsloth/launcher/qwen3.8-flash-next_176b_q4kxl_llamacpp_rocm72_mtp_256k_8107_unsloth_mi250dx4.sh L72（arch 黑名单提示）",
-        "git HEAD 的 glm5.3-flash …_8108_base_….sh L93-101（row/tensor 两条死路）"
-      ],
-      "status": "active",
-      "title_or_why": "llama.cpp --split-mode 与 RCCL / P2P —— 生产恒 layer，tensor 只是 deepseek4 的手工预填档：“看到 RCCL 已启用就切 tensor”是本轮被实测推翻的判断（decode 掉到 0.30×、冷启动 ×6，预填红利只有 deepseek4 吃得到）",
-      "verified": "2026-09-15"
-    },
-    {
-      "commands": [
-        "bash tools/ais_stack_check.sh   # 想验证注入链在不在位（不起服务）；六项全绿只证栈、不证你的盘（N20）",
-        "AIS_ENABLE=1 AIS_MODEL_DIR=models/<org>/<小样目录> <离线 LLM() 脚本>   # 真实注册试验",
-        "test/qwen4exp/run_q4e_ais_load.sh   # 离线唯一正解（自检+三件套+开关一体，别手敲 env）"
-      ],
-      "decision_rules": [
-        "7.2.3 有 hipAmdFileRead/Write、7.2.4 声明还在但实现不再导出（官方 deb nm=0）⇒ dlopen 探测失败后静默退回 POSIX——表现是“直读显存也很慢”且没有任何报错（shim 的存在理由）",
-        "别拿来当预期的旧数：手册基线 bounce 0.57 GB/s 是 TP1 单路数；AIS 成功案例（intel P4610）30 GB TP1 = 11.70 s（2.56 GB/s，ZFS 时代）、sm2263 15.57 s（1.93 GB/s）",
-        "PLE_FP8 的账：不设则 Qwen4Exp PLE bf16 驻留 56.06 GiB/die 起不来；设了收敛 97.13 s、1.91 GB/s、累计 9.9×",
-        "加载器账目雷（同族）：权重加载器里任何 list(weights) 都按“本组权重全量字节数”计价——ple_layer.py:407 残留预扫曾多钉 18.6 GiB/die 令 BF16/TP8 反复 OOM 于 shard 2–3/33",
-        "判盘必须带 4K 随机 O_DIRECT 一路（PM9A1 的 mmap hung 案：单流 1 MB 顺序 3.3 GB/s 照样挂，CLAUDE §10.5）",
-        "故障签名速查：5014（serve）→ 回 AIS=0、直读需求改离线；register_buffer failed → 落点盘不支持整块注册，先小样复现；invalid kernel file 死在 pynccl torch.zeros → 不是 QuickAllReduce 坏，是 LD_LIBRARY_PATH 缺 /opt/rocm-7.2.4/lib，用脚本起别裸敲 python；BF16 起来但精度可疑 → Q4E_PLE_FP8=1 残留；[ais.env] ❌ 拒绝注入：未探知权重落点 → AIS_MODEL_DIR 拼错/双重前缀（真实翻车案：拼成 $AI/$MODEL 曾静默放行），给绝对路径或白名单、别无脑 *"
-      ],
-      "hard_rules": [
-        "🛑 serve（api_server）进程树 + AIS 一律不开：同一份权重同一块 intel P4610，离线 LLM() + AIS 正常（94.81/97.13 s）、api_server + AIS 报 cuFileBufRegister error = 5014（136 次，越过 NCCL init、死在第一次 GDS 读）；三块盘交叉证明与盘无关、只属 api_server 进程树（手册 §3.3bis，未解 = N23①）",
-        "🛑 PM9A1 上 register 当场崩：submit_io: register_buffer failed … len=3043078144（gds.py:135，use_buf_register=True + 默认 16 GiB 块 ⇒ 整 shard 一次性注册，无外部旋钮）；且抛 Exception 不是 RuntimeError，绕过 vLLM 的 GDS→nogds 自动回退 = 以崩代降",
-        "AIS_ENABLE=1 才进注入分支、AIS_DISABLE=1 优先级更高；三道门的唯一实现是 config/ais.env：开关 + 落点白名单（fail-closed，探不到落点=拒绝注入）+ 六项自检 tools/ais_stack_check.sh --env 通过才 eval 注入",
-        "shim（src/hipais-shim/，27 行）只走 LD_PRELOAD 且必须 interpose dlsym（hipFile 是句柄作用域查找，只导出符号不拦 dlsym 无效）；绝不装进 /opt/rocm-7.2.4——软链指向本盘解包树会波及所有在用 vLLM（红线 2）",
-        "两个必带开关缺任一都“看起来接了其实没走”：① --load-format fastsafetensors（默认 safetensors 走 mmap 碰不到 AIS）；② 所用 vLLM 已打 nogds 补丁（TP>1 硬门 nogds = pg.size() > 1；0.28 wheel 原生有 weight_utils.py:1057，master 树靠补丁 + VLLM_FST_KEEP_NOGDS=1——只有 envs/vllm_master_rocm724 打过）",
-        "对 BF16 checkpoint 开着 Q4E_PLE_FP8 = 无声把 PLE 量化成 fp8（模型照起、输出照通顺）——补丁已加 dtype 护栏（非 fp8 分片 raise TypeError），跑 BF16 一律显式 VLLM_AIS_PLE_FP8=0",
-        "不要拿 ais_stack_check 六项全绿当“这块盘可用”（N20：它不测真实注册，PM9A1 崩的情况下照样全绿）；唯一判据是日志 Loading weights took 或搜 register_buffer failed",
-        "不要拿 sysfs mem_info_vram_used 当加载进度/OOM 判据（N17：加载中恒 10 MiB）；驻留只认 Model loading took X GiB",
-        "ais.env 有一段与开关无关的无条件逻辑（LD_LIBRARY_PATH 兜 ${ROCM_PATH:-/opt/rocm-7.2.4}/lib）——早期把它绑在 AIS 开关上，一关 AIS 连库路径一起没 ⇒ slim torch 报 invalid kernel file（N13 的马甲，死在 pynccl 的 torch.zeros）",
-        "8301/8302（0.28 wheel）AIS=0 分支 export 的两变量在 wheel 全树 grep=0——注释自陈“保留只为以后，现在没有任何作用，别当护栏”",
-        "别手敲 env：离线唯一正解入口 = test/qwen4exp/run_q4e_ais_load.sh（自检+三件套+开关一体）"
-      ],
-      "id": "ais-hipfile-load",
-      "kind": "knob",
-      "knob_names": [
-        "AIS（launcher 变量）",
-        "AIS_ENABLE（=VLLM_AIS_ENABLE，不带前缀者优先）",
-        "AIS_DISABLE（=VLLM_AIS_DISABLE，优先级更高）",
-        "AIS_DISK_WHITELIST",
-        "AIS_MODEL_DIR",
-        "VLLM_AIS_PLE_FP8（→Q4E_PLE_FP8）",
-        "VLLM_FST_KEEP_NOGDS",
-        "--load-format fastsafetensors"
-      ],
-      "scope": [
-        "8101-qwen38-27b-fable-distill-bf16-vllm-tp2",
-        "8107-qwen38-flash-next-176b-bf16-vllm-tp8",
-        "8109-qwen38-flash-next-176b-bf16-vllm-splitkv",
-        "8113-qwen38-27b-bf16-vllm-tp2",
-        "8111-ornith-1.5-35b-a3b-bf16-vllm-tp4",
-        "8203-qwen2.5-1.5b-bf16-vllm-smoke",
-        "8301-qwen38-27b-fable-distill-bf16-vllm-splitkv-ab",
-        "8302-qwen38-27b-fable-distill-bf16-vllm-dflash2",
-        "离线加载（唯一正解入口 run_q4e_ais_load.sh）"
-      ],
-      "settled_values": {
-        "8107/8109 三连写死": "VLLM_AIS_DISABLE=1 + VLLM_FST_KEEP_NOGDS=1 + VLLM_AIS_PLE_FP8=0（后者注释标注“不可省略”）",
-        "AIS_DISK_WHITELIST": "默认 /mnt/stripe-3mix-3t2 /mnt/kioxia-cm6-3t8（fail-closed，比对 findmnt -T 的挂载点；旁路只认显式 '*'）；注意 kioxia 已换 ext4 空盘（历史数属 ZFS 时代，严格说需复测）、stripe-3mix 上 AIS 从未测过——首开前拿 ≤5 GB 小样验证",
-        "VLLM_AIS_PLE_FP8": "默认 1（ais.env 末行 export Q4E_PLE_FP8=${VLLM_AIS_PLE_FP8:-1}）——Qwen4Exp(185.5 GB) 方案 C 的可用前提：不设 = PLE bf16 驻留 56.06 GiB/die 直接起不来；但跑 BF16 一律显式置 0",
-        "serve 侧 AIS": "一律 AIS=0——8107/8109 把 AIS=1 做成 exit 2 拒启（不是“建议别开”）；8101 默认 0（PM9A1 实测崩），=1 分支只留切换口子（需先把权重搬 P4610）",
-        "serve 侧现役路线（bounce）": "--load-format fastsafetensors + VLLM_AIS_DISABLE=1 + VLLM_FST_KEEP_NOGDS=1 = pread→钉主存→hip memcpy（非 mmap，顺带避开 PM9A1 4K 页错误 hung）；实测 55.6 GB / TP2 = 25.95 s（合计 2.14 GB/s，两 worker 并行读同盘）",
-        "推荐变量名": "不带 VLLM_ 前缀的 AIS_ENABLE——vLLM 会给未知 VLLM_* 打 Unknown vLLM environment variable WARNING（实测 VLLM_AIS_ENABLE 中招）"
-      },
-      "sources": [
-        "CLAUDE.md §10.5（决策摘要全部条）",
-        "config/ais.env（三道门与 fail-closed 逻辑逐行；唯一实现）",
-        "docs/MI250X-hipFile-AIS-部署手册.md（§3.3bis 5014 与盘无关、N13/N17/N20/N23/N25）",
-        "docs/MI250X-CLAUDE-下沉细节-2026-09-06.md §B（N23①/② 两形态原文）",
-        "docs/MI250X-AIS权重加载-2026-09-04.md（实验史）",
-        "models/Qwen/launcher/…8107/…8109.sh L53-68 与 models/TeichAI/launcher/…8101….sh L50-74（serve 侧消费现场）"
-      ],
-      "status": "active",
-      "title_or_why": "AIS / hipFile 权重加载旋钮（AIS、VLLM_AIS_PLE_FP8、nogds）——默认关是决定不是遗漏；serve 侧至今以崩代降（5014 未解），BF16 上还埋着静默量化陷阱（N25）",
-      "verified": "2026-09-15"
-    },
-    {
-      "commands": [
-        "curl -s http://127.0.0.1:<port>/v1/chat/completions -H 'content-type: application/json' -d '{\"model\": \"<served-name>\", \"messages\": [{\"role\":\"user\",\"content\":\"北京天气?\"}], \"tools\": [{\"type\":\"function\",\"function\":{\"name\":\"get_weather\",\"description\":\"查天气\",\"parameters\":{\"type\":\"object\",\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"]}}}]}' | head -c 400   # 工具档回归的最小复现",
-        "bench/se_bench.py --url http://127.0.0.1:<port>/v1   # 完整回归只认这个（17 项里 工具DSML 档专打这条链）"
-      ],
-      "decision_rules": [
-        "为什么带这两个 flag（唯一实测定音，CLAUDE §9 27B TP2 行）：SE-Bench 首跑 16/17、失败项=工具DSML HTTP 400；补 --enable-auto-tool-choice --tool-call-parser qwen3_coder 后 17/17——机制：不带 auto-tool-choice 时 vLLM 直接以 400 拒 tool_choice 请求，不是解析错而是根本不受理",
-        "qwen3_coder 是 Qwen3 系（含 27B/Flash-Next/Ornith-qwen35 家族）工具调用 DSL 的 vLLM 解析器名；换 checkpoint 要重测——同旗标在 8101 蒸馏臂通过说明蒸馏未改工具协议，不代表别的蒸馏可用（8114 干脆不验证这一层）",
-        "--reasoning-parser qwen3 把思考段拆到 reasoning_content、content 保持干净；8111/8113 不带它没出过事（属已知现状，要拆先在评测口径上重跑）",
-        "视觉塔包装 arch（Qwen3_8/3_5ForConditionalGeneration，333 个 visual.* 张量）不带限制旗标会在启动期做视觉塔 profiling，其异步错误拖到下一个 API 调用才爆、表现为 hipErrorInvalidKernelFile（8107 基脚本 L163-165）⇒ 恢复 limit-mm 或 language-model-only 即免疫",
-        "工具调用变成正文里的 <function>… 文本 = 解析器与 checkpoint 协议不匹配（把 qwen3_coder 抄给了不吃这套的模型）⇒ 换臂实测，勿远程推断",
-        "llama.cpp 臂对照：se_bench.py 的 enable_thinking kwarg 对 GLM 是空操作，不改就出假 FAIL（CLAUDE §9 GLM 行）⇒ 测这类模型必须起服侧 --reasoning-budget 0，别改 bench；DSV4.1 定稿 REASONING=on，复述收益走客户端逐请求 thinking:false（+177%，novel 档 geomean 31.0，CLAUDE §10）",
-        "抽查判据：缺 --enable-auto-tool-choice ⇒ 带 tools/tool_choice 的请求即 HTTP 400；旗标齐全时预期 message.tool_calls[0].function.name == get_weather（解析器真的解了，而不是把 DSL 当正文吐出来）"
-      ],
-      "hard_rules": [
-        "全仓 qwen3_xml 出现次数 = 0（models/config/docs/recipes grep 实测）——任务单里“8114 用 qwen3_xml + auto-tool-choice”与脚本实物不符，本表按实物写（分歧已回信列报）",
-        "加/改旗标后必须过 bench/se_bench.py（Phase1 的工具DSML 档就是旗标回归位）；完整回归只认 bench/se_bench.py --url http://127.0.0.1:<port>/v1",
-        "旗标只走 VLLM_EXTRA_ARGS='…' 具名 env 注入，别学位置参数——8107 L174-176 曾把 QR=1 当 $1 吃掉、开关根本没生效，同类事故在解析器上一样会发",
-        "与 served-model-name 的联动：litellm/cc-switch 按别名分流，flag 变了别名没变 ⇒ 消费方只会看到 400/输出形态变化，先小样验再挂流量",
-        "别跨引擎抄：llama.cpp 侧对应物是 --reasoning on/off + REASONING 旋钮（8108/8103/8112）；请求体 chat_template_kwargs 本仓 9 条臂没有一个消费它（未实测）"
-      ],
-      "id": "vllm-tool-call-and-reasoning-parsers",
-      "kind": "knob",
-      "knob_names": [
-        "--enable-auto-tool-choice",
-        "--tool-call-parser（本机只出现 qwen3_coder）",
-        "--reasoning-parser（本机只出现 qwen3）",
-        "--limit-mm-per-prompt",
-        "--language-model-only",
-        "VLLM_EXTRA_ARGS（具名注入通道）",
-        "llama.cpp 对应物：--reasoning on/off、REASONING、--reasoning-budget"
-      ],
-      "scope": [
-        "8101-qwen38-27b-fable-distill-bf16-vllm-tp2",
-        "8107-qwen38-flash-next-176b-bf16-vllm-tp8",
-        "8109-qwen38-flash-next-176b-bf16-vllm-splitkv",
-        "8111-ornith-1.5-35b-a3b-bf16-vllm-tp4",
-        "8113-qwen38-27b-bf16-vllm-tp2",
-        "8114-qwen38-27b-int8-w8a8-vllm-tp1-dflash12",
-        "8203-qwen2.5-1.5b-bf16-vllm-smoke",
-        "8301-qwen38-27b-fable-distill-bf16-vllm-splitkv-ab",
-        "8302-qwen38-27b-fable-distill-bf16-vllm-dflash2"
-      ],
-      "settled_values": {
-        "8107/8109/8101/8301/8302": "三件齐：--enable-auto-tool-choice + --tool-call-parser qwen3_coder + --reasoning-parser qwen3（8101 与 8107 同族旗标、蒸馏底座实测过；8301/8302 继承基脚本）",
-        "8111（两脚本）/8113": "只带 --enable-auto-tool-choice + --tool-call-parser qwen3_coder，故意不带 reasoning-parser（Ornith 输出形态不需要拆/上游模型行为差异，没出过事；要不要补=按该模型评测与 litellm 消费方实测，勿照抄）",
-        "8114": "三件全无——PR#41 忠实复现：配方 docker 命令行里就没有这三件；输出正确性走端到端验收（17*23→391）",
-        "8203": "三件全无（探针，不跑工具）",
-        "多模态旗标": "8107/8109/8101/8301/8302 用 --limit-mm-per-prompt '{\"image\":0,\"video\":0}'（禁多模态输入、保留塔）；8111/8114 用 --language-model-only（干脆不建塔，省显存+免 ViT 路径干扰；8114 头注 L44-45 明说与 limit-mm 达成同一目的、故不再带 limit-mm）"
-      },
-      "sources": [
-        "各 launcher 实物 grep（8101/8107/8109/8111/8113/8114/8203/8301/8302，见 §1 表）",
-        "CLAUDE.md §9（TP2 首跑 16/17=工具DSML HTTP 400 → 补两 flag 后 17/17）",
-        "models/Qwen/launcher/…8107…sh L160-165（limit-mm 与视觉塔 profiling 的因果）",
-        "CLAUDE.md §9 GLM 行（enable_thinking kwarg 空操作 ⇒ 假 FAIL）、§10 DSV4.1 行（REASONING 定稿与 thinking:false +177%）",
-        "models/davetha/launcher/…8114….sh L44-45（--language-model-only 与 --limit-mm-per-prompt 的等价性）"
-      ],
-      "status": "active",
-      "title_or_why": "--tool-call-parser / --reasoning-parser / --enable-auto-tool-choice 的逐臂实情：SE-Bench 的 16/17→17/17 只差这两个 flag，而“哪个臂该带哪个解析器”没有通用答案——同家族模型在 vLLM 与 llama.cpp 两侧、上游与蒸馏 checkpoint 之间协议并不相同，必须逐臂实测",
-      "verified": "2026-09-15"
+     "effect": "unmeasured",
+     "evidence": "data/knobs.json consumed_by 的 note 字段",
+     "value": "8111/8113/8203 是**不接投机**的臂（消费者列表里已注明）⇒ 它们出现在 consumed_by 里不等于适用",
+     "when": {}
     }
-  ],
-  "source": "/home/qiba/ai/docs/recipes/knobs"
+   ],
+   "hard_rules": [
+    "🛑 深度 5–8 是死区：n=5 实测起服即崩（机理 qsa_cache.py:836 断言 416 % capacity == 0，capacity=12 ∤ 416），别试 6/7/8；可行域 n=0 / 1–4 / 9–12 / 29–32",
+    "n=4 起得来但不划算：ring 零余量（span=4+n 须 < capacity=8，n=4 恰好相等）⇒ 单流 −33% 而 Phase2 只 −13%——只看并发会低估 ring 代价；“可行 ≠ 划算”（“n=4 与 n=3 同 capacity=8 是免费一档”的推断被实测推翻）",
+    "硬前置：8107/8109 开 MTP（SPEC>0）绝不设任何 HIP/ROCR/CUDA_VISIBLE_DEVICES（→ 配方 vllm-gpu-visibility-and-mtp）",
+    "8101 的 MTP 坑：n_predict 取顶层 mtp_num_hidden_layers 而该字段只在 text_config（=1）⇒ 顶层 getattr→None，必须显式给 num_speculative_tokens（上游 bug，别依赖 n_predict）",
+    "禁止跨配置 md5 对拍判对错：本仓多臂实测 temp=0 下投机与非投机不逐字同（并列 top1 翻面 + 归约换序级联）⇒ 正确性只认 Phase1 分数 + 抽查",
+    "改深度 = 换配置：同 boot 成对重跑才能进对比表；跨 boot 的 ±2% 不当结论（σ≈4.6%）",
+    "看 'Using …' 构造行会骗人——真上场判据只认 /metrics 计数器"
+   ],
+   "id": "vllm-mtp-spec-depth",
+   "kind": "knob",
+   "knob_names": [
+    "SPEC",
+    "MTP_K",
+    "DFLASH_K",
+    "N_SPEC",
+    "SPEC_TOKENS",
+    "--speculative-config（CLI 落点，num_speculative_tokens）"
+   ],
+   "settled_values": {
+    "N_SPEC（8114）": "12 定稿（dflash，配 \"cudagraph_mode\":\"FULL_DECODE_ONLY\"；脚本 L72 + PR41 复现配方 §5）",
+    "SPEC/DFLASH_K/MTP_K（8101）": "默认 off；dflash = {\"method\":\"dflash\",\"model\":models/z-lab/Qwen3.8-27B-DFlash2,\"num_speculative_tokens\":K}（K 默认 8）；mtp 不给 model、自动用主 checkpoint 的 mtp.*（K 默认 1，必须显式给 num_speculative_tokens）",
+    "SPEC/SPEC_TOKENS（8301/8302）": "8301 默认 0 / SPEC_TOKENS 7；8302 默认 SPEC=1、钉 n=3（dflash，接受长度 2.67、上限 4 ≈ 吃饱）",
+    "SPEC（8107/8109）": "默认 3、定稿 n=3（2026-09-05 同 560 W + batched 8192：Phase2 296.86 tok/s、单流 short 88.6）；SPEC=0 整段不传 flag；落 CLI = --speculative-config {\"method\":\"mtp\",\"num_speculative_tokens\":N}（qwen4_exp 权重自带 31 个 mtp.* 张量）"
+   },
+   "sources": [
+    "CLAUDE.md §9（SPEC 曲线全表）、§10（可行域/死区/ring 机理）",
+    "docs/MI250X-BF16-MTP三件套复核与prefix-cache架空-2026-09-05.md §6/§7/§8",
+    "models/Qwen/launcher/…8107…sh L28-40 与 …_8107_final_….sh L9-25",
+    "models/TeichAI/launcher/…_8101_teichai_mi250dx2_m3.sh L107-167（dflash/mtp 双形态与实测表）",
+    "models/davetha/launcher/…_8114_….sh L72（N_SPEC=12 定稿）+ docs/MI250X-PR41-Qwen38-27B-INT8-dflash-本机复现-2026-09-14.md §5",
+    "models/ornith-ai/launcher/…8111_final….sh L13（“深度最优不可跨模型搬”引 8110）；bench/ornith_mtp_depth_ab.sh 头注"
+   ],
+   "status": "active",
+   "title_or_why": "SPEC —— vLLM 侧投机解码深度旋钮（MTP n / DFlash K，可行域非单调）：深度不是越大越好也不是单调的——曲线在 n=3 见顶、5–8 是起服即崩的死区、“可行≠划算”，且最优深度不可跨模型搬",
+   "verified": "2026-09-15"
+  },
+  {
+   "applies_to": {
+    "preset": "generic-vllm"
+   },
+   "commands": [
+    "VLLM_TUNED_CONFIG_FOLDER=\"${AI_HOME}/config/moe-tuned\" bash <某launcher>   # 单次前缀赋值（自然随环境传给 python 子进程），勿写进 conf",
+    "LOG=\"$(ls -t logs/flash-next/server-8107-*.log | head -1)\"; grep -a \"Using configuration from\" \"$LOG\"   # 命中用户表\ngrep -a \"Using default MoE config\" \"$LOG\"   # 回退内置/默认（未接或未命中该形状）"
+   ],
+   "consumed_by": [
+    "8107-qwen38-flash-next-176b-bf16-vllm-tp8",
+    "8109-qwen38-flash-next-176b-bf16-vllm-splitkv",
+    "8111-ornith-1.5-35b-a3b-bf16-vllm-tp4"
+   ],
+   "consumed_by_note": [
+    "8111-ornith-1.5-35b-a3b-bf16-vllm-tp4：要接先自测"
+   ],
+   "decision_rules": [
+    "判负数据（同底座 A/B，2026-09-10，8107 Flash-Next BF16 TP8、SPEC=3、graph，施工单 §H）：a0 默认无表 = 单流 60.8 t/s / agg@8 289.0；a1 种子表（N16 全桶）= 58.8（−3%）/ 276.4（−4%）；日志确实打出 'Using configuration from …E=512,N=80…json' ⇒ 生效但更慢，不是“没拾取”；cap 未在该表标注——引用时注意与 §9 的 560 W 定稿数不同 boot 不同口径",
+    "davetha 的 +18%（int4_w4a16 单卡 358.9→425.4；TP2 +9%）属另一形状 + 另一量化（单卡 N=512），不可移植（CLAUDE §10 同款结论）⇒ 本机默认 tile 已接近最优",
+    "生效判据（日志两行，*_once 级每 worker 只出现一次）：命中用户表 = 'Using configuration from <path>'；回退 = 'Using default MoE config'；判“值不值”只认同 boot ABAB 端到端（±2% 不算差异，σ≈4.6%）——a1 就是靠“日志命中 + 数字变差”两步定性，少任一步会写成“没生效”",
+    "取用逻辑（fused_moe.py:1133 起）：用户目录优先于内置；文件名自算 E=<专家数>,N=<分片后中间维>,device_name=<sanitize(卡名)>.json，本机卡名口径 = AMD_Instinct_MI250X_MI250；bf16 表无后缀、int4 走 int4_w4a16、fp8 走 fp8_w8a8,block_shape=[...] 族",
+    "现役模型缺口：Flash-Next TP8 E=512,N=80（TP4 N=160）、Ornith 系 E=256,N=256/128——vLLM 自带 E=512 表 0 张是 MI250X 的；种子表从 davetha N=128/512 结构按 N=80 粗装配（BLOCK_N 须整除 80 ⇒ 实际用 16，§B 修正过“64/32 也行”的算术错误）",
+    "真要压过默认 tile 的唯一正路 = 自产表：src/mi210-vllm-qwen3next/moe-tuning/ + benchmark_moe.py --tune，约 17 min/档（vllm.conf 注释口径）",
+    "与 QR 别串数据：两者都判负但层面不同——种子表端到端 −3~−4%，QR 在 TP8 尺寸 −0.44%"
+   ],
+   "effect_by_scope": [
+    {
+     "effect": "unmeasured",
+     "evidence": "docs/recipes/serving/8121-…md §8",
+     "value": "8121 的 pitfalls 第 6 条正是本 knob：目录挂上了但**表名对不上**（现存表带旧构建 device_name，形状还是别的臂的 E=512/N=128）⇒ 别据此说『本臂的表已接上』",
+     "when": {
+      "quant": [
+       "ct-int4-w4a16"
+      ]
+     }
+    },
+    {
+     "effect": "blocked",
+     "evidence": "SKILL.md §MoE 调优表 device_name 陷阱",
+     "value": "`moe_tune_w4a16.py` 的基准夹具与生产形状不一致（uint8 [N,K/2] vs 生产 int32 [N,K/8] + bf16 scale）⇒ **它的胜负数字目前不能用于接线**",
+     "when": {}
+    }
+   ],
+   "hard_rules": [
+    "不许把该开关 blanket 进统一层/多臂默认：写回 config/vllm.conf 会被 tools/audit_conf_wiring.py R3 闸口直接拦红（09-13 曾接进统一层 = 让 8107/8109 每次起服默认吃 −3~−4%，已回退，记录 docs/决策落地-D1D3D4D6D7-2026-09-13.md §D3）",
+    "两个“tuned config”不是一套门，别混：VLLM_TUNED_CONFIG_FOLDER 喂 vLLM 自己的 Triton fused-MoE（本配方主题，判负）；a8w8_tuned_gemm.csv 是 AITER CK gemm_a8w8 的查表（只在 wu1w-int8 语境），'not found tuned config' 是正确行为不是警告，不要去“补表”（INT8-GFX90A.md 明说，8114 §6 逐字复现）",
+    "dense 臂（8101/8113/8114/8301/8302/8203，E=0）挂此旋钮无意义，别挂",
+    "删 config/moe-tuned/ 之前：先在目标臂上产出自调表并过同 boot ABAB，再谈接线"
+   ],
+   "id": "vllm-fused-moe-tile-seeds",
+   "kind": "knob",
+   "knob_names": [
+    "VLLM_TUNED_CONFIG_FOLDER（前缀赋值即可，勿在 conf 里 export）"
+   ],
+   "settled_values": {
+    "VLLM_TUNED_CONFIG_FOLDER": "默认不接（任何臂都不该在默认路径上设；config/vllm.conf 特意不 export）；想再试就单次前缀赋值 VLLM_TUNED_CONFIG_FOLDER=\"${AI_HOME}/config/moe-tuned\" bash <某launcher>",
+    "config/moe-tuned/ 表本体": "存在、可用、默认不接——davetha 研究的落盘资产 + 闸口 R3 存在的实物锚点，不删；粗装配种子已证明不够格"
+   },
+   "sources": [
+    "config/vllm.conf（“种子表默认不接”注释块，含 09-13 接错又回退的记录）",
+    "docs/davetha-wu1w-gfx90a-落地施工单-2026-09-10.md §B（取用逻辑/命名口径）与 §H（判负数据 a0/a1）",
+    "CLAUDE.md §10（🆕 2026-09-10 落地条：接表 60.8→58.8、289.0→276.4）",
+    "tools/audit_conf_wiring.py（R3 拦 blanket）；config/moe-tuned/（表本体 + make_seed.py + README）"
+   ],
+   "status": "experimental",
+   "title_or_why": "VLLM_TUNED_CONFIG_FOLDER —— fused-MoE tile 种子表：本机判负、默认不接；davetha 的 +18% 种子表移植到 8107 后实测 −3%/−4%，表文件还留在仓库里，接法与判负依据必须随文件走",
+   "verified": "2026-09-15"
+  },
+  {
+   "applies_to": {
+    "preset": "generic-vllm"
+   },
+   "commands": [
+    "QR=1 bash models/Qwen/launcher/qwen3.8-flash-next_176b_bf16_vllm_rocm724_256k_8107_final_Qwen_mi250dx8.sh   # 8107：会先跑 --require 断言；起不来先读 §4 显存账",
+    "grep -a \"QUICK_REDUCE\" \"$(cat logs/qwen3.8-flash-next-8107.logpath)\"   # 事后核对（只证构造）",
+    "python3 bench/qr_memory_probe.py   # 显存账复算工具（ws=8）"
+   ],
+   "consumed_by": [
+    "8107-qwen38-flash-next-176b-bf16-vllm-tp8",
+    "8109-qwen38-flash-next-176b-bf16-vllm-splitkv",
+    "8101-qwen38-27b-fable-distill-bf16-vllm-tp2",
+    "8111-ornith-1.5-35b-a3b-bf16-vllm-tp4",
+    "8113-qwen38-27b-bf16-vllm-tp2",
+    "8301-qwen38-27b-fable-distill-bf16-vllm-splitkv-ab",
+    "8302-qwen38-27b-fable-distill-bf16-vllm-dflash2",
+    "8203-qwen2.5-1.5b-bf16-vllm-smoke",
+    "8114-qwen38-27b-int8-w8a8-vllm-tp1-dflash12"
+   ],
+   "decision_rules": [
+    "收益表（全部带 world size 与口径，别外推，CLAUDE §10、8111 头注、AITER 落地文档 L313）：TP2（稠密 27B）单流 +4.7%/并发 +2.0%；TP4（Ornith）单流 +12.5%/并发4 +24.9%；TP4（Qwen27B）单流 +20.6%；TP8（Flash-Next）−0.44% 判负（trace 计数 120,696 次证明真上场了，端到端就是无收益；出处 docs/MI250X-AITER-cDNA2-吸收落地-2026-09-07.md L313）⇒ QR 只在 TP4 及以下有收益，8107/8109 默认 QR=0 是决定不是遗漏",
+    "显存账（8107 实测，bench/qr_memory_probe.py ws=8）：qr_max_size 默认取 ops.qr_max_size() = 2 GiB ⇒ QuickAllReduce 构造吃 4.00 GiB/die（2 GiB 本地静态 IPC 缓冲 + 对端窗口映射），Flash-Next 有 tp:0 与 ep:0 两个通信组 ⇒ ≈8–9 GiB/die；构造发生在 vLLM 探测可用显存之前 ⇒ util=0.95 启动门直接失败，报 Free memory on device cuda:N (54.94/63.98 GiB)——这 9 GiB 恒定，极易误判成“别的会话在抢卡”；设 MAX_SIZE_BYTES_MB=64 后实测只吃 0.13 GiB/die（可用比例 0.9867，过 0.95 门）",
+    "微基准 vs 端到端：QR 在 TP8 微基准 2.9× → 端到端 −0.44%（graph 会把微基准口径收益吃掉）⇒ 最终判据是端到端 ABAB"
+   ],
+   "effect_by_scope": [
+    {
+     "effect": "beneficial",
+     "evidence": "docs/recipes/knobs/quick-reduce-gfx90a.md",
+     "value": "TP8/TP4 bf16 臂的既定点亮项",
+     "when": {
+      "quant": [
+       "bf16"
+      ],
+      "topology": [
+       "tp8",
+       "tp4"
+      ]
+     }
+    },
+    {
+     "effect": "negative",
+     "evidence": "docs/recipes/serving/8121-…md §8/§9",
+     "value": "四个开 QR 的臂全部死在启动显存门（`Free memory 54.9 < desired 0.97`）；~9 GiB/卡 是 `ops.init_custom_qr()` 的固定分配，本模型 KV 预算只有 8.17 GiB ⇒ 算不过账",
+     "when": {
+      "model": [
+       "ZhipuAI/GLM-5.3-CT-Int4-W4A16"
+      ],
+      "quant": [
+       "ct-int4-w4a16"
+      ]
+     }
+    },
+    {
+     "effect": "fatal",
+     "evidence": "hyperloom/reports/models/glm53-int4/qr-c2c3-verdict.md",
+     "quantitative_ceiling": "要开必须 `util ≤ 0.858`，那时 KV 只剩 ~2 GiB/卡（32k 档原本 8.17）⇒ **1M 上下文不可能**。",
+     "rerun": "SKIP_A=1 SKIP_A2=1 bash quark-int8/qr_ab_watch.sh",
+     "value": "三臂实证（2026-09-21）：A（stock 镜像，env 不设）4.38/28.15/74.77 + 召回 6/6；A2（`-qr` 镜像，env 不设）4.18/26.64/73.13 + 6/6，两臂都选 `['PYNCCL']`，A2 对 A 差 −2…−5% **落在 cross-boot 漂移内 ⇒ 单次对拍不能说「中性」**；B（`-qr` 镜像 + 三条 env）env 确实生效（日志 `Custom quick allreduce: min size override = 0 MB`），但 `init_custom_qr` 在显存规划**之前**吃 ~9 GiB/卡 ⇒ `ValueError: Free memory on device cuda:5 (54.9/63.98 GiB) … less than desired (0.97, 62.06 GiB)`，8 worker 全拒启。",
+     "when": {
+      "engine": [
+       "vllm-0.3.1.dev85+gdee37d891"
+      ],
+      "model": [
+       "ZhipuAI/GLM-5.3-CT-Int4-W4A16"
+      ],
+      "quant": [
+       "ct-int4-w4a16"
+      ],
+      "topology": [
+       "tp8"
+      ]
+     }
+    }
+   ],
+   "hard_rules": [
+    "“三个 env + 一个补丁”才等于开了：必须配 patches/gfx90a/port_p1_c2_c3.py 的 C2（arch 白名单加 gfx90a）+ C3（qr_comm 条件加 or _MI250_QR_WANTED）——gfx90a 上光设 env 历史上从没真上场过（platforms/rocm.py 的 gfx94|gfx95 门 → parallel.py:1057 强制 disable，只打 logger.debug 看不见）",
+    "不要动平台门、不要摘 --disable-custom-all-reduce（那只关 ca_comm；CUSTOM 在 gfx90a 静默算错、输出全 !!!；MI250_ALLOW_CA 只存在于容器补丁，原生 env 0 命中）",
+    "时序红线：C3 的 _MI250_QR_WANTED 是模块级求值 ⇒ 所有 env 必须在 python 进程启动前设好，起服后再改无效",
+    "8107/8109 用 port_p1_c2_c3.py --require 做 fail-closed 准入（不通过 exit 2 拒启），不用 --check——--check 只问“有没有坏”，未打补丁的干净树也算过；没这条断言 QR=1 会静默跑 PYNCCL（8107 全部历史日志恒 Using ['PYNCCL'] 正是这个形状）",
+    "数值口径副作用：w=2 与 NCCL 逐位一致（FP lossless）；w≥4 是浮点求和重排：平均误差与 NCCL 相等（0.231 ULP、优劣对称 19/62/19，非脏数据），但 temp=0 逐 token 输出会变 ⇒ 开 QR 的臂旧基线全部作废、必须成对重跑才可比（CLAUDE §10）",
+    "日志 Using ['QUICK_REDUCE', …] 只证构造、不证上场；上场判据只有 Kineto trace 的 kernel 名或 ABAB 对拍；md5 对拍禁止跨配置判对错",
+    "撤 = QR=0 即回 PYNCCL 基线口径；补丁本身不动（master 树常驻在役，见 patch 配方）"
+   ],
+   "id": "quick-reduce-gfx90a",
+   "kind": "knob",
+   "knob_names": [
+    "QR（launcher 变量 0|1）",
+    "VLLM_ROCM_QUICK_REDUCE_QUANTIZATION",
+    "VLLM_ROCM_QUICK_REDUCE_CAST_BF16_TO_FP16",
+    "VLLM_ROCM_QUICK_REDUCE_MIN_SIZE_BYTES_MB",
+    "VLLM_ROCM_QUICK_REDUCE_MAX_SIZE_BYTES_MB",
+    "QR_QUANT、QR_MAX_MB（8107/8109 子旋钮）"
+   ],
+   "settled_values": {
+    "8101": "钉死 NONE（09-12 按“维持现状不改行为”写死；要真开：命令级预置 VLLM_ROCM_QUICK_REDUCE_QUANTIZATION=FP bash $0——脚本注释里 QR_QUANT=FP 那行对 8101 无效，本臂没有 QR 门）",
+    "8111/8113/8301/8302": "QR 开（脚本在 source conf 之后直接 export FP/0/0，conf 的 NONE 顶不掉）",
+    "8203/8114": "关（TP1 本无 allreduce 可减，中性；conf 补空 NONE/0/0）",
+    "QR（8107/8109 默认）": "QR=0（默认 PYNCCL = 全部 §9 基线口径）——是决定不是遗漏（TP8 判负）",
+    "VLLM_ROCM_QUICK_REDUCE_CAST_BF16_TO_FP16": "0——默认 True 会改 dtype，污染 temp=0 对拍",
+    "VLLM_ROCM_QUICK_REDUCE_MAX_SIZE_BYTES_MB（QR_MAX_MB）": "64，必须显式设否则 QR=1 根本起不来（§4 显存账）；依据：最大 allreduce = prefill 8192×2560×2B=41.9 MB，decode 只有 5 KB；再小会把 prefill 的 allreduce 挡在 QR 之外",
+    "VLLM_ROCM_QUICK_REDUCE_MIN_SIZE_BYTES_MB": "0（最关键）——默认最小消息门 ≥2 MB，而 decode 的 allreduce 只有 4–10 KB，不设 = QR 从没被调用过",
+    "VLLM_ROCM_QUICK_REDUCE_QUANTIZATION": "FP（C3 触发条件就是它 != NONE；NONE = 显式关，是 config/vllm.conf 的全机默认）"
+   },
+   "sources": [
+    "CLAUDE.md §10（QuickReduce 条、方法论条）、§9 基线口径",
+    "models/Qwen/launcher/…8107_Qwen_mi250dx8.sh L70-112（QR=0|1 门与显存账的原始记录）",
+    "config/vllm.conf（三 env 的“必要条件”注释块 + 默认 NONE 的决定性理由）",
+    "patches/gfx90a/port_p1_c2_c3.py 头注（C2/C3 装什么、故意不装什么）",
+    "docs/MI250X-AITER-cDNA2-吸收落地-2026-09-07.md L313（TP8 −0.44% 判负）",
+    "bench/qr_memory_probe.py（显存账复算工具）"
+   ],
+   "status": "active",
+   "status_note": "⚠️ 判语已两轮收紧：「装了就可用」(默认假设) → 「数值正确但吃显存」→ **三臂实证：在 KV 预算紧的臂上开了就起不来**。引用本 knob 必须同时给「数值正确性」与「该臂 KV 预算」两把尺子。",
+   "title_or_why": "QR / QuickReduce 三件套（gfx90a 上的 decode allreduce 开关）：vLLM 在 gfx90a 上唯一有效的自研 allreduce 通路，但“设了 env ≠ 上场”——三个 env 缺一不可、必须配 C2/C3 补丁、且只在 TP2/TP4 有收益",
+   "verified": "2026-09-15"
+  },
+  {
+   "applies_to": {
+    "preset": "generic-llamacpp"
+   },
+   "commands": [
+    "# 手工档（只用于 deepseek4 长预填/批量灌入；前提：RCCL 前缀，且自己给对 CTX/NGL）：\nenvs/llama.cpp_gfx90a-2026.9.8/qwen4exp-mtp-rccl/bin/…\nSPLIT_MODE=tensor bash models/unsloth/launcher/deepseek-v4-flash-0731_284b_q8kxl_llamacpp_rocm72_1m_8103_unsloth_mi250dx8.sh",
+    "test/tp-sm-tensor/comm_evidence.sh   # 通信上场铁证：RCCL 自报 via P2P/direct pointer"
+   ],
+   "consumed_by": [
+    "8103-deepseek-v4-flash-0731-284b-q8kxl-llamacpp",
+    "8107-qwen38-flash-next-176b-q4kxl-llamacpp",
+    "8108-glm-5.3-flash-320b-q8-0-llamacpp",
+    "8110-ornith-1.5-397b-q8-0-llamacpp",
+    "8112-deepseek-v4.1-flash-748b-q4km-llamacpp"
+   ],
+   "decision_rules": [
+    "A/B（同构建同 boot，llama-bench p512/tg128 r=3，560 W，2026-09-12）：8103 DSV4-Flash（deepseek4）prefill 258.54 → 445.58 t/s = 1.72× ✅、decode 22.19 → 6.73 = 0.30× ❌；8110 Ornith-397B（qwen35moe）prefill 539.81 → 533.47 = 0.99× 持平（±0%）、decode 32.84 → 9.72 = 0.30× ❌ ⇒ tensor ≠ 通用加速，预填红利只有 deepseek4 吃得到",
+    "长上下文红利不衰减反而略增（deepseek4）：pp8192 1.89×、pp32768 1.83×（layer 侧随长度 258→228→194，比值不缩）⇒ 不是“只有短 prompt 才赚”；1M 冷预填按 1.8× 粗估 ~61 min → ~34 min，但 pp32768 之后未测 ⇒ 外推不能当结论，要定档得在 CTX=1048576 实测一点",
+    "机理：tensor 每层每 token 都要 allreduce，而本机 8-rank 环掺 SYS 腿（§3 拓扑修正——“8 die 两两 1 跳 xGMI”旧前提是错的）；layer 模式跨 die 只搬 1 token × hidden 的激活，decode 成本被 HBM 上的权重 GEMV 支配",
+    "arch 门速查（黑名单制，default 放行）：glm5next/qwen4exp 显式禁用；deepseek41 不在名单但本前缀未链 RCCL ⇒ tensor 路无码（现判负不动默认）；deepseek4/qwen35moe/gemma4 放行，只有 deepseek4 有真实收益",
+    "8103 脚本 L80-85：走 tensor 两条前置缺一不可（arch 门放行 + 构建链了 RCCL）；-sm layer 是脚本默认；对照锚点没漂：8103 layer 臂 22.19 对上 CLAUDE §10 记的 22.1",
+    "RCCL 能在 MI250 llama.cpp 上工作：ROCm 7.2.4 的 rccl 重编（-DGGML_HIP_RCCL=ON）即可，ncclCommInitAll 成功、8 rank 环全部 via P2P/direct pointer、零回退；GGML_CUDA_P2P 管的是 layer 那条 cudaMemcpyPeerAsync 走不走 IF 直连，不是 allreduce、不等于开了 RCCL（:608 VMM 授权在本机是死代码，GGML_HIP_NO_VMM=ON）；GGML_HIP_UMD_P2P 在本构建不存在（strings 核实）"
+   ],
+   "hard_rules": [
+    "❌ 不把任何 launcher 默认改成 SPLIT_MODE=tensor：decode −70%（0.30×）、服务端就绪 1′13″→7′05″（×6），交互服务不可接受",
+    "❌ 不在 launcher 里 export GGML_HIP_RCCL 或 LLAMA_SPLIT_MODE——前者是 CMake 编译期、运行时 export 完全无效；后者根本不存在（实测全部 getenv(\"LLAMA_*\") 只有 LLAMA_TRACE/LLAMA_DSV4_COMPRESS_DEBUG/LLAMA_GRAPH_RESULT_DEBUG；SPLIT_MODE 只是本仓 shell 变量）；export = 自欺",
+    "❌ 不在 launcher 里 export GGML_CUDA_ALLREDUCE=nccl：实验参数变生产默认，且未链 RCCL 时 nccl/internal/none 三个名字全塌 butterfly",
+    "❌ 不为 8108（glm5next）/8107（qwen4exp）编 RCCL：llm_arch_supports_sm_tensor() 黑名单显式禁用，加载期就报错，编了也用不到",
+    "❌ 不试 --split-mode row：所有臂死路——device ROCm0 does not support split buffers（本分支无 split.cu ⇒ 不导出 ggml_backend_split_buffer_type，nm -D 命中 0，llama-model.cpp:1114 必抛）；与硬件/xGMI 无关",
+    "❌ 不用 ROCm 7.2.4 之外的 rccl 链 ggml：混代 .so.7 = 红线 2（用 ROCm 10 的 rccl 是错的）",
+    "🛑 通信“上场”只信铁证：RCCL 自报 via P2P/direct pointer（test/tp-sm-tensor/comm_evidence.sh）",
+    "tensor 模式下 --fit off 是必需：common_fit_params: llama_params_fit is not implemented for SPLIT_MODE_TENSOR, abort",
+    "“改一行黑名单就好”已实测证伪（8108 删 case 重编 → GGML_ASSERT(!suffix_fallback.empty())；换成占位则稍后静默崩）：要替 arch 整套命名补“名字→切分轴”表并数值验收 = 一次移植工程，已放弃并还原源码（全记录 §8.0）"
+   ],
+   "id": "llamacpp-tp-rccl-split-mode",
+   "kind": "knob",
+   "knob_names": [
+    "--split-mode（layer|tensor|row；launcher 侧 SPLIT_MODE）",
+    "--tensor-split",
+    "GGML_HIP_RCCL（CMake 编译期开关）",
+    "GGML_CUDA_P2P（运行期 env）",
+    "GGML_CUDA_ALLREDUCE=nccl|internal|none（运行期 env，仅 tensor 模式生效）",
+    "GGML_HIP / GGML_HIP_MMQ_MFMA / GRAPHS / NO_VMM（CMake 编译期）",
+    "OMP_WAIT_POLICY=PASSIVE（运行期）"
+   ],
+   "settled_values": {
+    "GGML_CUDA_P2P": "保留在默认里但不宣称收益：8108 实测 ±0.3%（= 0），只是免费；做对照组时 P2P=0",
+    "SPLIT_MODE=tensor（手工档）": "只用于 deepseek4 长预填/批量灌入，做成第二个 profile 不替换默认；前提 = RCCL 前缀（envs/llama.cpp_gfx90a-2026.9.8/qwen4exp-mtp-rccl）+ 自己给对 CTX/NGL + --fit off 必需",
+    "生产口径": "--split-mode layer + 全量 offload + 红线 5 两开关（--fit off --load-mode dio）+ GGML_CUDA_P2P=1 常开；构建保持 GGML_HIP_RCCL=OFF（现役两个前缀就是它）"
+   },
+   "sources": [
+    "docs/MI250X-llama.cpp-TP-RCCL-本机实测-2026-09-12.md §0（判词）/§1（构建）/§3（拓扑修正）/§4（arch 门）/§5/§5.1/§5.2（A/B）/§7（生产口径+三层次表）/§8（不要做清单）",
+    "CLAUDE.md §10 首条（同结论摘要）",
+    "tools/build_llamacpp_gfx90a_rccl.sh、envs/llama.cpp_gfx90a-2026.9.8/qwen4exp-mtp-rccl",
+    "models/unsloth/launcher/deepseek-v4-flash-0731_284b_q8kxl_llamacpp_rocm72_1m_8103_unsloth_mi250dx8.sh L71-85（SPLIT_MODE/TENSOR_SPLIT 旋钮与其两条前置门注释）",
+    "models/unsloth/launcher/qwen3.8-flash-next_176b_q4kxl_llamacpp_rocm72_mtp_256k_8107_unsloth_mi250dx4.sh L72（arch 黑名单提示）",
+    "git HEAD 的 glm5.3-flash …_8108_base_….sh L93-101（row/tensor 两条死路）"
+   ],
+   "status": "active",
+   "title_or_why": "llama.cpp --split-mode 与 RCCL / P2P —— 生产恒 layer，tensor 只是 deepseek4 的手工预填档：“看到 RCCL 已启用就切 tensor”是本轮被实测推翻的判断（decode 掉到 0.30×、冷启动 ×6，预填红利只有 deepseek4 吃得到）",
+   "verified": "2026-09-15"
+  },
+  {
+   "applies_to": {
+    "preset": "generic-vllm"
+   },
+   "commands": [
+    "bash tools/ais_stack_check.sh   # 想验证注入链在不在位（不起服务）；六项全绿只证栈、不证你的盘（N20）",
+    "AIS_ENABLE=1 AIS_MODEL_DIR=models/<org>/<小样目录> <离线 LLM() 脚本>   # 真实注册试验",
+    "test/qwen4exp/run_q4e_ais_load.sh   # 离线唯一正解（自检+三件套+开关一体，别手敲 env）"
+   ],
+   "consumed_by": [
+    "8101-qwen38-27b-fable-distill-bf16-vllm-tp2",
+    "8107-qwen38-flash-next-176b-bf16-vllm-tp8",
+    "8109-qwen38-flash-next-176b-bf16-vllm-splitkv",
+    "8113-qwen38-27b-bf16-vllm-tp2",
+    "8111-ornith-1.5-35b-a3b-bf16-vllm-tp4",
+    "8203-qwen2.5-1.5b-bf16-vllm-smoke",
+    "8301-qwen38-27b-fable-distill-bf16-vllm-splitkv-ab",
+    "8302-qwen38-27b-fable-distill-bf16-vllm-dflash2"
+   ],
+   "consumed_by_note": [
+    "非臂条目：离线加载（唯一正解入口 run_q4e_ais_load.sh）"
+   ],
+   "decision_rules": [
+    "7.2.3 有 hipAmdFileRead/Write、7.2.4 声明还在但实现不再导出（官方 deb nm=0）⇒ dlopen 探测失败后静默退回 POSIX——表现是“直读显存也很慢”且没有任何报错（shim 的存在理由）",
+    "别拿来当预期的旧数：手册基线 bounce 0.57 GB/s 是 TP1 单路数；AIS 成功案例（intel P4610）30 GB TP1 = 11.70 s（2.56 GB/s，ZFS 时代）、sm2263 15.57 s（1.93 GB/s）",
+    "PLE_FP8 的账：不设则 Qwen4Exp PLE bf16 驻留 56.06 GiB/die 起不来；设了收敛 97.13 s、1.91 GB/s、累计 9.9×",
+    "加载器账目雷（同族）：权重加载器里任何 list(weights) 都按“本组权重全量字节数”计价——ple_layer.py:407 残留预扫曾多钉 18.6 GiB/die 令 BF16/TP8 反复 OOM 于 shard 2–3/33",
+    "判盘必须带 4K 随机 O_DIRECT 一路（PM9A1 的 mmap hung 案：单流 1 MB 顺序 3.3 GB/s 照样挂，CLAUDE §10.5）",
+    "故障签名速查：5014（serve）→ 回 AIS=0、直读需求改离线；register_buffer failed → 落点盘不支持整块注册，先小样复现；invalid kernel file 死在 pynccl torch.zeros → 不是 QuickAllReduce 坏，是 LD_LIBRARY_PATH 缺 /opt/rocm-7.2.4/lib，用脚本起别裸敲 python；BF16 起来但精度可疑 → Q4E_PLE_FP8=1 残留；[ais.env] ❌ 拒绝注入：未探知权重落点 → AIS_MODEL_DIR 拼错/双重前缀（真实翻车案：拼成 $AI/$MODEL 曾静默放行），给绝对路径或白名单、别无脑 *"
+   ],
+   "hard_rules": [
+    "🛑 serve（api_server）进程树 + AIS 一律不开：同一份权重同一块 intel P4610，离线 LLM() + AIS 正常（94.81/97.13 s）、api_server + AIS 报 cuFileBufRegister error = 5014（136 次，越过 NCCL init、死在第一次 GDS 读）；三块盘交叉证明与盘无关、只属 api_server 进程树（手册 §3.3bis，未解 = N23①）",
+    "🛑 PM9A1 上 register 当场崩：submit_io: register_buffer failed … len=3043078144（gds.py:135，use_buf_register=True + 默认 16 GiB 块 ⇒ 整 shard 一次性注册，无外部旋钮）；且抛 Exception 不是 RuntimeError，绕过 vLLM 的 GDS→nogds 自动回退 = 以崩代降",
+    "AIS_ENABLE=1 才进注入分支、AIS_DISABLE=1 优先级更高；三道门的唯一实现是 config/ais.env：开关 + 落点白名单（fail-closed，探不到落点=拒绝注入）+ 六项自检 tools/ais_stack_check.sh --env 通过才 eval 注入",
+    "shim（src/hipais-shim/，27 行）只走 LD_PRELOAD 且必须 interpose dlsym（hipFile 是句柄作用域查找，只导出符号不拦 dlsym 无效）；绝不装进 /opt/rocm-7.2.4——软链指向本盘解包树会波及所有在用 vLLM（红线 2）",
+    "两个必带开关缺任一都“看起来接了其实没走”：① --load-format fastsafetensors（默认 safetensors 走 mmap 碰不到 AIS）；② 所用 vLLM 已打 nogds 补丁（TP>1 硬门 nogds = pg.size() > 1；0.28 wheel 原生有 weight_utils.py:1057，master 树靠补丁 + VLLM_FST_KEEP_NOGDS=1——只有 envs/vllm_master_rocm724 打过）",
+    "对 BF16 checkpoint 开着 Q4E_PLE_FP8 = 无声把 PLE 量化成 fp8（模型照起、输出照通顺）——补丁已加 dtype 护栏（非 fp8 分片 raise TypeError），跑 BF16 一律显式 VLLM_AIS_PLE_FP8=0",
+    "不要拿 ais_stack_check 六项全绿当“这块盘可用”（N20：它不测真实注册，PM9A1 崩的情况下照样全绿）；唯一判据是日志 Loading weights took 或搜 register_buffer failed",
+    "不要拿 sysfs mem_info_vram_used 当加载进度/OOM 判据（N17：加载中恒 10 MiB）；驻留只认 Model loading took X GiB",
+    "ais.env 有一段与开关无关的无条件逻辑（LD_LIBRARY_PATH 兜 ${ROCM_PATH:-/opt/rocm-7.2.4}/lib）——早期把它绑在 AIS 开关上，一关 AIS 连库路径一起没 ⇒ slim torch 报 invalid kernel file（N13 的马甲，死在 pynccl 的 torch.zeros）",
+    "8301/8302（0.28 wheel）AIS=0 分支 export 的两变量在 wheel 全树 grep=0——注释自陈“保留只为以后，现在没有任何作用，别当护栏”",
+    "别手敲 env：离线唯一正解入口 = test/qwen4exp/run_q4e_ais_load.sh（自检+三件套+开关一体）"
+   ],
+   "id": "ais-hipfile-load",
+   "kind": "knob",
+   "knob_names": [
+    "AIS（launcher 变量）",
+    "AIS_ENABLE（=VLLM_AIS_ENABLE，不带前缀者优先）",
+    "AIS_DISABLE（=VLLM_AIS_DISABLE，优先级更高）",
+    "AIS_DISK_WHITELIST",
+    "AIS_MODEL_DIR",
+    "VLLM_AIS_PLE_FP8（→Q4E_PLE_FP8）",
+    "VLLM_FST_KEEP_NOGDS",
+    "--load-format fastsafetensors"
+   ],
+   "settled_values": {
+    "8107/8109 三连写死": "VLLM_AIS_DISABLE=1 + VLLM_FST_KEEP_NOGDS=1 + VLLM_AIS_PLE_FP8=0（后者注释标注“不可省略”）",
+    "AIS_DISK_WHITELIST": "默认 /mnt/stripe-3mix-3t2 /mnt/kioxia-cm6-3t8（fail-closed，比对 findmnt -T 的挂载点；旁路只认显式 '*'）；注意 kioxia 已换 ext4 空盘（历史数属 ZFS 时代，严格说需复测）、stripe-3mix 上 AIS 从未测过——首开前拿 ≤5 GB 小样验证",
+    "VLLM_AIS_PLE_FP8": "默认 1（ais.env 末行 export Q4E_PLE_FP8=${VLLM_AIS_PLE_FP8:-1}）——Qwen4Exp(185.5 GB) 方案 C 的可用前提：不设 = PLE bf16 驻留 56.06 GiB/die 直接起不来；但跑 BF16 一律显式置 0",
+    "serve 侧 AIS": "一律 AIS=0——8107/8109 把 AIS=1 做成 exit 2 拒启（不是“建议别开”）；8101 默认 0（PM9A1 实测崩），=1 分支只留切换口子（需先把权重搬 P4610）",
+    "serve 侧现役路线（bounce）": "--load-format fastsafetensors + VLLM_AIS_DISABLE=1 + VLLM_FST_KEEP_NOGDS=1 = pread→钉主存→hip memcpy（非 mmap，顺带避开 PM9A1 4K 页错误 hung）；实测 55.6 GB / TP2 = 25.95 s（合计 2.14 GB/s，两 worker 并行读同盘）",
+    "推荐变量名": "不带 VLLM_ 前缀的 AIS_ENABLE——vLLM 会给未知 VLLM_* 打 Unknown vLLM environment variable WARNING（实测 VLLM_AIS_ENABLE 中招）"
+   },
+   "sources": [
+    "CLAUDE.md §10.5（决策摘要全部条）",
+    "config/ais.env（三道门与 fail-closed 逻辑逐行；唯一实现）",
+    "docs/MI250X-hipFile-AIS-部署手册.md（§3.3bis 5014 与盘无关、N13/N17/N20/N23/N25）",
+    "docs/MI250X-CLAUDE-下沉细节-2026-09-06.md §B（N23①/② 两形态原文）",
+    "docs/MI250X-AIS权重加载-2026-09-04.md（实验史）",
+    "models/Qwen/launcher/…8107/…8109.sh L53-68 与 models/TeichAI/launcher/…8101….sh L50-74（serve 侧消费现场）"
+   ],
+   "status": "active",
+   "title_or_why": "AIS / hipFile 权重加载旋钮（AIS、VLLM_AIS_PLE_FP8、nogds）——默认关是决定不是遗漏；serve 侧至今以崩代降（5014 未解），BF16 上还埋着静默量化陷阱（N25）",
+   "verified": "2026-09-15"
+  },
+  {
+   "applies_to": {
+    "preset": "generic-vllm"
+   },
+   "commands": [
+    "curl -s http://127.0.0.1:<port>/v1/chat/completions -H 'content-type: application/json' -d '{\"model\": \"<served-name>\", \"messages\": [{\"role\":\"user\",\"content\":\"北京天气?\"}], \"tools\": [{\"type\":\"function\",\"function\":{\"name\":\"get_weather\",\"description\":\"查天气\",\"parameters\":{\"type\":\"object\",\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"]}}}]}' | head -c 400   # 工具档回归的最小复现",
+    "bench/se_bench.py --url http://127.0.0.1:<port>/v1   # 完整回归只认这个（17 项里 工具DSML 档专打这条链）"
+   ],
+   "consumed_by": [
+    "8101-qwen38-27b-fable-distill-bf16-vllm-tp2",
+    "8107-qwen38-flash-next-176b-bf16-vllm-tp8",
+    "8109-qwen38-flash-next-176b-bf16-vllm-splitkv",
+    "8111-ornith-1.5-35b-a3b-bf16-vllm-tp4",
+    "8113-qwen38-27b-bf16-vllm-tp2",
+    "8114-qwen38-27b-int8-w8a8-vllm-tp1-dflash12",
+    "8203-qwen2.5-1.5b-bf16-vllm-smoke",
+    "8301-qwen38-27b-fable-distill-bf16-vllm-splitkv-ab",
+    "8302-qwen38-27b-fable-distill-bf16-vllm-dflash2"
+   ],
+   "decision_rules": [
+    "为什么带这两个 flag（唯一实测定音，CLAUDE §9 27B TP2 行）：SE-Bench 首跑 16/17、失败项=工具DSML HTTP 400；补 --enable-auto-tool-choice --tool-call-parser qwen3_coder 后 17/17——机制：不带 auto-tool-choice 时 vLLM 直接以 400 拒 tool_choice 请求，不是解析错而是根本不受理",
+    "qwen3_coder 是 Qwen3 系（含 27B/Flash-Next/Ornith-qwen35 家族）工具调用 DSL 的 vLLM 解析器名；换 checkpoint 要重测——同旗标在 8101 蒸馏臂通过说明蒸馏未改工具协议，不代表别的蒸馏可用（8114 干脆不验证这一层）",
+    "--reasoning-parser qwen3 把思考段拆到 reasoning_content、content 保持干净；8111/8113 不带它没出过事（属已知现状，要拆先在评测口径上重跑）",
+    "视觉塔包装 arch（Qwen3_8/3_5ForConditionalGeneration，333 个 visual.* 张量）不带限制旗标会在启动期做视觉塔 profiling，其异步错误拖到下一个 API 调用才爆、表现为 hipErrorInvalidKernelFile（8107 基脚本 L163-165）⇒ 恢复 limit-mm 或 language-model-only 即免疫",
+    "工具调用变成正文里的 <function>… 文本 = 解析器与 checkpoint 协议不匹配（把 qwen3_coder 抄给了不吃这套的模型）⇒ 换臂实测，勿远程推断",
+    "llama.cpp 臂对照：se_bench.py 的 enable_thinking kwarg 对 GLM 是空操作，不改就出假 FAIL（CLAUDE §9 GLM 行）⇒ 测这类模型必须起服侧 --reasoning-budget 0，别改 bench；DSV4.1 定稿 REASONING=on，复述收益走客户端逐请求 thinking:false（+177%，novel 档 geomean 31.0，CLAUDE §10）",
+    "抽查判据：缺 --enable-auto-tool-choice ⇒ 带 tools/tool_choice 的请求即 HTTP 400；旗标齐全时预期 message.tool_calls[0].function.name == get_weather（解析器真的解了，而不是把 DSL 当正文吐出来）"
+   ],
+   "hard_rules": [
+    "全仓 qwen3_xml 出现次数 = 0（models/config/docs/recipes grep 实测）——任务单里“8114 用 qwen3_xml + auto-tool-choice”与脚本实物不符，本表按实物写（分歧已回信列报）",
+    "加/改旗标后必须过 bench/se_bench.py（Phase1 的工具DSML 档就是旗标回归位）；完整回归只认 bench/se_bench.py --url http://127.0.0.1:<port>/v1",
+    "旗标只走 VLLM_EXTRA_ARGS='…' 具名 env 注入，别学位置参数——8107 L174-176 曾把 QR=1 当 $1 吃掉、开关根本没生效，同类事故在解析器上一样会发",
+    "与 served-model-name 的联动：litellm/cc-switch 按别名分流，flag 变了别名没变 ⇒ 消费方只会看到 400/输出形态变化，先小样验再挂流量",
+    "别跨引擎抄：llama.cpp 侧对应物是 --reasoning on/off + REASONING 旋钮（8108/8103/8112）；请求体 chat_template_kwargs 本仓 9 条臂没有一个消费它（未实测）"
+   ],
+   "id": "vllm-tool-call-and-reasoning-parsers",
+   "kind": "knob",
+   "knob_names": [
+    "--enable-auto-tool-choice",
+    "--tool-call-parser（本机只出现 qwen3_coder）",
+    "--reasoning-parser（本机只出现 qwen3）",
+    "--limit-mm-per-prompt",
+    "--language-model-only",
+    "VLLM_EXTRA_ARGS（具名注入通道）",
+    "llama.cpp 对应物：--reasoning on/off、REASONING、--reasoning-budget"
+   ],
+   "settled_values": {
+    "8107/8109/8101/8301/8302": "三件齐：--enable-auto-tool-choice + --tool-call-parser qwen3_coder + --reasoning-parser qwen3（8101 与 8107 同族旗标、蒸馏底座实测过；8301/8302 继承基脚本）",
+    "8111（两脚本）/8113": "只带 --enable-auto-tool-choice + --tool-call-parser qwen3_coder，故意不带 reasoning-parser（Ornith 输出形态不需要拆/上游模型行为差异，没出过事；要不要补=按该模型评测与 litellm 消费方实测，勿照抄）",
+    "8114": "三件全无——PR#41 忠实复现：配方 docker 命令行里就没有这三件；输出正确性走端到端验收（17*23→391）",
+    "8203": "三件全无（探针，不跑工具）",
+    "多模态旗标": "8107/8109/8101/8301/8302 用 --limit-mm-per-prompt '{\"image\":0,\"video\":0}'（禁多模态输入、保留塔）；8111/8114 用 --language-model-only（干脆不建塔，省显存+免 ViT 路径干扰；8114 头注 L44-45 明说与 limit-mm 达成同一目的、故不再带 limit-mm）"
+   },
+   "sources": [
+    "各 launcher 实物 grep（8101/8107/8109/8111/8113/8114/8203/8301/8302，见 §1 表）",
+    "CLAUDE.md §9（TP2 首跑 16/17=工具DSML HTTP 400 → 补两 flag 后 17/17）",
+    "models/Qwen/launcher/…8107…sh L160-165（limit-mm 与视觉塔 profiling 的因果）",
+    "CLAUDE.md §9 GLM 行（enable_thinking kwarg 空操作 ⇒ 假 FAIL）、§10 DSV4.1 行（REASONING 定稿与 thinking:false +177%）",
+    "models/davetha/launcher/…8114….sh L44-45（--language-model-only 与 --limit-mm-per-prompt 的等价性）"
+   ],
+   "status": "active",
+   "title_or_why": "--tool-call-parser / --reasoning-parser / --enable-auto-tool-choice 的逐臂实情：SE-Bench 的 16/17→17/17 只差这两个 flag，而“哪个臂该带哪个解析器”没有通用答案——同家族模型在 vLLM 与 llama.cpp 两侧、上游与蒸馏 checkpoint 之间协议并不相同，必须逐臂实测",
+   "verified": "2026-09-15"
+  },
+  {
+   "applies_to": {
+    "arch": "glm5next",
+    "model": "ZhipuAI/GLM-5.3-Flash-Quark-Int8",
+    "preset": "generic-vllm",
+    "quant": "int8-w8a8",
+    "topology": [
+     "tp8"
+    ]
+   },
+   "commands": [
+    "# 对象：models/ZhipuAI/GLM-5.3-Flash-Quark-Int8（314 G / 331.41 GB，quant_method=quark）\n# 底座：envs/vllm_master_rocm724（editable → src/vllm-master）；端口 8127（实验臂专用）\nexport PYTHONPATH=$AI/patches/gfx90a/aiter_int8_patch   # 站点补丁：注册 vllm.rocm_aiter_w8a8_gemm + 恢复 is_linear_enabled\nexport VLLM_ROCM_USE_AITER=1 VLLM_ROCM_USE_AITER_LINEAR=1\nexport HSA_NO_SCRATCH_RECLAIM=1 HIP_FORCE_DEV_KERNARG=1     # 8114 钉过、我漏抄的两个 env（§3）\nexport PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True\nexport VLLM_CACHE_ROOT=\"$AI/cache/vllm-<臂名>\"              # 编译缓存隔离：否则日志写 AITER 实际仍走 Triton\n# 必须给的 CLI：--kv-cache-dtype bfloat16（不是 bf16）· --block-size 128 · --safetensors-load-strategy eager\n# 必须不给的 env：AITER_CONFIG_GEMM_A8W8（只在 0.28 系用；master 上给了会在权重装完后 build_tune_dict 崩）",
+    "source /home/qiba/ROCm.AI/quark-int8/gpu_gate.sh && gate 8127   # 起服前的门用库里标准件，别手搓 monitor",
+    "kill -TERM -$(cat logs/glm53flash-int8-8127.pid)   # 停服只按把手；⚠️ engine init 失败会留孤儿 VLLM::Worker，pgrep api_server 查不到"
+   ],
+   "decision_rules": [
+    "**三颗地雷（每条都是实跑炸出来的）**：① `--kv-cache-dtype` 取值是 `bfloat16` 不是 `bf16`（合法集 auto/bfloat16/float16/fp8/fp8_ds_mla/…；写 bf16 起服即 argparse 退出）；本档**不能**用 fp8 KV（DSA/QSA 类架构要求 BF16 主 KV）。② `AITER_CONFIG_GEMM_A8W8` 在 **master 上必须不设**——它指向 0.28 构建的 kernelId 清单，master 上会 `RuntimeError: build_tune_dict: tuned CSV references kernels not in the build registry`。③ kpool indexer 有 `block_size` 硬断言（`models/glm5next/nvidia/attention.py:123-150`：`block_size % (index_kpool*32) == 0`，本档 index_kpool=4 ⇒ 必须 128 的倍数）⇒ `--block-size 128`。",
+    "**cudagraph 档：这个 arch 只能退而求其次**。默认 FULL_AND_PIECEWISE 报 `piecewise CUDA graphs … unavailable, model is not torch-compiled`（`models/glm5next/nvidia/model.py` 无 `support_torch_compile`）；只加 `VLLM_USE_BREAKABLE_CUDAGRAPH=1` 能起但**第一个请求硬 segfault**（栈在 `at::native::gpu_index_kernel`，紧跟 GDN/KDA 两个 Triton JIT）；再加 `--enforce-eager` ✅ 不崩。**未试**：`--compilation-config '{\"cudagraph_mode\":\"FULL_DECODE_ONLY\"}'`（8114 用的正是这一档，不依赖 torch.compile，是替代 --enforce-eager 的首选下一步）。",
+    "**AITER int8 线性核的门只有两道，且只需 PYTHONPATH**：`kernels/linear/scaled_mm/aiter.py:43-44` 那道『cap<90 拒』的门在 gfx90a **是过的**（本机 `get_device_capability()` 实测 `DeviceCapability(9,0)` ⇒ `has_device_capability(90)=True`），锚点在 master 也还在（`_aiter_ops.py:644/661/1749/1751`）⇒ **不必移植 wu1w 补丁**。",
+    "**MoE int8 后端只有 TRITON**：`Using TRITON Int8 MoE backend out of potential backends: ['TRITON','HUMMING','CPU']`（AITER MoE 在 gfx90a 终案不可用）。**稀疏 MLA 后端本平台仅一个候选**：`Using ROCM_AITER_MLA_SPARSE backend out of potential backends: ['ROCM_AITER_MLA_SPARSE']`（`platforms/rocm.py:712`）；09-20 交接 §2.3 说 gfx90a 正解是 ragged Triton ⇒ 要换路得改平台候选。",
+    "**一臂一杠杆（库规）**：收益数字必须同 boot、同底座、同请求集才可比；跨 boot σ≈4.6%，<±2% 不成立。"
+   ],
+   "effect_by_scope": [
+    {
+     "effect": "negative",
+     "evidence": "docs/recipes/knobs/glm5next-quark-int8-launch-set.md §5",
+     "value": "能起、能装载、能分配 KV（1,099,878 tokens），但**前向数值不确定**：同 prompt 连打 3 次 NLL 8.83/8.66/9.72，贪心两次不逐字一致 ⇒ 不是可交付臂",
+     "when": {
+      "arch": [
+       "glm5next"
+      ],
+      "engine": [
+       "vllm-0.3.1.dev85+gdee37d891",
+       "vllm-master@8a728663c"
+      ],
+      "quant": [
+       "int8-w8a8"
+      ]
+     }
+    }
+   ],
+   "hard_rules": [
+    "⚠️ **本配方当前 status=experimental，不是可交付臂**：能起、能装载、能分配 KV（`GPU KV cache size: 1,099,878 tokens` @262144/0.95），但**前向数值不确定**。",
+    "⚠️ 停服：engine 初始化失败会留**孤儿 `VLLM::Worker`（实测 8×40 GiB）**，`pgrep api_server` 查不到它们 ⇒ 要按**日志里的显式 Worker PID** 清。认领 PID 时必须用『cmdline 以解释器路径**开头**』，否则 `bash -c` 包装进程会自命中。",
+    "⚠️ `patches/vllm-dsa-gfx90a/patch_sparse_indexer_gfx9.py` **只覆盖非 kpool 文件**，`layers/sparse_attn_indexer_kpool.py:1062` 的原 raise 仍在。"
+   ],
+   "id": "glm5next-quark-int8-launch-set",
+   "kind": "knob",
+   "knob_names": [
+    "--kv-cache-dtype",
+    "AITER_CONFIG_GEMM_A8W8",
+    "--block-size",
+    "VLLM_USE_BREAKABLE_CUDAGRAPH",
+    "--compilation-config cudagraph_mode",
+    "--enforce-eager",
+    "PYTHONPATH=aiter_int8_patch",
+    "VLLM_ROCM_USE_AITER",
+    "VLLM_ROCM_USE_AITER_LINEAR",
+    "HSA_NO_SCRATCH_RECLAIM",
+    "HIP_FORCE_DEV_KERNARG",
+    "PYTORCH_CUDA_ALLOC_CONF",
+    "VLLM_CACHE_ROOT",
+    "--safetensors-load-strategy",
+    "--language-model-only"
+   ],
+   "settled_values": [
+    "`--kv-cache-dtype bfloat16`（**不是** bf16；本档不能用 fp8 KV）",
+    "`AITER_CONFIG_GEMM_A8W8` **不设**（master 上设了必崩；只在 0.28 系 8117/8114 用）",
+    "`--block-size 128`（kpool indexer 硬断言；index_kpool 改了要同步改）",
+    "`--safetensors-load-strategy eager` **必给**（8114 配方：去掉后在 `Loading safetensors checkpoint shards 0/2` **静默死亡**）",
+    "`--enforce-eager`（当前唯一能过第一个请求的档；`FULL_DECODE_ONLY` 未试）",
+    "装载耗时 354 s / 38.21 GiB per die（CK JIT 已缓存 + page cache 命中；冷 JIT 那轮 722 s）",
+    "KV 池 `GPU KV cache size: 1,099,878 tokens` @`--max-model-len 262144 --gpu-memory-utilization 0.95`（12.8 GB/rank ⇒ 11.6 KiB/token）"
+   ],
+   "sources": [
+    "docs/recipes/knobs/glm5next-quark-int8-launch-set.md（配方本体）",
+    "docs/GLM-5.3-Flash-Quark-INT8-施工单-2026-09-21.md §10.6/§10.7/§10.8/§11/§12",
+    "logs/glm53flash-int8/server-8127-20260921-{0551,0554,0609,0851,0904,0932}.log",
+    "models/davetha/launcher/qwen3.8_27b_int8_abliterated_vllm_rocm72_128k_8114_dflash12_davetha_mi250x_0.sh L82-90 / L105",
+    "docs/GLM-5.3-交接-2026-09-20.md §2.2/§2.3"
+   ],
+   "status": "experimental",
+   "status_note": "**能起、能装载、能分配 KV，但前向数值不确定**（同 prompt 连打 3 次 NLL 8.83/8.66/9.72，贪心两次不逐字一致）⇒ 不是可交付臂。已排除：int8 数据本身、两个不同实现的 int8 线性核、NaN、CUDA graph。剩三个嫌疑：① TRITON int8 fused MoE ② `ROCM_AITER_MLA_SPARSE` 在 gfx90a 上不可信 ③ kpool indexer 走 `forward_cuda` 的 torch 回退。",
+   "title_or_why": "`glm5_next`（GLM-5.3-Flash）在 vLLM master 上跑 Quark INT8 的启动开关组 —— 三颗地雷 + 一个未解的数值不确定 · 这条链从零试起烧掉 4 轮起服（每轮 ~10 min）才摸清『哪个开关必须给、哪个必须不给』；而库里 8114（现役 int8 臂）早有两个漏抄的 ROCm env，正对着『同输入不同输出』的症状。登记以免下任重烧。",
+   "verified": "2026-09-21"
+  },
+  {
+   "applies_to": {
+    "preset": "generic-vllm",
+    "tier": "T0"
+   },
+   "commands": [
+    "python3 /home/qiba/ROCm.AI/quark-int8/prefix_disambig.py   # 三 boot 配对；只用耗时判据\npython3 /home/qiba/ROCm.AI/quark-int8/qwen38_agent_probe.py  # singlestream / multiturn / consistency3\npython3 /home/qiba/ROCm.AI/quark-int8/step_probe.py          # steps=Δdraft/SPEC、tok/step=1+接受、step_ms=wall/steps"
+   ],
+   "consumed_by": [
+    "8107-qwen38-flash-next-176b-bf16-vllm-tp8",
+    "8109-qwen38-flash-next-176b-bf16-vllm-splitkv"
+   ],
+   "consumed_by_note": "markdown 的 `scope:` 是溯源，`applies_to` 才是适用判定。**本条是测量方法**（轴上收得宽），故 tier 记 T0。",
+   "decision_rules": [
+    "**六条硬规矩**：① 固定 prompt + **丢弃首个** + 中位数（n≥5），离群点要单独解释来源，不许混进中位数了事；② **必须同形状预热**——冷 boot 后前若干请求会撞 `Triton kernel JIT compilation during inference`（`_qsa_sparse_paged_gqa_splitk_kernel` / `_rejection_kernel` / `_resample_kernel` / `_compute_local_logits_stats_kernel`），**短请求（\"Say OK.\"）覆盖不到这些内核**；实测后果：12.64 t/s（≈30 s/请求）的离群点，spread 从 **1.1% 拉到 87%**；③ **报数带 acceptance + step ms**；④ 核他会话负载，不只看显存；⑤ 跨 boot 不可比（σ≈4.6%，同一 boot 内的 A/B 才可信，三 boot 配对是底线）；⑥ **正确性容差要建在引擎先天抖动上**。",
+    "★ **29% 的 TPS 差可以全部来自 MTP 接受率**：同一臂两条 workload 的 step 几乎相同（**38.9–40.2 ms**），但接受率 89.9% vs 61.2% ⇒ **只报 t/s 会把接受率变化读成内核变快**。",
+    "★ **同稳态请求 token 逐位相同，但 `|Δlogprob|` 可达 0.11**（MoE/QSA 归约次序）⇒ **用 ≤0.01 的容差判\"复用改变了输出\"必然误判**。",
+    "**前缀复用的判据只能用耗时**：新 prompt vs 重复 prompt 的预填充时间（本机 6.7k tok 实测：**新 2.51 s / 整段命中 0.45 s / 部分命中 1.59 s**）。⚠️ `vllm:prefix_cache_hits_total` 与引擎周期行 `Prefix cache hit rate: X%` 在本版**不区分内容**（全新 prompt 也报 ~90%）⇒ **不能当判据**。",
+    "**探针两个坑**：① 标签要**每次运行唯一**且写进**每一行**，只放开头会命中共享正文而得假阳性；② 真冷基准的 **salt 必须放最前**（放末尾会让『冷』那一次其实命中旧 prompt 的块）。"
+   ],
+   "hard_rules": [
+    "🛑 **未解决缺口（别当成已修）**：重复 prompt 的\"命中\"计数在本底座上**恒 0**，而耗时显示复用确实发生 ⇒ 计数口径与实现不一致，**以耗时为准**；多轮块对齐上限（期望 0/400/800/1200）**从未达标过**。"
+   ],
+   "id": "vllm-prefix-reuse-measurement",
+   "kind": "knob",
+   "knob_names": [
+    "（报数协议，无 env；属于测量方法）"
+   ],
+   "settled_values": [
+    "预热必须**同形状**：短请求覆盖不到 QSA/split-K/rejection 那几个 Triton 内核",
+    "报数三件套：`t/s` + `acceptance` + `step ms`，缺一项就不许下结论",
+    "正确性容差下限：`|Δlogprob| ≤ 0.11`（不是 0.01）",
+    "复用判据：只用 prefill 耗时（2.51 / 1.59 / 0.45 s 三档），不用 hits 计数器"
+   ],
+   "sources": [
+    "docs/recipes/knobs/vllm-prefix-reuse-measurement.md（配方本体）",
+    "quark-int8/prefix_disambig.py（三 boot 配对；耗时判据）",
+    "quark-int8/qwen38_agent_probe.py、quark-int8/step_probe.py",
+    "bench/ledger.jsonl L45–L48"
+   ],
+   "status": "active",
+   "title_or_why": "前缀复用与 TPS 的报数协议（耗时判据、同形状预热、他会话负载）—— MI250X 上最容易记错账的地方 · 本机关于「复用有没有生效」「TPS 涨没涨」的错结论全部出在口径上：命中计数器不区分内容、冷 boot 的 Triton JIT 尖峰伪装成「配置变慢」、并行会话的 CPU/内存争用伪装成「内核退化」。",
+   "verified": "2026-09-21"
+  }
+ ],
+ "scope_spec": "data/scope.json",
+ "source": "/home/qiba/ai/docs/recipes/knobs"
 }

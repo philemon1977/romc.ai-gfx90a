@@ -112,8 +112,10 @@ SKILL.md 是常驻的索引与 T0 层；下列细节**按需加载**：
 | `references/00-T0-host.md` | 主机层全文（含起服门、单臂探针、测量方法） | 起服/测量/判死之前 |
 | `references/10-version-matrix.md` | 版本层（aiter JIT 复用、官方技能仲裁、DCP/fp8KV、补丁队列、镜像坑） | 换引擎/ROCm/torch，或跨版本搬结论 |
 | `references/20-model-quant-matrix.md` | 模型×量化（GLM-5.3 自转 int4、Ornith 四线转换规程） | 碰自转权重或换量化 |
-| `references/40-knobs-and-patches.md` | 自研 kernel、稀疏 split-K 开关、roofline 口径 | 调性能杠杆 |
-| `references/50-dead-routes.md` | 死路与负结论（DSV4.1 线为骨干） | **动手前必读**，防止重做 |
+| `references/30-arms-detail.md` | **逐臂 T3 细节**（同一臂不同时点的数字口径、3 份实体分叉、日志侧车、互斥实况） | 搬某臂的经验到别处之前 |
+| `references/40-knobs-and-patches.md` | 自研 kernel（MoE GEMV / 稀疏 split-K）、roofline 口径、**护栏全谱与桩干跑**、`block_size` 才是真锁 | 调性能杠杆 |
+| `references/50-dead-routes.md` | 死路总表（含 2026-09-21 新增 17 条判负路线与"别搬"清单） | **动手前必读**，防止重做 |
+| `references/60-method-measurement-gates.md` | **测量有效性、判据设计、闸口自身缺陷、跨模型外推禁令、制度八条** | 设计任何实验/判据之前 |
 | `data/scope.json` | 九轴词表 + 分层规范 + **8 条已知混淆点** | 任何"这版本到底是多少"的疑问 |
 | `data/*.json` | 逐条目的 `applies_to` / `effect_by_scope` / 实测数字 | 用 `scope_match.py` 或直接查 |
 
@@ -134,10 +136,12 @@ SKILL.md 是常驻的索引与 T0 层；下列细节**按需加载**：
   ⚠️ `uname -r` 给 6.8.0-139，`/sys/module/amdgpu/version` 给 6.16.13，**两者不等是正常的**
   （DKMS 回移，vermagic 仍是 6.8.0-139）。别把 6.16.13 当内核版本。
 - 固件包 `amdgpu-dkms-firmware 30.30.4.0.30300400`。
+- ⚠️ **`card0` 是 BMC 显卡（无 `mem_info_vram_total`）**，8 个 die 是 **card1–card8**，且 **HIP index `i` → `card{i+1}`** ⇒ 拿 `card{0..7}` 循环会读到一个不存在的 die、同时漏掉一个真 die。
 - 功率：`560 W/module`，`/etc/amdgpu-powercap.conf`（`POWER_CAP_UW=560000000`）。
   **跨 run 比较前必须先对齐 cap**，报告数字必须带 cap 口径。
-- 显存读数单位是 **bytes**：
+- 显存读数单位是 **bytes**（`rocm-smi` 输出的才是 MiB）：
   `paste <(seq 1 8) <(for c in /sys/class/drm/card{1..8}; do cat $c/device/mem_info_vram_used; done)` — 空闲 ≈ 1.0e7
+  ⚠️ **按 MiB 文本解析 `mem_info_vram_used` 会恒得 0** ⇒ "等显存释放"变成空转；且 **sysfs 快照不是驻留/进度的判据**（缓冲一次性 alloc，瞬间跳满后拷贝期读数不动；09-04 见过加载中 8 die 全读 10 MiB 而 worker 自报 13.08 GiB）⇒ 判驻留/OOM 只认 vLLM 自报的 `Model loading took X GiB memory`。**进程消失 ≠ 显存释放**（实测 kill 完还留 40+ GiB）。详见 `references/00-T0-host.md` 附录。
 
 ### 1.2 安全红线（每条都有真实事故）
 
@@ -150,6 +154,10 @@ SKILL.md 是常驻的索引与 T0 层；下列细节**按需加载**：
   本机实录两类事故：① `pkill -f` 命中自己这条命令行（把当次调用杀掉 3 次）；
   ② `pgrep -x llama-server` 同时命中探针与生产实例，**误杀 8108**。
   ⚠️ 例外：`8121` 的 PID 文件里存的是**容器 ID** ⇒ 该臂只能 `docker rm -f $(cat …)`。
+  ⚠️ **`kill -TERM -<pgid>` 不是无条件安全的**：`nohup` 起的 server 若**继承了调用方的 PGID**，组杀会**连坐自己的 shell**（8110 实踩过；`kill -KILL -$pid` 已两次打死自己的 shell）。**只有确认 server 的 PGID 独立（`setsid` / 终端手起）才组杀，否则只杀该 PID**；手工起服一律 `setsid`。
+  🛑 **`VLLM::Worker_TP<n>` 不在 PID 文件里且新老同名** ⇒ 杀任何 worker 前先核父进程链（`ps -o pid,ppid,lstart,args -p <pid>`）；**父进程是活的 EngineCore 就一律不动**（09-21 实录：曾把别人 2 分钟前刚起的生产 worker 当残留）。
+  🛑 会话起的服务**在 `dsh-web.service` 的 cgroup 里**（`setsid` 不改 cgroup）⇒ 已加 drop-in **`no-kill-descendants.conf`（`KillMode=process`），别撤**。
+  完整边界见 `references/00-T0-host.md` 附录。
 - 🛑 **不碰 `/opt/rocm` 的 alternatives**。宿主 `/opt/rocm-7.2.4` 是**软链指向本盘解包树**
   （非 apt 完整安装）——**apt 会透过软链覆盖解包树，直接打挂正在跑的 `vllm_0.28.0_rocm72`**。
 - 🛑 **`HIP_VISIBLE_DEVICES` 会泄进 ROCR 掩码子环境**，导致 `import vllm` 直接抛。
@@ -160,6 +168,8 @@ SKILL.md 是常驻的索引与 T0 层；下列细节**按需加载**：
 ### 1.3 Step 0：起任何东西之前
 
 1. 哪些 die 被占（§1.1 的显存命令）。
+   ⚠️ **「八张 GCD 各 <5 GiB」是"没有别人在跑"的判据，不是"能不能起"的判据**：vLLM 按 `--gpu-memory-utilization` **一次性预分配**——实测一个 TP8 服务在**权重才加载到 29%** 时 8 张 die 已各占 **52/64 GiB**。
+   ⇒ 卡上躺着 52 GiB **不代表它已就绪、更不代表可以被顶替**；误读这条会**把自己的服务起在别人正在加载的服务旁边**。
 2. 谁握着 kfd：`sudo -n fuser -v /dev/kfd 2>/dev/null || fuser -v /dev/kfd`。
 3. 目标端口与它的 PID 文件：`cat logs/*-$P.pid 2>/dev/null`；**永不假设端口空闲**：
    `nc -z 127.0.0.1 $P; ss -ltnp | grep ":$P "`。
@@ -349,6 +359,15 @@ SKILL 第四轮记 **68.83 t/s**（MTP(5)@256K）。**未对齐口径前不得�
   **两条候选的受益场景都不是单流 decode**。
 - ⇒ 结论应改为：**int4 自建内核未判死，卡在三处工程；但两条候选都不指向单流 decode 收益。**
 
+### 更正 3 —— 「`port_qwen4exp_eagle_annotate.py` 让 prefix-cache 复用从 0 变 87%」
+
+- ~~原判词~~（09-18）：补丁使命中 `0 → 3200/3686 = 87%`、多轮 TTFT `1.43–1.86 → 0.28–0.71 s`⇒ 于是**把默认打开并写进 launcher**（护栏⑤）。
+- **实际**（09-21 **三 boot 配对**复测）：四项测量（同 prompt 顺序、P/Q 交替、多轮 TTFT、"命中"计数）**全部一致** ⇒ 该补丁对吞吐**中性**，只把启动日志里 **9 行警告**变成 0 行。
+- 🔑 **上游默认本来就有跨请求复用**：同 prompt 连发，**第 3 次起整段跳过预填充**（2.51 s → 0.45 s）。那 9 行说的是"组被当成草稿组"，**不等于"复用为 0"**。
+- **最可能的误因**：把**冷 boot 首个请求撞 Triton JIT** 当成了"没补丁就慢"——同一个坑在 09-18 另有 12.64 t/s 离群点记录（见 `references/60-…` §8 第 2 条）。
+- 留痕：`docs/recipes/patches/qwen4exp-mtp-prefix-reuse.md` §3、`bench/ledger.jsonl` L48（L48 明确撤回 L44）。
+- **可迁移的判语：警告消失 ≠ 行为改变。** 判"补丁生效"必须找一条**与警告无关**的独立尺子（这里是 prefill 耗时），并按配对 protocol 复测。
+
 ---
 
 ## 6. 死路（负结论也是资产）
@@ -361,7 +380,8 @@ SKILL 第四轮记 **68.83 t/s**（MTP(5)@256K）。**未对齐口径前不得�
 - AITER 的 MoE 路径与 MLA/CK decode 是 gfx942/950 专属；ROCm 10 上 AITER 仍翻不动。
   ⚠️ 但要把「AITER 不可用」**收窄到 MoE 通路**——`sparse_attn_indexer_kpool.py:1034/1062`
   的门**不是硬件门**。
-- vLLM TP8 QuickReduce 默认值、27B BF16 MTP 三件套上的 prefix-cache 假设 —— 各见 knobs。
+- **QuickReduce C2+C3：开了就起不来**（2026-09-21 三臂实证，推翻"装了就可用"的默认假设）。A（stock 镜像）4.38/28.15/74.77 + 召回 6/6；A2（`-qr` 镜像、env 不设）4.18/26.64/73.13 + 6/6，两臂都选 `['PYNCCL']`，差 −2…−5% **落在跨 boot 漂移内 ⇒ 单次对拍不能说"中性"**；B（`-qr` + 三条 env）env 确实生效（`Custom quick allreduce: min size override = 0 MB`），但 `init_custom_qr` 在显存规划**之前**吃 **~9 GiB/卡** ⇒ `ValueError: Free memory on device cuda:5 (54.9/63.98 GiB) … less than desired (0.97, 62.06 GiB)`，8 worker 全拒启。要开必须 `util ≤ 0.858`，那时 KV 只剩 **~2 GiB/卡**（32k 档原本 8.17）⇒ **1M 上下文不可能**。全量证据 `hyperloom/reports/models/glm53-int4/qr-c2c3-verdict.md`。
+- 27B BF16 MTP 三件套上的 prefix-cache 假设 —— 见 knobs。
 - **engram 表进主机 RAM = 死路**（三段证据）；`DSV41_ENG_HOST_PREALLOC=1` 可行但不划算。
 - **`case 256` head_dim 内核**：快 39× 但**算错 = NO-GO**；且**真锁是 `block_size` 不是 head_dim**
   （`rocm_attn.py:179-183` 只支持 16/32 + `_align_hybrid_block_size()` 把混合模型抬到 400/528）。
@@ -403,12 +423,20 @@ SKILL 第四轮记 **68.83 t/s**（MTP(5)@256K）。**未对齐口径前不得�
 `glm53-flash-quark-int8-convert`、`vllm-fused-moe-tile-seeds`）是**手工补进 JSON** 的。
 改了配方别以为技能数据会自动更新。
 
+🔑 **同一文件被两个会话同时整段重写就会静默丢内容**（2026-09-21 实录）：`f8954bd`/`af1494e` 曾把"第三轮沉淀"写进本文件，随后并行会话的"第四轮"整段重写**把它删了**——判据是 `git show HEAD:SKILL.md | grep -c MI250_MOE_GEMV` **得 0**。⇒ 三条纪律：① **改完立刻 `git commit` + `grep` 复检**；② **长内容放报告，本文件只留结论 + 指针**（本报告就是按这条把细节放进 `hyperloom/reports/mi250x-skill-scope-audit-2026-09-21.md`）；③ 提交前先 `git status` 看**全量**输出——本轮就因 `| head -3` 截断而误判"无既存改动"，`git checkout` 打回了别人未提交的 09-21 更正（已还原）。
+
+**`applies_to` 已在两个方向都落到位**（2026-09-21）：21 条 knob/patch 的权威 markdown 已回写
+`applies_to`，`recipes/TEMPLATE.md` 也加了该段与**写法警告**——mini-YAML 解析器既不认嵌套 map
+也不认独立 `#` 注释行（实测：嵌套 map 被折行嚼成垃圾串；注释行被吞进上一个键的最后一个值）。
+**只有 `- 轴=值` 列表是安全的**。回写后 `--dir knobs|patches` 的 `scope_applicability` 漂移归零。
+
 **改完配方 markdown 必须做的事**：把同一事实手工写回 JSON，然后跑闸口：
 
 ```bash
 python3 /home/qiba/ROCm.AI/scripts/audit_skill_recipes.py --dir serving   # 也支持 environments|patches|knobs|ops
 python3 /home/qiba/ROCm.AI/scripts/audit_skill_recipes.py --scope         # 适用范围自洽性
 python3 /home/qiba/ROCm.AI/scripts/scope_match.py --orphans               # 双向差集
+python3 /home/qiba/ROCm.AI/scripts/scope_match.py --env-check             # 臂↔环境 版本轴一致性
 ```
 
 闸口查（只读）：markdown↔JSON 的 id 双向覆盖、可逐字映射的 frontmatter
@@ -444,62 +472,18 @@ Ornith 臂折叠）、`scripts/note_emulation_boot.py`（boot 证据）、
 
 ---
 
-## 本会话新增（2026-09-21：前缀复用口径更正 · 三 boot 配对 · 护栏全谱）
-
-### 前缀复用：上游默认本来就有，标注补丁只消警告（**正面撤回**）
-- 本臂（8107 Qwen3.8-Flash-Next BF16）启动时会打 9 行
-  `… will be treated as a draft group … prefix-cache reuse across requests will be disabled`。
-  **那不等于复用为 0**：上游默认下同 prompt 连发，**第 3 次起整段跳过预填充**（2.51 s → 0.45 s）。
-- `patches/gfx90a/port_qwen4exp_eagle_annotate.py` + `VLLM_QWEN4EXP_EAGLE_ANNOTATE=1` 让警告 9→0，
-  但**三 boot 配对复测四项测量全部一致**（同 prompt 顺序、P/Q 交替、多轮 TTFT、"命中"计数）
-  ⇒ 它对吞吐**中性**，只是消掉误导性警告。
-- **撤回**：09-18 写的"命中 0→87%""多轮 TTFT 1.43–1.86→0.28–0.71 s"不可复现，
-  最可能是把**冷 boot 的 Triton JIT 尖峰**当成了"没补丁就慢"。留痕见
-  `docs/recipes/patches/qwen4exp-mtp-prefix-reuse.md` §3 与 `bench/ledger.jsonl` L48。
-
-### 判据只认耗时（这条最容易记错账）
-- `vllm:prefix_cache_hits_total` 与引擎周期行 `Prefix cache hit rate: X%` 在**本版不区分内容**：
-  全新 prompt 也报 ~90%（实测 Δh 恒 = 块数×400）。拿它们当跨请求复用判据会得出任意结论。
-- 可信判据 = **同 boot 内新 prompt vs 重复 prompt 的预填充耗时**（本机 6.7k tok：2.51 / 0.45 / 1.59 s）。
-- 探针 prompt 的唯一标签要**每次运行唯一且进每一行**；只放开头会命中共享正文（假阳性）。
-- 真冷基准要把 salt 放**最前**（放末尾会让"冷"那一次其实命中旧缓存）。
-
-### 报数协议增补（原三硬门之外）
-**必须同形状预热**（冷 boot 前若干请求会撞 `Triton kernel JIT compilation during inference`：
-`_qsa_sparse_paged_gqa_splitk_kernel` / `_rejection_kernel` / `_resample_kernel`；实测 12.64 t/s ≈30 s/请求，
-spread 1.1%→87%）；**必须带 acceptance + step ms**（本臂两条 workload step 同为 ~39–40 ms，
-29% 的 TPS 差全来自接受率 89.9% vs 61.2%）；**必须核他会话 CPU/内存**（实测并行会话
-`convert_dsv41_ct_int4.py`：1305% CPU、RSS 56.7 GB、主机 free 1 G + swap 10 G，显存却看着"没人占"）；
-正确性容差要建在引擎先天 `|Δlogprob| ≤ 0.11` 之上。
-
-### 护栏全谱与"门必须故意触发一次"
-launcher 内 7 道 fail-closed 门：①模型目录 ②`nc` 端口门 ③HF offline ④功率档只读校验（560 W）
-⑤草稿组标注准入（`--require`）⑥8 die 显存前置门 ⑦同端口实例存活门（核 `/proc/<pid>/cmdline`，
-防 PID 回收误拒）。教训：本臂 QR 那条准入断言曾因写了**不存在的补丁路径**而退化成
-"QR 永远开不起来"且长期无人发现（默认 QR=0 掩盖了它）⇒ 每道门都要**故意触发一次**。
-
-### 起停 / 验证 / 实体分叉
-- 停服必须三步（本底座 TERM 会挂住，worker 报 `FileNotFoundError: /psm_*`）：见
-  `docs/recipes/ops/serve-start-stop-observe.md`；**别用 `kill -KILL -$pid` 负号进程组**（已两次打死自己的 shell）。
-- **不占 GPU 验证 launcher 接线**：`VLLM_PYTHON=<桩脚本>` + 私有端口 + `VRAM_FREE_MIN_GIB=0` 干跑，
-  核对 env 与落盘路径（本会话靠它证明 6 项接线生效，全程没碰 GPU）。
-- 同一条臂有 **3 份实体**（基脚本 / `launcher/favor/…_final_….sh` 薄封装 / `/mnt` 镜像）⇒
-  改动只落基脚本 + `md5sum` 对账 + 侧车软链，否则会重演覆盖事故。
-- 8107 日志已改落 `logs/flash-next/server-<port>-<ts>.log`（+ `.current` 软链），
-  取日志请读 `.logpath` 侧车，**别用旧的 glob**（会静默读到旧日志）。
-
-### 数字口径（8107 BF16，同一臂三个时点）
-09-05 单流 88.6 / Phase2 296.86（560 W、SPEC=3、batched 8192）；覆盖期 92.07、93.16；
-合并 8 条臂级 env 后 94.85 / 94.62 / 95.29（acceptance 89.9%、step 38.9–39.2 ms）；
-KV 池 719,056 tok（2.74×）。**那 8 条 env 性能中性**；`VLLM_ENABLE_V1_MULTIPROCESSING=0`
-在 vLLM master 这版**并没有**把 EngineCore 并回 APIServer（仍有独立 `(EngineCore pid=…)` 行）。
-
 ## 9. 待办（别当成已解决）
 
-**本轮（2026-09-21 第二轮）已闭环**：`applies_to` 回写 21 条权威 markdown + TEMPLATE；
-`env → 版本` join 用归一化解决（0/15 → **15/15**）并落成 `--env-check` 闸口
-（**首跑即抓出一处真错**：`llama.cpp_gfx90a-2026.9.8` 一棵树含多个 commit 子前缀，
-env 条目的 engine 轴曾写成单值）；Top-10 资产已收编进 `references/`。
+**已闭环**：
+- 第二轮——`applies_to` 回写 21 条权威 markdown + TEMPLATE；`env → 版本` join 用归一化解决
+  （0/15 → **15/15**）并落成 `--env-check` 闸口（**首跑即抓出一处真错**：
+  `llama.cpp_gfx90a-2026.9.8` 一棵树含多个 commit 子前缀，env 条目的 engine 轴曾写成单值）；
+  Top-10 资产已收编进 `references/`。
+- 第三轮——并发会话追加的两段「本会话新增（日期）」**重新分层**（删 78 行、逐条安置，
+  硬 token 127/133 存活、6 项经核为省略号/空格造成的假阴性）；新建 `references/30-arms-detail.md`
+  兑现 `scope.json` 里声明的 T3 归属；**§1.1/§1.2/§1.3 三处 T0 安全写法按权威配方
+  `serve-start-stop-observe.md` §2 补上了限定**（组杀的 PGID 边界、worker 父进程链、
+  cgroup `KillMode`、`card0` 是 BMC、预分配判据的正确语义）；新增**更正 3**（前缀复用撤回）。
 
 仍开放：
 
@@ -513,60 +497,22 @@ env 条目的 engine 轴曾写成单值）；Top-10 资产已收编进 `referenc
    纯文件操作（CPU），**任何 aiter INT8 计时/对比之前应先补**。
 4. **`moe_tune_w4a16.py` 基准夹具与生产形状不一致**（uint8 `[N,K/2]` vs 生产 int32 `[N,K/8]` + bf16 scale）
    ⇒ **其胜负数字在夹具修好前不能用于接线**。
-5. **DSV4.1 转换记录仍有大块未沉淀**：本轮补了 §4.1/4.8/4.10/4.15/4.16/4.19/4.21/4.22/4.24/4.28/4.30/4.33
-   的要点，但全文 2462 行 / §4.1–§4.39 只覆盖约一半。
+5. **DSV4.1 转换记录仍有大块未沉淀**：已补 §4.1/4.8/4.10/4.15/4.16/4.19/4.21/4.22/4.24/4.28/4.30/4.33，
+   但全文 2462 行 / §4.1–§4.39 只覆盖约一半。
+5b. **`docs/` 41 个 harvest 小节里，Top-10 与撤回项已落库，其余 ~30 条已判级未逐条安置**
+   （H1/H2/H4/H8–H13/H15–H20/H22/H24/H26/H29–H30/H34–H35/H39–H40）；
+   逐条要点与真实行号在 `.tmp/harvest/docs-top.md`，不会凭空消失，但**不在技能里就等于没有**。
+5c. **技能正文与 `data/*.json` 是两套覆盖**：24 个「已覆盖」判词里 **11 个只被 JSON 覆盖、
+   正文 0 命中**（如 `llamacpp-tp-rccl-split-mode` 逐节引了 TP/RCCL 实测，正文完全没提）。
+   判「是否已沉淀」必须同时看两处——本轮已在路由表里把 JSON 指过去，但正文索引仍不完整。
 6. **`tools/audit_log_paths.py:86` 的漏检未修**（正则只匹配带引号赋值 ⇒ `>/tmp/` 与无引号赋值漏检却报绿）。
-7. **本轮所有技能/脚本改动 + 21 条配方回写均未提交**；
-   ⚠️ 注意 `scripts/note_agent_lane.py` 是**会话前既有改动**，不属本次范围，别顺手带上。
-8. **4 条新配方 markdown 未入库**（`8121`、`vllm-openai-rocm-nightly-0918`、
-   `glm5next-quark-int8-launch-set`、`glm53-flash-quark-int8-convert`）——
-   按制度「`??` 不过夜」应尽快 commit；它们也正是本轮查出从未进 `data/*.json` 的那 4 条。
-## 本会话沉淀（第三轮，2026-09-21 **重做**：上一次被并行会话整段重写吃掉）
-
-> ⚠️ 事故留痕：`f8954bd`/`af1494e` 两笔曾把本节写进技能，随后并行会话的「第四轮」重写把内容**静默删除**
-> （HEAD 里 `MI250_MOE_GEMV` 命中 0）。**同一文件被两个会话同时整段重写就会丢内容** ⇒ 改完立刻
-> `git commit` + `grep` 复检；长内容优先放报告，技能里只留结论 + 指针。
-
-### MoE 专家 GEMV（目前唯一已收回的 kernel 级杠杆）
-- 模块 `quark-int8/moe_gemv_patch/mi250_moe_gemv_gs.py`；开关 `MI250_MOE_GEMV=1`、
-  `MI250_MOE_GEMV_MODULE=mi250_moe_gemv_gs`、`MI250_MOE_GEMV_KERNEL`（v3 = scale 提出 k 循环）、
-  `_BOTH`、`_DEBUG`；`PYTHONPATH=/patches/moe_gemv` 由 launcher 注入。
-- 实测：gemm1 **8.7×** / gemm2 **5.0×**；单流 6.38–6.81 → **9.60–10.71 tok/s**；conc32 聚合 33.8 → **59.1**；召回 6/6。
-- `mi250_moe_gemv_v2.py` 是**被证伪**的那版（≈等于不开），别当可用模块；三处副本哈希由
-  `verify_patches.py ②` 守（`gs=af079db138ab` / `v2=c96264af84c1` / `v3=07b0d78f40b0`）。
-- ✂️ **已收回**：decode 归属表里 MoE GEMV 只占 **1.8%** 步时间，别在这里找收益（`moe-gemv-scale-hoist.md`）。
-
-### 稀疏注意力 split-K（`MI250_SPARSE_SPLITK`）——与 0.28 的 split-KV 不是一回事
-- 机制：一条 launch 把 `(query, split)` 当行（`_splitk_make_indptr` 造 `[M*S+1]` indptr、行序 `r=i*S+s`），
-  再 `_splitk_merge` 做 LSE 合并；补丁 `quark-int8/dcp_patches/0009_gfx90a_sparse_splitk.patch`。
-- 开关 `MI250_SPARSE_SPLITK=8`（**默认 0**）/ `MI250_SPARSE_SPLITK_MAXM=8`。
-- 内核 7.2×（M=1）/ 2.4×（M=4）、与 S=1 逐位一致（bf16 1 ulp）；但端到端单流 **−12%**
-  （NCCL 141→255 µs、elementwise/copy 调用 1332→3439/step）⇒ 默认必须保持 0。
-- ⚠️ 静默错：低层 `_rocm_sparse_attn_prefill_ragged_triton` 是**返回** out（内部 `empty_like`），
-  读预分配缓冲会得到 out 全 0 而 lse 正常 —— 看起来没崩，结果全错。
-
-### Roofline 口径：本机的慢**不是带宽**（别再按带宽解释）
-- `T_mem(mi250x)` @8 GCD / isl=osl=1024 / conc=32 = **859.0 tok/s**；同参数 mi300x 2779.3
-  ⇒ **比值 0.309 是防「按 MI300X 口径假通过」的判据**。
-- 实测（同一把尺子）：单流 @ctx≈800 **1.19%**、conc8 4.82%、conc32 **6.93%**；权重流量只有
-  **18.6 GB/s/rank = 峰值 1.1%** ⇒ 受限在层内串行/启动延迟。正确表述：**层内串行开销吃掉 93% 的访存预算**。
-
-### RecipeKB 回填与三个静默坑（GLM-5.3 int4 / mi250x）
-- 入口 `python3 scripts/note_glm53_int4_kb.py`（`--dry-run` 可预演）；必须走
-  `LocalRecipeStore.put_recipe`，手写 `recipe.json` 会让 `history/vN` 与 `version` 脱节。
-- ① `remaining_gaps` 条目必须是 **dict**（`description`/`metrics`），写字符串被**静默丢弃**；
-  ② `kernel_optimizations` 是**定长 dataclass**，键名不对得到**一串全零**条目；
-  ③ `best_config.extra_envs` 会被 warm-replay **当环境变量注入** ⇒ 别写说明文字。
-- `root:root 0600` 的槽位宿主读不到 ⇒ `local_store.search()` 抛 `LocalRecipeStoreError`；
-  容器内 `chown -R 1000:1000` + `chmod 644` 修。
-- warm-replay 置信门 `_DEFAULT_WARM_REPLAY_MIN_CONFIDENCE = 0.7`；recipe 的 `what_failed` 会被注入
-  explore 的 rejected 账本 ⇒ **负结论写进去等于省一次重测**。
-
-### QR C2+C3：**开了就起不来**（三臂实证 2026-09-21；推翻了「装了就可用」的默认假设）
-- A（stock 镜像，env 不设）4.38 / 28.15 / 74.77 + 召回 6/6；A2（`-qr` 镜像，env 不设）4.18 / 26.64 / 73.13 + 6/6，
-  两臂都选 `['PYNCCL']`；A2 对 A 差 −2…−5%，落在 cross-boot 漂移内 ⇒ **单次对拍不能说「中性」**。
-- B（`-qr` 镜像 + 三条 env）：env 确实生效（日志 `Custom quick allreduce: min size override = 0 MB`），
-  但 `init_custom_qr` 在显存规划**之前**吃 ~9 GiB/卡 ⇒
-  `ValueError: Free memory on device cuda:5 (54.9/63.98 GiB) ... less than desired ... (0.97, 62.06 GiB)`，8 worker 全拒启。
-  要开必须 `util ≤ 0.858`，那时 KV 只剩 **~2 GiB/卡**（32k 档原本 8.17）⇒ **1M 上下文不可能**。
-- 复跑：`SKIP_A=1 SKIP_A2=1 bash quark-int8/qr_ab_watch.sh`；全量证据 `reports/models/glm53-int4/qr-c2c3-verdict.md`。
+7. **`ROCm.AI` 侧改动未提交**（`local-skills/` 重构 + `data/scope.json` + `references/` 6 个文件
+   + `scripts/{scope_match.py,audit_skill_recipes.py}` + 报告）。
+   ⚠️ 两个坑：① `scripts/note_agent_lane.py` 是**会话前既有改动**，不属本次范围，别顺手带上；
+   ② **本机有并发会话在同一工作区提交**（`def33b9` 曾把本技能尚未提交的回写一并带走）
+   ⇒ 提交前先 `git status` **看全量、不要截断输出**（本轮就是 `| head -3` 截断导致误判，
+   `git checkout` 打回了一处别人的未提交更正，已还原）。
+8. ~~4 条新配方未入库~~ ✅ 已由并发会话 `def33b9` 提交；51→55 全部入库。
+9. 🔑 **`data/*.json` 与配方 markdown 会因并发而漂移**：`--dir knobs|patches` 的"覆盖缺口"
+   只报 INFO 不报红 ⇒ 新配方不会强制进 JSON。**本轮已把 markdown 侧 `applies_to` 的词表校验
+   补上（`--dir *` 会发现越表值）**，但"新配方未合成进 JSON"仍无硬门。

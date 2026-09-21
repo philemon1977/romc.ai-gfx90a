@@ -154,3 +154,174 @@ ROCm 侧 `platforms/rocm.py:827` 先查 `_ROCM_DEVICE_ID_NAME_MAP`，本机 `dev
 生产日志里的 `not found tuned config in a8w8_tuned_gemm.csv, will use default config` 就是它。
 装表是纯文件操作（CPU），建议在任何 aiter INT8 计时/对比之前先补上。
 
+
+
+---
+
+## 附录 D · ⚠️ 版本绑定核实（引用这两份记录前必读）
+
+- `docs/DeepSeek-V4.1-Flash-CT-INT4-W4A16-转换记录-2026-09-18.md`（175 KB / 2462 行）
+  **全文只有 nightly 一条线**（`0.29.1rc1.dev47+gdc36fcce9` L3-4 → `nightly-0918` = `dee37d891` L1800/L1838）；
+  **`0.28.0`、`master`、`748B`、`GLM-5.3` 在全文 0 命中**。
+  适用域：端口 **8119** / 补丁树 `ct_w4a16_dsv41_n0918` / 模型 **DeepSeek-V4.1-Flash** /
+  量化 **ct-int4 W4A16（uint4b8, g32）**；**与 GLM-5.3 int4（走 `deepseek_v32`）不是同一套补丁**。
+- `docs/MI250X-AITER-INT4-内核复核-2026-09-17.md` **全文无「ROCm 7.2.4」字样**（只隐含在脚本名
+  `…_vllm_rocm72_…` 里）。
+- ⇒ **版本绑定要按文件内实测字符串写，不能按文件名或印象推**，否则会造出不存在的版本绑定。
+
+## 附录 E · 自转 int4 权重的硬约束与判据（**T2**）
+
+> 出处 `docs/DeepSeek-V4.1-Flash-CT-INT4-W4A16-转换记录-2026-09-18.md`。
+> 本节是 §4.1–§4.33（约 1900 行）里**最可复用**的部分——技能此前只吃了 §4.34–§4.39。
+
+- **两条装载硬约束（能装上但结果全错）**〔§4.1 L235-243〕：
+  ① 合并列装载的 `shard_offset`/`shard_size` 必须传**未打包单位**
+    （loader 内部 `_adjust_shard_indexes_for_packing` 再除 `packed_factor=8`），
+    按打包单位传会算成 offset 160（应 0）⇒ **只能靠真实装载器验证**；
+  ② `TritonW4A16LinearKernel` 只实现 fp16/bf16 激活，而 `LinearBase` 默认
+    `torch.get_default_dtype()` = **fp32** ⇒ 报 `Only float16/bfloat16 activations are supported`
+    ⇒ **launcher 必须显式 `--dtype bfloat16`**。
+- ★ **TileLang mHC 在 gfx90a 上静默算错 `layer_input`**〔§4.8 L277-325〕：
+  `mhc.py::_has_tilelang_mhc()` **只排除 gfx942、未排除 gfx90a**；
+  症状是**只有 `layer_input` 非确定性错到 1.5× 量级**，`post_mix/pre_mix/comb` 全对（1.2e-7）、
+  logits 尺度形状全正常 ⇒ **无法从输出反推，必须连跑多次**（第 2 次恰好是对的）。
+  修法 `if on_gfx90a(): return False` 落回 torch 实现 + launcher fail-closed grep。
+  **两条通用规则**：①「上游自己都不信」的平台排除条件，换架构时要**重审放行/排除列表**，
+  优先看平台条件分支而非算子数学；② **wave64 是 gfx9 系统性风险面**——
+  凡有 `tx<32` / `warpSize` / `__ballot(0xffffffff)` 之类 warp32 假设的融合核，
+  在 gfx90a 上一律按「可能静默算错」验。
+- ★ **「按参数占比线性外推损伤」是错的**〔§4.19 L877-890〕：
+  `wq_a`/`wkv` 只占注意力参数 **7.2%**，却贡献 **4.62%** 输出偏差——因为它们在**最前端**
+  （`qr=rmsnorm(wq_a·x)` → `q=wq_b·qr` → softmax），误差穿过 softmax 非线性被放大；
+  `wo_b` 在末端不被放大 ⇒ **必须实测**，不能按占比估。
+- ★ **KV 格式才是 256K 的瓶颈，不是权重精度**〔§4.24 L1274-1320〕：
+  官方 global KV **890 B/token**（FP4 main KV）vs 我们 bf16 压缩 KV ≈**3,660 B/token**
+  （= 1.97 GiB ÷ 595,565 实测）≈ **4.1×**。
+  另：**两份 `config.json` 别取错**（模型根目录是 HF 风格 `text_config.kv_source_layer_ids`；
+  `inference/config.json` 才是参考实现的 `kv_source_layers`）。
+- **CT 的 `ignore` 通配匹配的是 vLLM 模块前缀名，不是 checkpoint 张量名**
+  （`wq_a`+`wkv` → `attn.fused_wqa_wkv`）⇒ 用 checkpoint 名写 glob 会**静默失效**，
+  随后 `KeyError: …weight`。〔§4.10 L417-477〕
+- **起服前静态一致性证明**〔§4.22 L1150-1215〕：不变式 = 对**全部模块**断言
+  `classify ⇒ 未量化 ⟺ ignore 命中`（**双向**，两个方向都会以 KeyError 炸）；
+  逐分片 QA 必须**直读分片 header**，**不能依赖输出目录 index**
+  （转换期间它还是试点那份，会把好分片误判成缺失）。
+  两条结构事实：mapper 里 **`"mtp.": None` ⇒ MTP/DSpark 权重整条丢弃、根本不加载**；
+  共享专家是独立 `DeepseekV4MLP`（两个 Linear 子模块）⇒ **不存在「同模块混 scheme」风险**。
+- **逐组最优 int4 scale 的收益按源格式分档**〔§4.16 L682-730〕：
+  fp4 路由专家 **1.48–1.61×**、fp8 共享专家/注意力仅 **1.12–1.14×**（平均 1.313×，n=24）；
+  bf16 落盘 scale 代价仅 0.007 个百分点 ⇒ 不必改 `scale_dtype`。
+  ⚠️ `torch.where(cond,A,B)` 参数顺序写反会把 running-min 变成"更优保留旧值"（收益一度为负）；
+  **自检法** = 打印被选值分布，看是否只出现候选集里的值。
+- **把量化层改 bf16 不会踩 ROCm 定制 GEMM 快路径**〔§4.19 L923-943〕：
+  `amd/rocm.py::_prep` 对 CT 量化模块与未量化模块**都返回 `None`** ⇒ 快路径保持关闭、
+  也不会执行 `shuffle_weight` 就地打乱（若被打乱而无可配 scale，结果反而错，被这个 `None` 挡住）。
+- **三堵物理墙（含三次 OOM 全误诊）**〔§4.28 L1828-1835〕：
+  ① HIP context ≈**1.08 GiB/rank**（worker 建 context 后才测 free）⇒ util 启动门**天花板 0.983**；
+  ② profile 期固定 **512 MiB** = `VLLM_SPARSE_INDEXER_MAX_LOGITS_MB`（默认 512，
+     `rocm_aiter_mla_sparse.py:1061`），**与 len/batch 无关** ⇒ **缩档治不了这个 OOM**；
+  ③ 60.95 GiB/rank + 1.08 + 激活≈1.2 + NCCL ≈ 63.98 物理满 ⇒ 过启动门但报
+     `No available memory for the cache blocks`。
+  另：**prefetch offload（`--offload-group-size`）× 流式装载 = 装载互锁**
+  （py-spy 栈 `_load_w13`、26 MiB/s、50 min 无进展）⇒ 该组合不可用；
+  但「offload 不可用」**只能限定为 prefetch 后端**（**UVA 后端从未试过**）。
+- **短上下文会走上游旁路**〔§4.30 L1893-1910〕：`attention.py:99
+  _fill_short_context_topk_indices` 在 `max_seq_len // ratio ≤ topk` 时直接"全选候选"并
+  `return None,None,None` ⇒ **稀疏 indexer op 本就不会被调用**。
+- **防重复实验**〔§4.33 L2057-2072〕：「注意力全体 bf16」**早已测过且无效**（退化率 77.78%），
+  别再花一轮。gfx90a 走纯 torch 回退的**机制原因**：`rocm_aiter_ops.is_enabled()` 被
+  `@if_aiter_supported` 包着、要求 `get_cdna_version() > 2` ⇒ gfx90a 恒返回 `None`；
+  且该回退含 `int(context_lens[i].item())` = **D2H 同步 ⇒ 图捕获期非法**。
+- **选路约束**：ROCm **没有 8bit 线性层内核**（uint8b128 的 exllama/marlin 是 CUDA 专属）
+  ⇒ 只能 `triton_w4a16`；CT 的 mxfp4 是 **W4A4**（需原生 fp4 硬件）⇒「CT 仓塞原生 MXFP4」不通。
+- **两个量尺纪律**〔§4.15 L626-665〕：① **RMSNorm 输出 rms 精确等于 `*_norm.weight` 的 rms** ⇒
+  残差流 rms 0.098→6.85（70×）与 layer15/39 FFN 尖峰被 `ffn_norm.weight` rms（0.02–0.61、随层增长）
+  解释掉，是 **checkpoint 自身性质不是运行时缺陷**。
+
+## 附录 F · 上游量化权重的二进制级准入判据
+
+> 出处 `docs/MI250X-三底座量化权重检索-ModelScope-2026-09-05.md`。
+> ⚠️ 该文有**两条前提已被实测推翻**（`Qwen3.8-Flash-Next` 小节结论已过期）⇒ **引用前先读其 §00 顶注**。
+
+- 🔑 **Marlin 符号 0 命中**（二进制级证据）：本机 4 个 vLLM `.so` 里 `marlin` 命中 **0**
+  （同文件 `scaled_mm=2` / `rocm=676` / `moe=1139` ⇒ 证明 strings 有效、非假阴性）；
+  `_rocm_C.abi3.so` 里 weight-only 4bit 只有 `gptq_gemm_rdna3*`（**RDNA3 专用**）；
+  Python 侧 `check_moe_marlin_supports_config()` 开头就是
+  `if current_platform.is_rocm(): return False`
+  ⇒ **AWQ / GPTQ / 任何 compressed-tensors W4A16 的快内核
+  （Marlin / Machete / AllSpark / Cutlass-W4A8）在本机全部不存在**。〔§1.1 L48-60〕
+- 🔑 **本机 vLLM 上有正经内核的档位只有两种**：**BF16** 与 **INT8 W8A16 gs=128 → Conch**。
+  「想要 int4 且快」⇒ 自己产 `group_size=128`（Conch 准入 `gs ∈ [-1,128]`）或直接用 GGUF；
+  **不要下 gs=32 的 AWQ/int4**。〔§5.2 L153-154〕
+- **三档量化同轮同 die 对拍**（`HIP_VISIBLE_DEVICES=6,7`、同 prompt、`max_tokens=192`、
+  warmup 后计时、**350 W cap**）：BF16 **29.52** / INT8-W8A16-Conch **11.79（40%）** /
+  INT8 eager 6.41（22%）/ int4-AWQ 12.1（~41%）⇒ **全部落在 BF16 的 22%–41%**。
+  ⚠️ **两个百分比分母不同不可混用**（本表以**本次实测 BF16** 为分母；
+  `safetensors适配清单` §10 的 11%/56% 以 **HBM 理论上限**为分母）。〔同文 §3 L86-103〕
+- **定档必须"以实测吞吐"定**，不以"内核是否准入 / 是否报 fallback / 是否在 GPU 上跑"定。
+  〔`docs/MI250X-safetensors模型硬件加速适配清单-2026-09-04.md` §0 L24〕
+- **DSV4-Flash 0731 的两道串行硬门**（照抄会撞两次）：先
+  `AssertionError: DeepseekV4 fp8_ds_mla layout only supports fp8 kv-cache, got auto` →
+  再 `fatal error: 'rocwmma/rocwmma.hpp' file not found`（**ROCm 7.2.4 树不带 rocwmma**）
+  ⇒ 修法 `apt-get install rocwmma-dev7.2.4`；**不能**用 `CPLUS_INCLUDE_PATH` 借 6.4.4 的头。〔§4.2 L122-127〕
+- **atom 把 `I8/U8` 无条件映射成 `fp4`** ⇒ 第三方 INT8 checkpoint 会**静默数值损坏**
+  （不报错）。〔`docs/MI250X-DSpark-INT8-本机运行记录-2026-09-08.md`〕
+
+## 附录 G · 选型铁律（比任何调参都值钱）
+
+> 出处 `docs/MI250X-vLLM-优化方案.md` §3 S3 L114-116。**已验证是数量级差异。**
+
+1. **无 DSA / 稀疏索引器**；
+2. **`head_dim ≤ 256`**；
+3. **权重不用 FP8/FP4**（用 bf16 或 W8A8 对称 int8）；
+4. **看激活参数量，不看总参数量**（A3B 的 75 t/s vs 27B 稠密 int8 的 8.2 t/s）。
+
+**瓶颈表述**〔§1 L12-23〕：不是带宽/算力/通信/显存，而是**每步的固定成本**
+（一个 decode 步串行 ~1178 个细碎 kernel；hipBLASLt 给 M=1 挑了 64×64 tile 的 GEMM）。
+2026-09-03 修正：**5 个 bind-mount 的 py 文件**就把 Ornith TP8 **75.0 → 92.7 t/s（+23.6%）**、
+TP2 **70.6 → 90.0（+27.5%）**；**QuickReduce 的门是"错误的保守设置"
+（gfx90a 数值逐位正确、可用），而 CUSTOM allreduce 的门不能打开。**
+
+⚠️ 这与 `data/knobs.json :: quick-reduce-gfx90a` 的"禁用"判词**并列存在**：
+QR 是否可用取决于**该臂的 KV 预算是否容得下那 ~9 GiB/卡固定分配**，不是恒禁。
+引用时必须同时给「数值正确性」与「显存账」两把尺子。
+
+**明确不要再做**〔§7.5 L267-270〕：
+① 在 gfx90a 打开 vLLM 的 **CUSTOM allreduce**（输出**静默**变 `!!!` 且 GPU 非法访存）；
+② 在 QuickReduce 上试 **INT8/INT6/INT4/INT3** 档（CDNA2 无对应指令，且 4 KB 消息本就延迟受限）；
+③ 用 **isolated 微基准给"碎核"排序定收益**（同一 topk kernel：孤立 10.2 µs vs in-situ 28.4 µs，
+**结论会反**）。
+
+**两阶段 TunableOp**〔§3 S2 L101-113〕（修那 2.4 ms/步的 tile 选错，预期 +10~18%）：
+⚠️ **inline 开启与 CUDA graph 捕获相乘爆炸**（9 分钟没能启动）⇒
+① `--enforce-eager` 跑一遍开 tuning 并在**退出时** dump CSV；② 生产 `TUNING=0` 只读该表。
+本 build **无 `torch.cuda.tunable.write_file()`**，依赖进程退出时 dump ⇒ 需先验证能否落盘。
+
+**两条外部风险**〔§3 S1 L99-100〕：hybrid-GDN 模型上 DFlash 长上下文可能**净亏**
+（vLLM issue #54691）⇒ 必须自己扫 ctx 长度；**别开 sleep mode**
+（MI250 + spec decode 有崩溃报告 #47548）。
+
+## 附录 H · indexer：bf16 承载比 fp8 存储快 2~3×
+
+> 出处 `docs/MI250X-indexer-非AITER-Triton路径-现状与方案-2026-09-05.md`。
+> **适用域：vLLM master 树（`qwen4_exp/amd/`、`glm5next/amd/`）。**
+
+- 🔑 **选型结论：dequant 必须提前到 cache 存储层**（K cache 应存 **bf16**，
+  而非照抄上游 fp8e4m3 布局）。〔§3.2 L102-118〕
+  `M=1` **1.62 vs 3.22 ms**；`M=2048` prefill **56.5 vs 18.8 TF**（达成率 **31% vs 10%**）。
+  根因：**CDNA2 无 fp8→bf16 硬件转换指令**，vendored 内核**在热循环里每次 dot 都重做一遍软件 dequant**。
+- 该 kernel 是 **`grid=(M,)` 一 program 一行** ⇒ `M=1` 只有 **1 个 CTA** 在 104 CU 上跑
+  ⇒ **必须把 N 方向也切并行**（split-K / 两段归约）。〔§3.2 L115-116〕
+- **GLM 走 `forward_cuda` 通用路径**（`index_kpool=4 > 1` 恒成立）⇒
+  **解耦不需要 AITER 支持 kpool**；gfx90a 唯一死因是**外层 `is_enabled()` 门**
+  （`_aiter_ops.py:157` 用 `get_cdna_version() > 2`）。
+  ⇒ **「AITER 不可用」应收窄为「仅 MoE 通路」**：`sparse_attn_indexer_kpool.py:1034/1062`
+  的门**不是硬件门**。〔§2 L33-50〕
+- **Qwen4Exp 量化红线**〔§4.1 L131-136〕：① KV cache **只能 bf16**
+  （`amd/qsa.py` 五处显式 `raise NotImplementedError("…BF16…")`）；
+  ② PLE n-gram 表（`320,001,536 × 160`、全表 **102.4 GB**、TP4≈25.6 GB/die、TP1 装不下）
+  **绝不能用 FP8 checkpoint**——`_QWEN4_EXP_IGNORED_MISSING_SUFFIXES` 把 `_weight_scale`
+  列为可忽略 ⇒ **FP8 PLE 会被裸 cast、scale 被静默丢弃 = 错值不报错**。
+- **GLM 起服参数**〔§4.2 L178-179〕：`--kv-cache-dtype` 必须 **auto/bf16**
+  （**fp8 会被路由进 AITER decode**——这正是 gfx950 用户照抄
+  `--kv-cache-dtype fp8` 到 MI250X 必死的坑）；`--block-size ≥ 128`。

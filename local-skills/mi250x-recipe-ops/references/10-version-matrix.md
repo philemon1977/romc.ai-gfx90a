@@ -115,3 +115,93 @@ HIP_VISIBLE_DEVICES=<idle die> python3 verify_gemm.py            # required acce
 - `bash -c` 里引用父 shell 变量必须 **export**，否则静默变空串（结果表写进空记录就是这来的）。
 - 判死/删容器**之前先存日志**，否则现场消失；就绪判定必须**同时看容器 State**，否则会为秒死的
   容器空等满超时（曾空等 45 分钟，fail-fast 后单次失败反馈约 100 秒）。
+
+
+---
+
+## 附录 · ROCm 10.0.0 整代实验（已移除，但结论是**版本轴**的核心资产）
+
+> 端口 8207 是它的**墓碑，勿复用**。离线介质刻意保留 2.1 GB（含 sha256，重装前先核对）。
+> 出处：`docs/ROCm-10.0.0-{本机安装与gfx90a验证,vLLM-Flash-Next-TP8-本机实测,本机移除记录}-2026-09-12.md`
+> 与 `docs/ROCm10-AITER-不可行性复核-2026-09-12.md`。
+
+### 适用边界表（一句话版）
+
+| 路线 | 判语 | 依据 |
+|---|---|---|
+| vLLM **TP>1** | ❌ **判死** | allreduce ×1.7~3.7、端到端 **−60%** |
+| vLLM **TP1** | 🟡 无收益 | 无 allreduce，只吃计算面（−3~6%）⇒ **不值得换** |
+| llama.cpp | ➖ 无收益 | decode/pp2048 持平、pp512 **−7%**（4/4 配对同号） |
+| hipFile / AIS | ❓ 未测 | — |
+| **编译期** | ✅ **真有码** | 719 个 gfx90a 文件（10.0 对 CDNA2 有码） |
+| AITER | ❌ 与版本无关 | 见下 |
+
+〔实测 §8 L169-176〕
+
+### 三条最重要的机制结论
+
+1. **−60% 的根因在通信，不在算力**：RCCL 小消息地板 **113 → 294 µs（×2.6）**；
+   **MTP 接受率与贪心正文 md5 两臂完全一致** ⇒「算得慢」**不是**「算错」。〔移除记录 §1 L12-19〕
+2. **5 个常用 RCCL 开关（LL / LL128 / Tree / DMABUF / CUMEM）全部无效**，5 KB 地板始终 ~294 µs
+   （`NCCL_PROTO=LL` 还让 42 MB 档 ×2.6 **更糟**）。机制线索：10.0 每 rank 打
+   `DMA_BUF Support Enabled` ×8（7.2.4 **一条都没有**）⇒ 传输建立走 dma-buf 而非老 IPC handle，
+   但关掉 `NCCL_DMABUF_ENABLE` **不回收延迟**；拓扑图节点类型 7.2.4 是 `GPU`、10.0 是 `DEV`，
+   两代都建了 240 条 P2P 连接 ⇒ **链路没丢，是 kernel/算法选择或同步路径变了**。〔实测 §6 L133-146〕
+3. **AITER 与 ROCm 版本无关**：AITER 的 wheel 里**没有 CDNA2 的货**（打包层，§3 L60-80）；
+   ISA 是真墙、10.0 碰不到（§4 L81-91）；10.0 唯一的真变量是 **JIT 工具链（编译期红利，不是能力红利）**。
+   ⚠️ **`~/.aiter/build` 里的 JIT `.so` 是按 7.2.4 编的 —— 混代直接用 = 把"崩"误读成"AITER 不行"**；
+   要试就 `rm -rf ~/.aiter/build` 重编（并清 `GPU_ARCHS` 残留），且别在 aiter 之外再混 `LD_LIBRARY_PATH`。
+   〔`ROCm10-AITER-不可行性复核` §6 L113-123〕
+
+### 🛑 保留而非重装的真正理由：风险面是"活的"
+
+10.0 的 deb `postinst` 会抢走 `/opt/rocm/{lib,bin}` 与 `/usr/bin` 的 16 个 CLI，
+而 4 个 vLLM env 的 `libtorch_hip.so` **RUNPATH 里 `/opt/rocm-7.2.3/lib` 本机根本不存在、
+全靠裸 `/opt/rocm/lib` 兜住** ⇒ **每次 `apt` 操作都可能静默换库**（两代 `libamdhip64` **同名 `.so.7`、
+soname 不同代**：10.0 = 7.15.26333）。〔移除记录 §1 L17-19〕
+
+**10.0 与 7.x 的打包结构断裂**（本机能装成 apt 版的唯一真障碍）：7.2.4 的 `/opt/rocm` 是
+**alternatives 软链**；10.0 是**真实目录**（内含 `core-10.0/`）。本机原来是软链 ⇒
+直接 `apt install` 会让 dpkg 要建的 `/opt/rocm/core-10.0` **穿过软链写进工作区那份 7.2.4 树**。
+〔安装验证 §5 L86-103〕
+
+### 若将来重装
+
+- 走 **tarball 自足前缀**（零风险路线）：2.0 GiB **gfx90a 单架构**（multiarch 那份 8.8 GiB，**别下错**）；
+  一律显式 `export HIP_PATH=<前缀>; LD_LIBRARY_PATH=$HIP_PATH/lib`，**不要**塞进 `/opt/rocm`；
+  走 tarball 前缀**连 root 都不需要**，且**不碰 alternatives**。〔§3 L46-56、实测 §2 L41-53〕
+- 用法：`ROCM_PREFIX=$PWD/envs/rocm-10.0.0-gfx90a <launcher>`；
+  判据 `LD_LIBRARY_PATH=<前缀>/lib python -c "import torch; …"`（看映射的 `.so` 含 `"7.15"`）。
+- 🛑 **绝不 `apt install amdrocm*`**；若非要装，装完**立刻** `tools/rocm10_pin_legacy.sh legacy`。
+  〔移除记录 §5 L91-104〕
+
+### 两个 API / 符号破坏点（迁移前必查）
+
+- `hipblasSingle` / `hipblasBfloat16` 这类 typedef **被删**（`(const hipblasSingle*)dA` 编译不过；
+  好消息：llama.cpp `ggml-hip` 不用这别名）；`hip_bf16.h` 的 `__floats2bfloat162_rn` 没了、
+  `__lows2bfloat162(a,b)` **语义变了**（不再收 float）⇒ 造 bf16x2 直接用 `__hip_bfloat162(lo,hi)`；
+  `hipcc` 仍按可见 GPU 逐个追加 `--offload-arch`（8 die ⇒ 命令行 8 个）。〔安装 §8 L179-187〕
+- **hipFile 在 10.0 仍然断**：`libamdhip64.so.7` 导出 C 符号 `hipAmdFileRead/Write`
+  **两代都是 0**（头里仍声明、hsa 通路在）⇒ **10.0 换不掉 `src/hipais-shim`**；
+  但 10.0 的 `libhipfile.so.0` **首次导出 C 面 `hipFileRead`（7.2.4 = 0）**
+  ⇒ fastpath 实现结构可能已变，**迁 10.0 前必须重验 shim 的 `dlsym` interpose 还命不命中**。
+  〔安装 §7 L162-177〕
+
+### 停机路径新坑
+
+8 个 `VLLM::Worker_TP*` 被 reparent 到 PID 1 后**完全无视 SIGTERM**（**28 min 不退**、
+显存 57–59 G/die 不放），`api_server` 本体挂在它们后面 ⇒ 只能 `kill -KILL <8 个显式 PID>`。
+〔实测 §7 L151-163〕
+
+⚠️ 两臂**起服耗时不对称**（202 s vs 520 s）是**页缓存冷热，不是代差** ⇒ 别拿这个当结论。〔§3 L69〕
+
+### ISA 断言的正确姿势（可执行证明协议）
+
+> 收编自 `docs/research-notes/aiter-cdna2-6-ISA实测与笔记更正.md` L17-36 / L59-70 / L73-89，
+> 工具 `tools/aiter_isa_proof.py`（子命令 `facts` / `isa-table` / `prove-by-reassembler`）。
+
+- **CDNA3→CDNA2 的 MFMA 是纯助记符改名**：`v_mfma_f32_16x16x16_bf16` → `v_mfma_f32_16x16x16bf16_1k`
+  （下划线位置不同）。⇒ **只拿母本助记符去试 gfx90a 会成片假 FAIL。**
+- **`gfx950` 的 ISA 码实测是 `0x4f`，不是 `0x4d`。**
+- 🔑 **任何 arch 断言必须有对照组**：手敲操作数连 gfx942 也拒绝 ⇒ 那次"不支持"的测试**无效**。
+  **没有对照组的「不支持」等于零信息。** 判定交给 `llvm-mc` 裁决，别靠记忆。

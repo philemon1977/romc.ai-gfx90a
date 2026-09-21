@@ -226,3 +226,36 @@ table and raises `Memory access fault by GPU`, which looks exactly like a kernel
 
 ---
 
+
+
+---
+
+## 附录 · 新增死路与"别搬"清单（2026-09-21 收编）
+
+**每条都注明被否证时的 scope。换 scope 不等于结论仍成立。**
+
+| 路线 | 判语 | 适用域 | 出处 |
+|---|---|---|---|
+| vLLM **CUSTOM allreduce** | ❌ 输出**静默**变 `!!!` + GPU 非法访存；根因候选 = `hipIpcOpenMemHandle` 需 `flag=1` | gfx90a / 所有 vLLM | `MI250X-vLLM-优化方案` §7.5；`会话经验总结` §5.1 |
+| **分层 allreduce** | ❌ 比 flat8 慢 **2.0~2.5×**，有数学下限：本机是 **4×OAM all-to-all 1 跳 mesh**，同模组 vs 跨模组单流带宽只差 **1.17×**（45.7 vs 38.9 GB/s）⇒ 分层的前提（域内≫域间）不成立 | 本机拓扑 | `会话经验总结` §0.10/§5.2 |
+| **`NCCL_SYMM_MEM`** | ❌ 可用但**全尺寸更慢**（4KB 39.3 vs 22.4 µs、1MB 79.4 vs 68.1）⇒ vLLM 的"H100 分档策略"（≤16 KiB 走 symm）在本平台应视为**无效** | gfx90a | 同上 §0.9/§5.2 |
+| **纯 GPU 排序（无 CPU 同步）** | ❌ triton spin / HIP plain / HIP atomic release-acquire + `__threadfence_system` **全部首轮即错** ⇒ 两独立 HIP 进程的 IPC 内存不具备跨 GPU happens-before | gfx90a 平台级 | 同上 §5.1 L120-124 |
+| **`case 256` hd256 内核** | ❌ **NO-GO 已回滚**：488.3 GB/s（快 39×）但**算错** | vLLM 0.28 native C++ PA | `attention-hd256-内核缺口` §7 |
+| **把 GLM 当 custom PA 靶子** | ❌ `use_rocm_custom_paged_attention` 只有一个调用者（稠密分页 decode），GLM 是 MLA+DSA 走另一家族 | GLM-5.3 | `GLM53-准入审计` §5 |
+| **QuickReduce 的 INT8/INT6/INT4/INT3 档** | ❌ CDNA2 无对应指令，且 4 KB 消息本就延迟受限 | gfx90a | `vLLM-优化方案` §7.5 |
+| **isolated 微基准给碎核排序** | ❌ **结论会反**（同一 topk kernel：孤立 10.2 µs vs in-situ 28.4 µs） | 通用方法 | 同上 |
+| **「注意力全体 bf16」** | ❌ 早已测过且无效（退化率 77.78%）⇒ **别再花一轮** | DSV4.1 int4 / nightly | `转换记录` §4.33 |
+| **prefetch offload × 流式装载** | ❌ 装载互锁（py-spy 栈 `_load_w13`、26 MiB/s、50 min 无进展）。⚠️ 只判死 **prefetch 后端**，**UVA 后端从未试过** | DSV4.1 int4 | 同上 §4.28 |
+| **CT 仓塞原生 MXFP4** | ❌ CT 的 mxfp4 是 **W4A4**（需原生 fp4 硬件） | Quark/CT | 同上 §4.33 |
+| **AWQ / GPTQ / CT-W4A16 快内核** | ❌ 本机 vLLM 的 `.so` 里 **marlin 符号 0 命中**；`_rocm_C.abi3.so` 的 weight-only 4bit 只有 `gptq_gemm_rdna3*`（RDNA3 专用）；`check_moe_marlin_supports_config()` ROCm 直接 `return False` | 所有 vLLM env | `三底座量化权重检索` §1.1 |
+| **patchkit 的 `SUPERSEDED` 状态** | ❌ **不可达状态（死代码）**：3 个调用点的 5 处 `superseded_marker` **全部自指**，`port_p1_c2_c3.py:C3b` 甚至与 `already_applied` **字面相同**而 `classify()` 先判后者 ⇒ **「我们在盯上游」是假象** | 本机补丁体系 | `mi210-vllm-本机应用方案` §2 P0-3 L41-46 |
+| **改 `config/*.conf` 想全局生效** | ❌ **只有 1/4 脚本真 source conf 仍成立** ⇒ 新 env 一律写进 **launcher 本体**（`${VAR:-默认}`） | 本机脚本体系 | 同上 §2.4 L38-39 |
+| **`-fa on` 当长上下文前提** | ❌ 已推翻（`flash_attn = enabled` 生效后仍 OOM；那块显存是 DSA 候选掩码，在注意力算子**之前**进图） | 8112 / llama.cpp | `上下文口径` §5.2 L83-84 |
+| **`VLLM_TUNED_CONFIG_FOLDER`** | ❌ 判负方向（`bench/ledger.py gate` 会直接 `exit 1`）；且本臂 MoE 是 TRITON **int8**，不同 tuned-config 键 | Ornith INT8-Attn | `INT8Attn-提速-经验迁移` §不适用 L156-161 |
+| **ROCm 10 全代** | ❌ 见 `references/10-version-matrix.md` 附录（vLLM TP>1 判死 −60%；llama.cpp 无收益；AITER 与版本无关） | 整代 | `ROCm-10.0.0-*` 三件 |
+
+### 一条元教训
+
+**"env 落点纪律"和"SUPERSEDED 死代码"这两条都属于"看起来在管理、实际没生效"的资产**。
+本仓已发生三次同类：补丁队列"重生成旧片"会让自检恒真、`consumers` 检查因键名写错而恒不命中、
+`audit_log_paths.py` 因正则漏检而报绿。**判据一律要问：它在什么输入下必须变红？答不出就是恒绿。**

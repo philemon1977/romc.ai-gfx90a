@@ -152,3 +152,80 @@
 3. **一次性扳手的归档条件是"使命已完成且有盘上证据"**，不是"很久没跑"。
 
 🛑 `launcher/beta/` **不在任何清理/归档范围**：红线规定它是不可再生资产。
+
+
+---
+
+## 8. 报数协议六条（TPS 最容易记错账的地方）
+
+> 出处 `docs/recipes/knobs/vllm-prefix-reuse-measurement.md`（`bench/ledger.jsonl` L45–L48）。
+> **本机关于『复用有没有生效』『TPS 涨没涨』的错结论全部出在口径上**——
+> 三条独立成因：命中计数器不区分内容、冷 boot 的 Triton JIT 尖峰伪装成『配置变慢』、
+> 并行会话的 CPU/内存争用伪装成『内核退化』。
+
+1. 固定 prompt + **丢弃首个** + 中位数（**n≥5**）；离群点要单独解释来源，不许混进中位数了事。
+2. 🔑 **必须同形状预热**。冷 boot 后前若干请求会撞
+   `Triton kernel JIT compilation during inference`
+   （`_qsa_sparse_paged_gqa_splitk_kernel` / `_rejection_kernel` / `_resample_kernel` /
+   `_compute_local_logits_stats_kernel`），而**短请求（『Say OK.』）覆盖不到这些内核**。
+   实测后果：出现 12.64 t/s（≈30 s/请求）的离群点，**spread 从 1.1% 拉到 87%**。
+3. 🔑 **报数必须同时给 `acceptance` 与 `step ms`**。同一臂两条 workload 的 step 可以几乎相同
+   （**38.9–40.2 ms**），而 29% 的 TPS 差**全部**来自 MTP 接受率（**89.9% vs 61.2%**）
+   ⇒ 只报 t/s 会把"接受率变化"读成"内核变快"。
+4. **核他会话负载，不只看显存**。本机常驻并行会话（实测 `convert_dsv41_ct_int4.py`：
+   **1305% CPU、RSS 56.7 GB、free 1 G + swap 10 G**）会造出 12.64 t/s 这类停顿，
+   **而显存看起来『没人占』**。
+5. **跨 boot 不可比**（σ≈4.6%）；同一 boot 内的 A/B 才可信，**三 boot 配对是底线**。
+6. 🔑 **正确性容差要建在引擎的先天抖动上**：同稳态请求 token 逐位相同，
+   但 **`|Δlogprob|` 可达 0.11**（MoE/QSA 归约次序）⇒ **用 ≤0.01 判『复用改变了输出』必然误判**。
+
+**前缀复用的判据只能用耗时**：本机 6.7k tok 实测
+**新 prompt 2.51 s / 整段命中 0.45 s / 部分命中 1.59 s**。
+⚠️ `vllm:prefix_cache_hits_total` 与引擎周期行 `Prefix cache hit rate: X%`
+在本版**不区分内容**（全新 prompt 也报 ~90%）⇒ **不能当判据**。
+探针两坑：标签要每次唯一且**写进每一行**；**salt 必须放最前**
+（放末尾会让『冷』那一次其实命中旧 prompt 的块）。
+
+⚠️ **未解决**：重复 prompt 的『命中』计数在本底座**恒 0**，而耗时显示复用确实发生
+⇒ 计数口径与实现不一致，**以耗时为准**；多轮块对齐上限（期望 0/400/800/1200）从未达标过。
+
+## 9. 一条完整的撤回案例（**方法论级**）
+
+> 出处 `docs/recipes/patches/qwen4exp-mtp-prefix-reuse.md`；`bench/ledger.jsonl` L48 撤回 L44。
+
+- **09-18 的结论**：补丁让 prefix-cache 命中从"恒 0"变 **+3200/3686 = 87%**、
+  多轮 TTFT 1.43–1.86 → 0.28–0.71 s ⇒ 于是把它的默认打开并写进 launcher。
+- **09-21 三 boot 配对复测推翻**：补丁只把启动日志里那 **9 行警告**变成 0 行，
+  **复用行为一项没变**。最可能的误因就是 §8 第 2 条——
+  **把"冷 boot 首个请求撞 Triton JIT"当成了『没补丁就慢』**。
+- 🔑 **可复用的判据**：`every group — including Mamba groups — will be treated as a draft
+  group … prefix-cache reuse across requests will be disabled`
+  这 9 行警告说的是『组被当成草稿组』，**不等于『复用为 0』**。
+  **上游默认本来就有跨请求复用**（同 prompt 连发，第 3 次起整段跳过预填充 2.51 → 0.45 s）。
+- **沉淀纪律**：警告**消失** ≠ 行为**改变**。判"补丁生效"必须找一条与警告无关的独立尺子
+  （这里是 prefill 耗时），并按 §8 的配对 protocol 复测。
+
+## 10. launcher 护栏全谱与「**每道门都要故意触发一次**」
+
+> 出处 8107 基脚本（`models/Qwen/launcher/qwen3.8-flash-next_176b_bf16_vllm_rocm724_256k_8107_Qwen_mi250dx8.sh`）。
+> **适用域 T1/T0：门本身的写法是通用的，具体清单随臂不同。**
+
+该 launcher 内 7 道 fail-closed 门：①模型目录 ②`nc` 端口门 ③HF offline
+④功率档**只读**校验（560 W）⑤草稿组标注准入（`--require`）⑥8 die 显存前置门
+⑦同端口实例存活门（核 `/proc/<pid>/cmdline`，防 PID 回收误拒）。
+
+🔑 **教训（这才是可复用的部分）**：本臂 QR 那条准入断言曾因写了**不存在的补丁路径**而退化成
+「**QR 永远开不起来**」，且**长期无人发现**——因为默认 `QR=0` 恰好掩盖了它。
+⇒ **每道门都要故意触发一次**，确认它在应该红的时候真的红。
+这与 §5「闸口绿 ≠ 脚本干净」、以及 `scope_match --env-check` 首跑即抓错是同一件事：
+**一扇门若从不变红，它与"没有门"在行为上不可区分。**
+
+## 11. 不占 GPU 验证 launcher 接线（**桩干跑**）
+
+`VLLM_PYTHON=<桩脚本>` + 私有端口 + `VRAM_FREE_MIN_GIB=0` 干跑，
+核对 env 与落盘路径——**全程不碰 GPU**。
+本会话靠它证明了 6 项接线生效。
+
+⇒ 这是「**需要 GPU 的结论一律先提方案等批准**」这条红线的**正面配套**：
+绝大多数"接线对不对 / env 有没有生效 / 路径落哪"的问题**根本不需要卡**，
+用桩干跑就能答，别为它去占 8 张卡。（对照 `stack_probe.sh` 的 `SKIP_BOOT=1` 同理。）

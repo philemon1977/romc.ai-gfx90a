@@ -1,560 +1,703 @@
 {
-  "generated_at": "2026-09-21T05:02:48+00:00",
-  "patches": [
+ "generated_at": "2026-09-21",
+ "patches": [
+  {
+   "applies_to": {
+    "preset": "generic-vllm"
+   },
+   "apply_verify_revert": {
+    "apply": "bash src/hipais-shim/build.sh（产出 libhipais-shim.so；🛑 只用 LD_PRELOAD，绝不装进 /opt/rocm-7.2.4）",
+    "revert": "去掉 LD_PRELOAD 即完全失效（不写盘、不改库树）",
+    "verify": "nm -D --defined-only src/hipais-shim/libhipais-shim.so | grep hipAmdFileRead；tools/ais_stack_check.sh"
+   },
+   "consumers": [
+    "ais-hipfile-load",
+    "8107-qwen38-flash-next-176b-bf16-vllm-tp8"
+   ],
+   "id": "hipais-shim",
+   "kind": "patch",
+   "path_or_target": "src/hipais-shim",
+   "rebuild": [
+    "bash src/hipais-shim/build.sh   # 幂等；产出 libhipais-shim.so；改完 .c 必须重建 .so"
+   ],
+   "red_lines": [
+    "🛑 只用 LD_PRELOAD，绝不装进 /opt/rocm-7.2.4：它是指向本盘解包树的软链，往里放东西 ① 波及所有在用的 vLLM（slim torch 依赖这棵树）② 与 alternatives 换代纠缠（红线 2）",
+    "🛑 shim 必须 interpose dlsym 本身：hipFile 是句柄作用域查找（dlopen 到的 handle 上调 dlsym），只导出符号不生效；症状与『shim 没装』一模一样——不报错、只是慢",
+    "🛑 必须 --load-format fastsafetensors：默认 safetensors 走 mmap，碰不到 AIS 分支",
+    "🛑 serve 侧一律 AIS=0：api_server 进程树 + AIS 以崩代降（cuFileBufRegister error = 5014 → submit_io: register_buffer failed，抛的是 Exception 不是 RuntimeError ⇒ 绕过 vLLM 自动回退）",
+    "🛑 ais_stack_check.sh 六项全绿 ≠ 这块盘能用 AIS：PM9A1 上当场崩、intel P4610 上正常，自检看不出差别 ⇒ 三道门里的挂载点白名单才是真护栏（fail-closed：探不到挂载点即拒绝）",
+    "config/ais.env 里 AIS_SHIM 缺文件时只 WARN 后继续启动（bounce 路径本身是好的）⇒ 别把 WARN 当故障，但也别当没看见"
+   ],
+   "selfcheck": [
+    "nm -D --defined-only src/hipais-shim/libhipais-shim.so | grep hipAmdFileRead",
+    "tools/ais_stack_check.sh   # 六项自检（dlopen/ais-check 层面）",
+    "findmnt -T \"$(readlink -f models/<org>/<model>)\"   # 权重物理挂载点，必须在 AIS_DISK_WHITELIST 里",
+    "起服请用 test/qwen4exp/run_q4e_ais_load.sh（自检 + 三件套 + 开关一体），别手敲 env"
+   ],
+   "sources": [
+    "src/hipais-shim/hipais_shim.c（头注：背景、同构判据、3.15 GiB/s 实测）",
+    "src/hipais-shim/build.sh",
+    "docs/MI250X-hipFile-AIS-部署手册.md、docs/MI250X-AIS权重加载-2026-09-04.md",
+    "CLAUDE.md §10.5",
+    "config/ais.env（注入与三道门）"
+   ],
+   "stack": {
+    "framework": "vLLM fastsafetensors → libhipfile.so → dlopen(libamdhip64.so.7) + dlsym(hipAmdFileRead)；shim = 27 行 C 转接 + 返回码映射",
+    "notes": "HSA 层 libhsa-runtime64（API 1.14 起）仍导出 hsa_amd_ais_file_read/write，handle 与 hip 侧逐字节同构（union { void* handle; int fd; uint8_t pad[8]; }）；内核侧前提已在位：amdgpu-dkms 30.30.4（modinfo 6.16.13）导出 kfd_ais_rw_file，8/8 die 各注册 65520 MB AIS",
+    "rocm": "7.2.4（hipAmdFileRead 声明在 hip/amd_detail/hip_storage.h，实现不再导出，官方 deb nm 命中 0；7.2.3 有）"
+   },
+   "status": "active",
+   "status_note": [
+    "实测：离线 LLM() + AIS（最快）Qwen4Exp 185.5 GB / TP4 = 97.13 s（1.91 GB/s，累计 9.9×），须配 VLLM_AIS_PLE_FP8=1（方案 C）",
+    "负结果：serve（api_server 进程树）+ AIS 以崩代降 ⇒ 只能离线加载用；盘相关性自检测不出（见红线）",
+    "bounce（AIS=0）不慢：55.6 GB / TP2 = 2.14 GB/s（别拿旧手册里单流 0.57 GB/s 当预期）"
+   ],
+   "title_or_why": "libhipais-shim（把 ROCm 7.2.4 缺失的 hipAmdFileRead 转接回 HSA AIS）——7.2.4 把 hipFile 弄断了：声明还在、实现不再导出，vLLM 探测失败后静默退回 POSIX（表现为『直读显存也很慢』而不是报错）；没有这个 shim，AIS 这条路在 7.2.4 上根本不存在。",
+   "verified": "2026-09-15"
+  },
+  {
+   "applies_to": {
+    "arch": "qwen3_5",
+    "preset": "vllm-028-family",
+    "quant": "bf16"
+   },
+   "apply_verify_revert": {
+    "apply": "envs/vllm_0.28.0_rocm72/bin/python patches/gfx90a/port_splitkv_pa.py --env vllm_0.28.0_rocm72 --apply",
+    "revert": "envs/vllm_0.28.0_rocm72/bin/python patches/gfx90a/port_splitkv_pa.py --env vllm_0.28.0_rocm72 --revert",
+    "verify": "envs/vllm_0.28.0_rocm72/bin/python patches/gfx90a/port_splitkv_pa.py --env vllm_0.28.0_rocm72 --require"
+   },
+   "consumers": [
+    "8111-ornith-1.5-35b-a3b-bf16-vllm-tp4",
+    "8301-qwen38-27b-fable-distill-bf16-vllm-splitkv-ab",
+    "8109-qwen38-flash-next-176b-bf16-vllm-splitkv"
+   ],
+   "effect_by_scope": [
     {
-      "apply_verify_revert": {
-        "apply": "bash src/hipais-shim/build.sh（产出 libhipais-shim.so；🛑 只用 LD_PRELOAD，绝不装进 /opt/rocm-7.2.4）",
-        "revert": "去掉 LD_PRELOAD 即完全失效（不写盘、不改库树）",
-        "verify": "nm -D --defined-only src/hipais-shim/libhipais-shim.so | grep hipAmdFileRead；tools/ais_stack_check.sh"
-      },
-      "consumers": [
-        "ais-hipfile-load",
-        "8107-qwen38-flash-next-176b-bf16-vllm-tp8"
+     "effect": "beneficial",
+     "evidence": "docs/recipes/patches/splitkv-paged-decode.md",
+     "value": "27B bf16 A/B 臂（8301）的对照项",
+     "when": {
+      "arch": [
+       "qwen3_5"
       ],
-      "id": "hipais-shim",
-      "kind": "patch",
-      "path_or_target": "src/hipais-shim",
-      "rebuild": [
-        "bash src/hipais-shim/build.sh   # 幂等；产出 libhipais-shim.so；改完 .c 必须重建 .so"
+      "engine": [
+       "vllm-0.28.0+rocm723"
       ],
-      "red_lines": [
-        "🛑 只用 LD_PRELOAD，绝不装进 /opt/rocm-7.2.4：它是指向本盘解包树的软链，往里放东西 ① 波及所有在用的 vLLM（slim torch 依赖这棵树）② 与 alternatives 换代纠缠（红线 2）",
-        "🛑 shim 必须 interpose dlsym 本身：hipFile 是句柄作用域查找（dlopen 到的 handle 上调 dlsym），只导出符号不生效；症状与『shim 没装』一模一样——不报错、只是慢",
-        "🛑 必须 --load-format fastsafetensors：默认 safetensors 走 mmap，碰不到 AIS 分支",
-        "🛑 serve 侧一律 AIS=0：api_server 进程树 + AIS 以崩代降（cuFileBufRegister error = 5014 → submit_io: register_buffer failed，抛的是 Exception 不是 RuntimeError ⇒ 绕过 vLLM 自动回退）",
-        "🛑 ais_stack_check.sh 六项全绿 ≠ 这块盘能用 AIS：PM9A1 上当场崩、intel P4610 上正常，自检看不出差别 ⇒ 三道门里的挂载点白名单才是真护栏（fail-closed：探不到挂载点即拒绝）",
-        "config/ais.env 里 AIS_SHIM 缺文件时只 WARN 后继续启动（bounce 路径本身是好的）⇒ 别把 WARN 当故障，但也别当没看见"
-      ],
-      "selfcheck": [
-        "nm -D --defined-only src/hipais-shim/libhipais-shim.so | grep hipAmdFileRead",
-        "tools/ais_stack_check.sh   # 六项自检（dlopen/ais-check 层面）",
-        "findmnt -T \"$(readlink -f models/<org>/<model>)\"   # 权重物理挂载点，必须在 AIS_DISK_WHITELIST 里",
-        "起服请用 test/qwen4exp/run_q4e_ais_load.sh（自检 + 三件套 + 开关一体），别手敲 env"
-      ],
-      "sources": [
-        "src/hipais-shim/hipais_shim.c（头注：背景、同构判据、3.15 GiB/s 实测）",
-        "src/hipais-shim/build.sh",
-        "docs/MI250X-hipFile-AIS-部署手册.md、docs/MI250X-AIS权重加载-2026-09-04.md",
-        "CLAUDE.md §10.5",
-        "config/ais.env（注入与三道门）"
-      ],
-      "stack": {
-        "framework": "vLLM fastsafetensors → libhipfile.so → dlopen(libamdhip64.so.7) + dlsym(hipAmdFileRead)；shim = 27 行 C 转接 + 返回码映射",
-        "notes": "HSA 层 libhsa-runtime64（API 1.14 起）仍导出 hsa_amd_ais_file_read/write，handle 与 hip 侧逐字节同构（union { void* handle; int fd; uint8_t pad[8]; }）；内核侧前提已在位：amdgpu-dkms 30.30.4（modinfo 6.16.13）导出 kfd_ais_rw_file，8/8 die 各注册 65520 MB AIS",
-        "rocm": "7.2.4（hipAmdFileRead 声明在 hip/amd_detail/hip_storage.h，实现不再导出，官方 deb nm 命中 0；7.2.3 有）"
-      },
-      "status": "active",
-      "status_note": [
-        "实测：离线 LLM() + AIS（最快）Qwen4Exp 185.5 GB / TP4 = 97.13 s（1.91 GB/s，累计 9.9×），须配 VLLM_AIS_PLE_FP8=1（方案 C）",
-        "负结果：serve（api_server 进程树）+ AIS 以崩代降 ⇒ 只能离线加载用；盘相关性自检测不出（见红线）",
-        "bounce（AIS=0）不慢：55.6 GB / TP2 = 2.14 GB/s（别拿旧手册里单流 0.57 GB/s 当预期）"
-      ],
-      "title_or_why": "libhipais-shim（把 ROCm 7.2.4 缺失的 hipAmdFileRead 转接回 HSA AIS）——7.2.4 把 hipFile 弄断了：声明还在、实现不再导出，vLLM 探测失败后静默退回 POSIX（表现为『直读显存也很慢』而不是报错）；没有这个 shim，AIS 这条路在 7.2.4 上根本不存在。",
-      "verified": "2026-09-15"
+      "quant": [
+       "bf16"
+      ]
+     }
     },
     {
-      "apply_verify_revert": {
-        "apply": "envs/vllm_0.28.0_rocm72/bin/python patches/gfx90a/port_splitkv_pa.py --env vllm_0.28.0_rocm72 --apply",
-        "revert": "envs/vllm_0.28.0_rocm72/bin/python patches/gfx90a/port_splitkv_pa.py --env vllm_0.28.0_rocm72 --revert",
-        "verify": "envs/vllm_0.28.0_rocm72/bin/python patches/gfx90a/port_splitkv_pa.py --env vllm_0.28.0_rocm72 --require"
-      },
-      "consumers": [
-        "8111-ornith-1.5-35b-a3b-bf16-vllm-tp4",
-        "8301-qwen38-27b-fable-distill-bf16-vllm-splitkv-ab",
-        "8109-qwen38-flash-next-176b-bf16-vllm-splitkv"
+     "effect": "negative",
+     "evidence": "SKILL.md『与 serving-llms-on-instinct 的仲裁』表",
+     "value": "conc32 三档全负（−18%/−14%/−13%）；与稀疏注意力的 `MI250_SPARSE_SPLITK` **不是一回事**",
+     "when": {
+      "quant": [
+       "int8-w8a8"
       ],
-      "id": "splitkv-paged-decode",
-      "kind": "patch",
-      "path_or_target": "envs/vllm_0.28.0_rocm72（8111/8301 在役）与 src/vllm-master（8109 臂，在役 editable 树）",
-      "rebuild": [
-        "envs/vllm_0.28.0_rocm72/bin/python patches/gfx90a/port_splitkv_pa.py --env vllm_0.28.0_rocm72 --apply"
-      ],
-      "red_lines": [
-        "🛑 rocm_splitkv_pa.py 的 sha 是唯一真值（patches/gfx90a/rocm_splitkv_pa.py 与已装树做字节比对）⇒ 只许改位置不许改内容；改行为要升 sha、重投、重对拍",
-        "patches/native-env/NEW-rocm_splitkv_pa.py 是它在 gitignore 区外的唯一副本（envs/ 不进 git）",
-        "🛑 对 editable 树的写入是 opt-in：8109 只有 SPLITKV=1 或 PROBE=1 才 --apply（那棵树是 8107 在役代码），且起服前跑六道前置断言，任一失败拒起",
-        ".orig 出厂态在 patches/gfx90a/backup/splitkv-pa/*.orig（按 commit 哈希分份），删了就回不去",
-        "MAX_SCRATCH 的账：8111 在 256k 下 seqs=16..64 七档全被打回，最小一次只超 524,288 B（1.6%）⇒ 192 MiB = 实测峰值 130 MiB + 48% 余量；scratch 不吃 KV 池；回退就写 =32",
-        "cand_splitkv_pa_mq.py = 多查询（MQ）变体候选稿，未接线，留作下一步实验"
-      ],
-      "selfcheck": [
-        "envs/vllm_0.28.0_rocm72/bin/python patches/gfx90a/port_splitkv_pa.py --env vllm_0.28.0_rocm72 --require   # 在位断言",
-        "判『真上场』：grep -ac 'MI250X split-KV paged-decode 已接管' logs/<key>/server-<port>.current   # >0 = 接管发生",
-        "envs/vllm_0.28.0_rocm72/bin/python patches/gfx90a/probe_splitkv_reach.py --env <env> --apply   # 计数器探针，区分『没过算子』与『过了但没赢』；⚠️ 实验完必须 --revert 掉探针，别把计数版内核留在役树里",
-        "接管的形状条件（全满足才走，不满足自动回原路径不是错误）：纯 decode ∧ bf16 ∧ hd256 ∧ 非 2 幂 block ∧ num_seqs × kv_heads ≤ 64"
-      ],
-      "sources": [
-        "patches/gfx90a/README.md（转正说明、sha 不变式）",
-        "docs/research-notes/splitkv-{原型,落地端到端,拐点与税收,转正许可证,8107-移植,27b-0.28env-A-B}-2026-09-0{7,8}.md",
-        "models/ornith-ai/launcher/ornith_1.5_35b_a3b_vllm_rocm72_mi250x_tp4_256k.sh（默认开）",
-        "models/Qwen/launcher/qwen3.8-flash-next_176b_bf16_vllm_rocm724_256k_8109_Qwen_mi250dx8.sh（默认关 + 前置断言）"
-      ],
-      "stack": {
-        "framework": "vLLM 0.28.0+rocm723 / vLLM master（editable）；三件 = K 新内核文件 vllm/v1/attention/ops/rocm_splitkv_pa.py + I 注入点 vllm/v1/attention/backends/utils.py + T 对拍校验件",
-        "notes": "门：VLLM_ROCM_SPLITKV_PA=1 才接管（补丁在位但门没开 ⇒ 行为逐字不变）；VLLM_ROCM_SPLITKV_PA_MAX_SCRATCH_MIB=192 是 8111 定稿值（内核默认 32 MiB/key 会把长 ctx 整档打回 Triton）；🛑 故意不设 MAX_SEQS：门限唯一真值 = 内核 DEFAULT_MAX_SEQS = 64",
-        "rocm": "7.2 系（随宿主 env）"
-      },
-      "status": "active",
-      "status_note": [
-        "收益判语：8111（Ornith-35B hd256 TP4）默认开——@30720 单流 13.1 → 94.5 t/s（×7.22），并发只 +1.4/+1.8/+0.2% ⇒ 价值全在长上下文单流",
-        "负结果：8109（Flash-Next，混合注意力）默认关——QSA/线性注意力根本不经过这个算子，开了也不上场（结构判定全记录 splitkv-8107-移植-2026-09-07.md）",
-        "8301（TeichAI 27B A/B 臂）显式开（实验臂），数据 bench/splitkv_out_*.json"
-      ],
-      "title_or_why": "split-KV paged-decode 注意力接管（gfx90a 上长上下文单流的 ×7.22）——参考内核 chunked_prefill_paged_decode 的 grid 是 (num_seqs, kv_heads)，单流只有 1 个 program 打 104 个 CU（7–12 GB/s）；split-KV 把 KV 维切开填满机器，是本机长上下文单流最大的一笔收益。",
-      "verified": "2026-09-15"
-    },
-    {
-      "apply_verify_revert": {
-        "apply": "patches/llama.cpp-dsv41/port_v41_dsml_tags.py --apply && cmake --build envs/llama.cpp-src-dsv41/build-hip -j 24 && cmake --install envs/llama.cpp-src-dsv41/build-hip --prefix /home/qiba/ai/envs/llama.cpp_dsv41-gfx90a-2026.9.12",
-        "revert": "patches/llama.cpp-dsv41/port_v41_dsml_tags.py --revert（随后同样要 build+install 两步才真正生效）",
-        "verify": "patches/llama.cpp-dsv41/port_v41_dsml_tags.py --check"
-      },
-      "consumers": [
-        "8112-deepseek-v4.1-flash-748b-q4km-llamacpp"
-      ],
-      "id": "llamacpp-dsv41-dsml-tags",
-      "kind": "patch",
-      "path_or_target": "envs/llama.cpp-src-dsv41（被打的源树；fork 点 2026-09-10 master，commit f37da57；改的是 C++ 文件 common/parsers/deepseek.cpp）",
-      "rebuild": [
-        "patches/llama.cpp-dsv41/port_v41_dsml_tags.py --apply   # 打完自动 touch 目标文件",
-        "cmake --build envs/llama.cpp-src-dsv41/build-hip -j 24",
-        "cmake --install envs/llama.cpp-src-dsv41/build-hip --prefix \"$PWD/envs/llama.cpp_dsv41-gfx90a-2026.9.12\""
-      ],
-      "red_lines": [
-        "🛑 打完必须重编 + 重装前缀：不碰 .so 等于没打；revert 同样要再 build+install 两步才真正生效",
-        "🛑 --jinja 默认 false 必带（launcher 早期注释曾断言『默认 enabled 不必加』，13:5x 实测证伪）；不加走内置回退模板 ⇒ 不认 DSML ⇒ tools 退化纯文本（两次实测复现）：--jinja 与 --chat-template-file 二者都在 ARGS 里，缺一不可",
-        "🛑 『补丁在树里』不是自动保证：8112 launcher 只把补丁写进注释、不会自动 --apply/--check（脚本里没有任何 patchkit 调用，也没有 --require 准入门；对照 vLLM 8109 臂才是起服自动 refresh+apply 的模式）⇒ 前缀被重建/回退后没人会被告知，症状是『工具调用悄悄漏成文本』；验收只能人工：--check（树侧）+ probe_tools_8112.py 6/6（运行侧）",
-        "禁开 SKIP_CHAT_PARSING=1 当默认（那是 09-12 的权宜，开着 = 工具永不解析）",
-        "别把 backup 目录搞混：出厂态 .orig 跟补丁资产同目录（patches/llama.cpp-dsv41/backup/llama.cpp-dsv41-v41-dsml/，当前实存 deepseek.cpp.e2962f772903.orig，是唯一还原凭据）；tools/backup/<name> 是 patchkit 自己的默认落点",
-        "施工三个『静默无效』坑（都实踩过）：打完重编空转（patchkit:374 原子写 copystat 保留 mtime ⇒ make 判 .o 比源码新；判据 stat -c '%y' …deepseek.cpp.o 必须前进，--apply 已自 os.utime() 兜底）；重配报 hip-lang 找不到（build-hip 缓存内嵌迁盘前死路径；rm build-hip/CMakeFiles/3.28.3/CMakeHIPCompiler.cmake 重探测 + -U CMAKE_HIP_COMPILER_AR/RANLIB）；金标校验静默 ImportError（dsv41_tpl_check.py 写死老 ckpt 路径；已改候选列表 + DSV41_CKPT= 覆盖，找不到 fail-closed）"
-      ],
-      "selfcheck": [
-        "patches/llama.cpp-dsv41/port_v41_dsml_tags.py --check   # 只读体检随时可跑；默认无参数 = dry-run；期望三件全 applied（{'applied': 3}，drift/ambiguous/missing = 0；2026-09-15 实测通过）",
-        "运行判据：带 tools 请求 tool_calls 非空且 content 无 <｜DSML｜",
-        "离线：test/dsv41/peg_probe.cpp（模板→chat_params→PEG→parse，不占 GPU）：generation_prompt 非空、语法里 \" calls\"=1/\"tool_calls\"=0、尾随换行 OK",
-        "在线：test/dsv41/probe_tools_8112.py 6/6、流式 tool_calls 分片正常、SE-Bench T16 工具DSML PASS（2026-09-14）"
-      ],
-      "sources": [
-        "patches/llama.cpp-dsv41/port_v41_dsml_tags.py（补丁本体，含逐字锚点与施工注释）",
-        "docs/DSV4.1-工具调用泄露-根因与修复-2026-09-14.md §1（三根因）/§2（落地+施工三坑）/§3（验收 6/6）",
-        "models/vcruz305/launcher/deepseek-v4.1-flash_748b_q4km_llamacpp_rocm72_256k_8112_vcruz305_mi250dx8.sh L171-181/L349-370",
-        "tools/patchkit.py（原子写/.orig 备份/mtime 陷阱的机制层）"
-      ],
-      "stack": {
-        "framework": "llama.cpp（vcruz305 fork runtime/deepseek41）+ patchkit（tools/patchkit.py：原子写/.orig 备份/mtime 陷阱的机制层）",
-        "notes": "PatchSet llama.cpp-dsv41-v41-dsml 三件（逐字锚点断言）：① V41DSML——官方 V4.1 把 DSML 标签全改成带前导空格（\" calls\"/\" invoke\"/\" parameter\"），解析器写死 V3.2/V4 拼法 ⇒ 补丁改为按渲染结果判定（V3.2/V4 路径逐字节不动）② GENPROMPT-OPTIONAL——peg 首字面量 <｜Assistant｜> 由必需改可选（否则 generation_prompt 为空时每条请求 HTTP 500）③ TRAILING-SPACE——闭合标签后容忍尾随空白（原来多吐换行 ⇒ 整条判不匹配 ⇒ 500）；配套模板 models/vcruz305/launcher/templates/dsv41_chat_template.jinja（补丁与模板缺一即回归症状）",
-        "rocm": "7.2.4（重编走 envs/llama.cpp-src-dsv41/build-hip）"
-      },
-      "status": "active",
-      "status_note": [
-        "三根因定位（09-14 修，泄露修复 §1/§2）：R1 修模板（add_generation_prompt）、R2/R3 修解析器（前导空格拼法 + 尾随空白）；本构建 use_jinja 默认 false 且分支无 --parser ⇒ 模板 + 补丁两件一起才认 DSML 标记",
-        "退休条件：上游 master 的 deepseek.cpp 出现带前导空格的拼法 ⇒ 本件可删；复核一行：curl -sSL https://raw.githubusercontent.com/ggml-org/llama.cpp/master/common/parsers/deepseek.cpp | grep -n '\" calls\"'（2026-09-14 直读：无 V4.1 支持，须自带补丁）",
-        "根定位：脚本向上 8 层找 config/ports.conf 当仓库根，与运行目录无关"
-      ],
-      "title_or_why": "llama.cpp dsv41 前缀 · V4.1 DSML 工具标签补丁（三件，需重编装前缀）——8112 的 tool_calls 能解析、不 500、不漏 DSML 进 content，全靠这一个补丁 + 一份修好的模板。",
-      "verified": "2026-09-15"
-    },
-    {
-      "apply_verify_revert": {
-        "apply": "cd envs/<env>/lib/python3.12/site-packages && patch -p1 --dry-run < $AI/patches/gfx90a/aiter-cpp_extension-pybind-abi.patch（先干跑）",
-        "revert": "patch -R -p1 < 同一文件",
-        "verify": "md5：aiter/jit/utils/cpp_extension.py 应等于 patches/native-env/MANIFEST.md5 里的 cd… 条目（vllm_0.28.0_rocm72 那份）"
-      },
-      "consumers": [
-        "wu1w-int8-028"
-      ],
-      "id": "aiter-pybind11-internals",
-      "kind": "patch",
-      "path_or_target": "envs/*/lib/python3.12/site-packages/aiter/jit/utils/cpp_extension.py",
-      "rebuild": [],
-      "red_lines": [
-        "🛑 终案证据，勿再投入：这是编译/装载层的修复，修完之后 gfx90a 上 AITER 依然算不对——这是两件不同的事",
-        "🛑 别把 a8w8 线性层的成功外推到 MoE；CDNA2 上 fused-MoE 用 TRITON 就是最优解，VLLM_ROCM_USE_AITER 保持 0（唯一例外 = patches/wu1w-int8-aiter 的 a8w8 线性层，它不依赖 MoE 通路）",
-        "🛑 launcher/beta/aiter-gfx90a/vllm/ 里的『故意没装 AITER MoE 的门控』那稿是红线 3 只读区，无生产引用",
-        "只在重放 wu1w-int8-028 那条 a8w8 路径时才需要动它：那棵树里此件被手改过（md5 a2661f24… 记在 MANIFEST.md5）；重建时 md5 对不上，先看是不是这份 patch 没重放"
-      ],
-      "selfcheck": [
-        "grep -n \"internals\\|PYBIND11\" envs/vllm_0.28.0_rocm72/lib/python3.12/site-packages/aiter/jit/utils/cpp_extension.py | head -5",
-        "cd envs/vllm_0.28.0_rocm72/lib/python3.12/site-packages && md5sum aiter/jit/utils/cpp_extension.py   # 应等于 patches/native-env/MANIFEST.md5 里的 cd… 条目（vllm_0.28.0_rocm72 那份）"
-      ],
-      "sources": [
-        "patches/gfx90a/README.md（AITER MoE 的终案证据，留作证据）",
-        "CLAUDE.md §10（❌ AITER MoE 在 gfx90a 终案：不可用；三层卡点）",
-        "docs/MI250X-AITER-cDNA2-吸收落地-2026-09-07.md、docs/ROCm10-AITER-不可行性复核-2026-09-12.md"
-      ],
-      "stack": {
-        "framework": "AITER JIT（torch.utils.cpp_extension 编 C++/HIP 扩展）",
-        "notes": "症状机理：加载期报 pybind11 internals 版本不匹配（v11 与 v12 两套 detail 命名空间：一侧版本标记与另一侧不同 ⇒ 模块能 import、函数解析不到，或反过来）；补丁把 internals 取值统一到本机 torch 实际带的那一侧；补丁原件 patches/gfx90a/aiter-cpp_extension-pybind-abi.patch",
-        "rocm": "7.2 系（amd-aiter 0.1.19 随 vLLM env；换 ROCm 10 也翻不动——AITER 侧零版本门可解）"
-      },
-      "status": "dead",
-      "status_note": [
-        "判死原因（三层卡点，CLAUDE.md §10）：① get_cdna_version() > 2 的 arch 门（CDNA2 直接被挡）② 预编 .so 里 gfx90a 码对象 = 0（同批 gfx942 = 97；铁证来自 ATOM 那次同构排查，docs/MI250X-ATOM-vLLM插件-本机实测-2026-09-06.md）③ JIT 出来也静默算错：bf16 无全局 AtomicAdd ⇒ CK 内核结果错，不报错、不崩溃",
-        "追加负结果：换 ROCm 10 也翻不动——AITER 侧零版本门可解（docs/ROCm10-AITER-不可行性复核-2026-09-12.md）",
-        "gate：无运行时调用（手工补丁，不在任何 launcher 的启动路径上）；此件在 vllm_0.28.0_rocm72 里留作证据"
-      ],
-      "title_or_why": "AITER JIT 的 pybind11 internals v11/v12 分裂修法（终案证据，勿再投入）——它修的是『AITER 在 gfx90a 上编不出/装不上』的最外层症状；真正卡死 AITER 的是 arch 门 + 无 gfx90a 码对象 + JIT 后 CK 静默算错（bf16 无全局 AtomicAdd）；留下是为了让下任不再把这三层卡点误读成一次编译事故。",
-      "verified": "2026-09-15"
-    },
-    {
-      "apply_verify_revert": {
-        "apply": "cd src/llama.cpp-upstream && git apply ../../patches/llama.cpp-mtp-only-export.patch   # git status 应显示 conversion/{base,qwen}.py 为 M",
-        "revert": "cd src/llama.cpp-upstream && git apply -R ../../patches/llama.cpp-mtp-only-export.patch",
-        "verify": "envs/unsloth_2026.9.2_rocm7.2/bin/python convert_hf_to_gguf.py <dir> --mtp --outtype bf16 --outfile /tmp/mtp-check.gguf && python3 ../../tools/gguf_head_dump.py /tmp/mtp-check.gguf --tensors"
-      },
-      "consumers": [
-        "8110-ornith-1.5-397b-q8-0-llamacpp"
-      ],
-      "id": "llamacpp-mtp-only-export",
-      "kind": "patch",
-      "path_or_target": "src/llama.cpp-upstream（转换树 @d4abd57；补丁打在 conversion/base.py + conversion/qwen.py；非服务运行时）",
-      "rebuild": [
-        "cd src/llama.cpp-upstream && git apply ../../patches/llama.cpp-mtp-only-export.patch   # git status 应显示 conversion/{base,qwen}.py 为 M",
-        "# 完整制造链（09-11 重导版，可原样复跑）：",
-        "D=/home/qiba/ai/cache/ornith397b-mtp",
-        "/usr/local/bin/modelscope download --model ornith-ai/Ornith-1.5-397B model-mtp.safetensors model-00001-of-00122.safetensors model-00122-of-00122.safetensors --local-dir \"$D\"",
-        "/usr/local/bin/modelscope download --model ornith-ai/Ornith-1.5-397B tokenizer.json tokenizer_config.json vocab.json merges.txt chat_template.jinja preprocessor_config.json processor_config.json --local-dir \"$D\"",
-        "cd src/llama.cpp-upstream && envs/unsloth_2026.9.2_rocm7.2/bin/python convert_hf_to_gguf.py \"$D\" --mtp --outtype bf16 --outfile \"$D/mtp-try.gguf\"   # 补丁在位",
-        "envs/llama.cpp_gfx90a-2026.9.8/qwen4exp-mtp/bin/llama-quantize \"$D/mtp-try.gguf\" \"$D/mtp-Ornith-1.5-397B-Q8_0.gguf\" Q8_0 24",
-        "python3 tools/gguf_head_dump.py \"$D/mtp-Ornith-1.5-397B-Q8_0.gguf\" --tensors   # ⑤ 校验 ⑥ 落位到量化子目录（见配方 8110 §4）"
-      ],
-      "red_lines": [
-        "🛑 tokenizer 文件必须在场，否则死在 get_vocab_base_pre 的 'BPE pre-tokenizer was not recognized'——报错会把人误导成『上游不支持 qwen35moe --mtp』（09-09 链路图漏了这步，白疑一场）",
-        "🛑 转换器不能跑在 envs/pytorch_2.14_rocm7.2（重导 §3.2），用 envs/unsloth_2026.9.2_rocm7.2",
-        "换头后必须把草稿的 <arch>.context_length 与主模型改齐（否则『主槽位够用、草稿被静默钳小』，8110 基脚本护栏已拦）",
-        "离线制造链专属：服务运行时前缀（envs/llama.cpp_gfx90a-2026.9.8/qwen4exp-mtp-rp）不含也不需要它——与 llamacpp-dsv41-dsml-tags（运行时 C++ 补丁）的本质区别就在这",
-        "缺头要显式警告：制造链必须可复跑（09-09 丢头事故的教训，见 status_note）"
-      ],
-      "selfcheck": [
-        "gate 判据：导出产物必须含 blk.60.nextn.{eh_proj,enorm,hnorm,shared_head_norm} + 自带 token_embd/output/output_norm（tools/gguf_head_dump.py --tensors 逐项可见）；缺 embd/norm 即补丁没生效",
-        "结构判据：general.architecture=qwen35moe、nextn_predict_layers=1、block_count=61、23 张量、无 blk.0.attn_norm ⇒ 命中 src/models/qwen35moe.cpp:39 的 mtp_only 合法独立草稿判据",
-        "行为判据（比结构更强，重导 §7.5 腿④）：无投机地板 33.09 → 挂此头 +MTP n=2 46.39（+40.2%）；与 09-09 首版头、09-11 重导头互证（地板跨两天跨两份头吻合到 0.1%）",
-        "verify 命令：envs/unsloth_2026.9.2_rocm7.2/bin/python convert_hf_to_gguf.py <dir> --mtp --outtype bf16 --outfile /tmp/mtp-check.gguf && python3 ../../tools/gguf_head_dump.py /tmp/mtp-check.gguf --tensors"
-      ],
-      "sources": [
-        "patches/llama.cpp-mtp-only-export.patch（补丁本体，2852 B，逐段读自 diff）",
-        "docs/Ornith-397B-MTP草稿头-重导-2026-09-11.md §2（执行链）/§3.1/§3.2/§4/§5",
-        "docs/下载-ModelScope-Ornith-1.5-397B-Q8_0-与8110底座-2026-09-09.md §10（首版链路与两处补丁判据）",
-        "docs/recipes/serving/8110-ornith-1.5-397b-q8-0-llamacpp.md §4"
-      ],
-      "stack": {
-        "framework": "llama.cpp convert_hf_to_gguf.py（HF→GGUF 转换器）",
-        "notes": "运行解释器 = envs/unsloth_2026.9.2_rocm7.2（🛑 不能跑在 envs/pytorch_2.14_rocm7.2：缺依赖/行为不符）；09-11 重导实测：转换 88 s → bf16 16.09 GiB / 23 tensors；llama-quantize（CPU 20.6 s）→ Q8_0 8.56 GiB",
-        "rocm": "无关（CPU 离线转换链，不占卡）"
-      },
-      "status": "active",
-      "status_note": [
-        "补丁内容（两处半，全部有注释自述根因）：[mtp-only-parts] base.py——上游 mtp_only 下仍无条件打开 weight_map 全部 122 片 / 751 GiB，把 part_names/tensor_names_from_index 收窄；[续] tensor_names_from_parts 一起收窄（否则落盘 00001/00122 里无关张量被判 Extra tensors 而 raise）；[mtp-only-keep-names] qwen.py _QwenMtpMixin——keep 白名单没有多模态 checkpoint 真名 model.language_model.{embed_tokens,norm}.weight ⇒ 静默丢掉草稿 token_embd/output_norm，产出不可独立运行的 mtp 文件（不报错，最阴）",
-        "事故存证（负结果）：09-09 首版头随 models/ornith-ai/Ornith-1.5-397B/ 目录删除而丢失 ⇒ 8110 静默退成无投机 33 t/s 跑了两周——这就是『制造链必须可复跑 + 缺头要显式警告』两条规矩的来源",
-        "为什么只能自导：bartowski 权重零 nextn 张量，官方仓库也没有独立 mtp 文件 ⇒ 只能从源模型 ornith-ai/Ornith-1.5-397B 的 model-mtp.safetensors 自导",
-        "现状：补丁在 src/llama.cpp-upstream（@d4abd57）上已在位（09-11 重导后 git status 显示 M）；若上游将 mtp_only 三处行为收编即可 archived——复核 = 干净树跑一次 §3③ 并比对 --tensors 输出"
-      ],
-      "title_or_why": "llama.cpp 转换器补丁 · --mtp 只导草稿层（两处收窄，产物才可独立运行）——Ornith-397B 的 MTP 草稿头（8110 的 +40.2% 来源）必须靠它导出来：上游 --mtp 在『只取三片』的场景下要么 FileNotFoundError、要么静默丢张量产出废文件。",
-      "verified": "2026-09-15"
-    },
-    {
-      "apply_verify_revert": {
-        "apply": "git -C src/vllm-master apply --check $AI/patches/qwen4exp/local-ple-fp8-resident.patch && git -C src/vllm-master apply $_（nogds 同法）",
-        "revert": "git -C src/vllm-master apply -R <对应 patch>（改完 commit 到 backup remote，见 environments/vllm_master_rocm724.md §4）",
-        "verify": "grep -n 'VLLM_FST_KEEP_NOGDS' src/vllm-master/vllm/model_executor/model_loader/weight_utils.py && grep -n 'VLLM_AIS_PLE_FP8' src/vllm-master/vllm/models/qwen4_exp/amd/ple_layer.py"
-      },
-      "consumers": [
-        "8107-qwen38-flash-next-176b-bf16-vllm-tp8",
-        "8109-qwen38-flash-next-176b-bf16-vllm-splitkv",
-        "ais-hipfile-load"
-      ],
-      "id": "qwen4exp-ais-ple",
-      "kind": "patch",
-      "path_or_target": "envs/vllm_master_rocm724（editable → src/vllm-master；只有这棵树打了）",
-      "rebuild": [
-        "git -C src/vllm-master apply --check $AI/patches/qwen4exp/local-ple-fp8-resident.patch && git -C src/vllm-master apply $AI/patches/qwen4exp/local-ple-fp8-resident.patch   # nogds 同法",
-        "# 改完 commit 到 backup remote（见 environments/vllm_master_rocm724.md §4）"
-      ],
-      "red_lines": [
-        "🛑 对 BF16 开着 VLLM_AIS_PLE_FP8=1 = 无声量化成 fp8（写入是 source.to(target.dtype)；模型照起、输出照通顺，肉眼发现不了）⇒ 补丁已加 dtype 护栏：非 fp8 分片 raise TypeError",
-        "🛑 两条分支一律惰性消费 weights，禁止 list(weights)：为预扫 weight_scale 物化整组权重，会把 fastsafetensors 交给本模块的整组同时钉在显存里 ⇒ BF16 实测多钉 19.85 GiB/die（61.75 自报 vs 真实 41.9），稳定 OOM 于 shard 2–3/33，签名 Consumer error: CUDA out of memory. Tried to allocate 764.00 MiB；折 scale 的条件里已有 dtype == float8_e4m3fn ⇒ BF16/FP16 checkpoint 根本没有 weight_scale，预扫是纯浪费（旧注释『bf16 分支需要它』已于 09-04 实测证伪）",
-        "不打 nogds 件 = AIS 在 TP>1 永不生效，没有任何报错（表现为『直读显存也很慢』）",
-        "PR55040-amd-ple-fp8-dequant.diff 别当本地补丁打（对照件）"
-      ],
-      "selfcheck": [
-        "grep -n 'VLLM_FST_KEEP_NOGDS' src/vllm-master/vllm/model_executor/model_loader/weight_utils.py | head -3",
-        "grep -n 'raise TypeError\\|VLLM_AIS_PLE_FP8' src/vllm-master/vllm/models/qwen4_exp/amd/ple_layer.py | head -5",
-        "grep -n 'list(weights)' src/vllm-master/vllm/models/qwen4_exp/amd/ple_layer.py   # 必须 0 命中",
-        "gate：config/ais.env 的 VLLM_AIS_PLE_FP8 写 1 时按分片 dtype 硬断言；8107 脚本对 BF16 强制 VLLM_AIS_PLE_FP8=0",
-        "起服走 test/qwen4exp/run_q4e_ais_load.sh（自检+三件套+开关一体），别手敲 env"
-      ],
-      "sources": [
-        "patches/qwen4exp/local-ple-fp8-resident.patch（头注：三阶段实测 960.15 s → 204.85 s → 97.13 s）",
-        "patches/qwen4exp/local-nogds-gds-for-tp-gt1.patch",
-        "patches/qwen4exp/PR55040-amd-ple-fp8-dequant.diff（上游对照件）",
-        "docs/MI250X-hipFile-AIS-部署手册.md §11、docs/MI250X-CLAUDE-下沉细节-2026-09-06.md §B",
-        "CLAUDE.md §10.5"
-      ],
-      "stack": {
-        "framework": "vLLM master（editable）：weight_utils.py + vllm/models/qwen4_exp/amd/ple_layer.py；补丁件 local-nogds-gds-for-tp-gt1.patch / local-ple-fp8-resident.patch",
-        "notes": "开关：VLLM_FST_KEEP_NOGDS=1 = 恢复上游 nogds 行为；VLLM_AIS_PLE_FP8 只对 FP8 checkpoint 有效（BF16 必须 0）；PR55040-amd-ple-fp8-dequant.diff 是上游对照件（amd vs nvidia 的 Qwen4ExpNGramEmbedding），用来判『上游吸收了多少、本地还剩哪几行』，别当本地补丁打",
-        "rocm": "7.2.4（hipFile/AIS 路径，配合 src/hipais-shim）"
-      },
-      "status": "active",
-      "status_note": [
-        "nogds 机理：上游 weight_utils.py 里 nogds = pg.size() > 1 是为避开 cuFileDriverOpen() 给每块可见 GPU 建 context；在 ROCm 上这条前提不成立（hipFile 走 hsa_amd_ais_file_read，不产生 per-device cuFile context）⇒ 打上后 nogds = pg.size() > 1 and os.environ.get('VLLM_FST_KEEP_NOGDS','0') != '0'；8107 脚本默认设 KEEP_NOGDS=1 配合 AIS=0 走 bounce",
-        "PLE fp8 驻留（方案 C）：去掉上游 #55040 的 load-time dequant，n-gram 表以 fp8 驻留、查表后再乘 scale ⇒ 省 51.2 GB 驻留 + 不再要求张量先落 host（AIS 收益才能兑现）；数值验证 bf16(fp8→bf16×scale) 与 (fp8 gather)→bf16×scale 实测 torch.equal == True、max diff 0.0",
-        "三阶段实测（Qwen4Exp 185.5 GB / TP4 / AIS / P4610）：原状（bf16 驻留+load-time dequant+mmap）960.15 s / 56.06 GiB per die → +本 patch（swap 仍在模型盘）204.85 s / 44.33 GiB → +swap 迁出模型盘+惰性消费 97.13 s（1.91 GB/s）/ 44.33 GiB"
-      ],
-      "title_or_why": "Qwen4Exp 的两件 vLLM 本地补丁（TP>1 的 nogds 硬门 + PLE 表 fp8 驻留）——它们决定 Flash-Next（qwen4_exp）在本机能不能起、起得起多大：nogds 门不打开则 AIS 直读显存在 TP>1 永不生效；PLE fp8 驻留不做则 185 GB 那档 bf16 驻留 56.06 GiB/die 直接起不来（可用前提，不是优化项）。",
-      "verified": "2026-09-15"
-    },
-    {
-      "apply_verify_revert": {
-        "apply": "cd envs/<env>/lib/python3.12/site-packages && patch -p1 < $AI/patches/native-env/vllm028-base-p1-qr.patch（整件类：cp $AI/patches/native-env/NEW-*.py 到对应路径）",
-        "revert": "逐件用裸轮对照恢复：cp 自 envs/wu1w-fresh/lib/python3.12/site-packages/<相对路径>（🛑 先判断漂移是有意改动还是误伤）",
-        "verify": "tools/verify_env_patches.sh"
-      },
-      "consumers": [
-        "vllm_0.28.0_rocm72",
-        "wu1w-int8-028",
-        "p1-gemv-c2c3-quickreduce",
-        "splitkv-paged-decode",
-        "wu1w-int8-aiter"
-      ],
-      "id": "native-env-drift-baseline",
-      "kind": "patch",
-      "path_or_target": "envs/vllm_0.28.0_rocm72 · envs/wu1w-int8-028 ·（历史）envs/atom_vllm",
-      "rebuild": [
-        "cd envs/<env>/lib/python3.12/site-packages && patch -p1 < $AI/patches/native-env/vllm028-base-p1-qr.patch",
-        "cp $AI/patches/native-env/NEW-rocm_splitkv_pa.py vllm/v1/attention/ops/   # 整件类",
-        "cp $AI/patches/native-env/NEW-mi250_kernels.py vllm/model_executor/layers/   # 整件类",
-        "tools/verify_env_patches.sh"
-      ],
-      "red_lines": [
-        "🛑 gitignore 区改完必须回写 patches/native-env：envs/ 不进 git，不记录就成孤儿改动（唯一副本只存在于工作树里）",
-        "🛑 基线必须按 env 分文件：同名文件在不同 env 里本就是不同内容（例：aiter/ops/communication.py 在 wu1w-int8-028 与已回收的 atom_vllm 是两份不同手改）；合并成一份 ⇒ 永远有一边『漂移』",
-        "🛑 不要顺手更新基线文件：漂移先定性（有意改动 / 误伤）；确认是有意的，才重新抓 md5 并在 p1-gemv-c2c3-quickreduce 之类配方里记一句『改了什么、依据哪次实测』",
-        "revert 前先判断漂移性质：逐件用裸轮对照恢复 cp 自 envs/wu1w-fresh/lib/python3.12/site-packages/<相对路径>",
-        "已回收的 env（atom_vllm、vllm_master_rocm724_atom）⇒ 脚本打『env 已回收，跳过（基线保留）』而不算失败；基线与唯一手改整件留在 cache/trash/…/env-unique-assets/，将来重建后仍可校验"
-      ],
-      "selfcheck": [
-        "tools/verify_env_patches.sh   # 全绿 = 手工补丁未漂移（exit 0）；exit 1 = 有漂移",
-        "漂移后的三步复原（脚本头注原文）：① 与裸轮对照看差异（envs/wu1w-fresh）② 重放补丁 patch -p1 < vllm028-base-p1-qr.patch ③ 整件覆盖 cp NEW-*.py 到对应路径",
-        "新增一处手改的动作清单：① 改完立刻把整件/diff 存进 patches/native-env/（diff -u 原文件 改后 > <名>.patch）② md5sum 相对 site-packages 路径 >> patches/native-env/<env>.hand-patched.md5 ③ tools/verify_env_patches.sh 校验 + 更新对应 patch 配方的 verified:"
-      ],
-      "sources": [
-        "tools/verify_env_patches.sh（头注：为什么需要它、基线为什么按 env 分文件、漂移后的三步复原）",
-        "patches/native-env/MANIFEST.md5",
-        "docs/envs-盘点与整改-2026-09-12.md §3"
-      ],
-      "stack": {
-        "framework": "vLLM 0.28.0+rocm723 系手改基线：vllm028-base-p1-qr.patch（P1 接线 + QR 守卫 C2/C3 + split-KV 注入点的全部差异）+ wu1w-int8-on-top-of-base.patch（aiter/int8 增量 7 件）+ NEW-mi250_kernels.py / NEW-rocm_splitkv_pa.py（裸轮里不存在的新文件整件，patch 装不下只能整件覆盖）",
-        "notes": "MANIFEST.md5 = 12 个手改文件的 md5 总表（人读）；<env>.hand-patched.md5 = 按 env 分文件的 md5 基线，verify_env_patches.sh 逐 env 读它",
-        "rocm": "随宿主 env（与 ROCm 版本无关的 md5 基线体系）"
-      },
-      "status": "active",
-      "status_note": [
-        "漂移谱系（md5 实测，别再靠猜）：wu1w-fresh（裸轮 vllm 0.28.0+rocm723）≡ atom_vllm（裸轮，零手改，已回收）→ vllm_0.28.0_rocm72（+P1 / +QR 守卫 / +split-KV）≡ wu1w-int8-028（+aiter int8 增量）",
-        "09-12 盘点与整改 §3：19 个只活在 gitignore 区里的文件变成资产",
-        "判『某处差异是官方 wheel 带的还是本机手改』：与 envs/wu1w-fresh 对 diff（全机唯一未打补丁的裸件，见 environments/wu1w-fresh.md）"
-      ],
-      "title_or_why": "site-packages 手改的基线与重放料（patches/native-env/ + tools/verify_env_patches.sh）——envs/ 整目录在 .gitignore 内，git status 永远看不见里面的改动，而本机的 P1 门控 GEMV / QR 守卫 / split-KV / wu1w INT8 全以『直接改 site-packages』的形式存在；这一目录是它们唯一的可复现副本 + 唯一漂移判据。",
-      "verified": "2026-09-15"
-    },
-    {
-      "apply_verify_revert": {
-        "apply": "不适用（目标树已不在本机；要考古用 git show f70c34c -- <路径>）",
-        "revert": "不适用",
-        "verify": "不适用"
-      },
-      "consumers": [],
-      "id": "nv-era-leftovers",
-      "kind": "patch",
-      "path_or_target": "src/vllm-0.27-src（已不在本机）",
-      "rebuild": [],
-      "red_lines": [
-        "🛑 不要把这些文件 copy 进 envs/ 或 src/vllm-master 来『试试』：它们的目标树/架构都不在本机",
-        "🛑 gate: none——没有任何现役 launcher 引用",
-        "⚠️ 同名机制陷阱：patches/envs-patches/sitecustomize.py 与 envs/wu1w-int8-028 里的手改 sitecustomize.py 不是一个东西（后者是 a8w8 通路的一部分，见 patches/wu1w-int8-aiter）⇒ md5 基线按 env 分文件正是为此",
-        "本机同名文件的本机态归属：vllm/v1/core/kv_cache_utils.py 由 patches/native-env/ 与 src/vllm-master 负责；NVFP4 属 Blackwell，CLAUDE.md §8 明列 FP4/FP8 档禁用"
-      ],
-      "selfcheck": [
-        "git show f70c34c --stat | head -30   # 09-12 清理基线（考古 NV 判据用）",
-        "git log --diff-filter=D --name-only --oneline -- 'launcher_legacy_nvidia/*' | head"
-      ],
-      "sources": [
-        "docs/envs-盘点与整改-2026-09-12.md §3（原 envs/patches/ 8 个文件整体入库）",
-        "docs/CUDA内容清除-2026-09-12.md",
-        "CLAUDE.md §8（09-12 迁移前旧机脚本与资产已全部删除，考古走 git 基线 f70c34c）",
-        "逐件头注（mhc_deepgemm_patch.py、sitecustomize.py）"
-      ],
-      "stack": {
-        "framework": "vLLM 0.27 / rtp-llm（NVFP4）等旧机改动：mhc_deepgemm_patch.py、sitecustomize.py、vllm027-src-8178-reap-local-mods.patch、rtp-llm-src-nvfp4-port-local-mods.patch、vllm-modifications/{anthropic_serving,cuda,linear}.py.modified、vllm/v1/core/kv_cache_utils.py",
-        "notes": "mhc_deepgemm_patch.py：vLLM 0.27 的 mhc_pre_broadcast_tilelang（DSV4 首层 hyperconnection pre）无条件调 vendored DeepGEMM 的 tf32_hc_prenorm_gemm，该 API 在 sm120 上断言 Unsupported architecture（hyperconnection.hpp:56）⇒ 用语义等价的 torch split-K 顶掉；CUDA/DeepGEMM 专属",
-        "rocm": "无关（CUDA/NVIDIA 世代）"
-      },
-      "status": "archived",
-      "status_note": [
-        "归档原因：NV（sm120/CUDA）时代遗留，本机 gfx90a 一条都不在路；同期做过一轮 CUDA 内容清除（docs/CUDA内容清除-2026-09-12.md）",
-        "为什么留而不删（负过程也是资产）：09-12 整改原则是『只活在 gitignore 区里的东西必须进 git，哪怕路线已废』；同期删的是可再生物（launcher_legacy_nvidia/、56 个残留、legacy_nv 软链树、NVFP4 量化工具、Blackwell 文档），这 8 件不可再生故整体入库",
-        "anthropic_serving.py.modified 是孤儿件（无消费方），入库只为不丢历史；vllm027 源码树 + PR#8178 合集对本机无效（本机 vLLM 是 0.28 / master）；考古旧机脚本走 git 基线 f70c34c（CLAUDE.md §8）"
-      ],
-      "title_or_why": "NV 世代遗留的 8 件补丁/整件（patches/envs-patches/，本机 gfx90a 无一条在路）——它们是迁移前那台 CUDA 机器（sm120）上的施工痕迹，09-12 从 gitignore 区整体入库当证据保留；列在这里是为了让人一眼判『这堆东西跟我现在的问题无关』，而不是照抄。",
-      "verified": "2026-09-15"
-    },
-    {
-      "apply_verify_revert": {
-        "apply": "envs/vllm_0.28.0_rocm72/bin/python patches/gfx90a/port_p1_c2_c3.py --env vllm_master_rocm724 --apply",
-        "revert": "envs/vllm_0.28.0_rocm72/bin/python patches/gfx90a/port_p1_c2_c3.py --env vllm_master_rocm724 --revert",
-        "verify": "envs/vllm_0.28.0_rocm72/bin/python patches/gfx90a/port_p1_c2_c3.py --env vllm_master_rocm724 --require"
-      },
-      "consumers": [
-        "8107-qwen38-flash-next-176b-bf16-vllm-tp8",
-        "8109-qwen38-flash-next-176b-bf16-vllm-splitkv",
-        "8111-ornith-1.5-35b-a3b-bf16-vllm-tp4",
-        "8113-qwen38-27b-bf16-vllm-tp2"
-      ],
-      "id": "p1-gemv-c2c3-quickreduce",
-      "kind": "patch",
-      "path_or_target": "envs/vllm_master_rocm724（editable → src/vllm-master）与 envs/vllm_0.28.0_rocm72",
-      "rebuild": [
-        "cd /home/qiba/ai && PY=envs/vllm_0.28.0_rocm72/bin/python   # 一律走 venv 解释器，别用系统 python",
-        "$PY patches/gfx90a/port_p1_c2_c3.py --env vllm_master_rocm724 --apply   # 写树（先 --check）",
-        "$PY patches/gfx90a/port_p1_c2_c3.py --env vllm_0.28.0_rocm72 --apply"
-      ],
-      "red_lines": [
-        "🛑 C2/C3 ≠ 摘 --disable-custom-all-reduce：那条 flag 只关 ca_comm；vLLM 的 CUSTOM allreduce 在 gfx90a 静默算错（输出全 !!!），平台门才是真护栏；MI250_ALLOW_CA 只存在于当年的容器补丁，原生 env 0 命中，别当护栏",
-        "三条硬规矩（patches/gfx90a/README.md 原文，违反过一次就回不去）：① AI_HOME 用锚点法解析（_ai_home() 找带 config/ports.conf 的目录），别再写死 .. 级数——09-12 从 4 层深搬到 2 层深，旧写法会把根解析成 /home/qiba 且静默找不到 env ② 不许改『写进目标树的标记文本』（probe_splitkv_reach.py 往已打补丁文件里插的含路径注释行），改了 --check/--revert 与树上旧标记就不匹配；只改 docstring 里的 usage 示例 ③ sha 不变式：rocm_splitkv_pa.py、kernels/mi250_kernels.py 与已装树做字节比对 ⇒ 只许改位置不许改内容，要改行为就升 sha、重投、重跑对拍",
-        "🛑 backup/p1c2c3/*.orig 是出厂态，--revert 逐字节还原靠它——删了就回不去（不属于 launcher/beta，但性质一样）",
-        "⚠️ 模块级求值陷阱：_MI250_QR_WANTED 在 import 时定型 ⇒ 必须在 python 启动前设好 QR 三 env，起服后再改无效",
-        "⚠️ QR 在 w>2 是浮点求和重排（0.231 ULP，非脏数据），但 temp=0 逐 token 输出会变 ⇒ 开 QR 后旧基线全部作废必须重跑才可比（这也是 config/vllm.conf 默认 QUANTIZATION=NONE 的理由，见 knobs/quick-reduce-gfx90a）"
-      ],
-      "selfcheck": [
-        "$PY patches/gfx90a/port_p1_c2_c3.py --list-targets   # 本机哪些 env 可投（editable 也能解析）",
-        "$PY patches/gfx90a/port_p1_c2_c3.py --env <env> --check   # 只读，drift/missing ⇒ exit 2",
-        "$PY patches/gfx90a/port_p1_c2_c3.py --env vllm_0.28.0_rocm72 --require   # 准入断言；退出码语义：4 = 判定不可用（launcher 据此 exit 2），非 0 其它值 = 工具自己出错 ⇒ launcher 只 WARN 不冒充结论",
-        "$PY patches/gfx90a/port_p1_c2_c3.py --self-test   # 临时目录里把六件套打一遍，不碰真实目标",
-        "$PY patches/gfx90a/port_p1_c2_c3.py --env vllm_0.28.0_rocm72 --obsolete   # 上游吸收判定（命中 = 该由人来撤）",
-        "两条校验都要跑：只跑 tools/verify_env_patches.sh 不能证明 master 树没问题；只跑 --require 不能证明 0.28 树没漂移（README §4）",
-        "判『真上场』而不是『构造成功』：日志 Using ['QUICK_REDUCE', …] 只证构造；证明上场只能看 Kineto trace 的 kernel 名，或 ABAB 对拍（CLAUDE.md §10 方法论条）"
-      ],
-      "sources": [
-        "patches/gfx90a/README.md（转正说明、三条硬规矩、谁在运行时调它）",
-        "docs/BETA资产转正-2026-09-12.md（15 件生产硬依赖转正）",
-        "docs/MI250X-vLLM-优化方案.md（P1 / QR 全数据表）",
-        "CLAUDE.md §10（P1、QuickReduce 三 env、CUSTOM allreduce 判死）",
-        "models/Qwen/launcher/qwen3.8-flash-next_176b_bf16_vllm_rocm724_256k_8107_Qwen_mi250dx8.sh（QR=1 断言现场）"
-      ],
-      "stack": {
-        "framework": "投递器 patches/gfx90a/port_p1_c2_c3.py（六件套子命令）；三件 = P1（vllm/model_executor/layers/utils.py + 新文件 layers/mi250_kernels.py）/ C2（device_communicators/quick_all_reduce.py arch 白名单 +gfx90a）/ C3+C3b（cuda_communicator.py 模块级 _MI250_QR_WANTED + qr_comm 构造条件）",
-        "notes": "P1 数据：Qwen3-Next shared_expert_gate 的 1×1×2048 GEMM 掉进 hipBLASLt 66.5 µs 慢核 × 40 层，补 out_features≤16 && tokens≤8 的 Triton GEMV（5.5 µs）⇒ Ornith TP4 单流 71.2→85.3 t/s（+19.8%）且与 F.linear 逐位相同；C3 机理：vLLM 只在 use_custom_allreduce 为真时才构造 qr_comm，而那是 MI300+ 假设（platforms/rocm.py 的 gfx94/95 门 → parallel.py:1057 强制 disable，且只打 logger.debug 日志里看不见）⇒ 只设 env 不够",
-        "rocm": "随两棵 vLLM 树（7.2 系）"
-      },
-      "status": "active",
-      "status_note": [
-        "两个 env 的投递形态不同（最容易搞混）：vllm_master_rocm724 = editable → src/vllm-master ⇒ 改动 = 源码 commit（QR-gfx90a 那发是 af49926），唯一副本走 git + backup remote/bundle，校验用 --require 与 git log；vllm_0.28.0_rocm72 = 直接改 site-packages（gitignore 区），唯一副本 patches/native-env/vllm028-base-p1-qr.patch + NEW-mi250_kernels.py，校验用 tools/verify_env_patches.sh（md5 基线）",
-        "C2 附注：FP lossless 模式在 CDNA2 与 NCCL 逐位一致；15 件生产硬依赖 09-12 从 BETA 转正（docs/BETA资产转正-2026-09-12.md）"
-      ],
-      "title_or_why": "vLLM 的 P1 门控 GEMV + C2/C3 QuickReduce 架构门（gfx90a 三件投递 + fail-closed 准入门）——这是本机 vLLM 侧收益最大的两件东西（P1 单流 +19.8%、QR 在 TP2/TP4 +4.7%/+12.5~24.9%），而 8107/8109 起服路径上的 --require 是准入断言：不在位就 exit 2 拒启，不是可选开关。",
-      "verified": "2026-09-15"
-    },
-    {
-      "apply_verify_revert": {
-        "apply": "envs/wu1w-int8-028/bin/python src/vllm-mi210/scripts/apply_gfx90a.py --apply",
-        "revert": "git 无关（envs/ 是 gitignore 区）⇒ 复原 = 从 envs/wu1w-fresh 重拷被改文件，再按需重放基线补丁；或 patch -R -p1 < patches/native-env/wu1w-int8-on-top-of-base.patch",
-        "verify": "envs/wu1w-int8-028/bin/python src/vllm-mi210/scripts/apply_gfx90a.py --check"
-      },
-      "consumers": [
-        "8114-qwen38-27b-int8-w8a8-vllm-tp1-dflash12",
-        "wu1w-int8-028"
-      ],
-      "id": "wu1w-int8-aiter",
-      "kind": "patch",
-      "path_or_target": "envs/wu1w-int8-028",
-      "rebuild": [
-        "cp -a envs/vllm_0.28.0_rocm72 envs/wu1w-int8-028",
-        "tools/fix_venv_prefix.sh",
-        "envs/wu1w-int8-028/bin/python src/vllm-mi210/scripts/apply_gfx90a.py --apply",
-        "tools/verify_env_patches.sh"
-      ],
-      "red_lines": [
-        "🛑 只有线性层：AITER MoE 在 gfx90a 终案不可用（arch 门 / 无码对象 / JIT 后 CK 静默算错 = bf16 无全局 AtomicAdd）；别把 a8w8 的成功外推到 MoE",
-        "🛑 VLLM_ROCM_USE_AITER=1 只允许在这条臂上出现：统一层 config/vllm.conf 默认 0 且带 WARN（RMSNorm 优先级门不查 arch）；8114 里显式 export VLLM_ROCM_USE_AITER=1 + VLLM_ROCM_USE_AITER_LINEAR=1，写在 conf 之前 ⇒ 不被 ${VAR:-0} 覆盖",
-        "⚠️ JIT 缓存要独立：沿用旧 torch_compile_cache 会出现『日志写着 AITER、实际仍跑 Triton』；8114 用 WU1W_CACHE（默认 cache/wu1w/torch_compile_cache）+ VLLM_ROCM_AITER_JIT_CACHE",
-        "⚠️ shebang 陷阱：cp -a 出来的 env 里 bin/* 若指向母本，bin/vllm serve 会静默加载未打补丁的 vLLM（本 env 09-12 中招并修好，详见 environments/wu1w-int8-028.md §4）",
-        "fused_gdn_hip.hip 此前任何 git 里都不存在，09-12 才入库（唯一副本 patches/wu1w/；另在 src/vllm-mi210 自己仓 commit c5bdf49）——丢了就没有第二份"
-      ],
-      "selfcheck": [
-        "起服前置闸（8114 头部要求，逐字）：cd /home/qiba/ai && envs/wu1w-int8-028/bin/python src/vllm-mi210/scripts/apply_gfx90a.py --check   # 任何一条非 ok/skip ⇒ 不要起服",
-        "判『真上场』：日志必须出现 AiterInt8ScaledMMLinearKernel；只出现 Using TRITON ... = 静默回退，配置形同未改",
-        "md5 基线：patches/native-env/wu1w-int8-028.hand-patched.md5（逐件）+ MANIFEST.md5 总表"
-      ],
-      "sources": [
-        "docs/davetha-wu1w-gfx90a-落地施工单-2026-09-10.md",
-        "docs/MI250X-PR41-Qwen38-27B-INT8-dflash-本机复现-2026-09-14.md",
-        "patches/native-env/wu1w-int8-on-top-of-base.patch、patches/wu1w/fused_gdn_hip.hip",
-        "src/vllm-mi210/scripts/apply_gfx90a.py（上游打补丁器，锚点定义在此）",
-        "patches/native-env/MANIFEST.md5（7 件 md5）"
-      ],
-      "stack": {
-        "framework": "vLLM 0.28.0+rocm723 + AITER：上游打补丁器 src/vllm-mi210/scripts/apply_gfx90a.py（锚点定义在此，幂等：不重写已打过的文件、不换 fork、不改 vLLM 本体结构）+ 重放件 patches/native-env/wu1w-int8-on-top-of-base.patch",
-        "notes": "7 件手改 + 1 件新增 HIP 核：vllm/_aiter_ops.py（MARK_CU：gfx90a 通过 AITER 可用性判定，104 CU）、vllm/_custom_ops.py（MARK_NO_FP8：打开 a8w8 路径、声明 AITER_A8W8_NO_FP8）、aiter/jit/utils/build_targets.py（JIT 目标加 gfx90a）、aiter/ops/communication.py（本 env 独改）、aiter/jit/utils/cpp_extension.py（pybind11 修法，见 aiter-pybind11-internals）、vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py（MARK_IMPORT/MARK_HIP_OP/MARK_GQA）、sitecustomize.py（进程启动即注入）；新增 fused_gdn_hip.hip（10.6 KB）",
-        "rocm": "7.2 系（随宿主 env wu1w-int8-028 / amd-aiter 0.1.19）"
-      },
-      "status": "active",
-      "status_note": [
-        "aiter/ops/communication.py 是本 env 独有的那份改动，与已回收的 atom_vllm 是两份不同内容 ⇒ md5 基线必须按 env 分文件的判例",
-        "对照实验开关：WU1W_EXTRAS=0 关掉本机习惯项做『配方忠实度 A/B』（docs/MI250X-PR41-Qwen38-27B-INT8-dflash-本机复现-2026-09-14.md 用的就是这条）",
-        "8114 只占单 die（TP=1），与别的臂不互斥"
-      ],
-      "title_or_why": "wu1w 的 gfx90a AITER-INT8 补丁（a8w8 线性层 + fused GDN HIP 核）——全机唯一让 AITER CK gemm_a8w8 在 CDNA2 上出 gfx90a 码对象的路径（实测 2.9× Triton INT8），也是 8114 那条单 die 臂能到 80 t/s 的全部原因。",
-      "verified": "2026-09-15"
-    },
-    {
-      "apply_verify_revert": {
-        "apply": "envs/vllm_master_rocm724/bin/python patches/vllm-dsa-gfx90a/patch_sparse_indexer_gfx9.py --check",
-        "revert": "在 src/vllm-master 侧 revert commit 9349d08（🛑 那是推不出去的本地 commit，先确认 backup/bundle 在位）",
-        "verify": "sha 比对：src/vllm-master/vllm/model_executor/layers/mqa_logits_gfx9.py 应等于 mqa_logits_gfx9.v1-fp32reference.py（b2d64a89…，commit 9349d08）"
-      },
-      "consumers": [
-        "vllm_master_rocm724",
-        "8107-qwen38-flash-next-176b-bf16-vllm-tp8",
-        "8109-qwen38-flash-next-176b-bf16-vllm-splitkv"
-      ],
-      "id": "vllm-dsa-indexer",
-      "kind": "patch",
-      "path_or_target": "src/vllm-master（8107/8109/8112-vLLM 臂共用的 editable 树）",
-      "rebuild": [
-        "envs/vllm_master_rocm724/bin/python patches/vllm-dsa-gfx90a/patch_sparse_indexer_gfx9.py --check   # 投递器：装 mqa_logits 模块 + 给 indexer 打捕获安全化门（graph capture 期不做 host 侧取值/断言）"
-      ],
-      "red_lines": [
-        "运行时不被任何 launcher 调用（gate 与 patches/gfx90a/ 的区别）⇒ 改这里不影响在役树；要改行为得动 src/vllm-master 并在那边 commit",
-        "🛑 mqa_logits_gfx9.py（fp16 + 精排版）已判回退：更快但 CUDA graph 下语义不稳 ⇒ 已回 fp32 参考版；留作对照，别顺手『优化』回去；想再试先在 eager 下对拍，别直接换在役文件",
-        "🛑 台账继续留在 beta：src/vllm-master/vllm/v1/attention/ops/rocm_aiter_mla_sparse.py:788 的注释按 launcher/beta/mi210-vllm/… 路径指路，而 launcher/beta/** 是红线 3 的不可再生区 ⇒ 只读，别在 beta 里改，也别『顺手清理』（判据去 beta 的 NOTES.md 与 C-施工单-DSA索引器捕获安全化.md）",
-        "revert 危险：9349d08 是推不出去的本地 commit，revert 前先确认 backup remote / bundle 在位",
-        "半成品勿接生产：port_prefix_prefill_partition.py、prefix_prefill.verify-ctx-partition.py（prefix prefill 的 ctx 分区改造 + 校验稿，未接生产）；enable_aiter_ck_gemm_gfx90a.py ❌ 不启用（AITER CK int8 GEMM 门，gfx90a 终案不可用，CLAUDE.md §10，留作 P2 之后的独立课题）"
-      ],
-      "selfcheck": [
-        "sha256sum src/vllm-master/vllm/model_executor/layers/mqa_logits_gfx9.py patches/vllm-dsa-gfx90a/mqa_logits_gfx9.v1-fp32reference.py   # 两行必须相同",
-        "git -C src/vllm-master show --stat 9349d08 | head -20",
-        "grep -n 'mqa_logits_gfx9\\|rocm_aiter_mla_sparse' src/vllm-master/vllm/v1/attention/ops/*.py | head"
-      ],
-      "sources": [
-        "patches/vllm-dsa-gfx90a/README.md（逐件状态表）",
-        "launcher/beta/mi210-vllm/NOTES.md（上游台账、收编/不收判词——没搬，因为树内注释按该路径指路）",
-        "launcher/beta/mi210-vllm/C-施工单-DSA索引器捕获安全化.md（因果链与验收判据）",
-        "docs/MI250X-indexer-非AITER-Triton路径-现状与方案-2026-09-05.md",
-        "CLAUDE.md §10（DeepSeek-V4-Flash vLLM 路卡 indexer only supported on AITER）"
-      ],
-      "stack": {
-        "framework": "vLLM master 侧：vllm/v1/attention/ops/rocm_aiter_mla_sparse.py + vllm/model_executor/layers/mqa_logits_gfx9.py；投递器 patches/vllm-dsa-gfx90a/patch_sparse_indexer_gfx9.py",
-        "notes": "在役源 = mqa_logits_gfx9.v1-fp32reference.py 逐字节（sha b2d64a89…，commit 9349d08，ahead 2 未推远端）；与 patches/gfx90a/ 的本质区别：那边是现役 launcher 每次起服都要跑的 fail-closed 准入门，这边只是来源记录（改动已装进 src/vllm-master 并提交）",
-        "rocm": "7.2 系（随 editable 树）"
-      },
-      "status": "active",
-      "status_note": [
-        "负结果登记：DeepSeek-V4 / V4.1 走 vLLM 的先决条件 = indexer 不依赖 AITER（现状 indexer only supported on AITER 硬门，CLAUDE.md §10）+ 注册 DeepseekV41ForCausalLM arch；三块触发条件与复评记录见准入调研 §10.4，serving/8112 §9 已把『vLLM 路线现期判死』记在那儿",
-        "fp16+精排那一版的判死理由（唯一理由）：CUDA graph 下语义不稳；已判回 fp32 参考版在役"
-      ],
-      "title_or_why": "DSA 稀疏索引器的 gfx90a 移植料（已装进 src/vllm-master 的来源记录）——DeepSeek 系稀疏注意力（indexer）在 vLLM 上游写死 AITER only，gfx90a 没有 AITER 通路；本目录是那套『绕开 AITER 的 fp32 参考实现 + 捕获安全化门』的唯一来源记录。",
-      "verified": "2026-09-15"
+      "topology": [
+       "tp1"
+      ]
+     }
     }
-  ],
-  "source": "/home/qiba/ai/docs/recipes/patches"
+   ],
+   "id": "splitkv-paged-decode",
+   "kind": "patch",
+   "path_or_target": "envs/vllm_0.28.0_rocm72（8111/8301 在役）与 src/vllm-master（8109 臂，在役 editable 树）",
+   "rebuild": [
+    "envs/vllm_0.28.0_rocm72/bin/python patches/gfx90a/port_splitkv_pa.py --env vllm_0.28.0_rocm72 --apply"
+   ],
+   "red_lines": [
+    "🛑 rocm_splitkv_pa.py 的 sha 是唯一真值（patches/gfx90a/rocm_splitkv_pa.py 与已装树做字节比对）⇒ 只许改位置不许改内容；改行为要升 sha、重投、重对拍",
+    "patches/native-env/NEW-rocm_splitkv_pa.py 是它在 gitignore 区外的唯一副本（envs/ 不进 git）",
+    "🛑 对 editable 树的写入是 opt-in：8109 只有 SPLITKV=1 或 PROBE=1 才 --apply（那棵树是 8107 在役代码），且起服前跑六道前置断言，任一失败拒起",
+    ".orig 出厂态在 patches/gfx90a/backup/splitkv-pa/*.orig（按 commit 哈希分份），删了就回不去",
+    "MAX_SCRATCH 的账：8111 在 256k 下 seqs=16..64 七档全被打回，最小一次只超 524,288 B（1.6%）⇒ 192 MiB = 实测峰值 130 MiB + 48% 余量；scratch 不吃 KV 池；回退就写 =32",
+    "cand_splitkv_pa_mq.py = 多查询（MQ）变体候选稿，未接线，留作下一步实验"
+   ],
+   "selfcheck": [
+    "envs/vllm_0.28.0_rocm72/bin/python patches/gfx90a/port_splitkv_pa.py --env vllm_0.28.0_rocm72 --require   # 在位断言",
+    "判『真上场』：grep -ac 'MI250X split-KV paged-decode 已接管' logs/<key>/server-<port>.current   # >0 = 接管发生",
+    "envs/vllm_0.28.0_rocm72/bin/python patches/gfx90a/probe_splitkv_reach.py --env <env> --apply   # 计数器探针，区分『没过算子』与『过了但没赢』；⚠️ 实验完必须 --revert 掉探针，别把计数版内核留在役树里",
+    "接管的形状条件（全满足才走，不满足自动回原路径不是错误）：纯 decode ∧ bf16 ∧ hd256 ∧ 非 2 幂 block ∧ num_seqs × kv_heads ≤ 64"
+   ],
+   "sources": [
+    "patches/gfx90a/README.md（转正说明、sha 不变式）",
+    "docs/research-notes/splitkv-{原型,落地端到端,拐点与税收,转正许可证,8107-移植,27b-0.28env-A-B}-2026-09-0{7,8}.md",
+    "models/ornith-ai/launcher/ornith_1.5_35b_a3b_vllm_rocm72_mi250x_tp4_256k.sh（默认开）",
+    "models/Qwen/launcher/qwen3.8-flash-next_176b_bf16_vllm_rocm724_256k_8109_Qwen_mi250dx8.sh（默认关 + 前置断言）"
+   ],
+   "stack": {
+    "framework": "vLLM 0.28.0+rocm723 / vLLM master（editable）；三件 = K 新内核文件 vllm/v1/attention/ops/rocm_splitkv_pa.py + I 注入点 vllm/v1/attention/backends/utils.py + T 对拍校验件",
+    "notes": "门：VLLM_ROCM_SPLITKV_PA=1 才接管（补丁在位但门没开 ⇒ 行为逐字不变）；VLLM_ROCM_SPLITKV_PA_MAX_SCRATCH_MIB=192 是 8111 定稿值（内核默认 32 MiB/key 会把长 ctx 整档打回 Triton）；🛑 故意不设 MAX_SEQS：门限唯一真值 = 内核 DEFAULT_MAX_SEQS = 64",
+    "rocm": "7.2 系（随宿主 env）"
+   },
+   "status": "active",
+   "status_note": [
+    "收益判语：8111（Ornith-35B hd256 TP4）默认开——@30720 单流 13.1 → 94.5 t/s（×7.22），并发只 +1.4/+1.8/+0.2% ⇒ 价值全在长上下文单流",
+    "负结果：8109（Flash-Next，混合注意力）默认关——QSA/线性注意力根本不经过这个算子，开了也不上场（结构判定全记录 splitkv-8107-移植-2026-09-07.md）",
+    "8301（TeichAI 27B A/B 臂）显式开（实验臂），数据 bench/splitkv_out_*.json"
+   ],
+   "title_or_why": "split-KV paged-decode 注意力接管（gfx90a 上长上下文单流的 ×7.22）——参考内核 chunked_prefill_paged_decode 的 grid 是 (num_seqs, kv_heads)，单流只有 1 个 program 打 104 个 CU（7–12 GB/s）；split-KV 把 KV 维切开填满机器，是本机长上下文单流最大的一笔收益。",
+   "verified": "2026-09-15"
+  },
+  {
+   "applies_to": {
+    "arch": "deepseek_v41",
+    "engine": "llamacpp-0.4.0-dev@f37da57",
+    "preset": "generic-llamacpp"
+   },
+   "apply_verify_revert": {
+    "apply": "patches/llama.cpp-dsv41/port_v41_dsml_tags.py --apply && cmake --build envs/llama.cpp-src-dsv41/build-hip -j 24 && cmake --install envs/llama.cpp-src-dsv41/build-hip --prefix /home/qiba/ai/envs/llama.cpp_dsv41-gfx90a-2026.9.12",
+    "revert": "patches/llama.cpp-dsv41/port_v41_dsml_tags.py --revert（随后同样要 build+install 两步才真正生效）",
+    "verify": "patches/llama.cpp-dsv41/port_v41_dsml_tags.py --check"
+   },
+   "consumers": [
+    "8112-deepseek-v4.1-flash-748b-q4km-llamacpp"
+   ],
+   "id": "llamacpp-dsv41-dsml-tags",
+   "kind": "patch",
+   "path_or_target": "envs/llama.cpp-src-dsv41（被打的源树；fork 点 2026-09-10 master，commit f37da57；改的是 C++ 文件 common/parsers/deepseek.cpp）",
+   "rebuild": [
+    "patches/llama.cpp-dsv41/port_v41_dsml_tags.py --apply   # 打完自动 touch 目标文件",
+    "cmake --build envs/llama.cpp-src-dsv41/build-hip -j 24",
+    "cmake --install envs/llama.cpp-src-dsv41/build-hip --prefix \"$PWD/envs/llama.cpp_dsv41-gfx90a-2026.9.12\""
+   ],
+   "red_lines": [
+    "🛑 打完必须重编 + 重装前缀：不碰 .so 等于没打；revert 同样要再 build+install 两步才真正生效",
+    "🛑 --jinja 默认 false 必带（launcher 早期注释曾断言『默认 enabled 不必加』，13:5x 实测证伪）；不加走内置回退模板 ⇒ 不认 DSML ⇒ tools 退化纯文本（两次实测复现）：--jinja 与 --chat-template-file 二者都在 ARGS 里，缺一不可",
+    "🛑 『补丁在树里』不是自动保证：8112 launcher 只把补丁写进注释、不会自动 --apply/--check（脚本里没有任何 patchkit 调用，也没有 --require 准入门；对照 vLLM 8109 臂才是起服自动 refresh+apply 的模式）⇒ 前缀被重建/回退后没人会被告知，症状是『工具调用悄悄漏成文本』；验收只能人工：--check（树侧）+ probe_tools_8112.py 6/6（运行侧）",
+    "禁开 SKIP_CHAT_PARSING=1 当默认（那是 09-12 的权宜，开着 = 工具永不解析）",
+    "别把 backup 目录搞混：出厂态 .orig 跟补丁资产同目录（patches/llama.cpp-dsv41/backup/llama.cpp-dsv41-v41-dsml/，当前实存 deepseek.cpp.e2962f772903.orig，是唯一还原凭据）；tools/backup/<name> 是 patchkit 自己的默认落点",
+    "施工三个『静默无效』坑（都实踩过）：打完重编空转（patchkit:374 原子写 copystat 保留 mtime ⇒ make 判 .o 比源码新；判据 stat -c '%y' …deepseek.cpp.o 必须前进，--apply 已自 os.utime() 兜底）；重配报 hip-lang 找不到（build-hip 缓存内嵌迁盘前死路径；rm build-hip/CMakeFiles/3.28.3/CMakeHIPCompiler.cmake 重探测 + -U CMAKE_HIP_COMPILER_AR/RANLIB）；金标校验静默 ImportError（dsv41_tpl_check.py 写死老 ckpt 路径；已改候选列表 + DSV41_CKPT= 覆盖，找不到 fail-closed）"
+   ],
+   "selfcheck": [
+    "patches/llama.cpp-dsv41/port_v41_dsml_tags.py --check   # 只读体检随时可跑；默认无参数 = dry-run；期望三件全 applied（{'applied': 3}，drift/ambiguous/missing = 0；2026-09-15 实测通过）",
+    "运行判据：带 tools 请求 tool_calls 非空且 content 无 <｜DSML｜",
+    "离线：test/dsv41/peg_probe.cpp（模板→chat_params→PEG→parse，不占 GPU）：generation_prompt 非空、语法里 \" calls\"=1/\"tool_calls\"=0、尾随换行 OK",
+    "在线：test/dsv41/probe_tools_8112.py 6/6、流式 tool_calls 分片正常、SE-Bench T16 工具DSML PASS（2026-09-14）"
+   ],
+   "sources": [
+    "patches/llama.cpp-dsv41/port_v41_dsml_tags.py（补丁本体，含逐字锚点与施工注释）",
+    "docs/DSV4.1-工具调用泄露-根因与修复-2026-09-14.md §1（三根因）/§2（落地+施工三坑）/§3（验收 6/6）",
+    "models/vcruz305/launcher/deepseek-v4.1-flash_748b_q4km_llamacpp_rocm72_256k_8112_vcruz305_mi250dx8.sh L171-181/L349-370",
+    "tools/patchkit.py（原子写/.orig 备份/mtime 陷阱的机制层）"
+   ],
+   "stack": {
+    "framework": "llama.cpp（vcruz305 fork runtime/deepseek41）+ patchkit（tools/patchkit.py：原子写/.orig 备份/mtime 陷阱的机制层）",
+    "notes": "PatchSet llama.cpp-dsv41-v41-dsml 三件（逐字锚点断言）：① V41DSML——官方 V4.1 把 DSML 标签全改成带前导空格（\" calls\"/\" invoke\"/\" parameter\"），解析器写死 V3.2/V4 拼法 ⇒ 补丁改为按渲染结果判定（V3.2/V4 路径逐字节不动）② GENPROMPT-OPTIONAL——peg 首字面量 <｜Assistant｜> 由必需改可选（否则 generation_prompt 为空时每条请求 HTTP 500）③ TRAILING-SPACE——闭合标签后容忍尾随空白（原来多吐换行 ⇒ 整条判不匹配 ⇒ 500）；配套模板 models/vcruz305/launcher/templates/dsv41_chat_template.jinja（补丁与模板缺一即回归症状）",
+    "rocm": "7.2.4（重编走 envs/llama.cpp-src-dsv41/build-hip）"
+   },
+   "status": "active",
+   "status_note": [
+    "三根因定位（09-14 修，泄露修复 §1/§2）：R1 修模板（add_generation_prompt）、R2/R3 修解析器（前导空格拼法 + 尾随空白）；本构建 use_jinja 默认 false 且分支无 --parser ⇒ 模板 + 补丁两件一起才认 DSML 标记",
+    "退休条件：上游 master 的 deepseek.cpp 出现带前导空格的拼法 ⇒ 本件可删；复核一行：curl -sSL https://raw.githubusercontent.com/ggml-org/llama.cpp/master/common/parsers/deepseek.cpp | grep -n '\" calls\"'（2026-09-14 直读：无 V4.1 支持，须自带补丁）",
+    "根定位：脚本向上 8 层找 config/ports.conf 当仓库根，与运行目录无关"
+   ],
+   "title_or_why": "llama.cpp dsv41 前缀 · V4.1 DSML 工具标签补丁（三件，需重编装前缀）——8112 的 tool_calls 能解析、不 500、不漏 DSML 进 content，全靠这一个补丁 + 一份修好的模板。",
+   "verified": "2026-09-15"
+  },
+  {
+   "applies_to": {
+    "preset": "generic-host"
+   },
+   "apply_verify_revert": {
+    "apply": "cd envs/<env>/lib/python3.12/site-packages && patch -p1 --dry-run < $AI/patches/gfx90a/aiter-cpp_extension-pybind-abi.patch（先干跑）",
+    "revert": "patch -R -p1 < 同一文件",
+    "verify": "md5：aiter/jit/utils/cpp_extension.py 应等于 patches/native-env/MANIFEST.md5 里的 cd… 条目（vllm_0.28.0_rocm72 那份）"
+   },
+   "consumers": [
+    "wu1w-int8-028"
+   ],
+   "id": "aiter-pybind11-internals",
+   "kind": "patch",
+   "path_or_target": "envs/*/lib/python3.12/site-packages/aiter/jit/utils/cpp_extension.py",
+   "rebuild": [],
+   "red_lines": [
+    "🛑 终案证据，勿再投入：这是编译/装载层的修复，修完之后 gfx90a 上 AITER 依然算不对——这是两件不同的事",
+    "🛑 别把 a8w8 线性层的成功外推到 MoE；CDNA2 上 fused-MoE 用 TRITON 就是最优解，VLLM_ROCM_USE_AITER 保持 0（唯一例外 = patches/wu1w-int8-aiter 的 a8w8 线性层，它不依赖 MoE 通路）",
+    "🛑 launcher/beta/aiter-gfx90a/vllm/ 里的『故意没装 AITER MoE 的门控』那稿是红线 3 只读区，无生产引用",
+    "只在重放 wu1w-int8-028 那条 a8w8 路径时才需要动它：那棵树里此件被手改过（md5 a2661f24… 记在 MANIFEST.md5）；重建时 md5 对不上，先看是不是这份 patch 没重放"
+   ],
+   "selfcheck": [
+    "grep -n \"internals\\|PYBIND11\" envs/vllm_0.28.0_rocm72/lib/python3.12/site-packages/aiter/jit/utils/cpp_extension.py | head -5",
+    "cd envs/vllm_0.28.0_rocm72/lib/python3.12/site-packages && md5sum aiter/jit/utils/cpp_extension.py   # 应等于 patches/native-env/MANIFEST.md5 里的 cd… 条目（vllm_0.28.0_rocm72 那份）"
+   ],
+   "sources": [
+    "patches/gfx90a/README.md（AITER MoE 的终案证据，留作证据）",
+    "CLAUDE.md §10（❌ AITER MoE 在 gfx90a 终案：不可用；三层卡点）",
+    "docs/MI250X-AITER-cDNA2-吸收落地-2026-09-07.md、docs/ROCm10-AITER-不可行性复核-2026-09-12.md"
+   ],
+   "stack": {
+    "framework": "AITER JIT（torch.utils.cpp_extension 编 C++/HIP 扩展）",
+    "notes": "症状机理：加载期报 pybind11 internals 版本不匹配（v11 与 v12 两套 detail 命名空间：一侧版本标记与另一侧不同 ⇒ 模块能 import、函数解析不到，或反过来）；补丁把 internals 取值统一到本机 torch 实际带的那一侧；补丁原件 patches/gfx90a/aiter-cpp_extension-pybind-abi.patch",
+    "rocm": "7.2 系（amd-aiter 0.1.19 随 vLLM env；换 ROCm 10 也翻不动——AITER 侧零版本门可解）"
+   },
+   "status": "dead",
+   "status_note": [
+    "判死原因（三层卡点，CLAUDE.md §10）：① get_cdna_version() > 2 的 arch 门（CDNA2 直接被挡）② 预编 .so 里 gfx90a 码对象 = 0（同批 gfx942 = 97；铁证来自 ATOM 那次同构排查，docs/MI250X-ATOM-vLLM插件-本机实测-2026-09-06.md）③ JIT 出来也静默算错：bf16 无全局 AtomicAdd ⇒ CK 内核结果错，不报错、不崩溃",
+    "追加负结果：换 ROCm 10 也翻不动——AITER 侧零版本门可解（docs/ROCm10-AITER-不可行性复核-2026-09-12.md）",
+    "gate：无运行时调用（手工补丁，不在任何 launcher 的启动路径上）；此件在 vllm_0.28.0_rocm72 里留作证据"
+   ],
+   "title_or_why": "AITER JIT 的 pybind11 internals v11/v12 分裂修法（终案证据，勿再投入）——它修的是『AITER 在 gfx90a 上编不出/装不上』的最外层症状；真正卡死 AITER 的是 arch 门 + 无 gfx90a 码对象 + JIT 后 CK 静默算错（bf16 无全局 AtomicAdd）；留下是为了让下任不再把这三层卡点误读成一次编译事故。",
+   "verified": "2026-09-15"
+  },
+  {
+   "applies_to": {
+    "engine": "llamacpp-0.3.0-dev@a9e9c3c5f",
+    "preset": "generic-llamacpp"
+   },
+   "apply_verify_revert": {
+    "apply": "cd src/llama.cpp-upstream && git apply ../../patches/llama.cpp-mtp-only-export.patch   # git status 应显示 conversion/{base,qwen}.py 为 M",
+    "revert": "cd src/llama.cpp-upstream && git apply -R ../../patches/llama.cpp-mtp-only-export.patch",
+    "verify": "envs/unsloth_2026.9.2_rocm7.2/bin/python convert_hf_to_gguf.py <dir> --mtp --outtype bf16 --outfile /tmp/mtp-check.gguf && python3 ../../tools/gguf_head_dump.py /tmp/mtp-check.gguf --tensors"
+   },
+   "consumers": [
+    "8110-ornith-1.5-397b-q8-0-llamacpp"
+   ],
+   "id": "llamacpp-mtp-only-export",
+   "kind": "patch",
+   "path_or_target": "src/llama.cpp-upstream（转换树 @d4abd57；补丁打在 conversion/base.py + conversion/qwen.py；非服务运行时）",
+   "rebuild": [
+    "cd src/llama.cpp-upstream && git apply ../../patches/llama.cpp-mtp-only-export.patch   # git status 应显示 conversion/{base,qwen}.py 为 M",
+    "# 完整制造链（09-11 重导版，可原样复跑）：",
+    "D=/home/qiba/ai/cache/ornith397b-mtp",
+    "/usr/local/bin/modelscope download --model ornith-ai/Ornith-1.5-397B model-mtp.safetensors model-00001-of-00122.safetensors model-00122-of-00122.safetensors --local-dir \"$D\"",
+    "/usr/local/bin/modelscope download --model ornith-ai/Ornith-1.5-397B tokenizer.json tokenizer_config.json vocab.json merges.txt chat_template.jinja preprocessor_config.json processor_config.json --local-dir \"$D\"",
+    "cd src/llama.cpp-upstream && envs/unsloth_2026.9.2_rocm7.2/bin/python convert_hf_to_gguf.py \"$D\" --mtp --outtype bf16 --outfile \"$D/mtp-try.gguf\"   # 补丁在位",
+    "envs/llama.cpp_gfx90a-2026.9.8/qwen4exp-mtp/bin/llama-quantize \"$D/mtp-try.gguf\" \"$D/mtp-Ornith-1.5-397B-Q8_0.gguf\" Q8_0 24",
+    "python3 tools/gguf_head_dump.py \"$D/mtp-Ornith-1.5-397B-Q8_0.gguf\" --tensors   # ⑤ 校验 ⑥ 落位到量化子目录（见配方 8110 §4）"
+   ],
+   "red_lines": [
+    "🛑 tokenizer 文件必须在场，否则死在 get_vocab_base_pre 的 'BPE pre-tokenizer was not recognized'——报错会把人误导成『上游不支持 qwen35moe --mtp』（09-09 链路图漏了这步，白疑一场）",
+    "🛑 转换器不能跑在 envs/pytorch_2.14_rocm7.2（重导 §3.2），用 envs/unsloth_2026.9.2_rocm7.2",
+    "换头后必须把草稿的 <arch>.context_length 与主模型改齐（否则『主槽位够用、草稿被静默钳小』，8110 基脚本护栏已拦）",
+    "离线制造链专属：服务运行时前缀（envs/llama.cpp_gfx90a-2026.9.8/qwen4exp-mtp-rp）不含也不需要它——与 llamacpp-dsv41-dsml-tags（运行时 C++ 补丁）的本质区别就在这",
+    "缺头要显式警告：制造链必须可复跑（09-09 丢头事故的教训，见 status_note）"
+   ],
+   "selfcheck": [
+    "gate 判据：导出产物必须含 blk.60.nextn.{eh_proj,enorm,hnorm,shared_head_norm} + 自带 token_embd/output/output_norm（tools/gguf_head_dump.py --tensors 逐项可见）；缺 embd/norm 即补丁没生效",
+    "结构判据：general.architecture=qwen35moe、nextn_predict_layers=1、block_count=61、23 张量、无 blk.0.attn_norm ⇒ 命中 src/models/qwen35moe.cpp:39 的 mtp_only 合法独立草稿判据",
+    "行为判据（比结构更强，重导 §7.5 腿④）：无投机地板 33.09 → 挂此头 +MTP n=2 46.39（+40.2%）；与 09-09 首版头、09-11 重导头互证（地板跨两天跨两份头吻合到 0.1%）",
+    "verify 命令：envs/unsloth_2026.9.2_rocm7.2/bin/python convert_hf_to_gguf.py <dir> --mtp --outtype bf16 --outfile /tmp/mtp-check.gguf && python3 ../../tools/gguf_head_dump.py /tmp/mtp-check.gguf --tensors"
+   ],
+   "sources": [
+    "patches/llama.cpp-mtp-only-export.patch（补丁本体，2852 B，逐段读自 diff）",
+    "docs/Ornith-397B-MTP草稿头-重导-2026-09-11.md §2（执行链）/§3.1/§3.2/§4/§5",
+    "docs/下载-ModelScope-Ornith-1.5-397B-Q8_0-与8110底座-2026-09-09.md §10（首版链路与两处补丁判据）",
+    "docs/recipes/serving/8110-ornith-1.5-397b-q8-0-llamacpp.md §4"
+   ],
+   "stack": {
+    "framework": "llama.cpp convert_hf_to_gguf.py（HF→GGUF 转换器）",
+    "notes": "运行解释器 = envs/unsloth_2026.9.2_rocm7.2（🛑 不能跑在 envs/pytorch_2.14_rocm7.2：缺依赖/行为不符）；09-11 重导实测：转换 88 s → bf16 16.09 GiB / 23 tensors；llama-quantize（CPU 20.6 s）→ Q8_0 8.56 GiB",
+    "rocm": "无关（CPU 离线转换链，不占卡）"
+   },
+   "status": "active",
+   "status_note": [
+    "补丁内容（两处半，全部有注释自述根因）：[mtp-only-parts] base.py——上游 mtp_only 下仍无条件打开 weight_map 全部 122 片 / 751 GiB，把 part_names/tensor_names_from_index 收窄；[续] tensor_names_from_parts 一起收窄（否则落盘 00001/00122 里无关张量被判 Extra tensors 而 raise）；[mtp-only-keep-names] qwen.py _QwenMtpMixin——keep 白名单没有多模态 checkpoint 真名 model.language_model.{embed_tokens,norm}.weight ⇒ 静默丢掉草稿 token_embd/output_norm，产出不可独立运行的 mtp 文件（不报错，最阴）",
+    "事故存证（负结果）：09-09 首版头随 models/ornith-ai/Ornith-1.5-397B/ 目录删除而丢失 ⇒ 8110 静默退成无投机 33 t/s 跑了两周——这就是『制造链必须可复跑 + 缺头要显式警告』两条规矩的来源",
+    "为什么只能自导：bartowski 权重零 nextn 张量，官方仓库也没有独立 mtp 文件 ⇒ 只能从源模型 ornith-ai/Ornith-1.5-397B 的 model-mtp.safetensors 自导",
+    "现状：补丁在 src/llama.cpp-upstream（@d4abd57）上已在位（09-11 重导后 git status 显示 M）；若上游将 mtp_only 三处行为收编即可 archived——复核 = 干净树跑一次 §3③ 并比对 --tensors 输出"
+   ],
+   "title_or_why": "llama.cpp 转换器补丁 · --mtp 只导草稿层（两处收窄，产物才可独立运行）——Ornith-397B 的 MTP 草稿头（8110 的 +40.2% 来源）必须靠它导出来：上游 --mtp 在『只取三片』的场景下要么 FileNotFoundError、要么静默丢张量产出废文件。",
+   "verified": "2026-09-15"
+  },
+  {
+   "applies_to": {
+    "arch": "qwen4exp",
+    "preset": "generic-vllm"
+   },
+   "apply_verify_revert": {
+    "apply": "git -C src/vllm-master apply --check $AI/patches/qwen4exp/local-ple-fp8-resident.patch && git -C src/vllm-master apply $_（nogds 同法）",
+    "revert": "git -C src/vllm-master apply -R <对应 patch>（改完 commit 到 backup remote，见 environments/vllm_master_rocm724.md §4）",
+    "verify": "grep -n 'VLLM_FST_KEEP_NOGDS' src/vllm-master/vllm/model_executor/model_loader/weight_utils.py && grep -n 'VLLM_AIS_PLE_FP8' src/vllm-master/vllm/models/qwen4_exp/amd/ple_layer.py"
+   },
+   "consumers": [
+    "8107-qwen38-flash-next-176b-bf16-vllm-tp8",
+    "8109-qwen38-flash-next-176b-bf16-vllm-splitkv",
+    "ais-hipfile-load"
+   ],
+   "id": "qwen4exp-ais-ple",
+   "kind": "patch",
+   "path_or_target": "envs/vllm_master_rocm724（editable → src/vllm-master；只有这棵树打了）",
+   "rebuild": [
+    "git -C src/vllm-master apply --check $AI/patches/qwen4exp/local-ple-fp8-resident.patch && git -C src/vllm-master apply $AI/patches/qwen4exp/local-ple-fp8-resident.patch   # nogds 同法",
+    "# 改完 commit 到 backup remote（见 environments/vllm_master_rocm724.md §4）"
+   ],
+   "red_lines": [
+    "🛑 对 BF16 开着 VLLM_AIS_PLE_FP8=1 = 无声量化成 fp8（写入是 source.to(target.dtype)；模型照起、输出照通顺，肉眼发现不了）⇒ 补丁已加 dtype 护栏：非 fp8 分片 raise TypeError",
+    "🛑 两条分支一律惰性消费 weights，禁止 list(weights)：为预扫 weight_scale 物化整组权重，会把 fastsafetensors 交给本模块的整组同时钉在显存里 ⇒ BF16 实测多钉 19.85 GiB/die（61.75 自报 vs 真实 41.9），稳定 OOM 于 shard 2–3/33，签名 Consumer error: CUDA out of memory. Tried to allocate 764.00 MiB；折 scale 的条件里已有 dtype == float8_e4m3fn ⇒ BF16/FP16 checkpoint 根本没有 weight_scale，预扫是纯浪费（旧注释『bf16 分支需要它』已于 09-04 实测证伪）",
+    "不打 nogds 件 = AIS 在 TP>1 永不生效，没有任何报错（表现为『直读显存也很慢』）",
+    "PR55040-amd-ple-fp8-dequant.diff 别当本地补丁打（对照件）"
+   ],
+   "selfcheck": [
+    "grep -n 'VLLM_FST_KEEP_NOGDS' src/vllm-master/vllm/model_executor/model_loader/weight_utils.py | head -3",
+    "grep -n 'raise TypeError\\|VLLM_AIS_PLE_FP8' src/vllm-master/vllm/models/qwen4_exp/amd/ple_layer.py | head -5",
+    "grep -n 'list(weights)' src/vllm-master/vllm/models/qwen4_exp/amd/ple_layer.py   # 必须 0 命中",
+    "gate：config/ais.env 的 VLLM_AIS_PLE_FP8 写 1 时按分片 dtype 硬断言；8107 脚本对 BF16 强制 VLLM_AIS_PLE_FP8=0",
+    "起服走 test/qwen4exp/run_q4e_ais_load.sh（自检+三件套+开关一体），别手敲 env"
+   ],
+   "sources": [
+    "patches/qwen4exp/local-ple-fp8-resident.patch（头注：三阶段实测 960.15 s → 204.85 s → 97.13 s）",
+    "patches/qwen4exp/local-nogds-gds-for-tp-gt1.patch",
+    "patches/qwen4exp/PR55040-amd-ple-fp8-dequant.diff（上游对照件）",
+    "docs/MI250X-hipFile-AIS-部署手册.md §11、docs/MI250X-CLAUDE-下沉细节-2026-09-06.md §B",
+    "CLAUDE.md §10.5"
+   ],
+   "stack": {
+    "framework": "vLLM master（editable）：weight_utils.py + vllm/models/qwen4_exp/amd/ple_layer.py；补丁件 local-nogds-gds-for-tp-gt1.patch / local-ple-fp8-resident.patch",
+    "notes": "开关：VLLM_FST_KEEP_NOGDS=1 = 恢复上游 nogds 行为；VLLM_AIS_PLE_FP8 只对 FP8 checkpoint 有效（BF16 必须 0）；PR55040-amd-ple-fp8-dequant.diff 是上游对照件（amd vs nvidia 的 Qwen4ExpNGramEmbedding），用来判『上游吸收了多少、本地还剩哪几行』，别当本地补丁打",
+    "rocm": "7.2.4（hipFile/AIS 路径，配合 src/hipais-shim）"
+   },
+   "status": "active",
+   "status_note": [
+    "nogds 机理：上游 weight_utils.py 里 nogds = pg.size() > 1 是为避开 cuFileDriverOpen() 给每块可见 GPU 建 context；在 ROCm 上这条前提不成立（hipFile 走 hsa_amd_ais_file_read，不产生 per-device cuFile context）⇒ 打上后 nogds = pg.size() > 1 and os.environ.get('VLLM_FST_KEEP_NOGDS','0') != '0'；8107 脚本默认设 KEEP_NOGDS=1 配合 AIS=0 走 bounce",
+    "PLE fp8 驻留（方案 C）：去掉上游 #55040 的 load-time dequant，n-gram 表以 fp8 驻留、查表后再乘 scale ⇒ 省 51.2 GB 驻留 + 不再要求张量先落 host（AIS 收益才能兑现）；数值验证 bf16(fp8→bf16×scale) 与 (fp8 gather)→bf16×scale 实测 torch.equal == True、max diff 0.0",
+    "三阶段实测（Qwen4Exp 185.5 GB / TP4 / AIS / P4610）：原状（bf16 驻留+load-time dequant+mmap）960.15 s / 56.06 GiB per die → +本 patch（swap 仍在模型盘）204.85 s / 44.33 GiB → +swap 迁出模型盘+惰性消费 97.13 s（1.91 GB/s）/ 44.33 GiB"
+   ],
+   "title_or_why": "Qwen4Exp 的两件 vLLM 本地补丁（TP>1 的 nogds 硬门 + PLE 表 fp8 驻留）——它们决定 Flash-Next（qwen4_exp）在本机能不能起、起得起多大：nogds 门不打开则 AIS 直读显存在 TP>1 永不生效；PLE fp8 驻留不做则 185 GB 那档 bf16 驻留 56.06 GiB/die 直接起不来（可用前提，不是优化项）。",
+   "verified": "2026-09-15"
+  },
+  {
+   "applies_to": {
+    "preset": "generic-host"
+   },
+   "apply_verify_revert": {
+    "apply": "cd envs/<env>/lib/python3.12/site-packages && patch -p1 < $AI/patches/native-env/vllm028-base-p1-qr.patch（整件类：cp $AI/patches/native-env/NEW-*.py 到对应路径）",
+    "revert": "逐件用裸轮对照恢复：cp 自 envs/wu1w-fresh/lib/python3.12/site-packages/<相对路径>（🛑 先判断漂移是有意改动还是误伤）",
+    "verify": "tools/verify_env_patches.sh"
+   },
+   "consumers": [
+    "vllm_0.28.0_rocm72",
+    "wu1w-int8-028",
+    "p1-gemv-c2c3-quickreduce",
+    "splitkv-paged-decode",
+    "wu1w-int8-aiter"
+   ],
+   "id": "native-env-drift-baseline",
+   "kind": "patch",
+   "path_or_target": "envs/vllm_0.28.0_rocm72 · envs/wu1w-int8-028 ·（历史）envs/atom_vllm",
+   "rebuild": [
+    "cd envs/<env>/lib/python3.12/site-packages && patch -p1 < $AI/patches/native-env/vllm028-base-p1-qr.patch",
+    "cp $AI/patches/native-env/NEW-rocm_splitkv_pa.py vllm/v1/attention/ops/   # 整件类",
+    "cp $AI/patches/native-env/NEW-mi250_kernels.py vllm/model_executor/layers/   # 整件类",
+    "tools/verify_env_patches.sh"
+   ],
+   "red_lines": [
+    "🛑 gitignore 区改完必须回写 patches/native-env：envs/ 不进 git，不记录就成孤儿改动（唯一副本只存在于工作树里）",
+    "🛑 基线必须按 env 分文件：同名文件在不同 env 里本就是不同内容（例：aiter/ops/communication.py 在 wu1w-int8-028 与已回收的 atom_vllm 是两份不同手改）；合并成一份 ⇒ 永远有一边『漂移』",
+    "🛑 不要顺手更新基线文件：漂移先定性（有意改动 / 误伤）；确认是有意的，才重新抓 md5 并在 p1-gemv-c2c3-quickreduce 之类配方里记一句『改了什么、依据哪次实测』",
+    "revert 前先判断漂移性质：逐件用裸轮对照恢复 cp 自 envs/wu1w-fresh/lib/python3.12/site-packages/<相对路径>",
+    "已回收的 env（atom_vllm、vllm_master_rocm724_atom）⇒ 脚本打『env 已回收，跳过（基线保留）』而不算失败；基线与唯一手改整件留在 cache/trash/…/env-unique-assets/，将来重建后仍可校验"
+   ],
+   "selfcheck": [
+    "tools/verify_env_patches.sh   # 全绿 = 手工补丁未漂移（exit 0）；exit 1 = 有漂移",
+    "漂移后的三步复原（脚本头注原文）：① 与裸轮对照看差异（envs/wu1w-fresh）② 重放补丁 patch -p1 < vllm028-base-p1-qr.patch ③ 整件覆盖 cp NEW-*.py 到对应路径",
+    "新增一处手改的动作清单：① 改完立刻把整件/diff 存进 patches/native-env/（diff -u 原文件 改后 > <名>.patch）② md5sum 相对 site-packages 路径 >> patches/native-env/<env>.hand-patched.md5 ③ tools/verify_env_patches.sh 校验 + 更新对应 patch 配方的 verified:"
+   ],
+   "sources": [
+    "tools/verify_env_patches.sh（头注：为什么需要它、基线为什么按 env 分文件、漂移后的三步复原）",
+    "patches/native-env/MANIFEST.md5",
+    "docs/envs-盘点与整改-2026-09-12.md §3"
+   ],
+   "stack": {
+    "framework": "vLLM 0.28.0+rocm723 系手改基线：vllm028-base-p1-qr.patch（P1 接线 + QR 守卫 C2/C3 + split-KV 注入点的全部差异）+ wu1w-int8-on-top-of-base.patch（aiter/int8 增量 7 件）+ NEW-mi250_kernels.py / NEW-rocm_splitkv_pa.py（裸轮里不存在的新文件整件，patch 装不下只能整件覆盖）",
+    "notes": "MANIFEST.md5 = 12 个手改文件的 md5 总表（人读）；<env>.hand-patched.md5 = 按 env 分文件的 md5 基线，verify_env_patches.sh 逐 env 读它",
+    "rocm": "随宿主 env（与 ROCm 版本无关的 md5 基线体系）"
+   },
+   "status": "active",
+   "status_note": [
+    "漂移谱系（md5 实测，别再靠猜）：wu1w-fresh（裸轮 vllm 0.28.0+rocm723）≡ atom_vllm（裸轮，零手改，已回收）→ vllm_0.28.0_rocm72（+P1 / +QR 守卫 / +split-KV）≡ wu1w-int8-028（+aiter int8 增量）",
+    "09-12 盘点与整改 §3：19 个只活在 gitignore 区里的文件变成资产",
+    "判『某处差异是官方 wheel 带的还是本机手改』：与 envs/wu1w-fresh 对 diff（全机唯一未打补丁的裸件，见 environments/wu1w-fresh.md）"
+   ],
+   "title_or_why": "site-packages 手改的基线与重放料（patches/native-env/ + tools/verify_env_patches.sh）——envs/ 整目录在 .gitignore 内，git status 永远看不见里面的改动，而本机的 P1 门控 GEMV / QR 守卫 / split-KV / wu1w INT8 全以『直接改 site-packages』的形式存在；这一目录是它们唯一的可复现副本 + 唯一漂移判据。",
+   "verified": "2026-09-15"
+  },
+  {
+   "applies_to": {
+    "preset": "generic-host"
+   },
+   "apply_verify_revert": {
+    "apply": "不适用（目标树已不在本机；要考古用 git show f70c34c -- <路径>）",
+    "revert": "不适用",
+    "verify": "不适用"
+   },
+   "consumers": [],
+   "id": "nv-era-leftovers",
+   "kind": "patch",
+   "path_or_target": "src/vllm-0.27-src（已不在本机）",
+   "rebuild": [],
+   "red_lines": [
+    "🛑 不要把这些文件 copy 进 envs/ 或 src/vllm-master 来『试试』：它们的目标树/架构都不在本机",
+    "🛑 gate: none——没有任何现役 launcher 引用",
+    "⚠️ 同名机制陷阱：patches/envs-patches/sitecustomize.py 与 envs/wu1w-int8-028 里的手改 sitecustomize.py 不是一个东西（后者是 a8w8 通路的一部分，见 patches/wu1w-int8-aiter）⇒ md5 基线按 env 分文件正是为此",
+    "本机同名文件的本机态归属：vllm/v1/core/kv_cache_utils.py 由 patches/native-env/ 与 src/vllm-master 负责；NVFP4 属 Blackwell，CLAUDE.md §8 明列 FP4/FP8 档禁用"
+   ],
+   "selfcheck": [
+    "git show f70c34c --stat | head -30   # 09-12 清理基线（考古 NV 判据用）",
+    "git log --diff-filter=D --name-only --oneline -- 'launcher_legacy_nvidia/*' | head"
+   ],
+   "sources": [
+    "docs/envs-盘点与整改-2026-09-12.md §3（原 envs/patches/ 8 个文件整体入库）",
+    "docs/CUDA内容清除-2026-09-12.md",
+    "CLAUDE.md §8（09-12 迁移前旧机脚本与资产已全部删除，考古走 git 基线 f70c34c）",
+    "逐件头注（mhc_deepgemm_patch.py、sitecustomize.py）"
+   ],
+   "stack": {
+    "framework": "vLLM 0.27 / rtp-llm（NVFP4）等旧机改动：mhc_deepgemm_patch.py、sitecustomize.py、vllm027-src-8178-reap-local-mods.patch、rtp-llm-src-nvfp4-port-local-mods.patch、vllm-modifications/{anthropic_serving,cuda,linear}.py.modified、vllm/v1/core/kv_cache_utils.py",
+    "notes": "mhc_deepgemm_patch.py：vLLM 0.27 的 mhc_pre_broadcast_tilelang（DSV4 首层 hyperconnection pre）无条件调 vendored DeepGEMM 的 tf32_hc_prenorm_gemm，该 API 在 sm120 上断言 Unsupported architecture（hyperconnection.hpp:56）⇒ 用语义等价的 torch split-K 顶掉；CUDA/DeepGEMM 专属",
+    "rocm": "无关（CUDA/NVIDIA 世代）"
+   },
+   "status": "archived",
+   "status_note": [
+    "归档原因：NV（sm120/CUDA）时代遗留，本机 gfx90a 一条都不在路；同期做过一轮 CUDA 内容清除（docs/CUDA内容清除-2026-09-12.md）",
+    "为什么留而不删（负过程也是资产）：09-12 整改原则是『只活在 gitignore 区里的东西必须进 git，哪怕路线已废』；同期删的是可再生物（launcher_legacy_nvidia/、56 个残留、legacy_nv 软链树、NVFP4 量化工具、Blackwell 文档），这 8 件不可再生故整体入库",
+    "anthropic_serving.py.modified 是孤儿件（无消费方），入库只为不丢历史；vllm027 源码树 + PR#8178 合集对本机无效（本机 vLLM 是 0.28 / master）；考古旧机脚本走 git 基线 f70c34c（CLAUDE.md §8）"
+   ],
+   "title_or_why": "NV 世代遗留的 8 件补丁/整件（patches/envs-patches/，本机 gfx90a 无一条在路）——它们是迁移前那台 CUDA 机器（sm120）上的施工痕迹，09-12 从 gitignore 区整体入库当证据保留；列在这里是为了让人一眼判『这堆东西跟我现在的问题无关』，而不是照抄。",
+   "verified": "2026-09-15"
+  },
+  {
+   "applies_to": {
+    "preset": "vllm-028-family"
+   },
+   "apply_verify_revert": {
+    "apply": "envs/vllm_0.28.0_rocm72/bin/python patches/gfx90a/port_p1_c2_c3.py --env vllm_master_rocm724 --apply",
+    "revert": "envs/vllm_0.28.0_rocm72/bin/python patches/gfx90a/port_p1_c2_c3.py --env vllm_master_rocm724 --revert",
+    "verify": "envs/vllm_0.28.0_rocm72/bin/python patches/gfx90a/port_p1_c2_c3.py --env vllm_master_rocm724 --require"
+   },
+   "consumers": [
+    "8107-qwen38-flash-next-176b-bf16-vllm-tp8",
+    "8109-qwen38-flash-next-176b-bf16-vllm-splitkv",
+    "8111-ornith-1.5-35b-a3b-bf16-vllm-tp4",
+    "8113-qwen38-27b-bf16-vllm-tp2"
+   ],
+   "id": "p1-gemv-c2c3-quickreduce",
+   "kind": "patch",
+   "path_or_target": "envs/vllm_master_rocm724（editable → src/vllm-master）与 envs/vllm_0.28.0_rocm72",
+   "rebuild": [
+    "cd /home/qiba/ai && PY=envs/vllm_0.28.0_rocm72/bin/python   # 一律走 venv 解释器，别用系统 python",
+    "$PY patches/gfx90a/port_p1_c2_c3.py --env vllm_master_rocm724 --apply   # 写树（先 --check）",
+    "$PY patches/gfx90a/port_p1_c2_c3.py --env vllm_0.28.0_rocm72 --apply"
+   ],
+   "red_lines": [
+    "🛑 C2/C3 ≠ 摘 --disable-custom-all-reduce：那条 flag 只关 ca_comm；vLLM 的 CUSTOM allreduce 在 gfx90a 静默算错（输出全 !!!），平台门才是真护栏；MI250_ALLOW_CA 只存在于当年的容器补丁，原生 env 0 命中，别当护栏",
+    "三条硬规矩（patches/gfx90a/README.md 原文，违反过一次就回不去）：① AI_HOME 用锚点法解析（_ai_home() 找带 config/ports.conf 的目录），别再写死 .. 级数——09-12 从 4 层深搬到 2 层深，旧写法会把根解析成 /home/qiba 且静默找不到 env ② 不许改『写进目标树的标记文本』（probe_splitkv_reach.py 往已打补丁文件里插的含路径注释行），改了 --check/--revert 与树上旧标记就不匹配；只改 docstring 里的 usage 示例 ③ sha 不变式：rocm_splitkv_pa.py、kernels/mi250_kernels.py 与已装树做字节比对 ⇒ 只许改位置不许改内容，要改行为就升 sha、重投、重跑对拍",
+    "🛑 backup/p1c2c3/*.orig 是出厂态，--revert 逐字节还原靠它——删了就回不去（不属于 launcher/beta，但性质一样）",
+    "⚠️ 模块级求值陷阱：_MI250_QR_WANTED 在 import 时定型 ⇒ 必须在 python 启动前设好 QR 三 env，起服后再改无效",
+    "⚠️ QR 在 w>2 是浮点求和重排（0.231 ULP，非脏数据），但 temp=0 逐 token 输出会变 ⇒ 开 QR 后旧基线全部作废必须重跑才可比（这也是 config/vllm.conf 默认 QUANTIZATION=NONE 的理由，见 knobs/quick-reduce-gfx90a）"
+   ],
+   "selfcheck": [
+    "$PY patches/gfx90a/port_p1_c2_c3.py --list-targets   # 本机哪些 env 可投（editable 也能解析）",
+    "$PY patches/gfx90a/port_p1_c2_c3.py --env <env> --check   # 只读，drift/missing ⇒ exit 2",
+    "$PY patches/gfx90a/port_p1_c2_c3.py --env vllm_0.28.0_rocm72 --require   # 准入断言；退出码语义：4 = 判定不可用（launcher 据此 exit 2），非 0 其它值 = 工具自己出错 ⇒ launcher 只 WARN 不冒充结论",
+    "$PY patches/gfx90a/port_p1_c2_c3.py --self-test   # 临时目录里把六件套打一遍，不碰真实目标",
+    "$PY patches/gfx90a/port_p1_c2_c3.py --env vllm_0.28.0_rocm72 --obsolete   # 上游吸收判定（命中 = 该由人来撤）",
+    "两条校验都要跑：只跑 tools/verify_env_patches.sh 不能证明 master 树没问题；只跑 --require 不能证明 0.28 树没漂移（README §4）",
+    "判『真上场』而不是『构造成功』：日志 Using ['QUICK_REDUCE', …] 只证构造；证明上场只能看 Kineto trace 的 kernel 名，或 ABAB 对拍（CLAUDE.md §10 方法论条）"
+   ],
+   "sources": [
+    "patches/gfx90a/README.md（转正说明、三条硬规矩、谁在运行时调它）",
+    "docs/BETA资产转正-2026-09-12.md（15 件生产硬依赖转正）",
+    "docs/MI250X-vLLM-优化方案.md（P1 / QR 全数据表）",
+    "CLAUDE.md §10（P1、QuickReduce 三 env、CUSTOM allreduce 判死）",
+    "models/Qwen/launcher/qwen3.8-flash-next_176b_bf16_vllm_rocm724_256k_8107_Qwen_mi250dx8.sh（QR=1 断言现场）"
+   ],
+   "stack": {
+    "framework": "投递器 patches/gfx90a/port_p1_c2_c3.py（六件套子命令）；三件 = P1（vllm/model_executor/layers/utils.py + 新文件 layers/mi250_kernels.py）/ C2（device_communicators/quick_all_reduce.py arch 白名单 +gfx90a）/ C3+C3b（cuda_communicator.py 模块级 _MI250_QR_WANTED + qr_comm 构造条件）",
+    "notes": "P1 数据：Qwen3-Next shared_expert_gate 的 1×1×2048 GEMM 掉进 hipBLASLt 66.5 µs 慢核 × 40 层，补 out_features≤16 && tokens≤8 的 Triton GEMV（5.5 µs）⇒ Ornith TP4 单流 71.2→85.3 t/s（+19.8%）且与 F.linear 逐位相同；C3 机理：vLLM 只在 use_custom_allreduce 为真时才构造 qr_comm，而那是 MI300+ 假设（platforms/rocm.py 的 gfx94/95 门 → parallel.py:1057 强制 disable，且只打 logger.debug 日志里看不见）⇒ 只设 env 不够",
+    "rocm": "随两棵 vLLM 树（7.2 系）"
+   },
+   "status": "active",
+   "status_note": [
+    "两个 env 的投递形态不同（最容易搞混）：vllm_master_rocm724 = editable → src/vllm-master ⇒ 改动 = 源码 commit（QR-gfx90a 那发是 af49926），唯一副本走 git + backup remote/bundle，校验用 --require 与 git log；vllm_0.28.0_rocm72 = 直接改 site-packages（gitignore 区），唯一副本 patches/native-env/vllm028-base-p1-qr.patch + NEW-mi250_kernels.py，校验用 tools/verify_env_patches.sh（md5 基线）",
+    "C2 附注：FP lossless 模式在 CDNA2 与 NCCL 逐位一致；15 件生产硬依赖 09-12 从 BETA 转正（docs/BETA资产转正-2026-09-12.md）"
+   ],
+   "title_or_why": "vLLM 的 P1 门控 GEMV + C2/C3 QuickReduce 架构门（gfx90a 三件投递 + fail-closed 准入门）——这是本机 vLLM 侧收益最大的两件东西（P1 单流 +19.8%、QR 在 TP2/TP4 +4.7%/+12.5~24.9%），而 8107/8109 起服路径上的 --require 是准入断言：不在位就 exit 2 拒启，不是可选开关。",
+   "verified": "2026-09-15"
+  },
+  {
+   "applies_to": {
+    "preset": "vllm-028-family",
+    "quant": "int8-w8a8"
+   },
+   "apply_verify_revert": {
+    "apply": "envs/wu1w-int8-028/bin/python src/vllm-mi210/scripts/apply_gfx90a.py --apply",
+    "revert": "git 无关（envs/ 是 gitignore 区）⇒ 复原 = 从 envs/wu1w-fresh 重拷被改文件，再按需重放基线补丁；或 patch -R -p1 < patches/native-env/wu1w-int8-on-top-of-base.patch",
+    "verify": "envs/wu1w-int8-028/bin/python src/vllm-mi210/scripts/apply_gfx90a.py --check"
+   },
+   "consumers": [
+    "8114-qwen38-27b-int8-w8a8-vllm-tp1-dflash12",
+    "wu1w-int8-028"
+   ],
+   "id": "wu1w-int8-aiter",
+   "kind": "patch",
+   "path_or_target": "envs/wu1w-int8-028",
+   "rebuild": [
+    "cp -a envs/vllm_0.28.0_rocm72 envs/wu1w-int8-028",
+    "tools/fix_venv_prefix.sh",
+    "envs/wu1w-int8-028/bin/python src/vllm-mi210/scripts/apply_gfx90a.py --apply",
+    "tools/verify_env_patches.sh"
+   ],
+   "red_lines": [
+    "🛑 只有线性层：AITER MoE 在 gfx90a 终案不可用（arch 门 / 无码对象 / JIT 后 CK 静默算错 = bf16 无全局 AtomicAdd）；别把 a8w8 的成功外推到 MoE",
+    "🛑 VLLM_ROCM_USE_AITER=1 只允许在这条臂上出现：统一层 config/vllm.conf 默认 0 且带 WARN（RMSNorm 优先级门不查 arch）；8114 里显式 export VLLM_ROCM_USE_AITER=1 + VLLM_ROCM_USE_AITER_LINEAR=1，写在 conf 之前 ⇒ 不被 ${VAR:-0} 覆盖",
+    "⚠️ JIT 缓存要独立：沿用旧 torch_compile_cache 会出现『日志写着 AITER、实际仍跑 Triton』；8114 用 WU1W_CACHE（默认 cache/wu1w/torch_compile_cache）+ VLLM_ROCM_AITER_JIT_CACHE",
+    "⚠️ shebang 陷阱：cp -a 出来的 env 里 bin/* 若指向母本，bin/vllm serve 会静默加载未打补丁的 vLLM（本 env 09-12 中招并修好，详见 environments/wu1w-int8-028.md §4）",
+    "fused_gdn_hip.hip 此前任何 git 里都不存在，09-12 才入库（唯一副本 patches/wu1w/；另在 src/vllm-mi210 自己仓 commit c5bdf49）——丢了就没有第二份"
+   ],
+   "selfcheck": [
+    "起服前置闸（8114 头部要求，逐字）：cd /home/qiba/ai && envs/wu1w-int8-028/bin/python src/vllm-mi210/scripts/apply_gfx90a.py --check   # 任何一条非 ok/skip ⇒ 不要起服",
+    "判『真上场』：日志必须出现 AiterInt8ScaledMMLinearKernel；只出现 Using TRITON ... = 静默回退，配置形同未改",
+    "md5 基线：patches/native-env/wu1w-int8-028.hand-patched.md5（逐件）+ MANIFEST.md5 总表"
+   ],
+   "sources": [
+    "docs/davetha-wu1w-gfx90a-落地施工单-2026-09-10.md",
+    "docs/MI250X-PR41-Qwen38-27B-INT8-dflash-本机复现-2026-09-14.md",
+    "patches/native-env/wu1w-int8-on-top-of-base.patch、patches/wu1w/fused_gdn_hip.hip",
+    "src/vllm-mi210/scripts/apply_gfx90a.py（上游打补丁器，锚点定义在此）",
+    "patches/native-env/MANIFEST.md5（7 件 md5）"
+   ],
+   "stack": {
+    "framework": "vLLM 0.28.0+rocm723 + AITER：上游打补丁器 src/vllm-mi210/scripts/apply_gfx90a.py（锚点定义在此，幂等：不重写已打过的文件、不换 fork、不改 vLLM 本体结构）+ 重放件 patches/native-env/wu1w-int8-on-top-of-base.patch",
+    "notes": "7 件手改 + 1 件新增 HIP 核：vllm/_aiter_ops.py（MARK_CU：gfx90a 通过 AITER 可用性判定，104 CU）、vllm/_custom_ops.py（MARK_NO_FP8：打开 a8w8 路径、声明 AITER_A8W8_NO_FP8）、aiter/jit/utils/build_targets.py（JIT 目标加 gfx90a）、aiter/ops/communication.py（本 env 独改）、aiter/jit/utils/cpp_extension.py（pybind11 修法，见 aiter-pybind11-internals）、vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py（MARK_IMPORT/MARK_HIP_OP/MARK_GQA）、sitecustomize.py（进程启动即注入）；新增 fused_gdn_hip.hip（10.6 KB）",
+    "rocm": "7.2 系（随宿主 env wu1w-int8-028 / amd-aiter 0.1.19）"
+   },
+   "status": "active",
+   "status_note": [
+    "aiter/ops/communication.py 是本 env 独有的那份改动，与已回收的 atom_vllm 是两份不同内容 ⇒ md5 基线必须按 env 分文件的判例",
+    "对照实验开关：WU1W_EXTRAS=0 关掉本机习惯项做『配方忠实度 A/B』（docs/MI250X-PR41-Qwen38-27B-INT8-dflash-本机复现-2026-09-14.md 用的就是这条）",
+    "8114 只占单 die（TP=1），与别的臂不互斥"
+   ],
+   "title_or_why": "wu1w 的 gfx90a AITER-INT8 补丁（a8w8 线性层 + fused GDN HIP 核）——全机唯一让 AITER CK gemm_a8w8 在 CDNA2 上出 gfx90a 码对象的路径（实测 2.9× Triton INT8），也是 8114 那条单 die 臂能到 80 t/s 的全部原因。",
+   "verified": "2026-09-15"
+  },
+  {
+   "applies_to": {
+    "arch": [
+     "deepseek_v32",
+     "glm_moe_dsa",
+     "deepseek_v41"
+    ],
+    "preset": "generic-vllm"
+   },
+   "apply_verify_revert": {
+    "apply": "envs/vllm_master_rocm724/bin/python patches/vllm-dsa-gfx90a/patch_sparse_indexer_gfx9.py --check",
+    "revert": "在 src/vllm-master 侧 revert commit 9349d08（🛑 那是推不出去的本地 commit，先确认 backup/bundle 在位）",
+    "verify": "sha 比对：src/vllm-master/vllm/model_executor/layers/mqa_logits_gfx9.py 应等于 mqa_logits_gfx9.v1-fp32reference.py（b2d64a89…，commit 9349d08）"
+   },
+   "consumers": [
+    "vllm_master_rocm724",
+    "8107-qwen38-flash-next-176b-bf16-vllm-tp8",
+    "8109-qwen38-flash-next-176b-bf16-vllm-splitkv"
+   ],
+   "effect_by_scope": [
+    {
+     "effect": "beneficial",
+     "evidence": "docs/recipes/serving/8121-…md §5；SKILL.md『indexer 缓存布局』",
+     "value": "`DSV41_IDX_AITER_KERNEL=1` 实测 conc32 73.13→123.78（**+69.3%**），召回仍 6/6；未设则走**本机不可信**的上游 torch 回退",
+     "when": {
+      "arch": [
+       "deepseek_v32",
+       "glm_moe_dsa"
+      ],
+      "quant": [
+       "ct-int4-w4a16",
+       "int8-w8a8"
+      ]
+     }
+    },
+    {
+     "effect": "negative",
+     "evidence": "docs/recipes/serving/8121-…md §9",
+     "value": "`MI250_SPARSE_SPLITK=8` 内核 7.2× 但端到端 conc1/8/32 全负（−18.3/−14.1/−13.0%），因为 elementwise/copy 每步 1332→3439 ⇒ 默认必须保持 0",
+     "when": {}
+    }
+   ],
+   "id": "vllm-dsa-indexer",
+   "kind": "patch",
+   "path_or_target": "src/vllm-master（8107/8109/8112-vLLM 臂共用的 editable 树）",
+   "rebuild": [
+    "envs/vllm_master_rocm724/bin/python patches/vllm-dsa-gfx90a/patch_sparse_indexer_gfx9.py --check   # 投递器：装 mqa_logits 模块 + 给 indexer 打捕获安全化门（graph capture 期不做 host 侧取值/断言）"
+   ],
+   "red_lines": [
+    "运行时不被任何 launcher 调用（gate 与 patches/gfx90a/ 的区别）⇒ 改这里不影响在役树；要改行为得动 src/vllm-master 并在那边 commit",
+    "🛑 mqa_logits_gfx9.py（fp16 + 精排版）已判回退：更快但 CUDA graph 下语义不稳 ⇒ 已回 fp32 参考版；留作对照，别顺手『优化』回去；想再试先在 eager 下对拍，别直接换在役文件",
+    "🛑 台账继续留在 beta：src/vllm-master/vllm/v1/attention/ops/rocm_aiter_mla_sparse.py:788 的注释按 launcher/beta/mi210-vllm/… 路径指路，而 launcher/beta/** 是红线 3 的不可再生区 ⇒ 只读，别在 beta 里改，也别『顺手清理』（判据去 beta 的 NOTES.md 与 C-施工单-DSA索引器捕获安全化.md）",
+    "revert 危险：9349d08 是推不出去的本地 commit，revert 前先确认 backup remote / bundle 在位",
+    "半成品勿接生产：port_prefix_prefill_partition.py、prefix_prefill.verify-ctx-partition.py（prefix prefill 的 ctx 分区改造 + 校验稿，未接生产）；enable_aiter_ck_gemm_gfx90a.py ❌ 不启用（AITER CK int8 GEMM 门，gfx90a 终案不可用，CLAUDE.md §10，留作 P2 之后的独立课题）"
+   ],
+   "selfcheck": [
+    "sha256sum src/vllm-master/vllm/model_executor/layers/mqa_logits_gfx9.py patches/vllm-dsa-gfx90a/mqa_logits_gfx9.v1-fp32reference.py   # 两行必须相同",
+    "git -C src/vllm-master show --stat 9349d08 | head -20",
+    "grep -n 'mqa_logits_gfx9\\|rocm_aiter_mla_sparse' src/vllm-master/vllm/v1/attention/ops/*.py | head"
+   ],
+   "sources": [
+    "patches/vllm-dsa-gfx90a/README.md（逐件状态表）",
+    "launcher/beta/mi210-vllm/NOTES.md（上游台账、收编/不收判词——没搬，因为树内注释按该路径指路）",
+    "launcher/beta/mi210-vllm/C-施工单-DSA索引器捕获安全化.md（因果链与验收判据）",
+    "docs/MI250X-indexer-非AITER-Triton路径-现状与方案-2026-09-05.md",
+    "CLAUDE.md §10（DeepSeek-V4-Flash vLLM 路卡 indexer only supported on AITER）"
+   ],
+   "stack": {
+    "framework": "vLLM master 侧：vllm/v1/attention/ops/rocm_aiter_mla_sparse.py + vllm/model_executor/layers/mqa_logits_gfx9.py；投递器 patches/vllm-dsa-gfx90a/patch_sparse_indexer_gfx9.py",
+    "notes": "在役源 = mqa_logits_gfx9.v1-fp32reference.py 逐字节（sha b2d64a89…，commit 9349d08，ahead 2 未推远端）；与 patches/gfx90a/ 的本质区别：那边是现役 launcher 每次起服都要跑的 fail-closed 准入门，这边只是来源记录（改动已装进 src/vllm-master 并提交）",
+    "rocm": "7.2 系（随 editable 树）"
+   },
+   "status": "active",
+   "status_note": [
+    "负结果登记：DeepSeek-V4 / V4.1 走 vLLM 的先决条件 = indexer 不依赖 AITER（现状 indexer only supported on AITER 硬门，CLAUDE.md §10）+ 注册 DeepseekV41ForCausalLM arch；三块触发条件与复评记录见准入调研 §10.4，serving/8112 §9 已把『vLLM 路线现期判死』记在那儿",
+    "fp16+精排那一版的判死理由（唯一理由）：CUDA graph 下语义不稳；已判回 fp32 参考版在役"
+   ],
+   "title_or_why": "DSA 稀疏索引器的 gfx90a 移植料（已装进 src/vllm-master 的来源记录）——DeepSeek 系稀疏注意力（indexer）在 vLLM 上游写死 AITER only，gfx90a 没有 AITER 通路；本目录是那套『绕开 AITER 的 fp32 参考实现 + 捕获安全化门』的唯一来源记录。",
+   "verified": "2026-09-15"
+  },
+  {
+   "applies_to": {
+    "arch": "qwen4exp",
+    "engine": "vllm-master@8a728663c",
+    "model": "Qwen/Qwen3.8-Flash-Next-BF16",
+    "preset": "generic-vllm",
+    "tier": "T1"
+   },
+   "apply_verify_revert": {
+    "apply": "P=patches/gfx90a/port_qwen4exp_eagle_annotate.py; env 门 VLLM_QWEN4EXP_EAGLE_ANNOTATE=1",
+    "revert": "撤 env 门 / 撤补丁 ⇒ 警告回到 9 行，但**复用行为不变**",
+    "verify": "启动日志里那 9 行 `every group -- including Mamba groups [0,1,2,3] -- will be treated as a draft group … prefix-cache reuse across requests will be disabled` 变 0 行"
+   },
+   "consumers": [
+    "8107-qwen38-flash-next-176b-bf16-vllm-tp8"
+   ],
+   "id": "qwen4exp-mtp-prefix-reuse",
+   "kind": "patch",
+   "path_or_target": "patches/gfx90a/port_qwen4exp_eagle_annotate.py（3 个 patch；env 门 VLLM_QWEN4EXP_EAGLE_ANNOTATE）",
+   "rebuild": "（无需重建：改的是 src/vllm-master 的 `v1/core/kv_cache_utils.py`（`_annotate_eagle_groups` 与两个 `_is_*_eagle` 判据，L2061/L2068/L2078/L2113/L2307））",
+   "red_lines": [
+    "**别把它当提速项**：装后警告 9→0，但**复用行为一项没变**（2026-09-21 三 boot 配对复测）。",
+    "**上游默认（不装补丁）本来就有跨请求复用**：同 prompt 连发，第 3 次起整段跳过预填充（2.51 s → 0.45 s）。那 9 行警告说的是「组被当成草稿组」，**不等于**「复用为 0」。"
+   ],
+   "selfcheck": [
+    "grep -c 'prefix-cache reuse across requests will be disabled' <启动日志>   # 装=0 / 未装=9"
+   ],
+   "sources": [
+    "docs/recipes/patches/qwen4exp-mtp-prefix-reuse.md（配方本体）",
+    "patches/gfx90a/port_qwen4exp_eagle_annotate.py",
+    "src/vllm-master/vllm/v1/core/kv_cache_utils.py L2061/L2068/L2078/L2113/L2307",
+    "quark-int8/prefix_disambig.py（2026-09-21 三 boot 配对）",
+    "bench/ledger.jsonl L48（**撤回 L44 的复用结论**）"
+   ],
+   "stack": {
+    "framework": "vLLM master（editable，src/vllm-master）",
+    "notes": "MTP + 混合 mamba 模型下引擎打 9 行 prefix-cache 警告；补丁让它闭嘴。**消警告有效、吞吐中性。**"
+   },
+   "status": "active",
+   "status_note": "**这是一条撤回记录**：2026-09-18 曾据「命中 +3200/3686=87%（改前恒 0）」「多轮 TTFT 1.43–1.86→0.28–0.71 s」把它的默认打开并写进 launcher（护栏⑤）。**2026-09-21 配对复测推翻这两条**：最可能是把「冷 boot 首个请求撞 Triton JIT」当成了「没补丁就慢」（同一个坑在 09-18 另有 12.64 t/s 离群点记录）。",
+   "title_or_why": "qwen4_exp MTP 草稿组标注补丁（port_qwen4exp_eagle_annotate.py）—— 消警告有效、**吞吐中性** · MTP + 混合 mamba 模型下引擎打 9 行「prefix-cache reuse will be disabled」警告；本补丁让它闭嘴（9→0），但 2026-09-21 三 boot 配对复测证明**它不改变任何可测的复用行为**——别把它当提速项。",
+   "verified": "2026-09-21"
+  }
+ ],
+ "scope_spec": "data/scope.json",
+ "source": "/home/qiba/ai/docs/recipes/patches"
 }
