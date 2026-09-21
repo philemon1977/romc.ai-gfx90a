@@ -195,8 +195,12 @@ REMAINING_GAPS = [
         "metrics": "KV 池 326,016 tokens（32k 档）；1M 未测",
     },
     {
-        "description": "QuickReduce C2+C3 在本模型上未验证（三条 env 未启用，需起服 + 事实召回 6/6 + TPS A/B）",
-        "metrics": "",
+        "description": (
+            "QuickReduce C2+C3 已判死（**不是**未验证，与 what_failed 那条对齐）：init_custom_qr 在显存"
+            "规划前固定吃 ~9 GiB/卡 ⇒ 0.97 档启动即拒（Free 54.9 < 门 62.06 GiB）；要开须 util ≤0.858，"
+            "那时 KV 只剩 ~2 GiB/卡 ⇒ 1M 上下文不可能。默认三条 env 留空（不注入）"
+        ),
+        "metrics": "三臂 A/A2/B 实证见 hyperloom/reports/models/glm53-int4/qr-c2c3-verdict.md",
     },
     {
         "description": "DCP 的 all-gather 在 gfx90a 没有快后端 ⇒ 只能减少/融合 gather",
