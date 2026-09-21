@@ -88,8 +88,40 @@ sys.exit(0 if ok else 1)
 PY
 [ $? -eq 0 ] || bail "静态自检未过"
 
-echo "== 5) CLI 接受性（--gpu-type mi250x 必须合法） =="
-python3 -m hyperloom.inference_optimizer.cli optimize --gpu-type mi250x --model /tmp/nope-such-model --framework vllm 2>&1 | tail -4 | sed 's/^/   /'
+# 探针必须用**非法值**触发 argparse 的 choices 报错，以此证明 mi250x 在合法集合里。
+# 反面教材（2026-09-21 21:3x 本机实踩）：这里原来写的是"合法值 + 假模型路径"
+#   optimize --gpu-type mi250x --model /tmp/nope-such-model
+# 以为它会"报到模型路径错就退出"。实际链路是：argparse 全过 -> 会话目录真的建出来
+# -> Claude 编排 agent 真的起来，跑了 3.5 分钟才发现并掐掉（session/nope-such-model/ 已删）。
+# 报告里那条 V2 判据（"报错变成模型路径相关"）只在**没 source .env** 的裸环境下才安全；
+# 一旦 .env 齐了，合法值探针 = 直接开一次真会话。
+# 注意别被自己的 pipefail 咬：argparse 撞上非法 choices **必定 exit 2**（这正是我们要的
+# 证据），所以 `python … | grep -q` 在 set -o pipefail 下会把 python 的 2 当成流水线状态，
+# 明明匹配上了也判 FAIL（09-21 实踩过一次，误杀但没起会话）。先把输出收进变量，再按内容判定。
+echo "== 5) CLI 接受性（非法值必须把 mi250x 列进 choices） =="
+CLIOUT="$(python3 -m hyperloom.inference_optimizer.cli optimize --gpu-type __no_such_gpu__ --model /tmp/x --framework vllm 2>&1 | tail -2 || true)"
+printf '%s\n' "$CLIOUT" | sed 's/^/   /'
+case "$CLIOUT" in
+  *mi250x*) echo "   mi250x 在 --gpu-type 的 choices 里：PASS" ;;
+  *) bail "mi250x 不在 --gpu-type 的 choices 里（identity 补丁没生效？）" ;;
+esac
+
+# 5b) LLM 网关实地验证。09-21 21:3x 实踩：.env 的 ANTHROPIC_BASE_URL 写成
+#   https://192.168.100.127:8107/anthropic  ——scheme 与路径**双错**（LiteLLM 只听
+#   http://192.168.100.127:8107，且 /v1/messages 在根下）。后果不是报错而是**静默空转**：
+#   会话目录建好、coordinator 活着、SEED turn 的 claude 子进程连不上网关就一直挂着，
+#   8 小时预算会在零候选中烧完。所以这一门必须在 launch 之前，且要用**SDK 真正调用的
+#   那个 bundled CLI**（不是裸 python 探针——裸探针只能证明 HTTP 可达，证不了 CLI 的
+#   model/协议协商；不带 --model 时 CLI 还会偷偷用默认模型名去撞一个不存在的模型）。
+echo "== 5b) LLM 网关实地验证 =="
+CLAUDE_BIN="$(python3 -c 'import claude_agent_sdk,os;print(os.path.join(os.path.dirname(claude_agent_sdk.__file__),"_bundled","claude"))' 2>/dev/null | tail -1)"
+[ -x "$CLAUDE_BIN" ] || bail "找不到 bundled claude CLI：$CLAUDE_BIN"
+GWOUT="$(timeout 180 "$CLAUDE_BIN" -p 'reply with exactly: GATEWAY_OK' --model "${CLAUDE_MODEL:-}" 2>&1 | tail -3)"
+echo "   gateway_reply=$GWOUT"
+case "$GWOUT" in
+  *GATEWAY_OK*) echo "   网关 PASS（base=$ANTHROPIC_BASE_URL model=$CLAUDE_MODEL）" ;;
+  *) bail "LLM 网关不通：base=$ANTHROPIC_BASE_URL model=${CLAUDE_MODEL:-} —— 宁可不跑，不要空转 8 小时" ;;
+esac
 
 echo "== 6) IR-1：preflight =="
 python3 "$SKILL_DIR/scripts/preflight.py" || bail "IR-1 preflight 未过"

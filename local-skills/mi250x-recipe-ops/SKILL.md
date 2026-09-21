@@ -464,6 +464,19 @@ SKILL.md 是常驻的索引与 T0 层；下列细节**按需加载**：
 - 🧪 **`HSA_NO_SCRATCH_RECLAIM` / `HIP_FORCE_DEV_KERNARG` 已否证**（09-21）：曾被点名为「同输入不同输出」
   的头号待验修复项，实测 0918 镜像**早已烘焙两者**（`docker exec … env`）而症状照在。别再照这条开药。
 - **不要在 isolated 微基准里排序**：结论会反（`CUSTOM allreduce` 输出静默变 `!!!`）。
+- 🚩 **「CLI 接受性探针」只能用非法值触发 argparse**（09-21 实踩，白烧 3.5 分钟 LLM 额度）：
+  `optimize --gpu-type <合法值> --model /tmp/不存在` 看着像"会报到模型路径就退出"，实际是
+  **argparse 全过 → 会话目录真的建出来 → Claude 编排 agent 真的起来**（默认预算还按 2h 走）。
+  报告里那条 V2 判据只在**没 source .env** 的裸环境下才安全。要证明 flag 合法，就传一个
+  **不可能的值**去读 `invalid choice … (choose from …)`，并断言目标词在 choices 里。
+- 🧯 **Hyperloom 的容器 ≠ 生产臂的容器**（09-21）：`hyperloom-local`（镜像 `-hl`）里 vLLM 的
+  `glm5next/amd/sparse_indexer.py` 与 `model_executor/layers/mhc.py` 与 `-0918` 底座**逐字节相同**
+  ⇒ 不含第 ⑧ 件与 mHC 回退。任何 `glm5_next` 权重进 Hyperloom 前必须先把这两件落进**那个镜像**
+  （现已烘成 `rocm-ai/vllm:glm53-int4-hl-fl1`），否则 baseline 在第一次 `_dummy_run` 撞
+  "Sparse attention indexer ROCm path is only supported on AITER."。同类坑：模型路径必须在容器
+  挂载里 —— `-hl` 只挂了 `/mnt/kioxia-cm6-3t8/ai/models`，本权重在 `/mnt/stripe-3mix-3t2/models`，
+  容器里 `ls` 不到；改挂载要 `docker commit` + 重建（可写层里有 Magpie 的 mi250x runner 注册，
+  直接从底座 build 会丢）。
 
 ---
 
