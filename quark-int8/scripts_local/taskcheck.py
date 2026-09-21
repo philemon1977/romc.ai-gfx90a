@@ -101,8 +101,15 @@ def main():
     print()
     print("=== %s 汇总：召回失败 %d，GSM8K %d/%d，针尖 %s ===" % (
         a.tag, fails, gsm, len(GSM8K), "HIT" if hit else "MISS"))
-    print("参照 8121 基线：召回 6/6、GSM8K 5/6、针尖 prompt=9232 MISS")
-    return 1 if (fails > 0 or gsm < 5) else 0
+    # ⚠ 那组「召回 6/6、GSM8K 5/6」是 **8121 = GLM-5.3-CT-Int4-W4A16** 的读数，
+    # 不是本模型的基线。本仓铁律：一个模型的结论不能外推到另一个模型。
+    # 所以这里的 PASS/FAIL 只能与**同一台机器、同一模型、只差被测变量的对照组**比，
+    # 不能拿这行当门（09-22 实踩：拿它当门会把 AITER 验收判成"回归"）。
+    print("注：上面那组参照属于 8121（GLM-5.3-CT-Int4-W4A16，**另一个模型**），只作旁证，不作判据；")
+    print("    判据请与同模型对照组逐项相减（见 verify_aiter_linear_arm.sh 的 AITER=0 臂）。")
+    # 退出码只保留"召回必须全对"这条真门：召回是字面事实题，坏数值一定先在这里露出来；
+    # GSM8K 的条数门交给对照组比较，不在脚本里写死别的模型的数字。
+    return 1 if fails > 0 else 0
 
 
 if __name__ == "__main__":

@@ -152,7 +152,72 @@ segfault」的同一条路，**但这次没崩还测出全场最高**。而本�
 硬尺：`tools/probe_nll.py` 的 NLL 量级 + `scripts_local/taskcheck.py` 的事实召回。
 数值坏 ⇒ 进死路清单，并在此声明「该 +2.9% 不可采信」；数值好 ⇒ 修正库内判词的适用面
 （AITER-linear 与 AITER-MoE 不是一回事，必须分开写）。
-## 5. 结果（待填，禁止提前抢答）
+## 5. 结果（收场后填，全部取工具自己写的权威文件）
+
+会话 `20260921T151223Z-34588c9d`，06:59:36 自然收场（deadline 前 13 分钟），`stop_reason=sweep_done`。
+
+### 5.1 权威数字
+
+| 项 | 值 | 出处 |
+|---|---|---|
+| `baseline_tput` | 23.4178 | `final.json/baseline_tput` |
+| `current_best.tput` | 24.1077 | `final.json/current_best/measurement/tput` |
+| `cumulative_gain_validated` | **+2.9457%** | 同上 |
+| `optimization_stack` | **1 条**：`env VLLM_ROCM_USE_AITER=1 + AITER_LINEAR=1`（其余 AITER 子开关全 0），`accuracy=None`、`gain=None` | `state.json` |
+| 阶段耗时 | PRELUDE 7223.6s ／ FRAMEWORK **15953.4s** ／ KERNEL **4734.9s** ／ SWEEP 118.2s（合计 7h47m） | `phase_elapsed_totals` |
+| 候选账目 | 11 个候选 → **1 KEEP / 10 REVERT**（journal 22 条） | `reports/optimization_journal.json` |
+
+### 5.2 口径纠正（重要，会误导下一个读数的人）
+
+`final.md` 把吞吐标成 **`23.4 tok/s/GPU`** —— **错**，它是**整台 8 卡服务器的聚合 output throughput**。三条内证：
+① `final.json` 里 `total_throughput = 48.2154 = 2 × tput`，而 ISL=OSL=512 ⇒ `total` 是 in+out、`tput` 是 **output**；
+② `tpot_p90_ms = 333.45` ⇒ 每流 3.0 tok/s × CONC 8 = **24.0**；③ 服务器日志 `Avg generation throughput: 24.0`。
+⇒ 对外引用这份结果时必须写 **24.1 tok/s（8 路聚合，output only，@CONC=8）**，
+否则与 MI300X 的 per-GPU 口径对比会**虚高 8×**。
+
+### 5.3 本轮真正的发现：这是**每步固定开销**瓶颈，不是带宽瓶颈，而并发是没用掉的杠杆
+
+单流实测 3.18-3.33 tok/s；本次 CONC=8 时 `tpot_p90=333 ms` ⇒ 每流 3.0 tok/s，
+**每流只退化 7%，聚合却近乎线性到 7.5×**。⇒ 步时里"随 batch 增长"的部分很小，
+大头是每步固定开销（对照 int4 那棵树 profile：稀疏注意力 36%／每层集合通信 19%／非专家 GEMM 19%）。
+按 mi250x roofline，本 workload 距访存下限还有 **一个数量级**。
+
+**由此产生两条明确的下一步**（都不在本轮口径内，故未做）：
+1. **并发扫描** —— 本轮按用户口径钉死 `CONC=8` 且 `--no-enable-conc-sweep`。近线性扩展说明
+   CONC 16/32 很可能直接翻倍聚合吞吐。**这是对"太慢"最可能有效的一档，优先级高于任何内核重写。**
+2. `--load-format fastsafetensors` —— 装载路径的第三个变量（本轮只证伪了 eager 的必要性：
+   同容器 805.24s → 746.35s，仅 7.3%）。
+
+### 5.4 内核车道：81 分钟 0 次尝试（不是"试了没保住"）
+
+| 证据 | 值 |
+|---|---|
+| `kernel_optimization_summary.json` | `by_kernel: []`，`failure_reason_breakdown` **九项计数全为 0** |
+| `final.md` Highlights | `response from kernel_agent: kind=geak_e2e_done status=timeout` |
+| 阶段切换原因 | `KERNEL_AGENT → SWEEP (reason=kernel_no_more_leverage)` |
+
+⇒ GEAK 跑到 `runner_timeout=4877s` 超时退出，**一次内核 campaign 都没发起**。最可能的门槛
+（未证，列为下一步要验的假设）：baseline 时 `TraceLens runtime patch unavailable for framework=vllm
+; profile will omit annotation-only flags` + journal 里 `roofline` 记为 **REVERT** ⇒ 没有带形状的
+trace，`trace_analyze` 提名不出候选内核，内核车道就没有输入。**下次跑内核车道前应先钉这条**。
+
+另有一条运行期告警必须留痕：`alert sev=high agent orchestration silent for 7273s (threshold=300s)`
+—— 编排 agent 静默 2 小时（与 PRELUDE 的 7223.6s 几乎等长），robustness 报了但未被处置。
+
+### 5.5 唯一 KEEP 的数值验收（进行中）
+
++2.9457% 来自 AITER-linear，而 `--no-eval` ⇒ 它**从未被精度验证**（`accuracy=None` 是写在栈里的字面事实）。
+验收方式与判据见 §4c；执行体 `quark-int8/scripts_local/verify_aiter_linear_arm.sh`（复刻 runner 的
+GEMV／自研 indexer preamble，改 `--network host` 以便宿主尺子直打）。结论待填：
+
+- NLL 量级门：?
+- 事实召回门：?
+- 判定：?
+## 6. 读法与复现
+
+- 状态读取：`bash quark-int8/scripts_local/hl_watch.sh`
+- 权威读数：`bash quark-int8/scripts_local/hl_final_report.sh`
+
 
 - `baseline_tput` = ?
 - 通过验证的 `optimization_stack` = ?

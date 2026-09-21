@@ -23,12 +23,24 @@ MODEL=/mnt/stripe-3mix-3t2/models/ZhipuAI/GLM-5.3-Flash-Quark-Int8
 LOGD=/home/qiba/ai/logs/verify-aiter; mkdir -p "$LOGD"
 LOG="$LOGD/server-$(date +%Y%m%d-%H%M%S).log"
 
+# AITER=1 = 实验臂（复刻会话里那条 KEEP）；AITER=0 = **对照组**。
+# 两者只差下面两个 0/1，其余（镜像、挂载、runner preamble 的那串 env、server args）逐字节相同，
+# 这样"数值有没有变坏"才是有对照的结论，而不是拿另一个模型的基线当尺子。
+AITER="${AITER-1}"
+NAME="verify-aiter-$AITER"
+if [ "$AITER" = "1" ]; then
+  ENV_A=(-e VLLM_ROCM_USE_AITER=1 -e VLLM_ROCM_USE_AITER_LINEAR=1)
+else
+  ENV_A=(-e VLLM_ROCM_USE_AITER=0 -e VLLM_ROCM_USE_AITER_LINEAR=0)
+fi
+echo "=== AITER=$AITER  NAME=$NAME ==="
+
 docker rm -f "$NAME" >/dev/null 2>&1 || true
 set -x
 docker run -d --name "$NAME" --network host --device /dev/kfd --device /dev/dri --group-add video \
   --security-opt seccomp=unconfined --ipc host --shm-size 64g \
   -v "$MODEL:/models:ro" \
-  -e VLLM_ROCM_USE_AITER=1 -e VLLM_ROCM_USE_AITER_LINEAR=1 \
+  "${ENV_A[@]}" \
   -e VLLM_ROCM_USE_AITER_MOE=0 -e VLLM_ROCM_USE_AITER_MHA=0 -e VLLM_ROCM_USE_AITER_MLA=0 \
   -e VLLM_ROCM_USE_AITER_TRITON_GEMM=0 -e VLLM_ROCM_USE_AITER_CUSTOM_AR=0 \
   -e VLLM_ROCM_USE_AITER_FUSION_SHARED_EXPERTS=0 -e VLLM_ROCM_USE_AITER_UNIFIED_ATTENTION=0 \
@@ -37,7 +49,7 @@ docker run -d --name "$NAME" --network host --device /dev/kfd --device /dev/dri 
   -e PYTORCH_HIP_ALLOC_CONF=expandable_segments:True -e HF_HUB_OFFLINE=1 \
   -e VLLM_SPARSE_INDEXER_MAX_LOGITS_MB=256 -e VLLM_EXECUTE_MODEL_TIMEOUT_SECONDS=1200 \
   -e AITER_LOG_TUNED_CONFIG=1 \
-  "$IMAGE" vllm serve /models --port "$PORT" --served-model-name glm53flash-int8 \
+  "$IMAGE" /models --port "$PORT" --served-model-name glm53flash-int8 \
     --tensor-parallel-size 8 --dtype bfloat16 --gpu-memory-utilization 0.95 \
     --max-model-len 8192 --max-num-seqs 8 --block-size 128 --kv-cache-dtype bfloat16 \
     --language-model-only --max-num-batched-tokens 2048 --enforce-eager --trust-remote-code
@@ -45,10 +57,19 @@ set +x
 docker logs -f "$NAME" > "$LOG" 2>&1 &
 echo "LOG=$LOG"
 
-# 就绪/死亡双签名（装载 ~12 min）
+# 就绪/死亡三签名（装载 ~12 min）。
+# 为什么要单独查容器已退出：09-22 实踩 —— 本脚本初稿在命令里又写了一遍 vllm serve，
+# 而 -fl1 镜像的 ENTRYPOINT 已是 ["vllm","serve"]，于是变成 vllm serve vllm serve /models，
+# vllm 直接 argparse 报错 exit 2。那种失败**不留** Segfault/EngineCore 痕迹，只有一行
+# "vllm: error: unrecognized arguments"，等待循环就会白转 30 分钟。容器状态才是硬信号。
 for i in $(seq 1 90); do
   grep -qaE "Application startup complete" "$LOG" && { echo "READY $(date +%T)"; break; }
-  grep -qaE "Segfault encountered|EngineCore failed|died unexpectedly|hipError|No available memory" "$LOG" && {
+  if ! docker ps -q -f name="$NAME" | grep -q .; then
+    echo "CONTAINER_EXITED $(date +%T) exit=$(docker inspect -f '{{.State.ExitCode}}' "$NAME" 2>/dev/null)"
+    tail -12 "$LOG" | cut -c1-190
+    docker rm -f "$NAME" >/dev/null; exit 4
+  fi
+  grep -qaE "Segfault encountered|EngineCore failed|died unexpectedly|hipError|No available memory|unrecognized arguments|No such option" "$LOG" && {
     echo "DIED $(date +%T)"; grep -anE "Segfault|died unexpectedly|Traceback|RuntimeError" "$LOG" | tail -6 | cut -c1-190
     docker rm -f "$NAME" >/dev/null; exit 2; }
   sleep 20
@@ -58,6 +79,9 @@ grep -qaE "Application startup complete" "$LOG" || { echo "TIMEOUT 未就绪"; e
 echo "=== 硬门 A：NLL 量级（对照 eager/lazy 基线 1.811 / 0.48 与坏模型 ln V=11.95） ==="
 python3 /home/qiba/ai/tools/probe_nll.py --url "http://127.0.0.1:$PORT/v1" --model glm53flash-int8 2>&1 | tail -12
 echo "=== 硬门 B：事实召回 + 短指令跟随 ==="
-python3 /home/qiba/ROCm.AI/quark-int8/scripts_local/taskcheck.py --url "http://127.0.0.1:$PORT/v1" --model glm53flash-int8 2>&1 | tail -20
+# 针尖必须收窄：本臂 --max-model-len 8192，而 taskcheck 默认 needle 目标 9000 token
+# ⇒ 直接 HTTP 400（09-22 实踩过，那一条腿等于没跑，不能记成 MISS）。给 8192 留出生成余量取 4000。
+NEEDLE_TOKENS="${NEEDLE_TOKENS-4000}"
+python3 /home/qiba/ROCm.AI/quark-int8/scripts_local/taskcheck.py --url "http://127.0.0.1:$PORT/v1" --model glm53flash-int8 --tag "aiter$AITER" --needle-tokens "$NEEDLE_TOKENS" 2>&1 | tail -22
 echo "=== 停服（只杀自己的容器） ==="
 docker rm -f "$NAME" >/dev/null && echo stopped
