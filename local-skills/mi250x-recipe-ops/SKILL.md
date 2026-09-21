@@ -260,3 +260,23 @@ result JSONs under `hyperloom/.tmp/single_stream_lab`, archived in
   这条路此前从未走通）；③ `DSV41_IDX_AITER_KERNEL` 未设时走的是**本机不可信**的 torch 回退，
   而设 `=1` 实测 +69%。
 
+
+## 与 serving-llms-on-instinct（AMD 官方技能）的仲裁（2026-09-21）
+
+该技能直接读 `data/gpu_overrides.json > gpu_configs`（按 **gfx 架构**分档），而它只覆盖
+`gfx942`/`gfx950`（MI300X/325X/350X/355X）—— 全技能内 MI250/gfx90a 命中 **0** 次。
+所以落在本机的任务，它给的是通用/MI300 口径。**本机任务一律以本技能为准**，冲突处按下表：
+
+| 通用口径可能怎么说 | 本机实测事实 |
+|---|---|
+| 启用 AITER 加速 | **不可用**（gfx90a 无 AITER MoE 路径） |
+| 打开 QuickReduce | **禁用**：`init_custom_qr` 固定吃 ~9 GiB/卡 ≈ 本模型 KV 全部预算 |
+| 用 split-KV 提速注意力 | **默认 0**：conc 1/8/32 三档全负（−18%/−14%/−13%） |
+| 关掉 eager 换 CUDA graph | 需同时给 `MAX_CUDAGRAPH_CAPTURE_SIZE>=1`，否则断言拒绝 |
+| indexer 走框架默认 | **必须 `DSV41_IDX_AITER_KERNEL=1`**：默认是更慢且本机不可信的回退，开启 +69.3%（conc32） |
+
+- 桥接（幂等，bootstrap 还原第三方文件后要重跑）：
+  `python3 hyperloom/patches-local/apply_serving_skill_mi250x.py`（`--check` 只看状态，`--revert` 回滚）。
+- **SKU 级而非架构级**：64 GiB/GCD、104 CU/GCD、TP8 时权重 52.9 GiB/rank ⇒ 32k 档 KV 仅
+  8.17 GiB / 94,016 tokens。别按「MI250X = 128 GiB」算 KV（那是两个 GCD 之和）。
+
