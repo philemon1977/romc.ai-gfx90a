@@ -146,3 +146,38 @@ TileLang 融合核，而该核在 **wave64** 上**非确定性地算错 `layer_i
 **不适合当好臂的必要条件** —— 否则一个健康的臂会被判 FAIL（8128 这次就差点被误判成「mHC 没修对」）。
 建议改法（未改代码，先记）：NLL 量级作硬门；确定性改为「同一 prompt 连打 k 次的**灾难位率**」
 （现测 zh1 = 10/16）而不是「两次文本是否逐字相同」。
+
+## ★ E1 已跑（2026-09-21 · 0918 镜像 · 单 die · 编译+跑约 15 秒）—— 根因升级为 kernel 级实锤
+
+`quark-int8/ktest_mhc_tilelang_nondeterminism.py`，真权重 `layers.0.hc_attn_{fn,scale,base}`
+（`model.language_model.` 前缀，HC=4、H=4096、`fn=(24,16384)`），`HIP_VISIBLE_DEVICES=1` 只占一张 die。
+
+```
+HAS_TILELANG_MHC(镜像默认)=True   on_gfx90a=True  on_gfx942=False
+Warning: [ThreadSync] Hoisting sync from inside if to before if. Condition is not safe for in-if sync: tx < 32
+第1次: layer_input 误差=1.953e-03  comb误差=1.788e-07   输入未被改写
+第2次: layer_input 误差=1.953e-03  comb误差=1.788e-07
+第3次: layer_input 误差=2.172e+00  comb误差=1.788e-07      ← 同一输入、同一进程
+第4次: layer_input 误差=2.031e+00  comb误差=1.788e-07
+对照：mhc_pre_delayed_torch 自比 4 次 = 0 / 0 / 0 / 0            ← 回落路径完全确定
+对照：tilelang             自比 4 次 = 0 / 2.547 / 2.180 / 1.961  ← 它自己就不确定
+判据: 回落路径确定=True  tilelang 自身不确定=True ⇒ 根因确认为 tilelang mHC 核的非确定性（gfx90a）
+```
+
+- **两次独立跑**（10:11:43 与 10:13:06）都命中，坏率约 25–50%（2/4 与 1/4）；
+- `1.953e-3` 是 bf16 对 fp32 参考的**噪声底**，`≈2.0` 是**错误**（输出量级 ~1.2）⇒ 判据要看
+  「四次之间是否一致 + 跳变量级」，不能只看单次误差大小；
+- `comb/post_mix/pre_mix` 三项恒 `1.788e-07` ⇒ 坏的确实只有喂给注意力与 FFN 的 `layer_input`；
+- 调用前后 `residual`/`pre_mix` 校验和逐位相同 ⇒ 不是 in-place 副作用；
+- tilelang **自己在编译期**打出 `tx < 32` 的 ThreadSync 警告 ⇒ 与 wave64 假设机制吻合。
+
+### 由此改变两个投入判断
+
+1. **E2 的「单变量对照臂」不再是判因的必要条件**：因果链已经是「kernel 级 + 有确定对照 + 单 die
+   15 秒可回归」，比 8 卡 10 分钟的端到端 NLL flip 更强 ⇒ **省掉那次起服**（若仍想要端到端记录，
+   `MHC_PATCH=0` 一跑即可，但它回答的是「症状是否随之消失」，不是「谁错」）。
+2. **本节的 09-18 那组数字（1.85 / 9.8e-4 / 2.17 / 1.97）需要留一个问号**：当时的脚本把
+   张量名写死成无前缀、`H=5120` 写死（另一颗 checkpoint 的形状）。tilelang 与参考拿到的是
+   **同一份错形状**，比较仍自洽、结论方向不变，但那组具体数字不该被当作本 checkpoint 的读数。
+   已把脚本改为**从 checkpoint 自适应**（前缀探测 + `HC/H` 取自 config + 形状断言），本节上方
+   的 E1 才是可引用的数。**教训：复现资产必须从被测对象取维度，写死的常量会在换 checkpoint 时静默失真。**
