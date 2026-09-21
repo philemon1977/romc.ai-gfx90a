@@ -280,3 +280,46 @@ result JSONs under `hyperloom/.tmp/single_stream_lab`, archived in
 - **SKU 级而非架构级**：64 GiB/GCD、104 CU/GCD、TP8 时权重 52.9 GiB/rank ⇒ 32k 档 KV 仅
   8.17 GiB / 94,016 tokens。别按「MI250X = 128 GiB」算 KV（那是两个 GCD 之和）。
 
+
+## 本机运维增补（2026-09-21 第二轮：DCP/fp8KV、补丁队列、镜像与脚本自伤）
+
+### DCP 与长上下文怎么起（launcher 没有 DCP 开关，走直通口）
+- `VLLM_EXTRA_ARGS="--decode-context-parallel-size 8 --dcp-comm-backend ag_rs"`（上游只验证过 `ag_rs`）。
+- 叠 fp8 KV：`--kv-cache-dtype fp8_e4m3`（只改 KV **存储**、无需 FP8 矩阵核；本机配置层已实测接受）。
+- **KV 算术（本机唯一该用的口径）**：DCP=1 → 93.4 KiB/token（8.17 GiB = 94,016 tokens）；
+  DCP=8 → **11.5 KiB/token**（5.89 GiB = 534,784 tokens，但权重 +2.11 GiB/rank）。
+  1M 单序列需 1,048,576 tokens ⇒ **必须 fp8 KV × DCP=8 才过线**（bf16 KV 只有 534,784，差一半）。
+- DCP=8 在短上下文（ISL≈700）是 **−28…−30%**，**必须在长档判**：`TPS_ISL_MULT=24`（≈17k）。
+
+### 补丁队列（quark-int8/dcp_patches）自洽检查
+- `python3 quark-int8/verify_patches.py`：①base+队列 与线上树**逐字节**相等 ②GEMV 四副本哈希
+  ③split-K 默认 0 ④QR 赋值行未注释。
+- 坑：`patch -i <相对路径>` 的路径按 **cwd** 解析 ⇒ 报"找不到补丁文件"、全 rc=2（曾被误归因为
+  "多文件 hunk"）。必须传 `resolve()` 后的绝对路径。
+- 树上还有 5 个文件被改过而 `base/` **无原件**（`weight_utils.py` + `models/deepseek_v41` 三个 +
+  一个）⇒ 本门对它们**无判别力**，属已知盲区，别当成"已覆盖"。
+- 新改动一律**追加**（如 0007/0008/0009），**不要重生成旧片**：重生成会让"队列==树"构造性为真，
+  自检从此失去判别力，还会把后补的修复静默并进旧片、改写归属。生成+自证脚本：
+  `quark-int8/dcp_patches/make_patch789.py`（生成后必须自证 sha256 相等）。
+
+### Docker 自建镜像的坑（QR 镜像就是这么做的，也是这么踩的）
+- `docker commit` 会把**被 commit 容器的 Entrypoint/Cmd 一并固化**。用 `--entrypoint bash` 起的
+  bake 容器 commit 出来入口就是 `bash -c sleep …`，launcher 传的参数会被当脚本执行 —— 表现为
+  容器**秒死**、日志只有一行 `/models: Is a directory`。正确做法显式还原并在事后逐行核对：
+  `docker commit --change 'ENTRYPOINT ["vllm","serve"]' --change 'CMD ["bash"]' --change 'WORKDIR /app' <ctr> <img>`
+  `docker inspect -f '{{.Config.Entrypoint}} {{.Config.Cmd}} {{.Config.WorkingDir}}' <img>`
+
+### 数字口径（本机最容易记错账的地方）
+- **请求级吞吐 ≠ 纯 decode tok/s**：`qr_tps_probe.py` 量的是含 prefill 的请求级（conc32 纪录 123.78），
+  旧报告的 9.60–10.71 是纯 decode 口径，**两者不可互比**；只可同一把尺子内横比。
+- 报告单流 TPS **必须带 ctx**：ctx≈800 约 10 tok/s，ctx=8192 约 4 tok/s。
+- **内核倍数 ≠ 端到端**：split-K 内核 7.2×，端到端 −13%。
+
+### 脚本自伤清单（今天为此烧掉两个 GPU 窗口，逐条都真发生过）
+- `pkill -f <模式>` 会匹配**执行它的 shell 自己**（把自己杀掉）；`ps -eo args | grep -F '…api_server'`
+  会匹配 **grep 自己** ⇒ 门永远不过。用 pgrep + 方括号模式 `api[_]server` 自保。
+- `[ "$x" -ge $${VAR:-1} ]` 里的 `$$` 是 **PID** ⇒ 整数比较报错、超时判断整体失效。
+- `bash -c` 里引用父 shell 变量必须 **export**，否则静默变空串（结果表写进空记录就是这来的）。
+- 判死/删容器**之前先存日志**，否则现场消失；就绪判定必须**同时看容器 State**，否则会为秒死的
+  容器空等满超时（曾空等 45 分钟，fail-fast 后单次失败反馈约 100 秒）。
+
