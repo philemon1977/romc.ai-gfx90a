@@ -506,9 +506,9 @@ Ornith 臂折叠）、`scripts/note_emulation_boot.py`（boot 证据）、
    正文 0 命中**（如 `llamacpp-tp-rccl-split-mode` 逐节引了 TP/RCCL 实测，正文完全没提）。
    判「是否已沉淀」必须同时看两处——本轮已在路由表里把 JSON 指过去，但正文索引仍不完整。
 6. **`tools/audit_log_paths.py:86` 的漏检未修**（正则只匹配带引号赋值 ⇒ `>/tmp/` 与无引号赋值漏检却报绿）。
-7. **`ROCm.AI` 侧改动未提交**（`local-skills/` 重构 + `data/scope.json` + `references/` 6 个文件
-   + `scripts/{scope_match.py,audit_skill_recipes.py}` + 报告）。
-   ⚠️ 两个坑：① `scripts/note_agent_lane.py` 是**会话前既有改动**，不属本次范围，别顺手带上；
+7. ~~`ROCm.AI` 侧改动未提交~~ ✅ 已提交 `7955ee0`（技能分层）+ 报告一笔；
+   **未 push**（本仓制度是"提交即推"，push 需另行确认）。
+   ⚠️ 两个坑（仍适用于下次）：① `scripts/note_agent_lane.py` 是**会话前既有改动**，不属本次范围，别顺手带上；
    ② **本机有并发会话在同一工作区提交**（`def33b9` 曾把本技能尚未提交的回写一并带走）
    ⇒ 提交前先 `git status` **看全量、不要截断输出**（本轮就是 `| head -3` 截断导致误判，
    `git checkout` 打回了一处别人的未提交更正，已还原）。
