@@ -64,6 +64,9 @@ ENV_SPECIAL = {
 }
 AI_RECIPES = Path("/home/qiba/ai/docs/recipes")
 
+KIND_SINGULAR = {"arms": "arm", "environments": "environment", "patches": "patch",
+                 "knobs": "knob", "ops": "op", "rows": "row", "references": "reference"}
+
 
 def resolve_env(v: str, env_ids):
     v = (v or "").strip().strip('"\'')
@@ -148,7 +151,10 @@ def load():
         for e in j[key]:
             items.append({
                 "file": fname,
-                "kind": key[:-1] if key.endswith("s") else key,
+                # 显式映射，不要用 key[:-1] 猜单数：`"patches"[:-1]` == "patche"，
+                # 而 arms/knobs/ops 恰好规则 ⇒ 只有 patches 出错，表现为
+                # `--kind patch` 静默返回 0 条（2026-09-21 实测踩到）。
+                "kind": KIND_SINGULAR.get(key, key),
                 "id": e.get(idf) or e.get("id"),
                 "title": (e.get("title_or_why") or e.get("recipe_id") or "")[:110],
                 "applies_to": expand(e.get("applies_to") or {}, presets),
@@ -350,6 +356,10 @@ def main() -> int:
     want_kinds = {k.rstrip("s") if k.endswith("s") and k != "ops" else k
                   for k in args.kind}
     want_kinds |= {k for k in args.kind}
+    # 反过来的容错：`--kind patch` 也要能匹配复数键（patches）
+    want_kinds |= {k + "es" for k in args.kind if k == "patch"}
+    want_kinds |= {v for v in KIND_SINGULAR.values() if v in args.kind}
+    want_kinds |= {k for k, v in KIND_SINGULAR.items() if v in args.kind}
     for it in items:
         if args.kind and not ({it["kind"], it["file"], it["file"].removesuffix(".json")}
                               & want_kinds):
