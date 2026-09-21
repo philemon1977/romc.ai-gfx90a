@@ -135,7 +135,7 @@ ROCm 侧 `platforms/rocm.py:827` 先查 `_ROCM_DEVICE_ID_NAME_MAP`，本机 `dev
 - aiter 资产普查（纯文件读取，不 import）：`module_gemm_a4w4_asm.so` / `module_gemm_a4w4_blockscale.so` / `module_moe_mxfp4_aux.so` 都在，但 int4 家族源码里 arch 字符串 **gfx950 ×1990 / gfx942 ×3 / gfx90a ×0**（`configs/model_configs/*a16w4*`、`*a4w4*` 亦然）⇒ 它们面向 CDNA4 的 fp4 scaled-MFMA。**a8w8 那条"通用 CK 模板 JIT 重编到 gfx90a"的路子对 int4 不存在**——a8w8 能成是因为 CDNA2 有原生 int8 MFMA。
 - 可复用的是**基础设施**而非内核：`AITER_JIT_DIR` 离线缓存（`~/.cache/aiter-gfx90a`）、CK 实例生成、pybind ABI 补丁、tuned-CSV 机制。
 - 收益上限的实测约束（两条独立证据）：① 本机 GLM-5.3-CT-Int4 归属表里 `triton_w4a16_gemm` 占 decode 一步 **18.9%**，自研 MoE GEMV 优化后只剩 **1.8%**（内核 8.7×/5.0× 仍被撤回），且「慢不是带宽、是层内串行与启动延迟」；② Ornith 自己的 int4 臂已经不用任何新内核就拿到 **68.83 tok/s**（`RESULT.md §7`），其步长模型显示 **61% 的步时间与 token 数无关** ⇒ 单流上换 GEMM 内核的天花板被同一个固定项封住。
-- 结论：**先做这两件（都不是内核）** —— ① 补装 gfx90a 的 a8w8 调优表（见 §5，纯文件操作）；② 在 MTP 深度/通信/固定开销上继续榨（§7 已证 +69% 来自 MTP 深度）。只有 profile 归属里 int4 GEMM 明显占主导（>25–30%）时，才值得考虑下面这条立项路线。
+- 结论：**先做这两件（都不是内核）** —— ① 装 gfx90a 的 a8w8 调优表（见 §5：**只为消噪音，性能恒等**，别当收益来源）；② 在 MTP 深度/通信/固定开销上继续榨（§7 已证 +69% 来自 MTP 深度）。只有 profile 归属里 int4 GEMM 明显占主导（>25–30%）时，才值得考虑下面这条立项路线。
 - 若真立项，唯一可能赢的设计是 **W4A8-int8**（int4 权重在寄存器 lift 成 int8 + 原生 int8 MFMA + 组内 requant，上游无源码，需新写），**前置条件**是先拿到 profile 归属证明 GEMM 是瓶颈（取窗口方法见上文 §Profile a step）。
 
 ### 4. 本会话固化的运维技巧（都已成脚本）
@@ -146,12 +146,14 @@ ROCm 侧 `platforms/rocm.py:827` 先查 `_ROCM_DEVICE_ID_NAME_MAP`，本机 `dev
 - **MTP × 量化的地雷**：开 `--speculative-config method=mtp` 后草稿模型（`Qwen3_5MoeMTP`）专家层是**未量化 bf16**，vLLM 会自动为它选 `ROCm AITER` MoE 后端并崩（`Unquantized MoE backend ROCm AITER does not support the deployment configuration`）⇒ 加 `-e VLLM_ROCM_USE_AITER_MOE=0`（目标模型的量化专家不受影响）。
 - 混合 GDN 架构的并发上限：Mamba state cache 与 KV 抢余量，`--max-num-seqs 256` 报 `exceeds available Mamba cache blocks`（Ornith 用 16）；`--gpu-memory-utilization <0.95` 会先报 `No available memory for cache blocks`。
 
-### 5. 已发现但**尚未回收**的便宜杠杆：aiter a8w8 调优表没装进 env
+### 5. ~~便宜杠杆~~ **反噪音项（已装，性能恒等）**：aiter a8w8 调优表的 gfx90a 行
 
 `patches/gfx90a/aiter_a8w8_tuned_gemm_gfx90a.csv` 内有 **54 行 gfx90a**，但三个 env
 （`vllm_0.28.0_rocm72` / `vllm_master_rocm724` / `wu1w-int8-028`）里的
 `aiter/configs/a8w8_tuned_gemm.csv` 只有 gfx942=26 + gfx950=553 ⇒ **gfx90a 的调优从未生效**，
 生产日志里的 `not found tuned config in a8w8_tuned_gemm.csv, will use default config` 就是它。
+装表动作与代码级依据见 `references/10-version-matrix.md` 的 a8w8 小节：
+⚠️ **它不是性能杠杆**——只消日志噪音，行为等价。曾在本技能里被误标为「尚未回收的便宜杠杆」，与 `knobs.json` 的正确判词互相矛盾，2026-09-21 已双向留痕更正。
 装表是纯文件操作（CPU），建议在任何 aiter INT8 计时/对比之前先补上。
 
 
@@ -189,7 +191,12 @@ ROCm 侧 `platforms/rocm.py:827` 先查 `_ROCM_DEVICE_ID_NAME_MAP`，本机 `dev
   **两条通用规则**：①「上游自己都不信」的平台排除条件，换架构时要**重审放行/排除列表**，
   优先看平台条件分支而非算子数学；② **wave64 是 gfx9 系统性风险面**——
   凡有 `tx<32` / `warpSize` / `__ballot(0xffffffff)` 之类 warp32 假设的融合核，
-  在 gfx90a 上一律按「可能静默算错」验。
+  在 gfx90a 上一律按「可能静默算错」验；
+  ③ **修闸门要覆盖全部树**：本机同时存在 3 棵 `mhc.py`（容器挂载树 / 宿主 editable
+    `src/vllm-master` / `envs/vllm_0.28.0_rocm72` site-packages），09-18 只修了容器那两棵，
+    于是 09-21 的 8127（宿主 editable 树）二次踩坑；**宿主树没有 launcher fail-closed 预检**，
+    属纯盲区 ⇒ 用 `ROCm.AI/hyperloom/patches-local/apply_mhc_gfx90a.py --check` 逐棵树点名；
+  ④ **坏得与量化无关就先查公共路径**（每层都过的那种），不要从「哪个量化坏了」出发。
 - ★ **「按参数占比线性外推损伤」是错的**〔§4.19 L877-890〕：
   `wq_a`/`wkv` 只占注意力参数 **7.2%**，却贡献 **4.62%** 输出偏差——因为它们在**最前端**
   （`qr=rmsnorm(wq_a·x)` → `q=wq_b·qr` → softmax），误差穿过 softmax 非线性被放大；

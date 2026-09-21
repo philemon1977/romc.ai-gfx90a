@@ -306,7 +306,8 @@ SKILL.md 是常驻的索引与 T0 层；下列细节**按需加载**：
 
 ## 4. T3 · 服务臂（速查；全量见 `data/arms.json`）
 
-⚠️ **本节曾只到 8121 且漏 8115/8116/8117/8119** —— 权威是 `config/ports.conf` + launcher 实物。
+✅ 本节现与 `config/ports.conf` 对齐：**8115/8116/8117/8119 四条臂已于 2026-09-21 补齐 serving 配方**（`$AI/docs/recipes/serving/`），并合成进 `data/arms.json`（19 条，全部带 `applies_to`）。端口权威仍是 `ports.conf` + launcher 实物。
+⚠️ **臂表里的数字一律先核三轴**（引擎 × MTP/并行深度 × 负载标签）——本轮就是靠这条把「8116 的 38.17 vs 68.83 矛盾」判成**跨轴误标**而非真矛盾。
 
 | 端口 | 臂 | 引擎 | 状态 |
 |---|---|---|---|
@@ -321,10 +322,11 @@ SKILL.md 是常驻的索引与 T0 层；下列细节**按需加载**：
 | 8112 | DeepSeek-V4.1-Flash 748B Q4_K_M（常驻） | llama.cpp | active |
 | 8113 | Qwen3.8-27B BF16 TP2 | vllm 0.28 | active |
 | 8114 | Qwen3.8-27B INT8-W8A8 TP1 + dflash12 | vllm 0.28 | active |
-| **8115** | Ornith-1.5-397B **Quark INT8 W8A8**（出厂/保守臂） | vllm 0.28 | active |
+| **8115** | Ornith-1.5-397B **Quark INT8 W8A8（Attn 变体）**（出厂/保守臂；⚠️ 文件名说 int8w8a8，默认权重是 `-Attn`） | vllm 0.28 | active |
+| **8116** | Ornith-1.5-397B **CT-Int4 W4A16** + MTP(5)（单流最快 vLLM 形态 68.83 加盐；⚠️ 文件名写 mtp1，默认 `SPEC=5`） | vllm 0.28 | active |
 | **8116** | Ornith-1.5-397B **CT-Int4 W4A16** + MTP | vllm 0.28 | active |
-| **8117** | 同 8115 checkpoint + 三个杠杆（AITER int8 补丁 / SPEC=5 / `--no-enable-prefix-caching`） | vllm 0.28 | active |
-| **8119** | DeepSeek-V4.1 int4（**与 8121 共用同一棵补丁树**） | vllm nightly-0918 | active |
+| **8117** | 同 8115 checkpoint + 三个杠杆（AITER int8 线性 / SPEC=5 / `--no-enable-prefix-caching`）。🛑 **做实验用 8127 不要用 8117** | vllm 0.28 | active |
+| **8119** | DeepSeek-V4.1 CT-Int4 + **engram-int4**（与 8121 共用补丁树） | vllm nightly-0918 | **🛑 experimental — 默认权重是悬空软链，当前起不来**（`:183` fail-closed 会拒） |
 | 8121 | GLM-5.3-CT-Int4-W4A16 402 GB（**本机自转**）TP8 | vllm nightly-0918 | active |
 | **8127** | **实验臂专用端口**（09-18 两会话撞 8117、PID 文件互相覆盖后定的规矩） | — | — |
 | 8203 | Qwen2.5-1.5B smoke | vllm 0.28 | active |
@@ -408,6 +410,19 @@ SKILL.md 是常驻的索引与 T0 层；下列细节**按需加载**：
   gfx942、未排除 gfx90a；**非确定性**，单次对拍抓不到，必须连跑多次）。
   推论：**wave64 是 gfx9 的系统性风险面** —— 凡有 `tx<32` / `warpSize` /
   `__ballot(0xffffffff)` 假设的融合核，都要按「可能静默算错」验。
+- 🔁 **同一个 mHC 闸已经咬过两次**（09-18 DSV4.1 = 补丁 ⑫；09-21 **8127 GLM-5.3-Flash Quark-INT8**
+  被记成「数值已判坏、三个嫌疑」，实为**同一 bug 的第二棵树**）。**根因判据**：坏得**与量化无关**
+  （两条不同 int8 线性核、eager/非 eager 全坏 + 贪心不可复现 + **权重侧审计全过**）⇒
+  **先查每层都过的公共路径，别从「哪个量化坏了」出发**（这条顺序错了白烧 4 轮起服）。
+- ✅ **接入门（零成本，必做）**：任何 config 带 `hc_mult` / `hc_sinkhorn_iters` / `mhc: true` 的模型，
+  接入第一天就确认**它将要用的那一棵树**含 gfx90a 排除。MHC 使用者全集只有两族：
+  `models/glm5next/*`、`models/deepseek_v4/{amd,xpu,cpu}`（`glm_moe_dsa`→`deepseek_v32` **不用**，
+  所以 8121 与此无关，与它事实召回 6/6 自洽）。⚠️ **一台机器上有多棵 mhc.py**：容器挂载树 ≠
+  宿主 editable 树（`src/vllm-master`）≠ 0.28 site-packages —— **只修一棵 = 其余照坏**，
+  且宿主 editable 树**没有 launcher 预检兜着**，是纯盲区。机制化：
+  `ROCm.AI/hyperloom/patches-local/apply_mhc_gfx90a.py --target <file> --check|--dry-run|--apply|--revert`。
+  零改码对照法：分派点在函数体内读**模块级全局** ⇒ sitecustomize 设 `mhc.HAS_TILELANG_MHC=False`。
+  证据链：`hyperloom/reports/models/glm53flash-int8/rootcause-mhc-tilelang.md`。
 - **不要在 isolated 微基准里排序**：结论会反（`CUSTOM allreduce` 输出静默变 `!!!`）。
 
 ---
@@ -514,9 +529,14 @@ Ornith 臂折叠）、`scripts/note_emulation_boot.py`（boot 证据）、
 2. **`serving` 配方仍无 `rocm:`/`torch:` 字段**（0/15）。版本轴目前由
    **臂 → env 配方** 这一跳供给并被 `--env-check` 锁住，不再靠人工抄写；
    彻底解决要在 serving frontmatter 加必填字段并改 `$AI/tools/audit_recipes.py` 的 `REQUIRED`。
-3. **`aiter` a8w8 调优表里 gfx90a 的 54 行仍未装进 env**（三个 env 的 `a8w8_tuned_gemm.csv`
-   只有 gfx942=26 + gfx950=553）⇒ 生产日志常年 `not found tuned config … will use default config`。
-   纯文件操作（CPU），**任何 aiter INT8 计时/对比之前应先补**。
+3. ~~`aiter` a8w8 调优表 54 行未装进 env，是待回收的便宜杠杆~~
+   → **该定性是错的，已更正并装表（2026-09-21）**。**代码级事实**（`aiter/ops/gemm_op_a8w8.py:656-663`）：a8w8 这条路径从 `a8w8_tuned_gemm.csv` **只消费 `splitK` 一个字段**，查不到就 `splitK=0`；而 54 行 gfx90a 的 splitK **全 = 0** ⇒ 装表**行为完全等价，性能恒等**。它的唯一作用是消掉每形一行 `not found tuned config …`（本机实测每次启动约 432 行），**这条日志本身是正确行为，不是待修的缺陷**——把它当性能杠杆是本技能的一处历史错误。
+   ⚠️ 本轮同时发现**技能内部自相矛盾**：`data/knobs.json`（源自上游 `INT8-GFX90A.md`）
+   一直写着「不要去补表，那是正确行为」，而 §9 与 `references/20` 却叫它"便宜杠杆"——
+   我这轮照错的半边执行后才回查出来。**矛盾已在两处同时留痕。**
+   已装进三个 env（各 580→634 行，独立复核通过），备份 + 一行回滚在
+   `references/10-version-matrix.md` 的 a8w8 小节。
+3a. ✅ 已装（2026-09-21 第三/五轮）：见 §7.1 与 `references/20` §5——**性能恒等**，只消噪音；回滚 = `cp envs/<e>/…/a8w8_tuned_gemm.csv.bak-20260921 …`（三个 env 各一份）。
 4. **`moe_tune_w4a16.py` 基准夹具与生产形状不一致**（uint8 `[N,K/2]` vs 生产 int32 `[N,K/8]` + bf16 scale）
    ⇒ **其胜负数字在夹具修好前不能用于接线**。
 5. **DSV4.1 转换记录仍有大块未沉淀**：已补 §4.1/4.8/4.10/4.15/4.16/4.19/4.21/4.22/4.24/4.28/4.30/4.33，
@@ -526,10 +546,11 @@ Ornith 臂折叠）、`scripts/note_emulation_boot.py`（boot 证据）、
    **✅32 / 🟡8 / 🔴0**（唯一的 🔴 经核是 token 形式假阴性，实质内容已在 `references/60` §4）。
    8 条 🟡 是"结论已落、逐条行号明细仍在 `.tmp/harvest/docs-top.md`"——
    这是**有意的**：按 §7.1 的纪律，技能里只留结论 + 指针，不把 41 小节全文搬进来撑爆常驻上下文。
+5b2. 🛑 **`--metric-audit` 现报 27 条吞吐数字缺负载标签**（advisory，不是 bug）。它是本轮把「38.17 vs 68.83 被当矛盾挂了三轮」这个教训机制化的产物。逐条补口径是后续活。
 5c. **技能正文与 `data/*.json` 是两套覆盖**：24 个「已覆盖」判词里 **11 个只被 JSON 覆盖、
    正文 0 命中**（如 `llamacpp-tp-rccl-split-mode` 逐节引了 TP/RCCL 实测，正文完全没提）。
    判「是否已沉淀」必须同时看两处——本轮已在路由表里把 JSON 指过去，但正文索引仍不完整。
-6. **`tools/audit_log_paths.py:86` 的漏检未修**（正则只匹配带引号赋值 ⇒ `>/tmp/` 与无引号赋值漏检却报绿）。
+6. ~~`audit_log_paths.py` 漏检未修~~ → **该 todo 是过期的**：`/tmp` 写点检测早在 **2026-09-16 已修**（`TMP_WRITE_RE` 按写点判定 + `mktemp` 白名单），本轮实测全仓 `/tmp` 命中 = 0、8109 那 4 处也早已改掉。**但同一类缺陷在另一处仍在**：PID 消费方检查没豁免整行注释 ⇒ 19 条发现**全是假阳性**（launcher 头注释里的停服示例被当成消费方）。本轮已补豁免并登记 VOCAB （8115/8116/8117/8127/8119/8121），该闸口发现数 **19 → 4**，剩下 4 条是真的：8121 用容器名式无 `MODEL_KEY`；三条 8119 脚本用 `%H%M%S` 违反 `%H%M` 规范（**它们其实是同一个分钟级撞名隐患的反向解法，改动前需拍板，我没有擅自动 launcher**）。
 7. ~~`ROCm.AI` 侧改动未提交~~ ✅ 已提交 `7955ee0`（技能分层）+ 报告一笔；
    **未 push**（本仓制度是"提交即推"，push 需另行确认）。
    ⚠️ 两个坑（仍适用于下次）：① `scripts/note_agent_lane.py` 是**会话前既有改动**，不属本次范围，别顺手带上；

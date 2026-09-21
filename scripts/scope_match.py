@@ -241,6 +241,77 @@ def fmt(item, verdict, reasons):
     return line
 
 
+
+# ── #5 数字口径闸口：单流吞吐必须带「负载标签」，因果必须单变量 ──────────────
+# 存在理由（本轮实测）：`8116` 的 38.17 与 68.83 被当成"矛盾"挂了三轮，真相是
+# **引擎与 MTP 深度两个轴同时变了却没记**；而"环境切换 +8.9%"这条归因也因
+# **不是单变量**而不成立。同类错误只写在散文里防不住，所以落成检查。
+LOAD_LABELS = ("加盐", "固定 prompt", "固定prompt", "结构化", "开放", "负载标签",
+               "自然散文", "自然内容", "greedy", "count prompt", "三形态", "几何平均",
+               "filler", "混合负载", "ISL", "prompt 集", "prompt集", "同一 prompt",
+               "多主题散文", "短 ctx", "长 ctx")
+CAUTION = ("非单变量", "不是单变量", "不可直接比", "不可互比", "不可顶替",
+           "不同 MTP", "口径不同", "单变量", "轴")
+
+
+def metric_audit(items) -> int:
+    """扫所有臂的吞吐数字，标出**缺负载标签**或**含因果却无单变量警示**的。"""
+    import re
+    bad = []
+    for it in items:
+        if it["file"] != "arms.json":
+            continue
+        raw = json.dumps(_raw_arm(it["id"]), ensure_ascii=False)
+        pm = _raw_arm(it["id"]).get("primary_metric") or {}
+        vals = [(f"primary_metric", str(pm.get("value", "")), str(pm.get("note", "")))]
+        for m in _raw_arm(it["id"]).get("other_metrics", []) or []:
+            vals.append((m.get("name", "?"), str(m.get("value", "")), str(m.get("note", ""))))
+        for name, val, note in vals:
+            blob = f"{name} {val}"
+            # 只管**吞吐数字**。第一版用 `tok|t/s|tps` 判定，把 `KV 池 = 536,203 tok`
+            # 和 `步长分解` 也算进来 ⇒ 56 条里大半是误报。**一个天天误报的闸口
+            # 会训练人忽略它**（references/60 §13 的原话），比没有更糟。
+            # 吞吐的判据：值或名字里有"每秒"单位，且不是容量/池子类。
+            is_rate = bool(re.search(r"\b(t/s|tok/s|tokens/s|tps)\b", blob, re.I)) or \
+                      bool(re.search(r"单流|聚合|吞吐|decode|prefill|Phase2|TPS", name))
+            # 容量类与"归属/分解类"都不是吞吐读数：它们回答"钱花在哪"，
+            # 不该被要求带负载标签（第一版把这些也算进去 ⇒ 误报）。
+            is_capacity = bool(re.search(
+                r"GiB|MiB|KV 池|池|block|预算|分片|张量|体量|GB\b"
+                r"|归属|占比|分解|上限|账|接受率|KV", blob))
+            if not (is_rate and not is_capacity):
+                continue
+            if not val or val in ("0", ""):
+                continue
+            has_label = any(k in note for k in LOAD_LABELS)
+            claims_cause = bool(re.search(r"[+＋]\s?\d+\.?\d*\s?%|收益|更快|提升", note)) \
+                or bool(re.search(r"→\s*[\d.]+", note))
+            has_caution = any(k in note for k in CAUTION)
+            if not has_label:
+                bad.append((it["id"], name, val, "缺负载标签（加盐/固定 prompt/结构化/开放…）"))
+            if claims_cause and not has_caution:
+                bad.append((it["id"], name, val, "含因果/前后对比表述但未声明是否单变量"))
+    print("数字口径闸口：单流吞吐必须带负载标签；含因果表述必须声明是否单变量")
+    if not bad:
+        print(f"\n✓ 全部吞吐数字均带口径（扫 {sum(1 for x in items if x['file']=='arms.json')} 条臂）")
+        return 0
+    for rid, name, val, why in bad:
+        print(f"  ⚠ {rid}\n      {name} = {val}\n      → {why}")
+    print(f"\n{len(bad)} 处口径不全。**这不是 bug 是提醒**：这些数字被引用时"
+          "读者无法判断可不可比（本仓已因此产生过一轮'38.17 vs 68.83 矛盾'的误判）。")
+    return 1
+
+
+_RAW_CACHE = {}
+
+
+def _raw_arm(rid):
+    if not _RAW_CACHE:
+        for e in json.loads((DATA / "arms.json").read_text(encoding="utf-8"))["arms"]:
+            _RAW_CACHE[e.get("recipe_id")] = e
+    return _RAW_CACHE.get(rid, {})
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -251,6 +322,8 @@ def main() -> int:
     ap.add_argument("--orphans", action="store_true", help="找被 0 个 knob 声明适用的臂")
     ap.add_argument("--env-check", action="store_true",
                     help="跨表一致性：臂的版本轴必须与它所引用环境的一致")
+    ap.add_argument("--metric-audit", action="store_true",
+                    help="数字口径闸口：吞吐数字必须带负载标签、因果必须声明单变量")
     ap.add_argument("--axes", action="store_true", help="打印九轴词表")
     ap.add_argument("--kind", action="append", default=[], help="只看某类（arms/knobs/...）")
     ap.add_argument("-v", "--verbose", action="store_true",
@@ -273,6 +346,9 @@ def main() -> int:
 
     if args.env_check:
         return env_check(items)
+
+    if args.metric_audit:
+        return metric_audit(items)
 
     if args.orphans:
         arms = {i["id"]: i for i in items if i["file"] == "arms.json"}
