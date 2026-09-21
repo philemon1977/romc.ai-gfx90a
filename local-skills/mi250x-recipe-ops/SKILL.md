@@ -496,15 +496,77 @@ KV 池 719,056 tok（2.74×）。**那 8 条 env 性能中性**；`VLLM_ENABLE_V
 
 ## 9. 待办（别当成已解决）
 
-1. `8116` 单流数字两处不一致（38.17 vs 68.83）——**对齐口径前不得引用**。
-2. `aiter` a8w8 调优表里 **gfx90a 的 54 行没装进 env**（三个 env 的 `a8w8_tuned_gemm.csv`
+**本轮（2026-09-21 第二轮）已闭环**：`applies_to` 回写 21 条权威 markdown + TEMPLATE；
+`env → 版本` join 用归一化解决（0/15 → **15/15**）并落成 `--env-check` 闸口
+（**首跑即抓出一处真错**：`llama.cpp_gfx90a-2026.9.8` 一棵树含多个 commit 子前缀，
+env 条目的 engine 轴曾写成单值）；Top-10 资产已收编进 `references/`。
+
+仍开放：
+
+1. 🔴 **`8116` 单流数字两处不一致**（`ports.conf` 38.17 vs 技能第四轮 68.83）——
+   **对齐口径前不得引用任一个**。
+2. **`serving` 配方仍无 `rocm:`/`torch:` 字段**（0/15）。版本轴目前由
+   **臂 → env 配方** 这一跳供给并被 `--env-check` 锁住，不再靠人工抄写；
+   彻底解决要在 serving frontmatter 加必填字段并改 `$AI/tools/audit_recipes.py` 的 `REQUIRED`。
+3. **`aiter` a8w8 调优表里 gfx90a 的 54 行仍未装进 env**（三个 env 的 `a8w8_tuned_gemm.csv`
    只有 gfx942=26 + gfx950=553）⇒ 生产日志常年 `not found tuned config … will use default config`。
-   纯文件操作（CPU），**建议在任何 aiter INT8 计时/对比之前先补上**。
-3. `moe_tune_w4a16.py` 的基准夹具与生产形状不一致（uint8 `[N,K/2]` vs 生产 int32 `[N,K/8]`
-   + bf16 scale）⇒ **它的胜负数字在夹具修好前不能用于接线**。
-4. `scripts/audit_skill_recipes.py`、`scripts/scope_match.py` 与 `local-skills/` 的新增改动
-   **尚未提交**。
-5. 死路与负结论里**只有 DSV4.1 线的 §4.34–§4.39 被沉淀**；§4.1–§4.33（约 1900 行）
-   仍是缺口——含 TileLang mHC、CED 反转、KV 890 vs 3660 B/token、三堵物理墙。
-6. `data/*.json` 与 SKILL.md 是**两套覆盖**：24 个「已覆盖」判词里有 11 个其实**只被
-   `data/*.json` 覆盖、SKILL 正文 0 命中**。判「是否已沉淀」必须同时看两套。
+   纯文件操作（CPU），**任何 aiter INT8 计时/对比之前应先补**。
+4. **`moe_tune_w4a16.py` 基准夹具与生产形状不一致**（uint8 `[N,K/2]` vs 生产 int32 `[N,K/8]` + bf16 scale）
+   ⇒ **其胜负数字在夹具修好前不能用于接线**。
+5. **DSV4.1 转换记录仍有大块未沉淀**：本轮补了 §4.1/4.8/4.10/4.15/4.16/4.19/4.21/4.22/4.24/4.28/4.30/4.33
+   的要点，但全文 2462 行 / §4.1–§4.39 只覆盖约一半。
+6. **`tools/audit_log_paths.py:86` 的漏检未修**（正则只匹配带引号赋值 ⇒ `>/tmp/` 与无引号赋值漏检却报绿）。
+7. **本轮所有技能/脚本改动 + 21 条配方回写均未提交**；
+   ⚠️ 注意 `scripts/note_agent_lane.py` 是**会话前既有改动**，不属本次范围，别顺手带上。
+8. **4 条新配方 markdown 未入库**（`8121`、`vllm-openai-rocm-nightly-0918`、
+   `glm5next-quark-int8-launch-set`、`glm53-flash-quark-int8-convert`）——
+   按制度「`??` 不过夜」应尽快 commit；它们也正是本轮查出从未进 `data/*.json` 的那 4 条。
+## 本会话沉淀（第三轮，2026-09-21 **重做**：上一次被并行会话整段重写吃掉）
+
+> ⚠️ 事故留痕：`f8954bd`/`af1494e` 两笔曾把本节写进技能，随后并行会话的「第四轮」重写把内容**静默删除**
+> （HEAD 里 `MI250_MOE_GEMV` 命中 0）。**同一文件被两个会话同时整段重写就会丢内容** ⇒ 改完立刻
+> `git commit` + `grep` 复检；长内容优先放报告，技能里只留结论 + 指针。
+
+### MoE 专家 GEMV（目前唯一已收回的 kernel 级杠杆）
+- 模块 `quark-int8/moe_gemv_patch/mi250_moe_gemv_gs.py`；开关 `MI250_MOE_GEMV=1`、
+  `MI250_MOE_GEMV_MODULE=mi250_moe_gemv_gs`、`MI250_MOE_GEMV_KERNEL`（v3 = scale 提出 k 循环）、
+  `_BOTH`、`_DEBUG`；`PYTHONPATH=/patches/moe_gemv` 由 launcher 注入。
+- 实测：gemm1 **8.7×** / gemm2 **5.0×**；单流 6.38–6.81 → **9.60–10.71 tok/s**；conc32 聚合 33.8 → **59.1**；召回 6/6。
+- `mi250_moe_gemv_v2.py` 是**被证伪**的那版（≈等于不开），别当可用模块；三处副本哈希由
+  `verify_patches.py ②` 守（`gs=af079db138ab` / `v2=c96264af84c1` / `v3=07b0d78f40b0`）。
+- ✂️ **已收回**：decode 归属表里 MoE GEMV 只占 **1.8%** 步时间，别在这里找收益（`moe-gemv-scale-hoist.md`）。
+
+### 稀疏注意力 split-K（`MI250_SPARSE_SPLITK`）——与 0.28 的 split-KV 不是一回事
+- 机制：一条 launch 把 `(query, split)` 当行（`_splitk_make_indptr` 造 `[M*S+1]` indptr、行序 `r=i*S+s`），
+  再 `_splitk_merge` 做 LSE 合并；补丁 `quark-int8/dcp_patches/0009_gfx90a_sparse_splitk.patch`。
+- 开关 `MI250_SPARSE_SPLITK=8`（**默认 0**）/ `MI250_SPARSE_SPLITK_MAXM=8`。
+- 内核 7.2×（M=1）/ 2.4×（M=4）、与 S=1 逐位一致（bf16 1 ulp）；但端到端单流 **−12%**
+  （NCCL 141→255 µs、elementwise/copy 调用 1332→3439/step）⇒ 默认必须保持 0。
+- ⚠️ 静默错：低层 `_rocm_sparse_attn_prefill_ragged_triton` 是**返回** out（内部 `empty_like`），
+  读预分配缓冲会得到 out 全 0 而 lse 正常 —— 看起来没崩，结果全错。
+
+### Roofline 口径：本机的慢**不是带宽**（别再按带宽解释）
+- `T_mem(mi250x)` @8 GCD / isl=osl=1024 / conc=32 = **859.0 tok/s**；同参数 mi300x 2779.3
+  ⇒ **比值 0.309 是防「按 MI300X 口径假通过」的判据**。
+- 实测（同一把尺子）：单流 @ctx≈800 **1.19%**、conc8 4.82%、conc32 **6.93%**；权重流量只有
+  **18.6 GB/s/rank = 峰值 1.1%** ⇒ 受限在层内串行/启动延迟。正确表述：**层内串行开销吃掉 93% 的访存预算**。
+
+### RecipeKB 回填与三个静默坑（GLM-5.3 int4 / mi250x）
+- 入口 `python3 scripts/note_glm53_int4_kb.py`（`--dry-run` 可预演）；必须走
+  `LocalRecipeStore.put_recipe`，手写 `recipe.json` 会让 `history/vN` 与 `version` 脱节。
+- ① `remaining_gaps` 条目必须是 **dict**（`description`/`metrics`），写字符串被**静默丢弃**；
+  ② `kernel_optimizations` 是**定长 dataclass**，键名不对得到**一串全零**条目；
+  ③ `best_config.extra_envs` 会被 warm-replay **当环境变量注入** ⇒ 别写说明文字。
+- `root:root 0600` 的槽位宿主读不到 ⇒ `local_store.search()` 抛 `LocalRecipeStoreError`；
+  容器内 `chown -R 1000:1000` + `chmod 644` 修。
+- warm-replay 置信门 `_DEFAULT_WARM_REPLAY_MIN_CONFIDENCE = 0.7`；recipe 的 `what_failed` 会被注入
+  explore 的 rejected 账本 ⇒ **负结论写进去等于省一次重测**。
+
+### QR C2+C3：**开了就起不来**（三臂实证 2026-09-21；推翻了「装了就可用」的默认假设）
+- A（stock 镜像，env 不设）4.38 / 28.15 / 74.77 + 召回 6/6；A2（`-qr` 镜像，env 不设）4.18 / 26.64 / 73.13 + 6/6，
+  两臂都选 `['PYNCCL']`；A2 对 A 差 −2…−5%，落在 cross-boot 漂移内 ⇒ **单次对拍不能说「中性」**。
+- B（`-qr` 镜像 + 三条 env）：env 确实生效（日志 `Custom quick allreduce: min size override = 0 MB`），
+  但 `init_custom_qr` 在显存规划**之前**吃 ~9 GiB/卡 ⇒
+  `ValueError: Free memory on device cuda:5 (54.9/63.98 GiB) ... less than desired ... (0.97, 62.06 GiB)`，8 worker 全拒启。
+  要开必须 `util ≤ 0.858`，那时 KV 只剩 **~2 GiB/卡**（32k 档原本 8.17）⇒ **1M 上下文不可能**。
+- 复跑：`SKIP_A=1 SKIP_A2=1 bash quark-int8/qr_ab_watch.sh`；全量证据 `reports/models/glm53-int4/qr-c2c3-verdict.md`。
