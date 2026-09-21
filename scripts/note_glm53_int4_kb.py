@@ -183,6 +183,16 @@ LESSONS = [
         "measured_impact": "并发 32 实测 59.5 tok/s 对 roofline T_mem 859 tok/s = 6.9%",
     },
     {
+        "statement": (
+            "DCP 省的不是显存而是每 token 的显存单价：DCP=8 的代价是权重 +2.11 GiB/rank（MLA 投影按"
+            "rank 复制）、KV 预算 8.17->5.89 GiB，但容量 94,016->534,784 tokens（93.4->11.5 KiB/token，1/8.1）"
+        ),
+        "measured_impact": (
+            "1M 算术：DCP=8+bf16 KV = 534,784 < 1,048,576 ⇒ 单条 1M 装不下；再叠 fp8 KV ≈1.05M 才过线"
+            "⇒ fp8 KV × DCP=8 是 1M 的必要条件；代价是短上下文 conc32 -28%"
+        ),
+    },
+    {
         "statement": "一项修复、两把尺子不等于两笔成果：同一修复的两个 harness 数字不可相加",
         "measured_impact": "沿用本仓证据纪律",
     },
