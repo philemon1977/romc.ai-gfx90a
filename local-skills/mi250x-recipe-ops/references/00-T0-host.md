@@ -147,3 +147,12 @@
      `VRAM_WAIT_FREE_S=150` 等待环）。
 - **同一条臂可能有 3 份实体**（基脚本 / `launcher/favor/…_final_….sh` 薄封装 / `/mnt` 镜像）⇒
   **改动只落基脚本 + `md5sum` 对账 + 侧车软链**，否则会重演覆盖事故。
+
+## 附录 · 另两条平台级硬事实
+
+- **BF16 只能 TP8**：TP4 = **83.8 GiB/die 装不下**，而 **PP 被 `model_state.py` 限为 1**
+  ⇒ 必须占满 8 die。（出处 `docs/MI250X-CLAUDE-下沉细节-2026-09-06.md` §C L102）
+- **KFD 锁页内存上限是隐性杀手**：`ulimit -l = 8 MiB`（hard 同）+
+  `no_system_mem_limit=N` 会触发 **SVM 死亡螺旋**（完整签名与已排除项见
+  `references/60-method-measurement-gates.md` §12）。
+  ⚠️ **根治方案（`memlock unlimited` / `no_system_mem_limit=1`）本机未验证**。

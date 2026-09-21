@@ -100,7 +100,14 @@
   （本臂权重 2 倍、KV 只有 387k）。
 - **「任何『这个臂更快』的说法必须同时给 `step ms`，否则可能只是在比草稿命中率」**（同文 §0.1 L49）。
 - **`Qwen3.8-27B` 全系是 dense GDN 混合体（E=0）** ⇒ MoE 调优表**不适用**；
+  dense 线性核的加速走 **wu1w INT8 线**而非 davetha 线；
   **fp8-KV 对 27B 无收益**（KV 大头在 GDN 态）。同文 §C L29
+- **本机曾无 W8A8 检查点时的来源坐标**：`Freaksterz/Qwen3.8-27B-SmoothQuant-W8A8-INT8`
+  （~31 GB，需 token）。同文 §C L67
+- **conch tile 调优：旋钮无效**（实测结论）。同文 §G.6 L138
+  ⇒ 与 `vllm-fused-moe-tile-seeds` 的"表名必须由镜像现场生成"是两条独立的负面结论。
+- **davetha 与 wu1w 两者皆 gfx90a = 104 CU = 本机 die 同架构** ⇒ 结论高度互证；
+  且 wu1w 的平台与我们现役 0.28 原生 env **逐字节一致** ⇒ 可直接 drop-in 实验。同文 §A L7
 - **构建升级的收益只在长上下文显现**：b136→b223 decode +15~17%、20k prefill ×1.59。
   GLM 全记录 适用域行 L210
 
@@ -229,3 +236,67 @@
 ⇒ 这是「**需要 GPU 的结论一律先提方案等批准**」这条红线的**正面配套**：
 绝大多数"接线对不对 / env 有没有生效 / 路径落哪"的问题**根本不需要卡**，
 用桩干跑就能答，别为它去占 8 张卡。（对照 `stack_probe.sh` 的 `SKIP_BOOT=1` 同理。）
+
+## 12. KFD SVM 死亡螺旋：完整现场签名与**已排除项**
+
+> 出处 `docs/MI250X-CLAUDE-下沉细节-2026-09-06.md` §A L16-29。**先认签名，再谈处置。**
+
+**前提**：`ulimit -l = 8 MiB`（hard 同）+ `no_system_mem_limit=N`。
+
+**现场签名**（四条同时成立即可判定）：日志冻在 `done_getting_tensors`；
+GPU util 恒 **0%**；设备级仍有 ~500 MB/s；但**进程 `read_bytes` 增量 ≈ 0**、
+`minflt` 仅 **52/s**（≈2 MB/s 有效消费）、RSS 钉在页缓存上限、**swap 不动**。
+
+**已排除**（都实测过，别再查）：与 ROCm 用户态版本无关（按 6.4.4 重编同样挂）；
+与 GPU/H2D 无关（`-ngl 0` 一样挂）；与盘无关（`dd iflag=direct` 2.4 GB/s）；与文件损坏无关。
+⚠️ **根治方案（`memlock unlimited` / `no_system_mem_limit=1`）本机未验证。**
+
+**同族的两条取证坑**：
+- `pgrep VLLM` 说没有进程但其实有——worker 的 `comm` 被改写成 **`VLLM::Worker_TP0`**，
+  按 comm 匹配会漏（与 GLM53 施工单 §10.6④「engine core 失败不回收 worker」**两处互证**）。
+- 杀了 vLLM 主进程**显存不还**（card 仍占 50+ GB）：worker 卡在 **D 态**，
+  `kill -9` 无法回收、父进程被 init 收养 ⇒ `ps -eo pid,rss,comm --sort=-rss | grep VLLM` 找出来一起杀。
+
+## 13. 判据设计的补充条目
+
+- 🔑 **判盘必须加 4K 随机 O_DIRECT 这一路**：单流 1 MB **顺序** O_DIRECT 实测 3.3 GB/s 却照样挂。
+  且 `ais_stack_check.sh` **六项全绿不代表该盘可用**（它不测真实 buffer 注册）
+  ⇒ 唯一判据是日志里的 `Loading weights ...`。〔`下沉细节` §B L53-54, L108〕
+- ⚠️ **`/proc/diskstats` 的 `$7` 是"读耗时毫秒"，不是扇区**（写扇区在 `$10`）
+  ⇒ 取错字段会得到「0 MB/s」这类荒谬值。〔`MI250X-hipFile-AIS-部署手册` §8 N10〕
+- ⚠️ **`bash x.sh | tee log` 的退出码是 `tee` 的** ⇒ 构建失败却报 `exit code 0`。
+  改 `> log 2>&1`，或调用侧 `set -o pipefail`。〔同 §8 N12〕
+- 🔑 **拓扑对 AIS 无影响，别为此折腾摆盘位**：以为"只有 2/8 GCD 能吃到 P2P"，
+  实测同 switch / 跨 root complex / 跨 NUMA **全是 3.15 GiB/s**。〔同 §8 N14〕
+- ★ **swap 必须与模型盘分离**：同一配置下 swap 在模型盘上时加载带宽 **0.90 GB/s**、
+  迁走后 **1.91 GB/s**；而加载期**全程零换页**
+  ⇒ **「没在换页」不等于「swap 不花钱」**（争的是同盘队列与 SLC）。〔同 §3.5 L170-174〕
+- **报数必须分形态**：`bench/glm53_shapes.py` 三形态 + 几何平均——
+  **同一个开关在三档上结论互相矛盾**；且 **聚合 ÷ 单流 < 1.5 ⇒ 那是串行不是并行**。〔`下沉细节` §D L144〕
+- ⚠️ **`bench/ledger.py gate` 只按 `rejected|impossible` 拦截，不因 `superseded` 放行**
+  ⇒ `gate "AITER int4 内核"` 仍 exit 1 打印 L25/L26，
+  **引用时以 L27 的 superseded 为准**，别被台账的 exit code 误导成"已判死"。
+  〔`AITER-INT4-内核复核` §6.2 L379-386〕
+- ⚠️ **取 profile 的两条路都可能在骗你，需仲裁**：`rocprofv3 --attach` 只打印 `:: success` 不写文件；
+  而 **torch profiler 在 0.28.0 上挂 `--profiler-config` 会让 EngineCore 直接死**。
+  本仓目前可用的是 **worker 内注入 `torch.profiler`**（见 `hyperloom/reports/models/glm53-int4/decode-step-attribution.md`）。
+- **数值是硬门，不通过不许接 launcher**（`Ornith-397B-Mamba-All` §3 L71-79 的验证设计纪律）。
+
+## 14. 「被并行会话污染的测量」——第三类假结论来源
+
+除 §2 的沙箱与指令预算、§8 的冷 boot 之外，**还有第三类：同机其他会话**。两个实录：
+
+- 「`mamba_cache_mode=align` 代价 −23.7%」是**假结论**——测量窗口与另一会话的服务加载重叠、
+  `/metrics` 计数器被同端口请求污染。⇒ 改成**专用端口 8127 + `_guard.sh`** 后复测：
+  `align` 代价 **≈0**（107.48 vs 107.80 t/s，n=3 spread **0.0%**）。
+  **征兆**：「步时分解 `steps + accepted ≠ tokens`」。〔`Ornith-397B-Mamba-All` §0 L16-19〕
+- CPU 侧同型：**`-t 48 --poll 0` → 2.01 ± 2.20 t/s**（方差比均值还大）——
+  因为机器上有 ~6 核并发占用；`-t 44 --poll 50` 直接掉到 **0.23 t/s**（空闲时正常档 6.4）。
+  ⇒ **CPU 上绝不要 `-t 48` + 默认 `--poll`**；稳态推荐 `-ngl 0 -t 32 --poll 0`
+  （pp512 95.4 / decode **7.83**，而 48 线程是 106.6 / **6.17** —— **pp 换 decode**）。
+  另：CPU decode **不是带宽受限**（6.24 GiB × 8 t/s ≈ 50 GiB/s vs 双路 DDR4-3200 理论 >400 GB/s），
+  瓶颈是 IQ4_NL 反量化 + batch=1 的算力/同步延迟；且 **`-fa on` 在 CPU 上完全无效**
+  （95.32 vs 95.44，同一次测量）。〔`MI250X-CPU-offload-gemma4-12b-2026-09-04.md` §0–§1〕
+
+⇒ **纪律**：任何"某开关有收益"的结论，先问三件事——
+**预热同形状了吗？这台机器上有别人的负载吗？步时分解自洽吗？**

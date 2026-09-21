@@ -180,3 +180,74 @@
   （SWA raw 32.25 MiB 固定项 + CSA 压缩 5376 + HCA 160 + LID 1344）；
   「1M 时驻留比权重大 ~20 GiB」的大头是 **compute buffer/graph（8 die ~14 GiB）不是 KV**
   ⇒ 按 20 GiB/slot 记账会把上限**算小 ~3×**。〔同文 §1 L20-32〕
+
+## 附录 D · AITER 的 ASM attention 是「**有库、无调用方**」
+
+> 出处 `docs/MI250X-AITER-射程-本机模型扫描-2026-09-07.md` §3 L78-96。
+
+- vLLM decode 走**自己的** `torch.ops._rocm_C.paged_attention`；aiter 的 attention 后端
+  引的全是 **Triton/Gluon**；`fmha_v3` 在全树**零引用**。
+  ⇒ 接上需要**新写一个 attention backend**（**功能开发，不是打开开关，也不是重跑 repatch**）。
+- 好消息：`module_attention_asm.so` 的 arch 码对象为 `[]`（运行时按 `hsa/<arch>/pa/` 装载 `.co`）
+  ⇒ **移植产物放进去能被找到**。
+- 9 模型逐字段射程扫描表（head_dim / heads / kv / GQA / 卡在哪一门）在同文 §2 L47-66 +
+  `tools/aiter_admission.py` 逐门输出；最近的是 **Ornith-35B-A3B，只差 head_dim**。
+- ⚠️ **该文 §4bis 的推论已被后续实测推翻**（形状与接线部分仍成立）：
+  正确下一步是给 vLLM 加 `case 256` 重编，而不是 AITER/rocWMMA
+  （后两者硬要求 `head_size ≤ 128`，对 hd256 模型**永远**不适用）。
+  —— 而 `case 256` 本身也已判 **NO-GO**（见本文件附录 A）⇒ **这条路两头都关着**。
+- ⚠️ **仍未证实、别当结论**：`block_size` 必须 2 的幂、KV 必须 native layout
+  （`has_native_layout`）否则强制 Triton。
+
+## 附录 E · ATOM 插件：墙 1 的机理与那条必需 env
+
+> 出处 `docs/MI250X-ATOM-vLLM插件-本机实测-2026-09-06.md`。**ATOM 在 gfx90a 已判死（四道墙）**，
+> 但这两条机理可迁移到任何"bf16 模型为什么需要 fp8 指令"的疑问上。
+
+- 🔑 **与权重精度无关，是编译单元的连带依赖**：`custom_all_reduce.cu` 的派发宏把
+  「普通版」和「fp8 逐 token 量化版」写在**同一个宏的两个分支**里，再对 fp32/fp16/bf16
+  各展开一次 ⇒ gfx90a 缺 `fp8-conversion-insts` 直接**编译失败**。
+  （同理见 `references/60-…` §9：警告消失 ≠ 行为改变；这里是"宏在，就必须能编"。）
+- 🛑 **`VLLM_PLUGINS=` 是 ATOM 场景的必需项**：ATOM 注册的是 vLLM **platform** plugin，
+  会整体替换 `RocmPlatform` 从而替换 backend 选择；作者自己的全部实测配方都设 `VLLM_PLUGINS=`
+  让 dispatch 回到 vLLM 自己的。DSpark 文档 §0 再次确认这是**起服必备**。
+- 用 fork 逐墙对照证明「社区 aiter gfx90a 移植**救不了 ATOM**」，墙 1 只有**未 merge 的 #4389** 能治；
+  且该 fork 自己的结论是 `AITER's RMSNorm in particular is unvalidated on gfx90a`，
+  其配方**全部** `VLLM_ROCM_USE_AITER_RMSNORM=0`。
+- **QR 的 `MIN_SIZE` 覆盖结论与上游自测相反**（我们用 `=0` 强行覆盖到 4–10 KB）；
+  且「先看单流 decode，不要只看并发就下结论」。
+
+## 附录 F · `mamba_cache_mode` 三档语义与 `all` 的内存几何
+
+> 出处 `docs/Ornith-397B-Mamba-All-模式实现方案-2026-09-18.md` §0/§1bis。
+> **适用域：混合 GDN/Mamba 模型（Ornith / Flash-Next）× vLLM。**
+
+| mode | 语义（`config/cache.py:141-148`） | 实测代价 |
+|---|---|---|
+| `none` | 关前缀缓存 | — |
+| `align` | **只在「某个 scheduler step 的最后一个 token、且该位置是 `block_size` 整数倍」时**才留状态快照 | **≈0**（107.48 vs 107.80 t/s，n=3 spread 0.0%） |
+| `all` | 每个 block 边界都留 | **起服即失败**，见下 |
+
+- ⚠️ `align` 的**推论**要写清：因为 decode 步的块尾通常不对齐 ⇒
+  **上一轮生成的那段没有快照 ⇒ 多轮里这段要重算**。省了内存但没省多轮重算。
+- 🔑 **`all` 的第一个拦路虎是内存几何，不是代码**：`all` 语义 = 每 block 边界留一份 mamba 状态
+  ⇒ 单请求状态内存 **∝ `max_model_len / mamba_block_size`**（262144/544 ≈ **481 块**）⇒
+  起服直接 `ValueError: … 16.47 GiB KV cache is needed, which is larger than the available
+  KV cache memory (5.95 GiB)`。**这是"稠密快照"的固有代价，不是 bug。**
+
+## 附录 G · 那条 9 行警告**为什么会出现**（机制，解释更正 3）
+
+> 出处 `docs/Qwen4Exp-MTP前缀复用-判定-2026-09-18.md` §2 L24-32。
+
+vLLM 有两条规则能让 MTP 草稿组被正确标注，**qwen4exp 两条都不中**：
+1. `non_causal_multi_token_decode` 标记 —— **只有 MLA 会带**；
+2. `use_deepseek_v4_fallback` —— 门被 `_is_deepseek_v4_eagle()` **限死成 `model_type == "deepseek_v4"`**。
+
+而本模型的 MTP 草稿层是 `layer_type="full_attention"` 且
+`mtp_start_layer_idx = num_hidden_layers`（`models/qwen4_exp/amd/mtp.py:171`）
+⇒ **恰好是最后注册的层，形状与规则 2 完全一致，只是模型名不匹配**
+⇒ 兜底分支 `_warn_if_unannotated_eagle_mamba()` 把**所有**组当草稿组并打出 9 行警告。
+
+🔑 **这解释了为什么"补丁只消警告、不改行为"**：警告本身就是**按模型名误判**的产物，
+不是"复用真的被禁用"的陈述。修法是 **env 门控、默认关**（不改变现役行为）。
+⇒ 通用判语：**按名字设的门，换个模型名就可能误开/误关；先读门条件的输入是什么。**

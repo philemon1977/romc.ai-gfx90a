@@ -325,3 +325,49 @@ QR 是否可用取决于**该臂的 KV 预算是否容得下那 ~9 GiB/卡固定
 - **GLM 起服参数**〔§4.2 L178-179〕：`--kv-cache-dtype` 必须 **auto/bf16**
   （**fp8 会被路由进 AITER decode**——这正是 gfx950 用户照抄
   `--kv-cache-dtype fp8` 到 MI250X 必死的坑）；`--block-size ≥ 128`。
+
+## 附录 I · 静默数值损坏的四个机理（**都不报错，只出错值**）
+
+> 这批是本技能里**危险度最高**的一类知识：现象正常、数字正常、结果错。
+
+1. 🔑 **`int4 ≠ fp4`**（某次判死初稿的第二个错因）：int4 走**软件解包 → bf16/int8 MFMA**，
+   CDNA2 **有**；只有 fp4 才需要 gfx950/gfx1250 的 fp4 矩阵单元。
+2. ★ **CK fused MoE 的 stage2 在 gfx90a 上静默不写**（根因可直接复用）：
+   `device_moe_gemm:301` 里 `MemoryDataOp = IsInputGemm ? Set : AtomicAdd` ⇒ 第二个 GEMM 用
+   **bf16 AtomicAdd**，而 `device_prop.hpp:221 is_bf16_atomic_supported()` 在 gfx90a = **false**、
+   `amd_atomic.hpp` **无软件回退**、`:444` 的报错**只在 `KBatch>1` 时才触发**
+   ⇒ **`KBatch==1` 时静默失效**。
+   修法：模板已分离 `CDataType`/`GemmAccDataType` ⇒ 可改 fp32 累加，或 fp32 partial + 独立 reduce。
+3. 🛑 **atom 插件把盘上 `I8/U8` 无条件映射成 `"fp4"`**
+   （`atom/plugin/vllm/model_wrapper.py::_probe_v4_routed_expert_dtype`，
+   该启发式为**官方 FP4 打包 ckpt**而写），而 `atom/models/deepseek_v4.py` 的
+   `expert_dtype: Literal["fp4","fp8"]` **没有 INT8 档**
+   ⇒ 用 atom 跑**第三方 INT8 checkpoint** = 按 FP4 `per_1x32` spec 去 dequant INT8 权重
+   = **静默数值损坏**。⇒ atom 只适合官方 FP4/FP8 版；第三方 INT8 只能用 vLLM-native。
+4. ⚠️ **root 容器产的 checkpoint 有 root-only 文件**：`Ornith-1.5-397B-CT-Int4-W4A16` 实测
+   **123 个 `-rw------- root:root`** 权重文件 ⇒ 主机 qiba 身份原生起服必
+   `PermissionError`（`fastsafetensors` 用 `os.open(O_RDONLY)`），
+   **且要加载 200 s 后才崩**（容易被当成别的故障）。
+   修 `sudo chown -R $USER:$USER <ckpt>`；8116 已加 fail-closed 权重可读性闸门。
+
+## 附录 J · 「内核存在 ≠ 在该形状可用」的定价法
+
+> 出处 `docs/MI250X-AITER-INT4-内核复核-2026-09-17.md` §5ter/§5quater。
+
+- 原生 fp4 MoE 按**真实形状**实测否决（hidden 4096 / moe_inter 1024 / E=512 / topk=10）：
+  一对 GEMM ≈ **47 ms/层**，而整模型 60 层一步才 **48.6 ms** ⇒ **慢约 3 个数量级**。
+- **两个排除污染的核对法**（可复用）：① `flush_cache_` 改 false 后 26.05→25.59 ms 几乎不变
+  ⇒ 不是缓存污染；② 耗时**几乎不随专家数缩放**（E=8/64/512 → 18.0/19.9/26.1 ms）。
+- 机制：flatmm 是 **prefill 取向**（把 tokens×experts 展平成大 M），
+  而 decode 每专家平均 token 仅 `16×10/512 ≈ 0.3–2`。
+- 🔑 **`MXFP4 判死`的措辞要改准**：不是「只有 EMULATION 后端」，而是
+  「**vLLM 只接线了 EMULATION；CK 有原生 fp4 MoE 内核且数值正确，但 prefill 取向、
+  decode 形状下慢 3 个数量级**」——**两条理由独立成立**，别合并成一条。
+- **权重带宽下界算法**（判"值不值得做内核工程"的第一步）：
+  `41.59 t/s ÷ 1.80 接受长度 ≈ 23 步/s` ⇒ 步长 43 ms；
+  每 die `1.06 GB ÷ 1.2–1.3 TB/s ≈ 0.85 ms` = **2%**，**低于噪声门 1.036×** ⇒ 换权重带宽内核没戏。
+  **对照**：int8 Linear 换 aiter CK ⇒ 步长 49.3→39.7 ms、端到端 **+14.9%**，**比 2% 大一个数量级**
+  ⇒ 这才是有效的杠杆定位方式。
+- **数值正确性三证据法**（可复用）：K 标定严格线性（−490/−992/−1952/−4064，
+  比值 ×2.02/×1.97/×2.08）＋ **两套异构设备实现互差 0.15%** ＋ CK host 参考 `check_err` 不报错。
+  ⚠️ `check_err` 有「**两边都退化成零 → 假通过**」风险 ⇒ **必须看真实数值**。

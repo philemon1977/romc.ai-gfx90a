@@ -205,3 +205,23 @@ soname 不同代**：10.0 = 7.15.26333）。〔移除记录 §1 L17-19〕
 - **`gfx950` 的 ISA 码实测是 `0x4f`，不是 `0x4d`。**
 - 🔑 **任何 arch 断言必须有对照组**：手敲操作数连 gfx942 也拒绝 ⇒ 那次"不支持"的测试**无效**。
   **没有对照组的「不支持」等于零信息。** 判定交给 `llvm-mc` 裁决，别靠记忆。
+
+## 附录 · aiter 的三条版本/构建级运维事实
+
+> 出处 `docs/MI250X-AITER-INT4-内核复核-2026-09-17.md`、`docs/MI250X-AITER-cDNA2-吸收落地-2026-09-07.md`。
+> **版本绑定**：aiter `0.1.19`（宿主三 env）/ `0.1.21.post2`（nightly 镜像）；**全文未记 ROCm 版本**。
+
+- 🔑 **aiter 包分两层，grep 错层会得出完全相反的结论**：`aiter/`（python + 预编 `.so`）
+  与 **`aiter_meta/`（源码树，`.cu` 只在 `csrc/`）**。
+  **只 grep `aiter/` 会把「wheel 没 ship」误读成「上游没有」**——某次初稿判死就错在此。
+- 🛑 **`module_gemm_a8w8` 的 gfx90a JIT 在引擎初始化路径内**：8 rank **串行**等
+  `aiter/jit/build/lock_module_gemm_a8w8` ⇒ 首次起服 **2310 s（38.5 min）**，
+  会把健康轮询/启动超时打爆（实测 1000 s 超时后 EngineCore 仍在等 shm broadcast）。
+  ⇒ **换 env / 重装 aiter 后，先单独预热编译再起服**（与本文件上面的 `AITER_JIT_DIR` 一节配套：
+  那个开关解决"重复编译"，这条解决"首编在关键路径上"）。
+- ⚠️ **RMSNorm 这颗雷的精确坐标**：`platforms/rocm.py:1109-1116` 的优先级门
+  **只看 `VLLM_ROCM_USE_AITER` + `_RMSNORM`，没有 arch 项**，而 `module_norm.so` 的
+  gfx90a 码对象 = **0** ⇒ 开总开关必须同时 `VLLM_ROCM_USE_AITER_RMSNORM=0`。
+  🔑 **sitecustomize 补丁只注册 w8a8 op，不管这颗雷** —— 别以为打了站点补丁就安全。
+- **`--check` 与 `--require` 必须分开**（`tools/patchkit.py` 六件套的两个子命令）。
+  混成一件事 = 把"你以为开了的东西其实没开"原样保留。这是**最容易复犯**的认知错误。
