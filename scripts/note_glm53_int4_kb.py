@@ -224,6 +224,17 @@ REMAINING_GAPS = [
         "description": "sparse split-K 的 7.2x 要变成净收益，需同时压掉它带来的 elementwise/copy 与 NCCL 增量",
         "metrics": "elementwise/copy 1332 -> 3439/step；NCCL 141 -> 255 us",
     },
+    {
+        "description": (
+            "fp8 KV 未实测：--kv-cache-dtype fp8_e4m3 已被本机配置层接受（06:36 起的臂已打印该值），"
+            "但按用户要求在装载阶段停止 —— KV 是否真翻倍、精度是否掉，两把闸都还没过"
+        ),
+        "metrics": "期望 DCP=8 下 534,784 -> ~1.05M tokens；起法 VLLM_EXTRA_ARGS=--decode-context-parallel-size 8 --dcp-comm-backend ag_rs --kv-cache-dtype fp8_e4m3；闸：事实召回 6/6 + 针尖",
+    },
+    {
+        "description": "DCP=8 缺长上下文验收：短档（ISL≈700）三档全负 -28..-30%，收益要 ISL>=16k 才可能出现，尚未跑",
+        "metrics": "起法 TPS_ISL_MULT=24 bash quark-int8/stack_probe.sh <臂名> …（≈17k）",
+    },
 ]
 
 # KernelOptimization 是定长 dataclass：键名/类型不对会被静默归零（2026-09-21 踩过）

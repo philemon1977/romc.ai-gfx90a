@@ -148,6 +148,14 @@
     {
       "description": "sparse split-K \u7684 7.2x \u8981\u53d8\u6210\u51c0\u6536\u76ca\uff0c\u9700\u540c\u65f6\u538b\u6389\u5b83\u5e26\u6765\u7684 elementwise/copy \u4e0e NCCL \u589e\u91cf",
       "metrics": "elementwise/copy 1332 -> 3439/step\uff1bNCCL 141 -> 255 us"
+    },
+    {
+      "description": "fp8 KV \u672a\u5b9e\u6d4b\uff1a--kv-cache-dtype fp8_e4m3 \u5df2\u88ab\u672c\u673a\u914d\u7f6e\u5c42\u63a5\u53d7\uff0806:36 \u8d77\u7684\u81c2\u5df2\u6253\u5370\u8be5\u503c\uff09\uff0c\u4f46\u6309\u7528\u6237\u8981\u6c42\u5728\u88c5\u8f7d\u9636\u6bb5\u505c\u6b62 \u2014\u2014 KV \u662f\u5426\u771f\u7ffb\u500d\u3001\u7cbe\u5ea6\u662f\u5426\u6389\uff0c\u4e24\u628a\u95f8\u90fd\u8fd8\u6ca1\u8fc7",
+      "metrics": "\u671f\u671b DCP=8 \u4e0b 534,784 -> ~1.05M tokens\uff1b\u8d77\u6cd5 VLLM_EXTRA_ARGS=--decode-context-parallel-size 8 --dcp-comm-backend ag_rs --kv-cache-dtype fp8_e4m3\uff1b\u95f8\uff1a\u4e8b\u5b9e\u53ec\u56de 6/6 + \u9488\u5c16"
+    },
+    {
+      "description": "DCP=8 \u7f3a\u957f\u4e0a\u4e0b\u6587\u9a8c\u6536\uff1a\u77ed\u6863\uff08ISL\u2248700\uff09\u4e09\u6863\u5168\u8d1f -28..-30%\uff0c\u6536\u76ca\u8981 ISL>=16k \u624d\u53ef\u80fd\u51fa\u73b0\uff0c\u5c1a\u672a\u8dd1",
+      "metrics": "\u8d77\u6cd5 TPS_ISL_MULT=24 bash quark-int8/stack_probe.sh <\u81c2\u540d> \u2026\uff08\u224817k\uff09"
     }
   ],
   "rocm_version": "7.2.3",
@@ -160,8 +168,8 @@
   "status": "active",
   "status_note": "\u5728\u5f79\u57fa\u7ebf\uff08\u4e0d\u662f\u6536\u655b\u503c\uff09\uff1a32k \u6863\u53ef\u7528\u3001\u4e8b\u5b9e\u53ec\u56de 6/6\uff1b256k \u5f85\u6d4b\u30011M \u672a\u8fbe\u6210\u3002\u5bf9\u7167 roofline T_mem(mi250x) 859 tok/s \u76ee\u524d\u53ea\u6709 6.9% \u21d2 \u4e3b\u8981\u6760\u6746\u5c1a\u672a\u6536\u56de\uff0c\u672a\u9a8c\u8bc1\u9879\u4e0e\u5df2\u77e5\u8fb9\u754c\u89c1 remaining_gaps\u3002QR \u4e09\u6761 env \u4e00\u5f8b\u7559\u7a7a\uff08\u672a\u542f\u7528\uff09\uff0csplit-K \u9ed8\u8ba4\u5173\uff08MI250_SPARSE_SPLITK=0\uff09\u3002",
   "tp": 8,
-  "updated_at": "2026-09-21T07:51:36.186681+00:00",
-  "version": 9,
+  "updated_at": "2026-09-21T07:55:49.754109+00:00",
+  "version": 10,
   "what_failed": [
     {
       "description": "sparse-attention split-K\uff08MI250_SPARSE_SPLITK=8\uff09\u4e09\u6863\u5168\u8d1f\uff1akernel \u7ea7 7.2x \uff08attention 861 -> 142 us\uff09\u4f46 NCCL 141 -> 255 us\u3001elementwise/copy \u8c03\u7528 1332 -> 3439/step\uff1b\u5355\u6760\u6746\u6d88\u878d\uff08\u540c\u4e00 indexer \u5185\u6838\u4e0b\uff09conc1 -18.3% / conc8 -14.1% / conc32 -13.0%",
