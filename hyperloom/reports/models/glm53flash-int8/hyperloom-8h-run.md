@@ -126,6 +126,32 @@ ZFS 回收抖动，**未证**。⇒ **本机装载时间的主导变量不是 lo
 
 **未测的第三个变量**：`--load-format fastsafetensors`（与本树的 FST 支持是两回事，8114 曾实测
 25.92 s / 25.17 GiB/worker 量级）。它可能比 lazy 再快一截，但那是**下一轮的单变量臂**，不混进本次会话。
+## 4c. 会话中段的实测进度快照（截至 4h45m/8h，工具自己跑出来的）
+
+`baseline_tput = 23.4178 tok/s`，**优化栈仍为空（0 KEEP）**。候选清单（口径：同一 workload，
+每候选一次全新起服，装载 ~12 min + 测量 ~6 min）：
+
+| # | 候选 | 改动 | 结果 |
+|---|---|---|---|
+| v00 | cudagraph-full-decode-only | `--compilation-config {"cudagraph_mode":"FULL_DECODE_ONLY","max_cudagraph_capture_size":8}` | **段错误**：捕获成功（`100% 2/2`、`Graph capturing finished in 12 secs`），首个真实请求 `!!!!!!! Segfault encountered !!!!!!` → `Worker proc VllmWorker-1 died unexpectedly`；段错误前一刻是 `Triton JIT during inference: BuildPrefillChunkMetadataKernel.kernel` + `fused_moe_kernel`，与 breakable 档同一对内核签名 ⇒ **cudagraph 三档全灭**，`--enforce-eager` 是当前唯一解（已回写 knobs §2） |
+| v01 | dsv41_kernel_plus_full_decode_graph | 同类 + 内核 env | **failed**（同族死法，`magpie_nonzero_invalid_measurement rc=1`） |
+| v02 | aiter-int8-w8a8-linear | `VLLM_ROCM_USE_AITER=1` | 23.6（**+0.8%**） |
+| v03 | prefill-batched-4096 | `--max-num-batched-tokens 4096` | 23.1（−1.4%） |
+| v04 | async-scheduling | `--async-scheduling` | 23.1（−1.4%） |
+| v05 | aiter-int8-full-atomic | AITER + `AITER_LINEAR=1`（MOE/MHA/MLA/TRITON_GEMM/CUSTOM_AR/FUSION 全 0） | **24.1（+2.9%）全场最佳，未过 KEEP 门** |
+| v06 | aiter-int8-full-plus-async | v05 + `--async-scheduling` | 进行中 |
+
+**必须记录的方法论事实**：工具在 7 个候选里 **3 个翻 `VLLM_ROCM_USE_AITER=1`**。本仓对 AITER 的
+判词主体是 **MoE**（gfx90a 终案不可用）与 **RMSNorm 门不查 arch**；而 v05/v06 只开 **linear/a8w8**
+这一条窄路 —— 它恰好也是 8127 那次「`Selected AiterInt8` + `import module_gemm_a8w8` + 首个请求
+segfault」的同一条路，**但这次没崩还测出全场最高**。而本会话是 `--no-eval`：**没有任何精度门**，
+所以一旦某个 AITER 变体越过 KEEP 门，它会以「validated gain」的身份进最终报告。
+
+**已定处置（用户拍板）**：不打断会话；会话结束后立刻用
+`quark-int8/scripts_local/verify_aiter_linear_arm.sh`（已写好，未跑）复现 v05 的有效环境并上两把
+硬尺：`tools/probe_nll.py` 的 NLL 量级 + `scripts_local/taskcheck.py` 的事实召回。
+数值坏 ⇒ 进死路清单，并在此声明「该 +2.9% 不可采信」；数值好 ⇒ 修正库内判词的适用面
+（AITER-linear 与 AITER-MoE 不是一回事，必须分开写）。
 ## 5. 结果（待填，禁止提前抢答）
 
 - `baseline_tput` = ?
