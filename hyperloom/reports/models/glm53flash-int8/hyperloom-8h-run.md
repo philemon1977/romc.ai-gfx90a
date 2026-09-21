@@ -77,6 +77,45 @@ runner `vllm_mi250x.sh` 的 `--num-prompts ${NUM_PROMPTS:-$((CONC*10))}` 与 Hyp
    **launch 前的网关门**：用 SDK 真正调用的那个 bundled CLI 带 `--model` 实打一次 `GATEWAY_OK`。
    （裸 python 探针不够：不带 `--model` 时 CLI 会偷偷用默认模型名去撞一个不存在的模型。）
 
+## 4b. 会话前的一轮单变量实验：装载策略（结论已改掉配方）
+
+起因是用户指令「用 hip ais 的方式直接加载到 vram」。先给**不可行**的证据：
+在 `hyperloom-local`/fl1 容器的 vLLM 树里，`VLLM_AIS_DISABLE`、`VLLM_FST_KEEP_NOGDS`、`hipFile`、
+`cuFileBufRegister`、`hipAmdFileRead` **命中文件数全为 0**（`fastsafetensors` 为 5）。AIS 是
+`patches/qwen4exp/local-nogds-gds-for-tp-gt1.patch` 打在**我们 master 树**上的东西，不在 0918
+nightly 底座里；而它存在的那些臂，本仓判词是「serve + AIS ⇒ `cuFileBufRegister` 5014 以崩代降，
+三块盘交叉证明与盘无关、只属 `api_server` 进程树」——Hyperloom 起服恰是那个进程树。⇒ 不走。
+
+但目标（少过宿主、砍装载时间）在这棵树里有等价杠杆：**不给** `--safetensors-load-strategy eager`
+（= vLLM 默认 lazy，`default_loader.py`）。同镜像(-fl1)、同 `--max-model-len 8192`、同 TP8、同 blk128：
+
+| 尺子（都取 vLLM 自带日志同一行） | eager | 默认 lazy |
+|---|---|---|
+| `Loading weights took`(`default_loader.py:430`) | 805.24 s | **444.47 s（1.81×）** |
+| `Model loading took`(`model_runner.py:419`) | 806.8–807.5 s | 452.2–452.6 s |
+| engine init → `GPU KV cache size` | 14m27s | **8m32s** |
+| vLLM 宿主 RSS 峰（采样 12 s） | 90.4 GiB | **37.5 GiB** |
+| `MemAvailable` 最低 | 14.1 GiB（离 Ray 误杀线 12.6 GiB 只差 1.5） | **71.3 GiB** |
+| `GPU KV cache size` | 1,041,873 tokens / 127.18x | **逐字相同** ⇒ 显存布局未被扰动 |
+
+**推翻的记录**：`knobs/glm5next-quark-int8-launch-set.md` 里「eager = 必给」原判词的实验对象是
+8114 的 **0.28 wheel** 底座（症状=去掉后在 shard 0/2 静默死亡）。同页姊妹判词「AIS/FST 两变量在
+0.28 wheel 全树 grep=0」已经说明两棵树装载路径不同 ⇒ 该判词**不可跨底座引用**。已在原处留痕改写，
+未静默覆盖。
+
+**数值侧验收**：默认 lazy 起来后 `tools/probe_nll.py` 三条量级全过，第 1/3 条与 eager 那跑几乎同值
+（1.811/0.481 vs 1.815/0.472）；第 2 条（中文诗句）在**同一台服务器**上连打三次是 1.514/0.607/1.514
+⇒ 属 batch/paged-KV 组成的 run-to-run 抖动，不是装载差异。探针那句「判定 FAIL」来自「贪心两次必须
+一致」这条**未校准判据**（本机从未有 TP8 臂通过，含健康的 8121），按本页纪律它是阳性指标而非必要条件，
+不采信。
+
+**边界照实说**：eager 侧跑在 `hyperloom-local`（Magpie 起服），lazy 侧跑在臂容器 ⇒ 跨容器，
+时间差不是严格单变量；但秒数取自同一行日志、RSS/余量是路径级差异、KV 池逐字相同 ⇒ 「eager 在 0918
+不必要」成立，而「快 1.81×」只给 ±10% 置信度——本机装载时间本身受 ZFS 缓存态支配（历史 eager 亦见
+334 s 与 620 s 两次）。
+
+**未测的第三个变量**：`--load-format fastsafetensors`（与本树的 FST 支持是两回事，8114 曾实测
+25.92 s / 25.17 GiB/worker 量级）。它可能比 lazy 再快一截，但那是**下一轮的单变量臂**，不混进本次会话。
 ## 5. 结果（待填，禁止提前抢答）
 
 - `baseline_tput` = ?
