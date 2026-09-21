@@ -423,6 +423,46 @@ SKILL.md 是常驻的索引与 T0 层；下列细节**按需加载**：
   `ROCm.AI/hyperloom/patches-local/apply_mhc_gfx90a.py --target <file> --check|--dry-run|--apply|--revert`。
   零改码对照法：分派点在函数体内读**模块级全局** ⇒ sitecustomize 设 `mhc.HAS_TILELANG_MHC=False`。
   证据链：`hyperloom/reports/models/glm53flash-int8/rootcause-mhc-tilelang.md`。
+- ⚠️ **平台门 ≠ 能力门，但过门要用放行、不能用总闸**（09-21 · 8128 实测，零 GPU 判死一条杠杆）：
+  `glm5_next`（GLM-5.3-**Flash**）与 `glm_moe_dsa`（GLM-5.3）**不是一个代码路径** —— 前者走新架构包
+  `vllm/models/glm5next/{amd,nvidia,common}`，ROCm 分派到 `amd/`，其 `sparse_indexer.py` 里
+  `if not rocm_aiter_ops.is_enabled(): raise "…only supported on AITER"` 是**这棵树里唯一一处 is_enabled 型门**
+  （`forward_native` 只是 `return forward_hip(...)`，没有第二条实现可退）。放行 = 抄
+  `model_executor/layers/sparse_attn_indexer.py` 已有的 `or on_gfx90a()` 写法（= 第 ⑧ 件补丁，单 hunk）。
+  **绝不用 `VLLM_ROCM_USE_AITER=1` 过这道门**：`is_enabled()` 是总闸、子闸（`_MLA/_MHA/_LINEAR/_RMSNORM`）
+  默认全 `True` 只靠 `master and 子闸` 关着，一翻就连带打开 gfx942/950 的 CK；而且实现体
+  `v1/attention/ops/rocm_aiter_mla_sparse.py:841` 的 aiter 分支**排在 gfx90a 专项 Triton 分派之前**，
+  那条 deepgemm fp8 内核在 gfx90a 上**编译不过**。判法只要两步 CPU：读那棵树的门 + 读分派顺序。
+  ⚠️ 「只有一处门」**说过头了（撤回）**：同一分支里还有 assert 型平台门 ——
+  `assert isinstance(…, DeepseekV32IndexerMetadata)`、`assert not use_fp4_cache,
+  "Unfused FP4 Insert is not supported yet"`、`assert page_size % 16 == 0`。本臂都过了，
+  但它们同样会按 config 触发 ⇒ 扫门要一起 grep `assert`，别只 grep `raise`。
+- ⚠️ **放行一个平台门 = 接管它的整条未验收实现面**（09-21 学到的代价）：第 ⑧ 件治好「起不来」，
+  但 `index_kpool=4` 走的分支**不经过**我们为 gfx90a 注册的那个 op（`grep kpool _aiter_ops.py` = 0 命中），
+  而是走 `models/glm5next/amd/ops/kpool_compress.py`（**859 行 Triton，本机第一次被执行**）。
+  ⇒ 这类臂**只能记 `experimental`**，不能说「已修好」。
+- 🧮 **先用算术做减法，再去跑实验**（本轮最省钱的两个结论都来自纸面）：
+  ① `index_topk=2048` ≫ 短 prompt（n≪2048）⇒ top-k 选择是平凡的（全选）⇒ **indexer 的 logits 再错
+     也改变不了注意力输出** ⇒ 短 prompt 上出现坏位，嫌疑只能在写入/池化值或公共路径，不在选核；
+  ② paged-KV 每次 block table 不同 ⇒ 1e-2 量级 logprob 抖动是**预期代价** ⇒「贪心两次不一致」**不能**
+     单独作为坏臂判据（详见下一条）。
+- 📐 **判据要先在健康对象上校准**（09-21 差点误判一次）：`probe_nll.py` 的「贪心两次必须逐字一致」
+  是从**坏臂症状**反推的，本机从未有任何 vLLM TP8 臂通过它（含健康的 8121）⇒ 它是**阳性指标**、
+  不是**必要条件**。量「单位置塌缩」用 `tools/probe_disaster.py`：`rate`/`phase`/`churn` 记**绝对位置**并扫
+  mod 2/4/8/16/32/128；`invar` 用因果不变量（位置 i 的分布不该受其后续内容影响）分开
+  **「模型算错」与「`prompt_logprobs` 取错行」** —— 这两种解释在 -19 这种症状下**长得一模一样**，
+  不先分开就会整轮追错东西。
+- ⚠️ **跨树对比 ≠ 单变量对照**：换镜像/换树时即使「只挂一个补丁」，两臂仍差着实现布局；
+  把旁证写成单变量会让下一个人以为因果已钉死。真要单变量就在**同一底座**上开关那一个挂载。
+  症状签名：权重装载成功、后端选择正常，**直到第一次 `_dummy_run` 才抛**；worker 全退后
+  **容器可能仍显示 `Up`**（僵尸前端）⇒ 判活看端口/日志签名，不看 `docker ps`。
+- 📏 **判据也要校准**（09-21 差点误判）：`tools/probe_nll.py` 的「贪心两次必须逐字一致」是**从坏臂的
+  症状反推出来的**，本机**从未有任何 vLLM TP8 臂**（含健康的 8121）通过过它 ⇒ 它是坏臂的**阳性指标**，
+  不是好臂的**必要条件**；当硬门用会把修对了的臂判成 FAIL。正确用法：**NLL 量级 = 硬门**，
+  确定性 = 「同一 prompt 连打 k 次的灾难位率」另计。一般化：**用一条判据前，先查它在健康对象上
+  是否成立过**（本仓 grep 留痕：只有坏臂的数据，就说明判据未校准）。
+- 🧪 **`HSA_NO_SCRATCH_RECLAIM` / `HIP_FORCE_DEV_KERNARG` 已否证**（09-21）：曾被点名为「同输入不同输出」
+  的头号待验修复项，实测 0918 镜像**早已烘焙两者**（`docker exec … env`）而症状照在。别再照这条开药。
 - **不要在 isolated 微基准里排序**：结论会反（`CUSTOM allreduce` 输出静默变 `!!!`）。
 
 ---
@@ -551,13 +591,27 @@ Ornith 臂折叠）、`scripts/note_emulation_boot.py`（boot 证据）、
    正文 0 命中**（如 `llamacpp-tp-rccl-split-mode` 逐节引了 TP/RCCL 实测，正文完全没提）。
    判「是否已沉淀」必须同时看两处——本轮已在路由表里把 JSON 指过去，但正文索引仍不完整。
 6. ~~`audit_log_paths.py` 漏检未修~~ → **该 todo 是过期的**：`/tmp` 写点检测早在 **2026-09-16 已修**（`TMP_WRITE_RE` 按写点判定 + `mktemp` 白名单），本轮实测全仓 `/tmp` 命中 = 0、8109 那 4 处也早已改掉。**但同一类缺陷在另一处仍在**：PID 消费方检查没豁免整行注释 ⇒ 19 条发现**全是假阳性**（launcher 头注释里的停服示例被当成消费方）。本轮已补豁免并登记 VOCAB （8115/8116/8117/8127/8119/8121），该闸口发现数 **19 → 4**，剩下 4 条是真的：8121 用容器名式无 `MODEL_KEY`；三条 8119 脚本用 `%H%M%S` 违反 `%H%M` 规范（**它们其实是同一个分钟级撞名隐患的反向解法，改动前需拍板，我没有擅自动 launcher**）。
-7. ~~`ROCm.AI` 侧改动未提交~~ ✅ 已提交 `7955ee0`（技能分层）+ 报告一笔；
-   **未 push**（本仓制度是"提交即推"，push 需另行确认）。
+7. ~~未提交/未 push~~ ✅ 已提交并推送：`cdfef9f..72f0a2a` → `origin/main`
+   （49 笔，含并发会话的工作；推送前对**全部待推提交**做过敏感面扫描）。
+   🛑 **推送需 `export PATH="$PWD/.tools/bin:$PATH"`**——`git-lfs` 装在 `.tools/bin`，
+   不在 PATH 时 pre-push 钩子会让推送**静默失败**（`error: failed to push some refs`，
+   看着像网络/权限问题，其实是 LFS）。本仓没有 sudo，这是唯一正解。
    ⚠️ 两个坑（仍适用于下次）：① `scripts/note_agent_lane.py` 是**会话前既有改动**，不属本次范围，别顺手带上；
    ② **本机有并发会话在同一工作区提交**（`def33b9` 曾把本技能尚未提交的回写一并带走）
    ⇒ 提交前先 `git status` **看全量、不要截断输出**（本轮就是 `| head -3` 截断导致误判，
    `git checkout` 打回了一处别人的未提交更正，已还原）。
 8. ~~4 条新配方未入库~~ ✅ 已由并发会话 `def33b9` 提交；51→55 全部入库。
+8bis. 🛑 **既存红线违规一处（非本次引入，已核实无泄密）**：
+   `hyperloom/session/runtime/recipe_kb/.kb_preflight.json` **被跟踪**，
+   而 §7 规定「`session/**/runtime/` 一律不入库」。它内容是 4 个布尔值、**无凭据**，
+   且**早已在 origin/main**（引入于 `ed38799`），本次推送未新增暴露。
+   ⇒ 待办：`git rm --cached` 并加 `.gitignore`；同时确认那条红线的真正理由仍然成立——
+   **`runtime/kernel-agent.env.sh`（内含明文 API key）实测未被跟踪，红线核心守住**。
+8ter. ⚠️ **`/home/qiba/ai` 有 29 笔提交未推 gitee**（其中 28 笔非本次工作）。
+   已对待推集做过扫描（`session/runtime` 0 命中、凭据形态 0 命中、
+   `config/unsloth-studio.env` 只是"凭据放哪"的说明无真凭据），
+   **但 `gitee/taijizhang/rocm-server` 的可见性我无法核实，且那 28 笔不是我写的**
+   ⇒ 未擅自推送。该仓制度「提交即推」要求补推，请人工确认后执行。
 9. 🔑 **`data/*.json` 与配方 markdown 会因并发而漂移**：`--dir knobs|patches` 的"覆盖缺口"
    只报 INFO 不报红 ⇒ 新配方不会强制进 JSON。**本轮已把 markdown 侧 `applies_to` 的词表校验
    补上（`--dir *` 会发现越表值）**，但"新配方未合成进 JSON"仍无硬门。
