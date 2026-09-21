@@ -241,6 +241,45 @@ result JSONs under `hyperloom/.tmp/single_stream_lab`, archived in
 `python3 /home/qiba/ROCm.AI/scripts/build_skill_data.py` to refresh
 `data/*.json`.
 
+## aiter JIT prebuilt reuse (never pay the ~50 min compile twice)
+
+aiter's JIT does **not** reuse across envs: a fresh env compiles 72 CK instances for
+`module_gemm_a8w8` (~50 min of CPU, no GPU needed) on first import. Reuse *is* natively
+supported — the switch is `AITER_JIT_DIR` — and this host has a verified cache.
+
+```bash
+cd ~/.cache/aiter-gfx90a
+python3 restore.py --list                                       # 426 MB cache, 2 variants
+python3 restore.py --env <env> --variant full-72inst-production --apply
+HIP_VISIBLE_DEVICES=<idle die> python3 verify_gemm.py            # required acceptance
+```
+
+- Mechanism (read from aiter 0.1.19 source): `compile_ops` does `get_module(md)` and only
+  falls into `build_module(...)` when that raises `ModuleNotFoundError`; with `AITER_JIT_DIR`
+  set, `get_module_custom_op` imports the module from that dir (it is put on `sys.path[0]`).
+  The `.so` must be the **bare name** `<md>.so` — `JIT_EXTENSION_VERSIONER` is per-process
+  memory state whose first `bump_version_if_changed` returns 0, so there is no `_v1` suffix.
+  `_needs_arch_rebuild()` scans the `.so` for `amdhsa--gfx*` and passes it when gfx90a is
+  present. **Trap:** `build_module`'s `MainFunc` starts with
+  `os.remove(get_user_jit_dir()/<md>.so)` — entering the compile path deletes a working
+  prebuilt. "Compile finished but no `.so`" is that delete plus a re-compile, not lost output.
+- **Three gates, all required:** aiter version + torch version + ROCm version must match the
+  archive, and the running arch must be in the `.so` markers. Measured here: three envs share
+  aiter 0.1.19 (8316 sources byte-identical), torch `2.12.0+git6bbd260`, ROCm 7.2.4.
+- Verified install (`vllm_master_rocm724`, 2026-09-21): `get_module` **0.300 s** (not 50 min),
+  `[256,4096,4096]` int8 GEMM rel_err **6.369e-03**, `[1024,2048,2048]` **7.042e-03**
+  (tol 2e-2). Evidence line to look for in any arm's log:
+  `[aiter] import [module_gemm_a8w8] under …/aiter/jit/module_gemm_a8w8.so`.
+- Reading the numbers: a `max_abs` of 0.5 is **one bf16 ULP at magnitude ~256**, not an error —
+  judge on **relative** error. And `not found tuned config in a8w8_tuned_gemm.csv, will use
+  default config` means correctness is still proven but **performance is not** the production
+  config; top up the tuning table before timing anything.
+- **Do not** assume same-named `.o` files are interchangeable across envs: measured
+  **38/38 same-name `.o` hashes differ** between `wu1w-int8-028` and `vllm_0.28.0_rocm72`,
+  and the cause is a build-target difference (`"gfx90a": 104` in `GFX_CU_NUM_MAP`), not the
+  ROCm version (both are 7.2.4). Copy `.so`, treat `.o` as a fallback only.
+- Full write-up: `hyperloom/reports/aiter-jit-prebuilt-reuse.md`.
+
 ## 起服前的门 + 单臂探针（2026-09-21 新增，可直接复用）
 
 - `quark-int8/gpu_gate.sh`：`source` 后 `gate 8121`（放行返回 0）/ `wait_free 8121 7200`。
@@ -381,6 +420,12 @@ result JSONs under `hyperloom/.tmp/single_stream_lab`, archived in
 ### 待办（别当成已解决）
 - QR（QuickReduce）在 **GLM-5.3 int4 上仍未验证**：A 臂基线已测（QR 关：召回 6/6；
   ISL≈800/OSL128 请求级 conc 1/8/32 = 4.38 / 28.15 / 74.77 tok/s —— 与 1024/1024 档的 59.1
-  **不同尺子，不可互比**）；B 臂（QR 开）被 `docker commit` 入口 bug 挡在起服阶段。
-  已打好 C2+C3 的镜像是 `rocm-ai/vllm:glm53-int4-gfx90a-0918-qr`（入口待修，见上一节 Docker 坑）。
+  **不同尺子，不可互比**）；B 臂（QR **真开**）**至今没出过任何结果**。
+- 进展（2026-09-21 10:40）：入口 bug 已被重烤修好（`docker inspect` 与 stock 镜像 Config 逐字一致，
+  实跑 `vllm serve --help` 正常）。**A2 臂**（同一个 `-qr` 镜像、三条 env 全不设）已测：召回 6/6、
+  请求级 TPS 4.18 / 26.64 / 73.13；对照 **A 臂**（stock 镜像）4.38 / 28.15 / 74.77 ⇒ 差 **−2…−5%**，
+  落在本机 cross-boot 漂移内 ⇒ **仅凭单次对拍不能说"代码在但关着是中性"**，只能说没有反向证据。
+  两臂日志里 `tp:0`/`ep:0` 都选 `['PYNCCL']`。
+- 现在要跑 B 臂：`SKIP_A=1 SKIP_A2=1 bash quark-int8/qr_ab_watch.sh`（镜像 `...-0918-qr` 已可用；
+  脚本里的 `wait_free` 会等到八张卡都空才动手）。
 
