@@ -89,15 +89,27 @@ nightly 底座里；而它存在的那些臂，本仓判词是「serve + AIS ⇒
 但目标（少过宿主、砍装载时间）在这棵树里有等价杠杆：**不给** `--safetensors-load-strategy eager`
 （= vLLM 默认 lazy，`default_loader.py`）。同镜像(-fl1)、同 `--max-model-len 8192`、同 TP8、同 blk128：
 
-| 尺子（都取 vLLM 自带日志同一行） | eager | 默认 lazy |
+| 尺子（都取 vLLM 自带日志同一行） | eager | 默认 lazy（**同容器**，会话 #3 baseline） |
 |---|---|---|
-| `Loading weights took`(`default_loader.py:430`) | 805.24 s | **444.47 s（1.81×）** |
-| `Model loading took`(`model_runner.py:419`) | 806.8–807.5 s | 452.2–452.6 s |
-| engine init → `GPU KV cache size` | 14m27s | **8m32s** |
-| vLLM 宿主 RSS 峰（采样 12 s） | 90.4 GiB | **37.5 GiB** |
-| `MemAvailable` 最低 | 14.1 GiB（离 Ray 误杀线 12.6 GiB 只差 1.5） | **71.3 GiB** |
-| `GPU KV cache size` | 1,041,873 tokens / 127.18x | **逐字相同** ⇒ 显存布局未被扰动 |
+| `Loading weights took`(`default_loader.py:430`) | 805.24 s | **746.35 s ⇒ 仅快 7.3%** |
+| vLLM 宿主 RSS 峰（12 s 采样） | 90.4 GiB | **36.2 GiB ⇒ 降 2.5×** |
+| `MemAvailable` 最低 | 14.1 GiB（离 Ray 误杀线 12.6 GiB 只差 1.5 GiB） | **75.9 GiB** |
+| `GPU KV cache size` | 1,041,873 tokens / 127.18x | **逐字相同** ⇒ 未扰动显存布局 |
 
+⚠️ **撤回**：本节初稿写「lazy `Loading weights took` 444.47 s ⇒ 快 1.81×」。那个 444.47 s 来自
+**另一个容器**（臂容器 `glm53flash-0918`，`server-8128-20260921-225717.log`），拿它去比
+`hyperloom-local` 里的 805.24 s 正是本页禁令说的「跨容器对比 ≠ 单变量对照」。补上同容器的 lazy
+数据（746.35 s）后时间收益只剩 **7.3%**，**1.81× 作废**。
+
+仍然成立、而且更有用的是两件事：
+① **宿主 RSS 降 2.5×、`MemAvailable` 最低从 14.1 GiB 抬到 75.9 GiB**，且两个容器里都复现
+   （臂容器 37.5 GiB / 本容器 36.2 GiB）⇒ 是路径级现象，不是偶然；
+② 因此「0918 上 eager 不必要」的理由换成**把装载从 Ray memory monitor 的误杀线上摘下来**，
+   而不是「快一倍」。
+
+未解释的余量：同一条 lazy 路径，臂容器 444 s vs `hyperloom-local` 746 s（1.7×）。同镜像、同权重、
+同 blk128，已知唯一差别是后者同时跑着 Ray + coordinator + Magpie。候选解释是并发内存占用引发
+ZFS 回收抖动，**未证**。⇒ **本机装载时间的主导变量不是 loader flag**，别再把它当杠杆排序。
 **推翻的记录**：`knobs/glm5next-quark-int8-launch-set.md` 里「eager = 必给」原判词的实验对象是
 8114 的 **0.28 wheel** 底座（症状=去掉后在 shard 0/2 静默死亡）。同页姊妹判词「AIS/FST 两变量在
 0.28 wheel 全树 grep=0」已经说明两棵树装载路径不同 ⇒ 该判词**不可跨底座引用**。已在原处留痕改写，
@@ -109,10 +121,8 @@ nightly 底座里；而它存在的那些臂，本仓判词是「serve + AIS ⇒
 一致」这条**未校准判据**（本机从未有 TP8 臂通过，含健康的 8121），按本页纪律它是阳性指标而非必要条件，
 不采信。
 
-**边界照实说**：eager 侧跑在 `hyperloom-local`（Magpie 起服），lazy 侧跑在臂容器 ⇒ 跨容器，
-时间差不是严格单变量；但秒数取自同一行日志、RSS/余量是路径级差异、KV 池逐字相同 ⇒ 「eager 在 0918
-不必要」成立，而「快 1.81×」只给 ±10% 置信度——本机装载时间本身受 ZFS 缓存态支配（历史 eager 亦见
-334 s 与 620 s 两次）。
+（旧「边界照实说」段已被上面的撤回块取代：它当时把时间收益写成「1.81×，只给 ±10% 置信度」，
+实际同容器复测只剩 7.3%——问题不在置信度区间，在于对照对象选错了容器。）
 
 **未测的第三个变量**：`--load-format fastsafetensors`（与本树的 FST 支持是两回事，8114 曾实测
 25.92 s / 25.17 GiB/worker 量级）。它可能比 lazy 再快一截，但那是**下一轮的单变量臂**，不混进本次会话。
