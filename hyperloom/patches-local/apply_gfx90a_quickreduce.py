@@ -75,6 +75,16 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--revert", action="store_true")
     a = ap.parse_args()
+    # ★ 2026-09-21 前置门：本机实测 QR 对本模型不可用（固定 ~9 GiB/卡 vs KV 总预算 8.17 GiB）。
+    # 打补丁本身没问题（代码层与 NCCL 逐位一致），问题在"启用之后"的显存账 ⇒ 默认拦住；
+    # 确要在别的模型 / 更宽松显存上启用时，显式 QR_MEM_ACK=1 放行。
+    if not a.revert and not os.environ.get("QR_MEM_ACK"):
+        print("⚠️  QR 是本机已判死的路线（2026-09-21，四条臂全部死在启动显存门）：")
+        print("    init_custom_qr 固定占 ~9 GiB/卡 ≈ GLM-5.3-int4 的 KV 全部预算（8.17 GiB），")
+        print("    VLLM_ROCM_QUICK_REDUCE_MAX_SIZE_BYTES_MB 压不动它；不开 QR 时同刻 free 63.0 GiB。")
+        print("    依据：hyperloom/reports/models/glm53-int4/decode-config-ablation.md 第三节")
+        print("    要在别的模型/更宽松显存上启用：QR_MEM_ACK=1 重跑本脚本。")
+        return 3
     bad = edit(QR, QR_OLD, QR_NEW, a.revert, "C2")
     bad += edit(CC, CC_OLD, CC_NEW, a.revert, "C3")
     import ast

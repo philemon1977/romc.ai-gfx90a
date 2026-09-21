@@ -156,12 +156,16 @@
   "status": "active",
   "status_note": "\u5728\u5f79\u57fa\u7ebf\uff08\u4e0d\u662f\u6536\u655b\u503c\uff09\uff1a32k \u6863\u53ef\u7528\u3001\u4e8b\u5b9e\u53ec\u56de 6/6\uff1b256k \u5f85\u6d4b\u30011M \u672a\u8fbe\u6210\u3002\u5bf9\u7167 roofline T_mem(mi250x) 859 tok/s \u76ee\u524d\u53ea\u6709 6.9% \u21d2 \u4e3b\u8981\u6760\u6746\u5c1a\u672a\u6536\u56de\uff0c\u672a\u9a8c\u8bc1\u9879\u4e0e\u5df2\u77e5\u8fb9\u754c\u89c1 remaining_gaps\u3002QR \u4e09\u6761 env \u4e00\u5f8b\u7559\u7a7a\uff08\u672a\u542f\u7528\uff09\uff0csplit-K \u9ed8\u8ba4\u5173\uff08MI250_SPARSE_SPLITK=0\uff09\u3002",
   "tp": 8,
-  "updated_at": "2026-09-21T04:47:49.430063+00:00",
-  "version": 6,
+  "updated_at": "2026-09-21T05:02:48.342921+00:00",
+  "version": 7,
   "what_failed": [
     {
-      "description": "sparse-attention split-K\uff08MI250_SPARSE_SPLITK=8\uff09\u7aef\u5230\u7aef\u51c0\u8d1f\uff1akernel \u7ea7 7.2x \uff08attention 861 -> 142 us\uff09\u4f46 NCCL 141 -> 255 us\u3001elementwise/copy \u8c03\u7528 1332 -> 3439/step",
+      "description": "sparse-attention split-K\uff08MI250_SPARSE_SPLITK=8\uff09\u4e09\u6863\u5168\u8d1f\uff1akernel \u7ea7 7.2x \uff08attention 861 -> 142 us\uff09\u4f46 NCCL 141 -> 255 us\u3001elementwise/copy \u8c03\u7528 1332 -> 3439/step\uff1b\u5355\u6760\u6746\u6d88\u878d\uff08\u540c\u4e00 indexer \u5185\u6838\u4e0b\uff09conc1 -18.3% / conc8 -14.1% / conc32 -13.0%",
       "reason": "end_to_end_regression"
+    },
+    {
+      "description": "QuickReduce C2+C3\uff08\u4e09\u6761 env\uff1aQUANTIZATION=FP / MIN_SIZE_BYTES_MB=0 / CAST_BF16_TO_FP16=0\uff09\u5728\u672c\u6a21\u578b\u4e0a\u4e0d\u53ef\u7528\uff1a\u542f\u7528\u540e ops.init_custom_qr \u56fa\u5b9a\u5360 ~9 GiB/\u5361\uff0c\u800c\u672c\u6a21\u578b KV \u603b\u9884\u7b97\u4ec5 8.17 GiB \u21d2 \u542f\u52a8\u663e\u5b58\u95e8\u76f4\u63a5\u5931\u8d25\uff08free 54.9 < desired 62.06\uff09\uff1bVLLM_ROCM_QUICK_REDUCE_MAX_SIZE_BYTES_MB=16 \u538b\u4e0d\u52a8\u5b83\uff08\u5931\u8d25\u81c2\u6570\u5b57\u4e00\u6a21\u4e00\u6837\uff09",
+      "reason": "memory_incompatible"
     },
     {
       "description": "MTP \u6295\u673a\u89e3\u7801\u5355\u6d41 -20%\uff08\u63a5\u53d7\u957f\u5ea6 1.18-1.67\uff09\uff0cKV \u6c60 326,016 -> 173,184",

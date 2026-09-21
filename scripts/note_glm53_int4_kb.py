@@ -98,10 +98,22 @@ WHAT_WORKED = [
 WHAT_FAILED = [
     {
         "description": (
-            "sparse-attention split-K（MI250_SPARSE_SPLITK=8）端到端净负：kernel 级 7.2x "
-            "（attention 861 -> 142 us）但 NCCL 141 -> 255 us、elementwise/copy 调用 1332 -> 3439/step"
+            "sparse-attention split-K（MI250_SPARSE_SPLITK=8）三档全负：kernel 级 7.2x "
+            "（attention 861 -> 142 us）但 NCCL 141 -> 255 us、elementwise/copy 调用 1332 -> 3439/step；"
+            "单杠杆消融（同一 indexer 内核下）conc1 -18.3% / conc8 -14.1% / conc32 -13.0%"
         ),
         "reason": "end_to_end_regression",
+        "metrics": "MAXM 默认 8 时 conc32 根本不进场 ⇒ 高并发档必须把 MAXM 提到 32 才算测过",
+    },
+    {
+        "description": (
+            "QuickReduce C2+C3（三条 env：QUANTIZATION=FP / MIN_SIZE_BYTES_MB=0 / CAST_BF16_TO_FP16=0）"
+            "在本模型上不可用：启用后 ops.init_custom_qr 固定占 ~9 GiB/卡，而本模型 KV 总预算仅 "
+            "8.17 GiB ⇒ 启动显存门直接失败（free 54.9 < desired 62.06）；"
+            "VLLM_ROCM_QUICK_REDUCE_MAX_SIZE_BYTES_MB=16 压不动它（失败臂数字一模一样）"
+        ),
+        "reason": "memory_incompatible",
+        "metrics": "4 个开 QR 的臂全部死在启动检查；不开 QR 的同刻 free 为 62.9-63.03 GiB，差值 ~9 GiB/卡"
     },
     {
         "description": "MTP 投机解码单流 -20%（接受长度 1.18-1.67），KV 池 326,016 -> 173,184",

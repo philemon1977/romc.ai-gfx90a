@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-21T04:47:52+00:00",
+  "generated_at": "2026-09-21T05:02:48+00:00",
   "note": "Vendor (vllm-project/recipes) recipes folded in as *reference*, not as MI250X-validated configs. Each entry separates the hardware-independent flags that transfer to gfx90a from what the vendor's own support matrix gates to MI300X+.",
   "references": [
     {
