@@ -1,0 +1,779 @@
+{
+ "axes": {
+  "arch": {
+   "note": "**架构 ≠ 模型名**。同一个模型换量化可能改 config_model_type；注册表里有没有这个 arch 决定了能不能起。",
+   "question": "模型架构（决定 vLLM 走哪个 model 实现、arch 字符串是否在注册表里）",
+   "vocab": {
+    "deepseek_v32": {
+     "evidence": [
+      "docs/recipes/serving/8121-…md"
+     ],
+     "facts": [
+      "⇒ DSV4.1 的 `models/deepseek_v41/*` 补丁对 GLM-5.3 int4 臂**不适用**。"
+     ],
+     "label": "deepseek_v32（vLLM 侧实现，被 glm_moe_dsa 复用）"
+    },
+    "deepseek_v41": {
+     "evidence": [
+      "config/ports.conf 8112 注释",
+      "docs/recipes/environments/vllm_master_rocm724.md"
+     ],
+     "facts": [
+      "本机三个宿主 vLLM env **都没注册** `DeepseekV41ForCausalLM` ⇒ 该臂脚本预检 fail-closed exit 3；8112 上现只剩 llama.cpp 一条实体脚本。"
+     ],
+     "label": "DeepseekV41ForCausalLM（native）与 llama.cpp deepseek41"
+    },
+    "deepseek_v4_flash": {
+     "evidence": [
+      "docs/recipes/serving/8103-…md"
+     ],
+     "facts": [
+      "8103 臂的 arch；llama.cpp 与 vLLM 的 arch 串不是同一套命名。"
+     ],
+     "label": "DeepSeek-V4-Flash-0731（llama.cpp 侧）"
+    },
+    "glm5next": {
+     "evidence": [
+      "docs/recipes/knobs/glm5next-quark-int8-launch-set.md §2/§对象"
+     ],
+     "facts": [
+      "**`vllm_0.28.0_rocm72` 不注册它**（378 个 arch 实测无）；只有 `envs/vllm_master_rocm724` 有。",
+      "`models/glm5next/nvidia/model.py` **无** `support_torch_compile` ⇒ piecewise/全图捕获不可用。"
+     ],
+     "label": "Glm5NextForConditionalGeneration（GLM-5.3-Flash）"
+    },
+    "glm_moe_dsa": {
+     "evidence": [
+      "docs/recipes/serving/8121-…md",
+      "docs/recipes/environments/vllm-openai-rocm-nightly-0918.md §3"
+     ],
+     "facts": [
+      "**只有 nightly-0918 镜像起得来**；宿主三个 vLLM env 都没有它的注册与 CT W4A16 MoE 路径。",
+      "vLLM 走 `vllm.models.deepseek_v32`（**不是** `deepseek_v41`）。",
+      "78 层 = 3 dense + 75 稀疏 MoE（+1 MTP），256 专家 top-8。"
+     ],
+     "label": "glm_moe_dsa（GLM-5.3 系列）"
+    },
+    "mamba-gdn-hybrid": {
+     "evidence": [
+      "SKILL.md Dead routes 段",
+      "data/vendor_references.json"
+     ],
+     "facts": [
+      "Mamba state cache 与 KV 抢余量 ⇒ 并发上限受 `--max-num-seqs` 约束；`--gpu-memory-utilization <0.95` 会先报 `No available memory for cache blocks`。",
+      "官方 recipe 的坑：`assert num_cache_lines >= batch` → 降低 `--max-cudagraph-capture-size`（默认 512）。"
+     ],
+     "label": "混合 GDN + Mamba（Flash-Next / Ornith 系列）"
+    },
+    "mla": {
+     "evidence": [
+      "docs/recipes/serving/8121-…md",
+      "SKILL.md DCP 一节"
+     ],
+     "facts": [
+      "MLA 投影按 rank 复制 ⇒ DCP=8 时权重每 rank +2.11 GiB。"
+     ],
+     "label": "MLA（Multi-head Latent Attention，DSV4/GLM-5.3 系列）"
+    },
+    "qwen2": {
+     "evidence": [
+      "config/ports.conf 8203 注释"
+     ],
+     "facts": [
+      "原生上限 32768；抬档必须挂 YaRN 8× ⇒ RoPE 一变，它与 Ornith(hd256) 的每 token 注意力成本对照就不再同口径。"
+     ],
+     "label": "Qwen2（8203 冒烟臂）"
+    },
+    "qwen3_5": {
+     "evidence": [
+      "models/*/config.json"
+     ],
+     "facts": [
+      "Qwen3.8 系列多数权重 config 里写的是 qwen3_5。"
+     ],
+     "label": "qwen3_5 / Qwen3_5ForConditionalGeneration"
+    },
+    "qwen3_5_moe": {
+     "evidence": [
+      "SKILL.md 第四轮 §4"
+     ],
+     "facts": [
+      "MTP 草稿模型专家层是**未量化 bf16** ⇒ 开 `--speculative-config method=mtp` 后 vLLM 会自动为它选 ROCm AITER MoE 后端并崩，必须 `VLLM_ROCM_USE_AITER_MOE=0`。"
+     ],
+     "label": "qwen3_5_moe（含 Qwen3_5MoeMTP 草稿头）"
+    },
+    "qwen4exp": {
+     "evidence": [
+      "docs/recipes/environments/vllm_master_rocm724.md"
+     ],
+     "facts": [
+      "**只有 envs/vllm_master_rocm724 注册**（5 处）；0.28 裸轮 grep 得 0。"
+     ],
+     "label": "Qwen4Exp（Flash-Next 系列）"
+    }
+   }
+  },
+  "driver": {
+   "question": "内核驱动与固件是什么版本？（决定 kfd/HSA 行为、power cap 是否可设）",
+   "vocab": {
+    "amdgpu-dkms-6.16.13.30300400": {
+     "evidence": [
+      "dpkg -l amdgpu-dkms amdgpu-dkms-firmware",
+      "cat /sys/module/amdgpu/version",
+      "modinfo amdgpu",
+      "uname -r"
+     ],
+     "facts": [
+      "**`uname -r` 给 6.8.0-139-generic，而 `/sys/module/amdgpu/version` 给 6.16.13 —— 两者不等是正常的**，它是 DKMS 回移模块（`/lib/modules/6.8.0-139-generic/updates/dkms/amdgpu.ko.zst`，vermagic 仍是 6.8.0-139-generic）。别把 6.16.13 当成内核版本。",
+      "配套固件包 amdgpu-dkms-firmware 30.30.4.0.30300400。"
+     ],
+     "label": "amdgpu DKMS 模块 6.16.13，装在内核 6.8.0-139-generic 上"
+    },
+    "power-cap-560w": {
+     "evidence": [
+      "cat /etc/amdgpu-powercap.conf",
+      "docs/recipes/TEMPLATE.md 填写规矩 3"
+     ],
+     "facts": [
+      "**跨 run 比较前必须先对齐 cap**；报告数字必须带 cap 口径（配方模板 §7 强制）。",
+      "本机历史上出现过 200/250/350/560 W 不同档的测量，混用即不可比。"
+     ],
+     "label": "560 W/module，写在 /etc/amdgpu-powercap.conf（POWER_CAP_UW=560000000）"
+    }
+   }
+  },
+  "engine": {
+   "question": "哪个推理引擎、哪个构建？（同引擎不同 commit 的 arch 注册表不同）",
+   "vocab": {
+    "atom-vllm": {
+     "evidence": [
+      "docs/MI250X-ATOM-vLLM插件-本机实测-2026-09-06.md",
+      "config/ports.conf 8201 注释"
+     ],
+     "facts": [
+      "四道墙，2026-09-06 判死；`envs/atom_vllm` 与 `envs/vllm_master_rocm724_atom` 已回收，8201 现为空号。"
+     ],
+     "label": "ATOM（vLLM 插件）—— **gfx90a 判死**"
+    },
+    "litellm": {
+     "evidence": [
+      "data/environments.json :: litellm_1_88"
+     ],
+     "facts": [
+      "不是推理引擎，只是 proxy，没有 vllm/torch；**目录名 1_88 已漂移**，实测 importlib.metadata 读数是 1.100.1 ⇒ 以 pip 读数为准。"
+     ],
+     "label": "LiteLLM Proxy（envs/litellm_1_88）"
+    },
+    "llamacpp-0.3.0-dev@629b50552": {
+     "evidence": [
+      "docs/recipes/environments/llama.cpp_886.md",
+      "docs/recipes/environments/llama.cpp_gfx90a-2026.9.8.md"
+     ],
+     "facts": [
+      "8108 (GLM-5.3-Flash Q8_0) 的解释器；`-rp` 自足前缀于 09-12 起为默认。"
+     ],
+     "label": "llama.cpp 0.3.0-dev build 223, commit 629b50552（unslothai fork, glm5next-rp）"
+    },
+    "llamacpp-0.3.0-dev@a9e9c3c5f": {
+     "evidence": [
+      "config/env-lock 无（非 pip）",
+      "docs/recipes/environments/llama.cpp_gfx90a-2026.9.8.md"
+     ],
+     "facts": [
+      "8103 / 8107-q4kxl / 8110 三条 GGUF 臂的解释器。"
+     ],
+     "label": "llama.cpp 0.3.0-dev build 1, commit a9e9c3c5f（unslothai fork, qwen4exp-mtp-rp）"
+    },
+    "llamacpp-0.4.0-dev@f37da57": {
+     "evidence": [
+      "docs/recipes/environments/llama.cpp_dsv41-gfx90a-2026.9.12.md",
+      "config/env-lock 无（非 pip）"
+     ],
+     "facts": [
+      "8112 (DeepSeek-V4.1-Flash Q4_K_M) 的解释器；arch 注册 deepseek41。"
+     ],
+     "label": "llama.cpp 0.4.0-dev build 1, commit f37da57（vcruz305 fork, runtime/deepseek41）"
+    },
+    "sglang-not-deployed": {
+     "evidence": [
+      "config/sglang.conf",
+      "grep -rl sglang /home/qiba/ai/models/*/launcher/ = 空"
+     ],
+     "facts": [
+      "`config/sglang.conf` 是占位件，带 fail-closed 解释器检查；原 envs/sglang_0.5.17 是 CUDA 机器件，未随迁移落盘。",
+      "任何『本机用 sglang 起 X』的动作都不成立，除非先重建。"
+     ],
+     "label": "SGLang —— **本机未部署**"
+    },
+    "unsloth": {
+     "evidence": [
+      "docs/recipes/ops/unsloth-studio-8888.md"
+     ],
+     "facts": [
+      "常驻侧服务，会与 llama.cpp 推理臂抢卡 ⇒ 起臂前的抢卡前置检查必须带上它。"
+     ],
+     "label": "Unsloth Studio（envs/unsloth_2026.9.2_rocm7.2，:8888）"
+    },
+    "vllm-0.28.0+rocm723": {
+     "evidence": [
+      "docs/recipes/environments/vllm_0.28.0_rocm72.md",
+      "config/env-lock/vllm_0.28.0_rocm72.txt"
+     ],
+     "facts": [
+      "env `envs/vllm_0.28.0_rocm72`；**不是裸轮**——带 P1 门控 GEMV、C2/C3 QuickReduce 架构门、split-KV paged decode。",
+      "是 `vllm_master_rocm724` 与 `wu1w-int8-028` 的复制母本：它坏，三条路线一起断。",
+      "9 条实体臂里 5 条的解释器（8111/8113/8203/8301/8302）。",
+      "arch 注册表**不含** `Qwen3_5…`（grep 得 0）与 `DeepseekV41ForCausalLM`。"
+     ],
+     "label": "vLLM 0.28.0+rocm723（venv + 手工三件 gfx90a 补丁）"
+    },
+    "vllm-0.3.1.dev85+gdee37d891": {
+     "evidence": [
+      "docs/recipes/environments/vllm-openai-rocm-nightly-0918.md"
+     ],
+     "facts": [
+      "**本机唯一能起 `glm_moe_dsa`（GLM-5.3）与 CT-int4 W4A16 MoE 的 vLLM**。",
+      "补丁以 bind-mount 逐文件 `:ro` 注入 `patches/gfx90a/ct_w4a16_dsv41_n0918/tree`，**不改镜像**。",
+      "容器内 dist-packages 路径 `/usr/local/lib/python3.12/dist-packages/vllm/…` 写死在 launcher 挂载里 ⇒ **换镜像 tag 会让全部挂载点落空**。",
+      "必须 `VLLM_ROCM_USE_AITER=0`、`VLLM_ROCM_USE_AITER_MOE=0`（AITER MoE/MLA-CK decode 是 gfx942/950 专属）。"
+     ],
+     "label": "vLLM nightly-0918（容器镜像 vllm/vllm-openai-rocm:nightly-0918）"
+    },
+    "vllm-master@8a728663c": {
+     "evidence": [
+      "docs/recipes/environments/vllm_master_rocm724.md",
+      "config/env-lock/vllm_master_rocm724.txt"
+     ],
+     "facts": [
+      "env `envs/vllm_master_rocm724`，editable → `src/vllm-master/vllm`；**唯一有 Qwen4Exp arch 的树**（5 处注册）。",
+      "Flash-Next 系列必须用它；0.28 裸轮没有该 arch。",
+      "由 vllm_0.28.0_rocm72 整份 `cp -a` 而来，torch 同 commit。"
+     ],
+     "label": "vLLM master editable（0.1.dev1+g8a728663c.rocm724，pin 8a728663c）"
+    }
+   }
+  },
+  "host": {
+   "note": "本机唯一取值。任何一台别的机器上，本技能 T0 以外的内容都不保证成立。",
+   "question": "这台机器是什么？",
+   "vocab": {
+    "mi250x-gfx90a": {
+     "evidence": [
+      "/sys/class/drm/card{1..8}/device/{product_name,device,vendor,numa_node,current_link_speed}",
+      "lscpu",
+      "CLAUDE.md §1"
+     ],
+     "facts": [
+      "PCI ID 1002:740c；sysfs product_name = 'AMD INSTINCT MI250 (MCM) OAM AC MBA'。",
+      "8 个 GCD(compute die)，每个 64 GiB HBM、104 CU；**两个 GCD 才是一个 MI250 模块的 128 GiB** —— 算 KV 时绝不能按 128 GiB/GCD 算。",
+      "无原生 FP8 / FP4 矩阵核（CDNA2）；int8 MFMA 有，bf16 MFMA 有。",
+      "PCIe Gen4 x16（current_link_speed 16.0 GT/s，width 16）。",
+      "CPU：2× AMD EPYC 7413（24 核/路，共 96 线程）；NUMA 2 节点。",
+      "**GPU NUMA 接线是 4+4**：card1-4 → numa_node 0，card5-8 → numa_node 1。跨 NUMA 的 TP8 通信要意识到这一点。",
+      "render 节点 /dev/dri/renderD128..135；compute 节点 /dev/kfd。"
+     ],
+     "label": "8× AMD Instinct MI250 (MCM) OAM AC MBA / gfx90a / CDNA2"
+    }
+   }
+  },
+  "model": {
+   "_note": "开集轴：vocab 只列『本机自转』这类**需要特别标注**的类别，不穷举上游权重 id。校验器对 open 轴不查词表。",
+   "note": "取值 = 配方 frontmatter 的 `model:` 字段（HF id 或 models/ 下相对路径）。**本机自转**的权重必须显式标注，它的适用范围比上游权重窄得多。",
+   "open": true,
+   "question": "哪一份权重？（出品方不同、甚至同出品方不同 revision，都是不同底座）",
+   "vocab": {
+    "self-converted": {
+     "evidence": [
+      "docs/recipes/serving/8121-…md",
+      "quark-int8/RESULT.md"
+     ],
+     "facts": [
+      "产物的适用范围 = 产出它的转换器版本 + 源权重 + 方案；**换转换器即换底座**。",
+      "证据强度弱于上游权重：必须有自己的独立验收尺子（例如 `verify_glm53_int4.py`，不复用转换器函数）。"
+     ],
+     "label": "本机自转 checkpoint（GLM-5.3-CT-Int4-W4A16 402 GB、Ornith CT-Int4/Quark-Int8 等）"
+    }
+   }
+  },
+  "quant": {
+   "_note": "fp8 / fp8-emulation / mxfp4-w4a16 三个取值**已定义但当前 applies_to 直接用到的是 0**：它们的事实都在 SKILL.md 的『死路』与量化选型段，尚未落成条目——这正是下一轮要补的。",
+   "question": "哪种量化形态？（同一模型不同量化 = 不同内核路径 = 不同适用事实）",
+   "vocab": {
+    "bf16": {
+     "facts": [
+      "本机最稳的形态；vLLM 走原生路径。"
+     ],
+     "label": "BF16 原始权重"
+    },
+    "ct-int4-w4a16": {
+     "evidence": [
+      "quark-int8/INT4_CT_PLAN.md",
+      "docs/MI250X-AITER-INT4-内核复核-2026-09-17.md",
+      "quark-int8/mfma_evidence.py"
+     ],
+     "facts": [
+      "**int4 在本机只能走 compressed-tensors**：Quark 对 int4/uint4 一律 `NotImplementedError: No quark compatible scheme was found`。",
+      "消费者 = auto_awq / auto_gptq / compressed_tensors_moe_wna16 / moe_wna16；ROCM 侧 `TritonW4A16LinearKernel`。",
+      "走 MFMA（实测生成 `v_mfma_f32_16x16x16bf16_1k`、**零 FMA**）。",
+      "**aiter 没有 gfx90a 的 int4 内核**（int4 家族源码 arch 字符串 gfx950×1990 / gfx942×3 / gfx90a×0）。"
+     ],
+     "label": "compressed-tensors INT4 W4A16"
+    },
+    "fp8": {
+     "evidence": [
+      "SKILL.md Dead routes",
+      "data/vendor_references.json"
+     ],
+     "facts": [
+      "**gfx90a 上必死**：`torch._scaled_mm` 要求 MI300+/CC>=8.9，engine init 阶段就 die（Ornith-1.5-397B-FP8 全量 389.6 GiB 权重装载健康后仍死）。",
+      "官方 vLLM recipe 的 AMD 支持矩阵只有 {MI300X,MI325X,MI355X}，MI250X 全矩阵缺席 —— 这是**硅门，不是调参问题**。"
+     ],
+     "label": "FP8（上游 checkpoint 原生）"
+    },
+    "fp8-emulation": {
+     "evidence": [
+      "SKILL.md Dead routes / FP8 emulation 段"
+     ],
+     "facts": [
+      "`hyperloom/patches/fp8-w8a8-emulation-gfx90a/`；gfx90a 上唯一把这颗 FP8 checkpoint 装进 vLLM 的路线。",
+      "**代价：BF16 权重常驻 48.27 GiB/die** ⇒ 1M 上下文装不下；8-bit 常驻 + tile-load dequant 才能解放 ~23.9 GiB/die。"
+     ],
+     "label": "FP8→BF16 dequant 仿真（本地补丁）"
+    },
+    "gguf-q4_k_m": {
+     "facts": [
+      "8112 DeepSeek-V4.1-Flash 748B，414.19 GiB / 11 片；engram 103 GiB 不进显存。"
+     ],
+     "label": "GGUF Q4_K_M"
+    },
+    "gguf-q8_0": {
+     "facts": [
+      "8108 GLM-5.3-Flash 320B / 8110 Ornith-1.5-397B。",
+      "Ornith-397B 在 vLLM 侧 FP8 判死 ⇒ **该模型在本机 = llama.cpp Q8_0 (8110) 唯一形态**。"
+     ],
+     "label": "GGUF Q8_0（llama.cpp）"
+    },
+    "gguf-ud-q4_k_xl": {
+     "facts": [
+      "8107 Flash-Next 176B，108 GiB；**单流最快档**（§5 选型：要单流速度走 GGUF）。"
+     ],
+     "label": "GGUF UD-Q4_K_XL"
+    },
+    "gguf-ud-q8_k_xl": {
+     "facts": [
+      "8103 DeepSeek-V4-Flash-0731。"
+     ],
+     "label": "GGUF UD-Q8_K_XL"
+    },
+    "int8-w8a8": {
+     "evidence": [
+      "quark-int8/RESULT.md",
+      "SKILL.md 第四轮 §1"
+     ],
+     "facts": [
+      "走 aiter `module_gemm_a8w8`（CDNA2 有原生 int8 MFMA）⇒ 这是本机**唯一** AITER GEMM 路线可行的量化。",
+      "Ornith：v1 仅 experts INT8 57.37 t/s、NLL 1.9687；v2 把 attn/GDN 也 INT8 ⇒ **−8.5% 吞吐、NLL +2.8%（不加分）**。",
+      "默认只量化 routed experts。"
+     ],
+     "label": "INT8 W8A8（Quark / compressed-tensors）"
+    },
+    "mxfp4-w4a16": {
+     "evidence": [
+      "quark-int8/RESULT.md v3",
+      "SKILL.md 第四轮 §1"
+     ],
+     "facts": [
+      "ROCm 上 MXFP4 MoE 只有 `AITER_MXFP4_BF16`（被 CDNA2 门控禁用）+ `EMULATION`，**没有 triton 回落** ⇒ 逐 token 反量化 ⇒ 慢 5 倍。",
+      "**本机 MXFP4 = 省显存不省算力，别拿它换吞吐。**"
+     ],
+     "label": "MXFP4 W4A16（Quark OCP MX）"
+    }
+   }
+  },
+  "rocm": {
+   "question": "哪一套 ROCm？（宿主前缀 / 容器内 / wheel 构建标签是三个不同的东西）",
+   "vocab": {
+    "10.0.0": {
+     "evidence": [
+      "docs/ROCm-10.0.0-vLLM-Flash-Next-TP8-本机实测-2026-09-12.md",
+      "docs/ROCm-10.0.0-本机移除记录-2026-09-12.md",
+      "config/ports.conf 8207 注释"
+     ],
+     "facts": [
+      "判语=不迁：vLLM TP8 单流 **−60%**，根因是 RCCL 小消息地板 113→294 µs；llama.cpp 持平；AITER 在 10.0 仍翻不动。",
+      "已移除：envs 前缀 + apt amdrocm* + rocmAB 构建 + 对应 launcher；端口 8207 留作**墓碑，勿复用**。",
+      "**移除它的直接原因**：ROCm 10 的 deb postinst 会抢走 `/opt/rocm/{lib,bin}`，而两代 `libamdhip64.so.7` 同名 ⇒ 静默换库。"
+     ],
+     "label": "ROCm 10.0.0 —— 2026-09-12 实测后**已全部移除**"
+    },
+    "container-7.2.3-nightly0918": {
+     "evidence": [
+      "docs/recipes/environments/vllm-openai-rocm-nightly-0918.md §1/§3"
+     ],
+     "facts": [
+      "镜像内 vLLM 0.3.1.dev85+gdee37d891、ROCm 7.2.3、torch 2.12.0+git6bbd260（hip 7.2.53211）、python 3.12。",
+      "**容器不吃宿主的 /opt/rocm** —— 容器内的 ROCm 版本与宿主 7.2.4 无关。",
+      "结论只能这么写：『nightly-0918 镜像内 ROCm 7.2.3』，不能写成『本机 ROCm 7.2.3』。",
+      "镜像 ID sha256:5550994c1874ef331c6aed3ea27ae1efb7f4cfd17a2f18f5466c2837b9bf5467（构建于 2026-09-18T05:16:56Z）；上游 nightly tag 会漂，镜像 ID 才是复现凭证。"
+     ],
+     "label": "vllm/vllm-openai-rocm:nightly-0918 镜像**容器内**的 ROCm 7.2.3"
+    },
+    "host-7.2.4": {
+     "evidence": [
+      "dpkg -l rocm-core",
+      "ls -la /opt/rocm",
+      "grep -rho 'ROCM_PREFIX.*' /home/qiba/ai/models/*/launcher/*.sh"
+     ],
+     "facts": [
+      "rocm-core 7.2.4.70204-93~24.04；`/opt/rocm/{bin,lib,llvm,...}` 全部是 → /etc/alternatives/rocm-* 的软链。",
+      "23 个 launcher 显式引用 `/opt/rocm-7.2.4`（`ROCM_PREFIX=\"${ROCM_PREFIX:-${ROCM724:-/opt/rocm-7.2.4}}\"`）。",
+      "**红线：不要碰 /opt/rocm 的 alternatives**（CLAUDE.md 红线 2）。"
+     ],
+     "label": "宿主 ROCm 用户态前缀 /opt/rocm-7.2.4（= /opt/rocm 经 alternatives 的当前目标）"
+    },
+    "legacy-6.4.4": {
+     "evidence": [
+      "grep -rho '/opt/rocm-6.4.4' /home/qiba/ai/models/*/launcher/*.sh"
+     ],
+     "facts": [
+      "历史残留，非现役；见到它说明该 launcher 是旧机迁移件，用前先核。"
+     ],
+     "label": "/opt/rocm-6.4.4 遗留引用（2 处 launcher）"
+    },
+    "wheel-tag-rocm723": {
+     "evidence": [
+      "docs/recipes/environments/vllm_0.28.0_rocm72.md §2 红线",
+      "config/env-lock/vllm_0.28.0_rocm72.txt"
+     ],
+     "facts": [
+      "`vllm==0.28.0+rocm723` 是官方 ROCm wheel 的 build tag（对 ROCm 7.2.3 构建），它**运行在宿主 /opt/rocm-7.2.4 上**。",
+      "该 wheel 的 RUNPATH 写死 `/opt/rocm-7.2.3/lib`，本机**不存在**这个目录 ⇒ 全靠裸 `/opt/rocm/lib` 解析。",
+      "所以 env 名 `envs/vllm_0.28.0_rocm72`（省了末位）与 wheel tag `rocm723` 指的是**同一套东西**，别再拆成两个版本讨论。"
+     ],
+     "label": "wheel 构建标签 `+rocm723` —— **不是**运行时 ROCm 版本"
+    }
+   }
+  },
+  "topology": {
+   "question": "并行度与占卡拓扑（同一条臂换 TP 就是另一条臂）",
+   "vocab": {
+    "dcp1": {
+     "evidence": [
+      "hyperloom/reports/models/glm53-int4/decode-config-ablation.md §四"
+     ],
+     "facts": [
+      "GLM-5.3 int4：权重 **50.84 GiB/rank**、32k 档 KV **8.17 GiB = 94,016 tokens**（93.4 KiB/token）。"
+     ],
+     "label": "DCP=1（默认，无解码上下文并行）"
+    },
+    "dcp8": {
+     "evidence": [
+      "hyperloom/reports/models/glm53-int4/decode-config-ablation.md",
+      "SKILL.md 第二轮增补"
+     ],
+     "facts": [
+      "GLM-5.3 int4：权重 52.95 GiB/rank（MLA 投影按 rank 复制，+2.11）、KV **11.5 KiB/token**（5.89 GiB = 534,784 tokens）。",
+      "短上下文（ISL≈700）**−28…−30%** ⇒ 必须在长档判（`TPS_ISL_MULT=24`，≈17k）。",
+      "上游只验证过 `ag_rs` 这个 comm backend。"
+     ],
+     "label": "DCP=8（--decode-context-parallel-size 8 --dcp-comm-backend ag_rs）"
+    },
+    "gpu-group": {
+     "evidence": [
+      "ls /home/qiba/ai/config/gpu_mi250x_*.conf"
+     ],
+     "facts": [
+      "tp2_node0 / tp2_node1 / tp2_node2 / tp2_node3 / tp4_node0+1 / tp4_node2+3 / tp8；**与 NUMA 4+4 接线对齐**。"
+     ],
+     "label": "GPU 组（config/gpu_mi250x_*.conf）"
+    },
+    "tp1": {
+     "evidence": [
+      "config/ports.conf 8114 注释"
+     ],
+     "facts": [
+      "8114 (Qwen3.8-27B INT8 W8A8 + dflash12) 只占单 die ⇒ **与其它臂不互斥**，挑空闲 die 用 HIP_VISIBLE_DEVICES 覆盖即可。"
+     ],
+     "label": "TP1（单 GCD）"
+    },
+    "tp2": {
+     "evidence": [
+      "config/ports.conf 8301/8302 注释"
+     ],
+     "facts": [
+      "27B Fable split-KV / dflash2 A/B 臂。"
+     ],
+     "label": "TP2（8301/8302 = die6+7）"
+    },
+    "tp4": {
+     "evidence": [
+      "config/ports.conf 8111 注释"
+     ],
+     "facts": [
+      "8111 Ornith-1.5-35B-A3B。"
+     ],
+     "label": "TP4（只占 die0-3）"
+    },
+    "tp8": {
+     "evidence": [
+      "config/ports.conf",
+      "data/arms.json gpus 字段"
+     ],
+     "facts": [
+      "**占满 8 die 的臂彼此全互斥**：8103/8107-vllm/8108/8109/8110/8111(TP4 例外)/8112/8115/8116/8117/8119/8121。",
+      "权重 52.9 GiB/rank 这类数字只在 TP8 成立。"
+     ],
+     "label": "TP8（占满 8 die）"
+    }
+   }
+  },
+  "torch": {
+   "question": "哪个 PyTorch？—— 同一台机器上并存**三个**互不相同的 torch。",
+   "vocab": {
+    "2.11.0+rocm7.2": {
+     "evidence": [
+      "config/env-lock/unsloth_2026.9.2_rocm7.2.txt"
+     ],
+     "facts": [
+      "配套 triton-rocm 3.6.0、transformers 5.5.0、torchao 0.18.0、gguf 0.19.0。仅 Unsloth 侧使用。"
+     ],
+     "label": "torch 2.11.0+rocm7.2（envs/unsloth_2026.9.2_rocm7.2，自足）"
+    },
+    "2.12.0+git6bbd260": {
+     "evidence": [
+      "config/env-lock/{vllm_0.28.0_rocm72,vllm_master_rocm724,wu1w-int8-028}.txt",
+      "docs/recipes/environments/vllm_0.28.0_rocm72.md §2"
+     ],
+     "facts": [
+      "**全部 vLLM env 共用这一个 commit**：vllm_0.28.0_rocm72 / vllm_master_rocm724 / wu1w-int8-028 / wu1w-fresh / atom_vllm（已回收）。",
+      "= vLLM master 的 docker/Dockerfile.rocm_base 所钉版本 ⇒ 复用，**绝不让 pip 重装**。",
+      "**slim 不自带 ROCm 运行时**：缺 `LD_LIBRARY_PATH=/opt/rocm-7.2.4/lib` 时 `import torch` 直接 core dump（N13）。走 launcher 不会缺，手工起 python 必须自己带。",
+      "nightly-0918 容器内也是这个 commit（hip 7.2.53211）—— 宿主与容器同 torch 但 **ROCm 不同**（7.2.4 vs 7.2.3）。"
+     ],
+     "label": "torch 2.12.0+git6bbd260（slim）"
+    },
+    "2.14.0+rocm7.2": {
+     "evidence": [
+      "config/env-lock/pytorch_2.14_rocm7.2.txt",
+      "data/environments.json"
+     ],
+     "facts": [
+      "与 vLLM env 的 2.12.0 **不是同一套**；配套 torchvision 0.29.0+rocm7.2、triton-rocm 3.8、numpy 2.5.2、modelscope 1.39.1。",
+      "**它不参与任何 vLLM 臂**；跨 env 抄命令时若落到这个解释器，行为会不同。"
+     ],
+     "label": "torch 2.14.0+rocm7.2（envs/pytorch_2.14_rocm7.2，自足）"
+    }
+   }
+  }
+ },
+ "comparability_rules": [
+  "同 scope + 同 boot + 同 cap：可横比。",
+  "同 scope 不同 boot：绝对值不可混（跨 boot 漂移 σ≈4.6%）；±2% 级差异不得当结论。",
+  "不同 engine / 不同 quant / 不同 model：**不可横比任何吞吐数字**，只能各自表述。",
+  "『请求级吞吐含 prefill』与『纯 decode tok/s』是两把尺子（qr_tps_probe 123.78 vs 旧报告 9.60–10.71），**不可互比**。",
+  "单流 TPS 必须带 ctx：ctx≈800 约 10 tok/s、ctx=8192 约 4 tok/s。",
+  "TPS 测量必须 `ignore_eos=True` + `min_tokens=max_tokens`，否则短答立刻 EOS、解码 TPS 变 nan。",
+  "一个修复用两个 harness 测出的两个增益不可相加（同一件事的两次测量）。",
+  "一项结论若只在 int4 上验过，不得外推到 bf16 或 int8 —— 同一模型换量化，失败现象可能一样而根因完全不同。"
+ ],
+ "gaps": [
+  {
+   "fix": "给 environment 配方加一个稳定的 `slug:`，并让 serving 的 `env:` 用它",
+   "id": "env-axis-unresolvable",
+   "impact": "arm → env → rocm/torch 的三跳 join 在第一跳就断；九轴里的 rocm/torch 目前只能人工填",
+   "issue": "serving 配方的 `env:` 字段解析不到 environment 配方 id（实测 0/15）",
+   "status": "✅ 已解决（2026-09-21）：用归一化规则 `resolve_env()`（去 `envs/` 前缀 + 取首段 + 8121 镜像特例）后 **15/15 可解析**，并落成闸口 `scripts/scope_match.py --env-check`：校验每条臂的 rocm/torch/engine 轴与它所引用环境的轴一致。首跑即抓出一处真错——`llama.cpp_gfx90a-2026.9.8` 一棵树里含多个 commit 子前缀，env 条目的 engine 轴曾写成单值。"
+  },
+  {
+   "fix": "serving frontmatter 增两个必填字段，由 audit_recipes.py 的 REQUIRED 强制",
+   "id": "no-rocm-torch-in-serving",
+   "impact": "同一条臂换 env（历史上 8101 就换过）后，版本轴无从追溯",
+   "issue": "serving 配方没有 `rocm:` / `torch:` 字段（实测 0/15）",
+   "status": "⚠️ 部分解决：serving frontmatter 仍无 `rocm:`/`torch:` 字段，但版本轴改由 **臂 → env 配方** 这一跳供给并被 `--env-check` 锁住，不再依赖人工抄写。彻底解决需在 serving 配方加必填字段并改 audit_recipes.REQUIRED。"
+  },
+  {
+   "fix": "写入 recipes/TEMPLATE.md 并在 audit_recipes.py 里给 knob/patch 加 REQUIRED",
+   "id": "applies-to-not-in-markdown",
+   "impact": "下次抽取会把它们丢掉（技能自己就写着『改了 markdown 要手工回写 JSON』，反向同样成立）",
+   "issue": "`applies_to` / `effect_by_scope` 只活在 skill 的 data/*.json，配方 markdown 里没有",
+   "status": "✅ 已解决（2026-09-21）：10 条 knob + 11 条 patch 的权威 markdown 全部回写 `applies_to`（21/21），写法固定为 `- 轴=值` 列表；`recipes/TEMPLATE.md` 已加该段与写法警告；`audit_skill_recipes.py --dir knobs|patches` 的 scope_applicability 漂移归零。**注意**：mini-YAML 既不认嵌套 map 也不认独立 # 注释行（实测），回写时踩了一次，已把这条禁令写进模板与脚本 docstring。"
+  }
+ ],
+ "generated_at": "2026-09-21",
+ "known_confusions": [
+  {
+   "evidence": "docs/recipes/environments/vllm_0.28.0_rocm72.md §2 红线",
+   "id": "wheel-tag-vs-runtime-rocm",
+   "symptom": "把 `vllm==0.28.0+rocm723` 的 `+rocm723` 当成『本机跑的是 ROCm 7.2.3』。",
+   "truth": "它是 wheel 的 build tag；运行时是宿主 `/opt/rocm-7.2.4`。wheel 的 RUNPATH 写死 `/opt/rocm-7.2.3/lib`，该目录本机不存在。"
+  },
+  {
+   "evidence": "docs/recipes/environments/vllm-openai-rocm-nightly-0918.md §3",
+   "id": "container-rocm-vs-host-rocm",
+   "symptom": "把 nightly-0918 容器内的 ROCm 7.2.3 写成『本机 ROCm 7.2.3』。",
+   "truth": "容器不吃宿主 /opt/rocm；宿主是 7.2.4。两者必须分开写。"
+  },
+  {
+   "evidence": "/sys/module/amdgpu/version 与 uname -r 实测",
+   "id": "uname-vs-amdgpu-version",
+   "symptom": "看到 `/sys/module/amdgpu/version` = 6.16.13 就以为内核是 6.16.13。",
+   "truth": "内核是 6.8.0-139-generic；6.16.13 是 DKMS 回移的 amdgpu 模块版本。"
+  },
+  {
+   "evidence": "data/arms.json framework_version 列",
+   "id": "framework_version-two-generations",
+   "symptom": "在 data/arms.json 的 `framework_version` 列里横比，得出『master 比 0.28.0 新/旧』。",
+   "truth": "该列混了三种格式：`0.28.0+rocm723`（发行版号）、`0.1.dev1+g8a728663c.rocm724`（master 的 dev 号）、`0.3.0-dev (build 223, commit 629b50552)`（llama.cpp）。**跨引擎不可比，跨格式更不可比。**"
+  },
+  {
+   "evidence": "config/env-lock/*.txt",
+   "id": "same-host-three-torches",
+   "symptom": "在 vLLM env 里按 2.14 的 API 写代码，或反过来。",
+   "truth": "同机并存 torch 2.12.0+git6bbd260（全部 vLLM env）/ 2.14.0+rocm7.2（pytorch env）/ 2.11.0+rocm7.2（unsloth env）。"
+  },
+  {
+   "evidence": "SKILL.md §MoE 调优表 device_name 陷阱",
+   "id": "gpu-name-not-constant",
+   "symptom": "手抄 MoE 调优表名 `device_name=AMD_Instinct_MI250X_MI250` 到新臂。",
+   "truth": "同机实测出现过**两个**值（另一个是 `AMD_INSTINCT_MI250_(MCM)_OAM_AC_MBA`），取值随**镜像/构建**变，不是本机常量。表名只能由该臂镜像里的 `get_config_file_name()` 现场生成。"
+  },
+  {
+   "evidence": "config/ports.conf vs SKILL.md Serving arms 表",
+   "id": "arm-table-vs-ports-conf",
+   "symptom": "以为技能的服务臂表 = 全部在册臂。",
+   "truth": "`config/ports.conf` 是端口权威，登记到 8127；SKILL.md 表曾只到 8121 且漏 8115/8116/8117/8119。**以 ports.conf + launcher 实物为准。**"
+  },
+  {
+   "evidence": "config/ports.conf 8115/8116 注释",
+   "id": "quant-label-collision",
+   "symptom": "看到两臂都写 'INT8' 就当成同一底座。",
+   "truth": "Ornith 8115 是 Quark INT8 W8A8（专家 386 G），8116 是 CT-Int4 W4A16（专家 193 G）——同模型不同量化，KV 池 418,083 vs 1,853,658 tokens。"
+  }
+ ],
+ "purpose": [
+  "本机知识混在一处会互相毒化：一条在 vLLM 0.28.0 + bf16 + TP8 上测出来的结论，被读到 llama.cpp Q4_K_M 臂上引用，就会得出错误动作。",
+  "本文件给技能内每一条知识定义**适用范围（scope）**：它绑定在哪几个轴上、换掉哪个轴就失效、以及哪些数字之间可以横比。",
+  "SKILL.md 是索引与本机不变式；细节在 references/ 下按分层归档；本条规范是两者的共同坐标系。"
+ ],
+ "read_protocol": [
+  "1. 读到任何一条结论，先看它的 scope 头（形如 `[T2 · engine=vllm-0.28.0 | rocm=host-7.2.4 | model=Qwen/Qwen3.8-27B | quant=bf16 | tp=TP2]`）。",
+  "2. 你要做的动作若与 scope 头**任一轴不符**，该结论即不适用——不是'参考一下'，是不适用。要跨轴用，必须先在目标轴上重测，或显式标注『未在目标轴验证』。",
+  "3. 没有 scope 头的数字，按 T3 处理（最窄适用），不得外推。",
+  "4. 数字只有 scope 完全一致时才可横比；scope 不同的两个 TPS 放在同一张表里，必须在表头写明『不可横比』。"
+ ],
+ "recipe_frontmatter_mapping": {
+  "_why": [
+   "技能 data/*.json 的 applies_to 是从**配方 markdown 的 frontmatter** 合成来的。",
+   "两者用不同的词表（配方用 recipe-native 的 engine/model/quant/env，九轴用 scope.json 的 id），",
+   "所以必须显式记下映射，否则：① 下次抽取会把 applies_to 丢掉；② 两套词表会各说各话。"
+  ],
+  "environment": {
+   "engine/rocm/torch": "从 `stack:` 散文里人工摘出"
+  },
+  "knob": {
+   "_note": "markdown 的 `scope:` 是**溯源**（skill JSON 里的 consumed_by），**不是**适用判定；applies_to 在 markdown 里**没有对应字段**，目前只活在 JSON 里"
+  },
+  "op": {
+   "_note": "markdown 只有 `entry:`/`scripts:`"
+  },
+  "patch": {
+   "_note": "同 knob：markdown 只有 `target:`（被打补丁的树），没有适用域字段"
+  },
+  "serving": {
+   "arch": "**markdown 里没有** ⇒ 目前由人工从 config.json / 配方正文填写",
+   "engine": "直接映射（`vllm`→按 env 细化到具体构建；`llamacpp`→按 env 细化到 commit）",
+   "env": "**markdown 里的 `env:` 解析不到 environment 配方 id**（实测 0/15：8121 的值是补丁树路径）⇒ engine/rocm/torch 三轴目前靠人工跨表拼，这一跳是断的（见 gaps）",
+   "model": "`model:` 逐字",
+   "quant": "`quant:` 归一化到 quant 词表 id（如 'int4 W4A16（compressed-tensors…）'→`ct-int4-w4a16`）",
+   "topology": "`gpus:` + `tp:`（如 mi250dx8+8 → `tp8`）"
+  }
+ },
+ "schema_version": 1,
+ "scope_presets": {
+  "_why": [
+   "轴的三态必须分清，否则匹配会给出错误的否定答案：",
+   "  · 轴 = 具体值  ⇒ 该轴上有限定，不符即不适用；",
+   "  · 轴 = \"*\"      ⇒ 该轴上**明确**无限制（已知任意值都成立）；",
+   "  · 轴缺失        ⇒ **未知**，不否决，但判定标记为『不完整』。",
+   "  · 轴 = \"vllm-*\" ⇒ 前缀 glob。glob 是必需的：跨臂开关（QuickReduce / MTP / 工具解析器）",
+   "    的**规则**对任何 vLLM 版本都成立，差别在**效果**（那是 effect_by_scope 的活）。",
+   "    把这类开关钉死在某一个引擎版本上，会让『换版本后还能不能用』得到错误的否定答案。",
+   "preset 只是把常用组合写短，展开后语义与手写九个轴完全一样。"
+  ],
+  "generic-host": {
+   "arch": "*",
+   "driver": "*",
+   "engine": "*",
+   "host": "mi250x-gfx90a",
+   "model": "*",
+   "quant": "*",
+   "rocm": "*",
+   "tier": "T0",
+   "topology": "*",
+   "torch": "*"
+  },
+  "generic-llamacpp": {
+   "arch": "*",
+   "driver": "*",
+   "engine": "llamacpp-*",
+   "host": "mi250x-gfx90a",
+   "model": "*",
+   "quant": "*",
+   "rocm": "*",
+   "tier": "T1",
+   "topology": "*",
+   "torch": "*"
+  },
+  "generic-vllm": {
+   "arch": "*",
+   "driver": "*",
+   "engine": "vllm-*",
+   "host": "mi250x-gfx90a",
+   "model": "*",
+   "quant": "*",
+   "rocm": "*",
+   "tier": "T1",
+   "topology": "*",
+   "torch": "*"
+  },
+  "vllm-028-family": {
+   "arch": "*",
+   "driver": "*",
+   "engine": "vllm-0.28.0+rocm723",
+   "host": "mi250x-gfx90a",
+   "model": "*",
+   "quant": "*",
+   "rocm": "host-7.2.4",
+   "tier": "T1",
+   "topology": "*",
+   "torch": "*"
+  }
+ },
+ "tiers": {
+  "T0": {
+   "invalidated_by": "换机器、换 GPU 型号、换驱动、换端口规划。",
+   "lives_in": "SKILL.md（常驻）",
+   "name": "通用层 / 主机不变式",
+   "rule": "只依赖本机硅、内核驱动、文件布局与运维纪律，与引擎/框架/模型/量化版本全部无关。"
+  },
+  "T1": {
+   "invalidated_by": "升级/降级 engine、rocm、torch 中任一轴。",
+   "lives_in": "references/10-version-matrix.md + data/environments.json",
+   "name": "版本层",
+   "rule": "绑定推理引擎、ROCm 或 PyTorch 的某个具体版本/构建。换版本可能静默失效。"
+  },
+  "T2": {
+   "invalidated_by": "换 checkpoint、换出品方、换量化方案或 group size。",
+   "lives_in": "references/20-model-quant-matrix.md",
+   "name": "模型层",
+   "rule": "绑定具体权重身份与量化形态（同一模型的 bf16 / fp8 / int8 / int4 / GGUF 档位各有各的事实）。"
+  },
+  "T3": {
+   "invalidated_by": "任一轴变化；且**跨 boot 绝对值不可混**（σ≈4.6%）。",
+   "lives_in": "references/30-arms.md + data/arms.json",
+   "name": "组合层",
+   "rule": "绑定 (engine版本 × rocm × torch × 模型 × 量化 × 拓扑) 的完整组合，通常是一条服务臂或一次实测。"
+  }
+ },
+ "title": "mi250x-recipe-ops 适用范围分层规范"
+}
