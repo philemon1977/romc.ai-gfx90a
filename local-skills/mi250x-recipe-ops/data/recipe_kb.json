@@ -1,6 +1,6 @@
 {
   "env_hint": "KNOWLEDGE_LOCAL_ROOT=/home/qiba/ROCm.AI/hyperloom/kb",
-  "generated_at": "2026-09-20T22:48:51+00:00",
+  "generated_at": "2026-09-21T04:47:52+00:00",
   "kb_root": "/home/qiba/ROCm.AI/hyperloom/kb",
   "recipe_dirs": [
     "deepseek-v4-flash-0731-gguf/mi250x/llama.cpp/unknown_model_type/unknown_arch/0.3.0-dev+a9e9c3c5f/ud-q8_k_xl",
@@ -71,7 +71,7 @@
         "pitfalls": 5,
         "remaining_gaps": 5,
         "what_failed": 4,
-        "what_worked": 3
+        "what_worked": 4
       },
       "dir": "glm-5.3-ct-int4-w4a16/mi250x/vllm/glm_moe_dsa/glmmoedsaforcausallm/0.3.1.dev85+gdee37d891/w4a16",
       "framework_version": "0.3.1.dev85+gdee37d891",

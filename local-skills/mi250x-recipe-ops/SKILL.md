@@ -174,6 +174,23 @@ optimizer sealed baseline on this route (`baseline_tput=0.0`), so its
 `best_throughput` stays 0.0 and the llama.cpp Q8_0 arm's 47.28 tok/s (ngram+MTP)
 remains a different, non-comparable measurement protocol.
 
+**Profile a step before running more A/B rounds.** Six end-to-end rounds on Ornith
+could only characterise speculation's long-context cost ("one O(ctx) term per
+speculative step, independent of k": 435.1 ms/step at k=1 vs 451.6 ms at k=2 at 128k,
+against 42.7 ms with split-KV and no speculation) and produced two falsified
+attributions. One profiled window named it: with `max_query_len > 1`,
+`chunked_prefill_paged_decode` runs the Triton prefix-prefill over the *whole*
+context for every layer and then falls through to the decode branch, where split-KV
+overwrites the same output rows -- 288 calls x 26.0 ms in a 17-step 145k-context
+window, 78.9% of the step, pure waste. How to get that window on a ROCm box:
+`--profiler-config.profiler torch --profiler-config.torch_profiler_dir <dir>` plus
+`POST /start_profile` / `POST /stop_profile`; each worker writes
+`profiler_out_<rank>.txt` (a `key_averages().table()` per-kernel CUDA-time ranking).
+`rocprofv3 --attach` is *not* a substitute here: on this host it prints `:: success`
+and writes nothing. Send the same long prompt twice with prefix caching on so the
+profiled request is decode-only, otherwise the one-time prefill (~15 x 25 ms of that
+same kernel) pollutes the attribution.
+
 **Before hand-writing a gfx90a kernel, check for the one that ships disabled.**
 On Ornith-1.5-397B-FP8 the long-context decode wall (`TPOT ~= 45.4 ms + 3.97 ms x
 ctx/1024`, i.e. 0.30% of HBM peak because the fallback is ONE workgroup per
@@ -186,10 +203,12 @@ per 1k tokens. Two traps that cost real time: (a) `head_dim=256` fails the nativ
 ROCm paged-attention gate (`platforms/rocm.py:403` allows 64/128) and the hybrid
 `block_size=528` is not a power of two, which is *why* it lands on the serial path;
 (b) widening the kernel to serve speculative steps (`VLLM_ROCM_SPLITKV_PA_MAX_Q=3`,
-patch + tests in `hyperloom/kernels/gfx90a_flash_decode/`) triples its scratch, and
-the default 32 MiB budget then silently pushes shapes back onto the serial kernel
--- raise `VLLM_ROCM_SPLITKV_PA_MAX_SCRATCH_MIB` together with it, and read
-`/tmp/sk_*.json` `reject_by_reason` as the authority on what actually ran.
+patch + tests in `hyperloom/kernels/gfx90a_flash_decode/`) is *necessary but not
+sufficient*: the scratch budget story was a red herring (raising
+`VLLM_ROCM_SPLITKV_PA_MAX_SCRATCH_MIB`/`_MAX_TOTAL_MIB` changed nothing once
+`takeover` was non-zero) -- the multi-row batch never reaches split-KV *first*,
+because the redundant Triton prefix-prefill pass above it dominates; see the
+`multirow-skip-triton-prefill.patch` dispatch fix and the profiling note above.
 `VLLM_ATTENTION_BACKEND=TRITON_ATTN` was measured as ~21% *slower* at 128k: do not
 reach for it. And a microbench for these kernels must hand them a block table as
 wide as a live server's (`max_model_len/block_size`); a minimal one reads past the
@@ -221,3 +240,23 @@ result JSONs under `hyperloom/.tmp/single_stream_lab`, archived in
 `python3 /home/qiba/ROCm.AI/scripts/verify_recipe_kb.py` and
 `python3 /home/qiba/ROCm.AI/scripts/build_skill_data.py` to refresh
 `data/*.json`.
+
+## 起服前的门 + 单臂探针（2026-09-21 新增，可直接复用）
+
+- `quark-int8/gpu_gate.sh`：`source` 后 `gate 8121`（放行返回 0）/ `wait_free 8121 7200`。
+  判据两条：除自己端口外无别的 `api_server` + 八张 GCD 各 <5 GiB（与 launcher 硬门同阈值）。
+  内含三条单测与两个真实踩过的坑：`ps -eo args | grep -F '…api_server'` 会匹配 **grep 自己**
+  ⇒ 门永远不过；`[ -ge $$… ]` 里的 `$$` 是 PID ⇒ 超时判断失效。
+- `quark-int8/stack_probe.sh <臂名> KEY=VALUE …`：等卡 → 起服 → 事实召回 + TPS(conc 1/8/32)
+  → 停服 → 追加 `logs/stack/results.jsonl`。fail-fast：每轮查容器 `State`，**连续两次**判死才撤，
+  且**先把整份容器日志存盘再删容器**；`SKIP_BOOT=1` 可脱离 GPU 自测判据；
+  `TPS_ISL_MULT=8/24` 切长上下文档（DCP/split-K 这类杠杆必须在长档判）。
+- **一臂一杠杆**：混测只能探天花板，不能记收益。今天的教训：首轮五杠杆混测得 conc32 +47%，
+  记在 split-K 头上；消融后真身是 `DSV41_IDX_AITER_KERNEL=1`（+69.3%），split-K 实际 −13%。
+- 结论与数字出处：`hyperloom/reports/models/glm53-int4/decode-config-ablation.md`
+  （机器可读同目录 `stack_results_20260921.jsonl`；`quark-int8/logs/` 是 gitignore 的）。
+- 三个默认值即地雷，改 launcher 时别踩：① 枚举型 env 用 `${VAR:-}` 注入空串 ⇒ vLLM 抛
+  `Invalid value ''`；② `MAX_CUDAGRAPH_CAPTURE_SIZE=0` + `ENFORCE_EAGER=0` ⇒ 断言拒绝（eager=0
+  这条路此前从未走通）；③ `DSV41_IDX_AITER_KERNEL` 未设时走的是**本机不可信**的 torch 回退，
+  而设 `=1` 实测 +69%。
+

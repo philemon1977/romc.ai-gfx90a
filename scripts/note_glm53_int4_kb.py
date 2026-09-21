@@ -50,6 +50,7 @@ BEST_CONFIG = {
         "VLLM_ROCM_USE_AITER_MOE": "0",
         "MI250_MOE_GEMV": "1",
         "MI250_MOE_GEMV_MODULE": "mi250_moe_gemv_gs",
+        "DSV41_IDX_AITER_KERNEL": "1",
         "MI250_SPARSE_SPLITK": "0",
         "FASTSAFETENSORS_UNIFIED_MEM": "1",
         "MI250_FST_MAX_BATCH_MB": "1920",
@@ -80,6 +81,17 @@ WHAT_WORKED = [
             "all-reduce 后端在 gfx90a 上选定 PYNCCL（tp:0 与 dcp:0 两个组都选它）"
         ),
         "measured_impact": "141 -> 255 us 每次集合通信（vLLM CudaCommunicator 对非 tp 组会禁用全部快路径）",
+    },
+    {
+        "description": (
+            "DSV41_IDX_AITER_KERNEL=1：indexer decode 从上游 torch 回退（launcher 自陈按行主序读 "
+            "SHUFFLE 页缓存、本机结果不可信）换成自研 gfx90a 内核（已三方对拍）"
+        ),
+        "measured_impact": (
+            "同一把尺子（请求级吞吐 ISL~700/OSL=128）：conc1 4.18->4.54 (+8.6%)、" 
+            "conc8 26.64->32.51 (+22.0%)、conc32 73.13->123.78 (+69.3%)，召回 6/6；"
+            "该 env 在当前 launcher 里默认未设 ⇒ 默认值是更慢且更不可信的那一支"
+        ),
     },
 ]
 
