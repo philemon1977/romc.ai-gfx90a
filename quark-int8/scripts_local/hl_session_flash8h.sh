@@ -45,6 +45,21 @@ grep -q 'gfx90a-host patch' "$VPKG/models/glm5next/amd/sparse_indexer.py" || bai
 grep -q 'if on_gfx90a():' "$VPKG/model_executor/layers/mhc.py" || bail "mHC gfx90a 回退件不在容器里"
 python3 -c 'import vllm;print("   vllm="+vllm.__version__)' 2>/dev/null | tail -1
 
+# ── Ray memory monitor 必须关（2026-09-21 实测，第一次 8h 会话就是这么废掉的）──
+# 本机 251.7 GiB 内存里 ZFS ARC 常驻 125.8 GiB，而 **ARC 不计入 MemAvailable**
+# （free: used=154 / available=74）。Ray 的 memory monitor 按 "used > 95% × total" 判定，
+# 于是在 vLLM 装载 308 GiB 权重到 ~10% 时就把 serving actor SIGKILL：
+#   baseline 侧只见 "Task was killed due to the node running low on memory"
+#   runner 侧只见 "12076 Killed … Process died before /health became ready"
+#   GPU 侧毫无异常（显存根本没打满）—— 这是**判定假阳性**，不是真的耗尽：
+#   同一台机器上普通 docker run 起同模型（8128 臂）装载成功过两次（342 s / 808 s）。
+# 抬 zfs_arc_max 需要 root（/sys/module/zfs/parameters/zfs_arc_max 是 root:root 0644，本机无 sudo），
+# 所以正解是关掉 monitor，并且**必须在 install.sh 之前**导出 —— raylet 是 install.sh 里
+# `ray start --head` 起的，节点级配置只在那一刻从环境读，晚导出无效。
+# 同时先把旧集群停掉，否则 install.sh 会复用没有这个 env 的 raylet（表现为"改了没生效"）。
+export RAY_memory_monitor_refresh_ms=0
+command -v ray >/dev/null 2>&1 && ray stop --force >/dev/null 2>&1 || true
+
 echo "== 2) IR-2：install.sh =="
 INSTALL_SH="$INSTALL_DIR/hyperloom/inference_optimizer/assets/install.sh"
 [ -f "$INSTALL_SH" ] || bail "install.sh 不在"
@@ -57,6 +72,17 @@ KERNEL_AGENT_ENV="${KERNEL_AGENT_ENV:-${USER_DATA_PATH}/runtime/kernel-agent.env
 . "$KERNEL_AGENT_ENV"
 export PYTHONPATH="${INSTALL_DIR}:${PYTHONPATH:-}"
 echo "   PYTHON=${PYTHON:-$(command -v python3)}"
+
+# 2b) 证明那个 env 真的进了 raylet（不证明就等于没改：install.sh 可能复用了旧集群）。
+#     raylet 的节点级配置只在 `ray start --head` 那一刻从环境读，读 /proc/<pid>/environ
+#     是唯一能区分"我导出了"与"raylet 真拿到了"的尺子。
+RAYLET_PID="$(pgrep -f '[r]aylet' | head -1)"
+[ -n "$RAYLET_PID" ] || bail "install.sh 之后没有 raylet 进程（Ray 没起来，baseline/内核车道都会挂）"
+if tr '\0' '\n' < "/proc/$RAYLET_PID/environ" | grep -qx 'RAY_memory_monitor_refresh_ms=0'; then
+  echo "   raylet(pid=$RAYLET_PID) 已带 RAY_memory_monitor_refresh_ms=0：PASS"
+else
+  bail "raylet 没继承 RAY_memory_monitor_refresh_ms=0 —— monitor 还会误杀 baseline，别开跑"
+fi
 
 echo "== 3) 重打 mi250x 三处（install.sh 之后必须重来） =="
 python3 "$INSTALL_DIR/patches-local/apply_mi250x_runner.py" || bail "apply_mi250x_runner"
