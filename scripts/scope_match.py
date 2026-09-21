@@ -33,7 +33,9 @@
   # 打印九轴词表
   python3 scripts/scope_match.py --axes
 
-退出码：0 = 有适用条目；1 = 没有任何条目适用（或 --orphans 发现缺口）；2 = 输入不可用。
+退出码：0 = 查询跑完（**与判定结果无关**——「全不适用」和「轴不足待定」都是合法答案）；
+1 = --orphans 发现**矛盾**（记录了用过却判不适用）；2 = 输入不可用（臂 id 不存在 / 一个轴都没给）。
+**答案看输出，不要拿退出码当判据。**
 """
 
 from __future__ import annotations
@@ -388,7 +390,15 @@ def main() -> int:
           f"{len(buckets['unknown'])} 条判定不完整 / {len(buckets['no'])} 条不适用。")
     if buckets["unknown"]:
         print("补上缺失的轴可以消除「判定不完整」——它们既不是适用也不是不适用。")
-    return 0 if buckets["applies"] else 1
+    if not buckets["applies"] and buckets["unknown"]:
+        print("↑ 注意：0 条确定适用**不代表没有可用知识**，而是给的轴不够定。"
+              "\n  要精确判定请用 `--arm <id>`，或把 --host/--driver/--rocm/--torch 也补上。")
+    # 退出码语义（2026-09-21 修正）：**查询跑完就是成功**。
+    # 第一版把「0 条适用」当失败返回 1，于是 SKILL.md 里那条示例命令自己报错——
+    # 而"全不适用"和"轴不足待定"都是合法答案，用退出码区分它们只会让工具
+    # 在脚本/流水线里不可用。真正的错误（臂 id 不存在、一个轴都没给）已在前面
+    # 用 return 2 处理。答案看输出，不看退出码。
+    return 0
 
 
 if __name__ == "__main__":
