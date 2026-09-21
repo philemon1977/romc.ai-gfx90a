@@ -37,7 +37,23 @@
 | `hyperloom/patches/*/vllm/**` | 不入库的已构建 overlay（其 `.so` 与上游 wheel 逐字节相同）。改动本体是 `hyperloom/patches/*/*.patch`，重建用 `scripts/build_fp8_emulation_overlay.sh` |
 | `module_gemm_a8w8.gfx90a-*.so`、`torch_trace/*.pt.trace.json.gz` | **已入库**，走 Git LFS；轻量克隆后需 `git lfs pull` 取回 |
 | `scripts-local/…`、`kernels/…`、`kb/…`、`presets/…`、`patches-local/…` | **已入库**，路径一致 |
+| `aiter/jit/module_gemm_a8w8.so`、`aiter/jit/build/**/*.o` | **不入库**的 JIT 编译产物（本机 gfx90a 全量集 187 MB，72 个 CK 实例；现场重编一次约 50 min）。离线缓存放在仓库外的 `~/.cache/aiter-gfx90a/`，`ARCHIVE.md` 记了复用机制与前置判据，`archive.py`/`restore.py` 负责归档与恢复。**判据**：aiter 源树 + torch + ROCm 三者的版本都要与归档时一致，且运行 arch 在 `.so` 的 `amdhsa--gfx*` 标记里；装完必须过一次 import + 单形状 int8 GEMM 对拍才算数 |
 
 `profiling/benchmark_vllm_20260915_051456/torch_trace/` 里的 trace 用
 [Magpie TraceLens](https://github.com/AMD-AGI/Magpie) 后处理，即可复现
 `profiling-decode-attribution.md` 的归因表；`profiling/gap*/gap_analysis/*.csv` 是它的展开结果。
+
+## 2026-09-21 追加：GLM-5.3 int4 decode 配置消融（新报告）
+
+| 结论一句话 | 文件 |
+|---|---|
+| `DSV41_IDX_AITER_KERNEL=1` 是当天唯一显著正向（conc32 +69.3%，且默认值是更慢更不可信那一支）；split-K 三档全负；QuickReduce 固定吃 ~9 GiB/卡不可用；DCP=8 不省显存但把每 token KV 单价降到 1/8（1M 需再叠 fp8 KV） | [`models/glm53-int4/decode-config-ablation.md`](models/glm53-int4/decode-config-ablation.md) |
+
+**本机路径 ↔ 仓库内对应物**（§9 约定）：
+
+| 本机路径 | 仓库内对应物 |
+|---|---|
+| `/home/qiba/ai/models/ZhipuAI/launcher/glm53_int4w4a16_vllm_rocmnightly0918_32k_8121_mi250dx8.sh` | `quark-int8/launchers/`（同名镜像；今天改了 QR 条件注入、cudagraph capture 防御两处） |
+| `rocm-ai/vllm:glm53-int4-gfx90a-0918-qr`（docker 镜像，含 QR C2+C3） | applier 在 `hyperloom/patches-local/apply_gfx90a_quickreduce.py`；镜像本身需 `docker commit --change` 重建，见报告第五节 |
+| `quark-int8/logs/stack/results.jsonl`（gitignore） | `hyperloom/reports/models/glm53-int4/stack_results_20260921.jsonl` |
+
