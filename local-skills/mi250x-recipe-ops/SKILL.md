@@ -477,6 +477,15 @@ SKILL.md 是常驻的索引与 T0 层；下列细节**按需加载**：
   挂载里 —— `-hl` 只挂了 `/mnt/kioxia-cm6-3t8/ai/models`，本权重在 `/mnt/stripe-3mix-3t2/models`，
   容器里 `ls` 不到；改挂载要 `docker commit` + 重建（可写层里有 Magpie 的 mi250x runner 注册，
   直接从底座 build 会丢）。
+- 💣 **`docker commit` 会把「为了当沙盒而设的 entrypoint」一起烘进镜像**（09-21 实踩）：
+  `hyperloom-local` 是用 `--entrypoint tail … -f /dev/null` 起来的，于是 `docker commit` 出来的
+  `-fl1` 带着 `ENTRYPOINT=["tail"]`。之后 `docker run -fl1 <vllm 参数>` 把参数喂给了 `tail`
+  ⇒ **0 秒 exit 1，唯一日志是 `tail: unrecognized option --port`**。
+  正解是 commit 时就修配置（文件系统不动）：
+  `docker commit --change 'ENTRYPOINT ["vllm","serve"]' --change 'CMD ["--help"]' 容器 新tag`；
+  现役容器不受影响（entrypoint 属于容器配置，不属于镜像）。
+  一般化：**凡「用 sleep/tail 当保活而 commit 出来的镜像」都要重设 ENTRYPOINT/CMD 再用**，
+  否则它会以「完全看不懂的参数错误」的形式在几个月后回来。
 
 ---
 

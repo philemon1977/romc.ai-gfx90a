@@ -27,6 +27,22 @@ GPU_MEM_UTIL="${GPU_MEM_UTIL:-0.95}"
 BLOCK_SIZE="${BLOCK_SIZE:-128}"          # kpool 硬门：index_kpool=4 ⇒ 必须 128 的倍数
 MHC_PATCH="${MHC_PATCH:-0}"              # 1 = 挂载已修 mhc.py（门二）
 IDX_PATCH="${IDX_PATCH:-1}"              # 1 = 挂载放行 gfx90a 的 glm5next AMD indexer（门一）
+# 装载策略（09-21 加，为单变量对照用）：
+#   eager = 8128 臂建档以来的写法。它的判词原文来自 **8114 / 0.28 wheel 树**
+#           （"去掉后在 Loading safetensors checkpoint shards 0/2 静默死亡"），
+#           不能无条件外推到 0918 nightly —— 本仓同族判词还写着"AIS/FST 两个变量在
+#           0.28 wheel 全树 grep=0，别当护栏"，适用面要分开算。
+#   留空   = 不给这个 flag ⇒ 走镜像默认（baked FASTSAFETENSORS_ODIRECT=1、
+#           MI250_FST_MAX_BATCH_MB=2560），方向是"少过宿主、批量直写显存"。
+# 用 ${LOAD_STRATEGY-eager}（不带冒号），这样显式传空串才等于"不给 flag"。
+LOAD_STRATEGY="${LOAD_STRATEGY-eager}"
+# 官方配方（recipes.vllm.ai/zai-org/GLM-5.3-Flash）要求的两个解析器：
+#   不给的后果是**静默的** —— HTTP 200、能出字，但  全文混在 content 里、
+#   reasoning_content 恒空，tool_calls 也不会结构化。本地图像两处都注册了 glm47：
+#   vllm/reasoning/__init__.py:63 与 vllm/tool_parsers/__init__.py:65（已核）。
+REASONING_PARSER="${REASONING_PARSER:-glm47}"
+TOOL_PARSER="${TOOL_PARSER:-glm47}"
+ENABLE_AUTO_TOOL="${ENABLE_AUTO_TOOL:-1}"   # 0 = 不注册 auto tool choice（只想纯文本时）
                                          #   0 = 镜像原样 ⇒ 权重装完后的第一次 forward 必抛
 
 LOG_DIR="$AI_HOME/logs/glm53flash-0918"; mkdir -p "$LOG_DIR"
@@ -86,11 +102,15 @@ ARGS=(/models
       --block-size "$BLOCK_SIZE"
       --kv-cache-dtype bfloat16
       --language-model-only
-      --safetensors-load-strategy eager
       --enforce-eager)
+# 装载策略单独挂：LOAD_STRATEGY 为空 ⇒ 不给这个 flag，走镜像默认（FST 方向）
+[ -n "${LOAD_STRATEGY}" ] && ARGS+=(--safetensors-load-strategy "${LOAD_STRATEGY}")
+[ -n "$REASONING_PARSER" ] && ARGS+=(--reasoning-parser "$REASONING_PARSER")
+[ -n "$TOOL_PARSER" ] && ARGS+=(--tool-call-parser "$TOOL_PARSER")
+[ "$ENABLE_AUTO_TOOL" = "1" ] && ARGS+=(--enable-auto-tool-choice)
 [ -n "${EXTRA_ARGS:-}" ] && { read -r -a _x <<< "$EXTRA_ARGS"; ARGS+=("${_x[@]}"); }
 
-echo "== GLM-5.3-Flash Quark-INT8 :$PORT  镜像=$IMAGE  IDX_PATCH=$IDX_PATCH MHC_PATCH=$MHC_PATCH  len=$MAX_MODEL_LEN util=$GPU_MEM_UTIL blk=$BLOCK_SIZE eager=1 AITER=0 =="
+echo "== GLM-5.3-Flash Quark-INT8 :$PORT  镜像=$IMAGE  IDX_PATCH=$IDX_PATCH MHC_PATCH=$MHC_PATCH  len=$MAX_MODEL_LEN util=$GPU_MEM_UTIL blk=$BLOCK_SIZE load=${LOAD_STRATEGY:-<不给=镜像默认/FST>} eager=1 AITER=0 =="
 docker run -d --name "$NAME" --network host --device /dev/kfd --device /dev/dri --group-add video \
   --security-opt seccomp=unconfined --ipc host --shm-size 16g \
   "${MOUNT[@]}" "${ENVS[@]}" "$IMAGE" "${ARGS[@]}" > /dev/null
@@ -103,4 +123,6 @@ docker logs -f "$NAME" > "$LOG_FILE" 2>&1 &
 echo "   ✅ container=$CID  日志 $LOG_FILE"
 echo "   就绪签名: 'Application startup complete'（int8 308 GiB，装载实测 354–722 s）"
 echo "   验尺子:   python3 $AI_HOME/tools/probe_nll.py --url http://127.0.0.1:$PORT/v1 --model glm53flash-int8"
+echo "   思考分档: chat_template_kwargs={\"reasoning_effort\":\"low\"}  ← 模板支持，已核 chat_template.jinja"
+echo "             （⚠️ 早前记的『thinking 关不掉』是**没给 --reasoning-parser** 导致的误判，已更正）"
 echo "   停服:     docker rm -f $NAME   （PID 文件里是容器 ID，别用 kill -TERM -\$(cat …)）"
