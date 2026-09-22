@@ -253,6 +253,7 @@ table and raises `Memory access fault by GPU`, which looks exactly like a kernel
 | **`-fa on` 当长上下文前提** | ❌ 已推翻（`flash_attn = enabled` 生效后仍 OOM；那块显存是 DSA 候选掩码，在注意力算子**之前**进图） | 8112 / llama.cpp | `上下文口径` §5.2 L83-84 |
 | **`VLLM_TUNED_CONFIG_FOLDER`** | ❌ 判负方向（`bench/ledger.py gate` 会直接 `exit 1`）；且本臂 MoE 是 TRITON **int8**，不同 tuned-config 键 | Ornith INT8-Attn | `INT8Attn-提速-经验迁移` §不适用 L156-161 |
 | **ROCm 10 全代** | ❌ 见 `references/10-version-matrix.md` 附录（vLLM TP>1 判死 −60%；llama.cpp 无收益；AITER 与版本无关） | 整代 | `ROCm-10.0.0-*` 三件 |
+| **AITER CK MoE（含"修好原子后提速"这条）** | ❌ **已定价，别再修**：bf16 输出被**静默丢弃**（stage2 的 `AtomicAdd` 在 gfx90a 函数体为空 ⇒ 输出恒为全零）；fp16 + 权重 preshuffle **算得对**但 Ornith 真实 MoE 形状下**比 TRITON 慢 M=1 2.60× / M=16 1.29× / M=64 1.28× / M=256 1.15×**，从未反超，而 TRITON 侧还只是默认 config ⇒ 修好也只会更落后 | gfx90a / vLLM 0.28+rocm723 / Ornith qwen3_5_moe | `20-model-quant-matrix` 附录 I-2；`bench/aiter-moe-gfx90a-20260923/ANALYSIS.md`（2026-09-23 实测） |
 
 ### 一条元教训
 

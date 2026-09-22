@@ -267,7 +267,7 @@ SKILL.md 是常驻的索引与 T0 层；下列细节**按需加载**：
 
 | 通用口径可能怎么说 | 本机实测事实 |
 |---|---|
-| 启用 AITER 加速 | **不可用**（gfx90a 无 AITER MoE 路径） |
+| 启用 AITER 加速 | **不可用**（gfx90a 上 AITER **MoE** 路径不可用：bf16 输出被静默丢弃；fp16 可用但实测比 TRITON 慢 1.15~2.6×。线性层 int8 a8w8 那条**是**可用的，勿混） |
 | 打开 QuickReduce | **看 KV 预算**：`init_custom_qr` 固定吃 ~9 GiB/卡；本模型 KV 只有 8.17 GiB 时**起不来** |
 | 用 split-KV 提速注意力 | **默认 0**：conc 1/8/32 三档全负（−18%/−14%/−13%） |
 | 关掉 eager 换 CUDA graph | 需同时给 `MAX_CUDAGRAPH_CAPTURE_SIZE>=1`，否则断言拒绝 |

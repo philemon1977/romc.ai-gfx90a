@@ -323,7 +323,8 @@ QR 是否可用取决于**该臂的 KV 预算是否容得下那 ~9 GiB/卡固定
   **解耦不需要 AITER 支持 kpool**；gfx90a 唯一死因是**外层 `is_enabled()` 门**
   （`_aiter_ops.py:157` 用 `get_cdna_version() > 2`）。
   ⇒ **「AITER 不可用」应收窄为「仅 MoE 通路」**：`sparse_attn_indexer_kpool.py:1034/1062`
-  的门**不是硬件门**。〔§2 L33-50〕
+  的门**不是硬件门**。〔§2 L33-50〕（MoE 通路的准确边界见上文**附录 I 第 2 条**：bf16 硬坏、
+   fp16 可用但已定价为不划算。）
 - **Qwen4Exp 量化红线**〔§4.1 L131-136〕：① KV cache **只能 bf16**
   （`amd/qsa.py` 五处显式 `raise NotImplementedError("…BF16…")`）；
   ② PLE n-gram 表（`320,001,536 × 160`、全表 **102.4 GB**、TP4≈25.6 GB/die、TP1 装不下）
@@ -345,6 +346,26 @@ QR 是否可用取决于**该臂的 KV 预算是否容得下那 ~9 GiB/卡固定
    `amd_atomic.hpp` **无软件回退**、`:444` 的报错**只在 `KBatch>1` 时才触发**
    ⇒ **`KBatch==1` 时静默失效**。
    修法：模板已分离 `CDataType`/`GemmAccDataType` ⇒ 可改 fp32 累加，或 fp32 partial + 独立 reduce。
+
+   🔬 **2026-09-23 复验把"静默"落到行、并且给这条修法**定价**（见 `Ornith397B-装载路径与AIS-施工单` §E7、
+   `bench/aiter-moe-gfx90a-20260923/ANALYSIS.md`）**：
+   - "静默"的**精确落点**：`ck/utility/amd_buffer_addressing_builtins.hpp:481` 把 bf16 原子加
+     `__builtin_amdgcn_global_atomic_fadd_v2bf16` 包在 `#if defined(__gfx942__)||__gfx950__||__gfx12__` 里
+     ⇒ gfx90a 上 **整个函数体为空**：编译过、`static_assert` 过（它允许 `bhalf_t`）、运行时什么都不做。
+     实测：把 stage2 的 `out` 预填 7.0，调用后 **一个字节都没写（0/2048）**；同一次 stage1 正常写满 4096。
+     ⇒ 现象是"**输出恒为 `torch.empty` 初值**"（几 KiB 新页 = 全零），不是"竞态算错"。
+     ⚠️ 顺带的教训：**别用"CK 实例源码里 atomic 命中=0"去否定这条**——那查的是累加器类型
+     （确实 F32），而开关在**全局存储操作** `Set/AtomicAdd` 上。本会话犯过这个错，已更正。
+   - **fp16 是通的**（`half_t` 分支无 arch 门）⇒ `--dtype` 之外还需**权重 preshuffle**
+     （`aiter.ops.shuffle.moe_shuffle_weight` / `shuffle_weight`，置 `is_shuffled=True`）才数值正确；
+     仅 fp16 不 shuffle = **错值**（aiter 自己在 `fused_moe.py:1974` 警告 preshuffle_off
+     "may produce incorrect results"）。两条件齐备后 **max_rel 1.2e-3 ✅**。
+   - 🛑 **但上面那条"改 fp32 累加"的修法不要再去做了——已定价**：在 Ornith 真实 MoE 形状
+     （E=512 / D=4096 / I=1024 / topk=10，单 die，`bench_ck_vs_triton.py`）实测
+     CK-fp16 **比现役 TRITON 慢：M=1 2.60× / M=16 1.29× / M=64 1.28× / M=256 1.15×**，从未反超；
+     而 TRITON 侧跑的还只是默认 config（本机缺 MI250X 调优表）⇒ 修好了也只会更落后。
+     ⇒ **AITER MoE 这条路结案（结论同旧判语，依据换成上面这条硬机制 + 这张性能表）**，
+       要提速 MoE 请去 **TRITON 侧的调优表/分块参数**。
 3. 🛑 **atom 插件把盘上 `I8/U8` 无条件映射成 `"fp4"`**
    （`atom/plugin/vllm/model_wrapper.py::_probe_v4_routed_expert_dtype`，
    该启发式为**官方 FP4 打包 ckpt**而写），而 `atom/models/deepseek_v4.py` 的

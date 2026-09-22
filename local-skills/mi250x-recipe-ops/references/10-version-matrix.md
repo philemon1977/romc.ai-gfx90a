@@ -56,7 +56,7 @@ HIP_VISIBLE_DEVICES=<idle die> python3 verify_gemm.py            # required acce
 
 | 通用口径可能怎么说 | 本机实测事实 |
 |---|---|
-| 启用 AITER 加速 | **不可用**（gfx90a 无 AITER MoE 路径） |
+| 启用 AITER 加速 | **不可用（仅就 MoE 通路）**（bf16 输出被静默丢弃；fp16 可用但比 TRITON 慢 1.15~2.6× ⇒ 已定价、别再修；int8 a8w8 线性层可用） |
 | 打开 QuickReduce | **禁用**：`init_custom_qr` 固定吃 ~9 GiB/卡 ≈ 本模型 KV 全部预算 |
 | 用 split-KV 提速注意力 | **默认 0**：conc 1/8/32 三档全负（−18%/−14%/−13%） |
 | 关掉 eager 换 CUDA graph | 需同时给 `MAX_CUDAGRAPH_CAPTURE_SIZE>=1`，否则断言拒绝 |
