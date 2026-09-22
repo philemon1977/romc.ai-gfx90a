@@ -20,14 +20,22 @@ NAME=verify-aiter-linear
 PORT=8128
 IMAGE=rocm-ai/vllm:glm53-int4-hl-fl1
 MODEL=/mnt/stripe-3mix-3t2/models/ZhipuAI/GLM-5.3-Flash-Quark-Int8
-LOGD=/home/qiba/ai/logs/verify-aiter; mkdir -p "$LOGD"
-LOG="$LOGD/server-$(date +%Y%m%d-%H%M%S).log"
-
 # AITER=1 = 实验臂（复刻会话里那条 KEEP）；AITER=0 = **对照组**。
 # 两者只差下面两个 0/1，其余（镜像、挂载、runner preamble 的那串 env、server args）逐字节相同，
 # 这样"数值有没有变坏"才是有对照的结论，而不是拿另一个模型的基线当尺子。
+# REPEATS：同一台服务器上连打 N 次 taskcheck。单条读数差不能直接归因——本机 TP8 的
+# paged-KV/batch 组成会造成 run-to-run 抖动（09-21 实测同一条中文诗 NLL 在 0.573~1.514 之间跳），
+# 所以"实验臂裂了一条召回"必须先排除抖动才能定性。
 AITER="${AITER-1}"
+REPEATS="${REPEATS-1}"
 NAME="verify-aiter-$AITER"
+LOGD=/home/qiba/ai/logs/verify-aiter; mkdir -p "$LOGD"
+# 整臂输出必须落盘（09-22 实踩：A/B 只走管道送到调用方的作业输出里，读一次就没了，
+# 事后想查"到底是哪一条召回裂了"无从查起）。
+RUNLOG="$LOGD/arm$AITER-$(date +%Y%m%d-%H%M%S).out"
+LOG="$LOGD/server-$(date +%Y%m%d-%H%M%S).log"
+exec > >(tee -a "$RUNLOG") 2>&1
+echo "AITER=$AITER REPEATS=$REPEATS RUNLOG=$RUNLOG"
 if [ "$AITER" = "1" ]; then
   ENV_A=(-e VLLM_ROCM_USE_AITER=1 -e VLLM_ROCM_USE_AITER_LINEAR=1)
 else
@@ -82,6 +90,9 @@ echo "=== 硬门 B：事实召回 + 短指令跟随 ==="
 # 针尖必须收窄：本臂 --max-model-len 8192，而 taskcheck 默认 needle 目标 9000 token
 # ⇒ 直接 HTTP 400（09-22 实踩过，那一条腿等于没跑，不能记成 MISS）。给 8192 留出生成余量取 4000。
 NEEDLE_TOKENS="${NEEDLE_TOKENS-4000}"
-python3 /home/qiba/ROCm.AI/quark-int8/scripts_local/taskcheck.py --url "http://127.0.0.1:$PORT/v1" --model glm53flash-int8 --tag "aiter$AITER" --needle-tokens "$NEEDLE_TOKENS" 2>&1 | tail -22
+for k in $(seq 1 "$REPEATS"); do
+  echo "----- taskcheck 第 $k/$REPEATS 次（同一台服务器，用来把抖动与真回归分开）-----"
+  python3 /home/qiba/ROCm.AI/quark-int8/scripts_local/taskcheck.py --url "http://127.0.0.1:$PORT/v1" --model glm53flash-int8 --tag "aiter$AITER-r$k" --needle-tokens "$NEEDLE_TOKENS" 2>&1 | tail -24
+done
 echo "=== 停服（只杀自己的容器） ==="
 docker rm -f "$NAME" >/dev/null && echo stopped
