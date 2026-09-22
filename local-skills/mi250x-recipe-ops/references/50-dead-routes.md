@@ -259,3 +259,37 @@ table and raises `Memory access fault by GPU`, which looks exactly like a kernel
 **"env 落点纪律"和"SUPERSEDED 死代码"这两条都属于"看起来在管理、实际没生效"的资产**。
 本仓已发生三次同类：补丁队列"重生成旧片"会让自检恒真、`consumers` 检查因键名写错而恒不命中、
 `audit_log_paths.py` 因正则漏检而报绿。**判据一律要问：它在什么输入下必须变红？答不出就是恒绿。**
+
+---
+
+## 本会话新增（2026-09-22：Ornith-1.5-397B INT8-Attn 的**投机解码 × 并行拓扑**判据）
+
+> 全部在一台 8×MI250X、**同 boot 背靠背**、固定 prompt + 丢首请求 + 中位数 n=5 的尺子下实测；
+> 原始数字与产物在 `$AI/bench/ornith-tp2pp4-ab-20260922/`、`$AI/bench/ornith-dflash-vs-mtp-20260922/`，
+> 汇总报告 `ROCm.AI/hyperloom/reports/mi250x-ornith397b-int8-spec-and-topology-2026-09-22.md`。
+> 配方（serving）：`$AI/docs/recipes/serving/8127-ornith-1-5-397b-int8-{dflash15-vllm-tp8,vllm-tp4pp2-spec0,vllm-tp2pp4-spec0}.md`
+
+| 路线 | 判语 | 适用域 | 出处 |
+|---|---|---|---|
+| **PP>1 + `method=mtp`** | ❌ **config 期硬拒** `NotImplementedError: Pipeline parallelism is not supported for this model` —— 被拒的是**草稿** `Qwen3_5MoeMTP`（无 `SupportsPP`），**不是主模型**（主模型 `supports_pp=True`） | vLLM 0.28 / qwen3_5_moe | `config/speculative.py:1383`；本条实测于 2026-09-22 |
+| **PP>1 + `method=dflash`** | ❌ 同一道门。⚠️ 根因不是"没声明"：`DFlashQwen3ForCausalLM` 声明了 `supports_pp=True`，但 **`forward` 不收 `intermediate_tensors`** ⇒ 校验器判 `supports_pp=False`（`DFlash2*`/`DFlashLaguna*` 同）。**这是能力缺口，不是平台门 ⇒ 不要补声明绕过** | vLLM 0.28 | `model_executor/models/interfaces.py:783` |
+| **PP>1 + 任何草稿型投机** | ❌ 唯一能过门的是**无草稿的 CPU `ngram`**（`draft_model_config` 指回目标模型，`speculative.py:834`）；`ngram_gpu` 虽本地能过，但上游 PR **#57817 正在"拒绝 ngram_gpu + PP"** | vLLM | 上游 PR #57817 |
+| **TP2×PP4（同模组 TP2 + 四模组 PP4）** | ❌ **更慢**：单流 **−17.6%**（35.33 vs 42.86 t/s，SPEC=0 同 boot）、并发 4 −40.6%、并发 8 **−49.0%** ⇒ "PP 只在并发才划算"被否证。唯一收获 **KV ×3.62** | 本机 / 397B int8 | `$AI/bench/ornith-tp2pp4-ab-20260922/ANALYSIS.md` |
+| **TP4×PP2（TP 组=一个 NUMA node）** | ⚠️ **近似平手但没反超**：单流 **−3.9%**、并发 4 **+1.8%**、并发 8 **−27.7%**、KV ×2 ⇒ "消掉 allreduce 的 SYS 腿"确有收益（抵掉了 2 级串行的大部分代价），但仍不如 TP8 | 本机 / 397B int8 | 同上 |
+| **两层 TP（TP2×TP4 嵌套）** | ❌ **vLLM 无此实现**（并行维度只有 DP/PP/PCP/DCP/TP，`EP = DP×PCP×TP`）；其等价物"分层 allreduce"**本仓已判必输 flat8 2.0–2.5×** | vLLM + 本机拓扑 | `distributed/parallel_state.py:1918`；本文件上方旧条目 |
+| **EP 当杠杆（`--enable-expert-parallel`）** | ❌ **ROCm 上不赚**：EP 不是独立维度（`ep_size = DP×PCP×TP`），本机无 ROCm DeepEP ⇒ 只能走默认 `allgather_reducescatter`；而 TP 下各 rank 的 batch 本就复制 ⇒ **allgather 是冗余流量、集合次数 ×2** | ROCm / vLLM 0.28 | `config/parallel.py:188`、`distributed/device_communicators/all2all.py` |
+| **`TP1+EP8`（稠密复制 + 专家 8 切）** | ❌ **内存算术不可能**：专家 372.70 GiB/8 = 46.6 + 稠密复制 13.0 = **59.6 GiB/die**，加 non-torch 3.9 + graph 3.45 ≈ **66.9 > 63.98** ⇒ 连 KV=0、eager 都超 | 本机 / 397B int8 | `$AI/bench/…/ANALYSIS.md` §内存算术 |
+| **`tp2+ep4` / `tp2+dp4+ep8`** | ❌ ep4 ⇒ 专家只切 4 份 = **93.2 GiB/die**（直接出局）；`tp2+dp4+ep8` 每 die 53.1 GiB ⇒ KV 只剩 ~1 GiB（**262k 一条请求都服务不了**） | 本机 / 397B int8 | 同上 |
+| **"每模组一个 TP2 副本"（DP4×TP2）** | ❌ 对**大模型**不成立：整模型需 ≤ **~96 GiB**（2 die × 48 GiB）才装得下 ⇒ 397B(386)/320B/176B 全部出线，连 CT-Int4 的 397B（193 GB ⇒ 96.5 GiB/die）也刚好不行。**别再把它当大模型候选** | 本机 | 同上 |
+| **DFlash 草稿 = 无条件替代 MTP** | ⚠️ **按负载分裂**：`z-lab/Qwen3.5-397B-A17B-DFlash`（base 与本机 Ornith 逐项同构）在 **count 类可预测负载 +72.7%**（97.28→168.03 t/s，接受长度 3.9→9.88），但 **explain 类散文 −27.4%**（76.10→55.26，接受长度持平 3.0 而草稿吞吐翻倍 = **白付 12 个草稿位**）⇒ 正解是**按负载选 n**（z-lab 自己也分 block 4/8/16 档） | Ornith int8 / vLLM 0.28 / gfx90a | `$AI/bench/ornith-dflash-vs-mtp-20260922/ANALYSIS.md` |
+| **`num_speculative_tokens` 越大越好** | ❌ 同上：n=15 在低接受率负载上**负收益**；n 必须与"负载可预测性"配对，不看负载只报 t/s 会得出相反结论 | 通用 | 同上 |
+
+### 两条可复用的**机理**（比单条判语值钱）
+
+1. **步时成分反解**：用同 boot 的两个拓扑点联立可把每 token 的墙钟拆成
+   **带宽可压部分 a** 与**与并行宽度无关的延迟部分 L**。本模型实测 **a≈2.3 ms（~10%）/ L≈21 ms（~90%）**
+   ⇒ 结论：**瓶颈是每步固定延迟，不是 8 卡聚合带宽**；任何"加串行级数/加集合次数"的改动都在最坏路径上加钱，
+   而"加宽并行"几乎免费。同一模型给出 `F≈18.5 ms/步、m≈4.8 ms/token` ⇒ 解释 MTP/DFlash 为何值钱（摊薄 F）。
+2. **KV 容量 ≈ ∝ PP 级数**（TP **不切层** ⇒ 每 rank 只备本 stage 的注意力层）：
+   三臂同时验证 `748,908 × PP级数` ⇒ 偏差 **+0.0% / −1.3% / −9.4%**（最后一项差额 ≈ 该臂自身的 `padding layers 9.09%` 警告）。
+   ⇒ 需要 262k 满窗高并发时，**PP 是本机唯一能线性放大 KV 的旋钮**（代价是单流 −4%~−18% 与并发下滑）。

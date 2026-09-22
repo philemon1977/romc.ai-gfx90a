@@ -505,6 +505,17 @@
      ],
      "label": "TP2（8301/8302 = die6+7）"
     },
+    "tp2pp4": {
+     "evidence": [
+      "hyperloom/reports/mi250x-ornith397b-int8-spec-and-topology-2026-09-22.md"
+     ],
+     "facts": [
+      "TP2 组 = 一个 OAM 模组（模组内 xGMI 144 GB/s）；PP4 = 四个模组；stage0/1 在 node0、stage2/3 在 node1。",
+      "Ornith-397B int8 实测（SPEC=0，同 boot）：单流 **35.33 t/s / 28.30 ms**（对 TP8 **−17.6%**）、并发 4 60.75（−40.6%）、并发 8 104.02（**−49.0%**）、**KV 2,712,793（×3.62）**。",
+      "⇒ 「PP 只在并发才划算」已被否证；KV ×3.62 是它唯一收获（TP 不切层的副作用）。同样拿不到 mtp/dflash 草稿。"
+     ],
+     "label": "TP2×PP4（同模组 TP2，四个 OAM 模组做 PP4）"
+    },
     "tp4": {
      "evidence": [
       "config/ports.conf 8111 注释"
@@ -513,6 +524,17 @@
       "8111 Ornith-1.5-35B-A3B。"
      ],
      "label": "TP4（只占 die0-3）"
+    },
+    "tp4pp2": {
+     "evidence": [
+      "hyperloom/reports/mi250x-ornith397b-int8-spec-and-topology-2026-09-22.md"
+     ],
+     "facts": [
+      "TP 组恰好落在一个 NUMA node 内（die0-3=node0、die4-7=node1）⇒ **每层 allreduce 不含 16/SYS 跨 node 腿**；PP2 = 两个 NUMA node，每次交接跨 node。",
+      "Ornith-397B int8 实测（SPEC=0，同 boot）：单流 **41.18 t/s / 24.28 ms**（对 TP8 −3.9%）、并发 4 **104.12**（+1.8%）、并发 8 **147.51**（−27.7%）、**KV 1,478,286（×2）**。",
+      "占满 8 die ⇒ 与一切全占臂互斥；且 **PP>1 时拿不到 mtp/dflash 草稿**（config 期硬拒）⇒ 只能 SPEC=0 或 ngram。"
+     ],
+     "label": "TP4×PP2（TP 组 = 一个 NUMA node，跨 node 做 PP2）"
     },
     "tp8": {
      "evidence": [

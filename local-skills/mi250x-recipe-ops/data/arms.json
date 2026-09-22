@@ -4279,10 +4279,458 @@
      "measured_impact": "缺权重时 exit 1 并明确报路径，而不是加载 200 s 后才崩"
     }
    ]
+  },
+  {
+   "applies_to": {
+    "arch": "qwen3_5_moe",
+    "driver": "amdgpu-dkms-6.16.13.30300400",
+    "engine": "vllm-0.28.0+rocm723",
+    "host": "mi250x-gfx90a",
+    "model": "models/ornith-ai/Ornith-1.5-397B-Quark-Int8-Attn",
+    "quant": "int8-w8a8",
+    "rocm": "host-7.2.4",
+    "tier": "T3",
+    "topology": [
+     "tp8"
+    ],
+    "torch": "2.12.0+git6bbd260"
+   },
+   "architectures": [
+    "Qwen3_5MoeForConditionalGeneration"
+   ],
+   "best_args": [
+    "--tensor-parallel-size 8",
+    "--pipeline-parallel-size 1",
+    "--served-model-name ornith ornith-1.5-397b-int8 ornith-1.5-397b-int8aiter dflash",
+    "--speculative-config {\"method\":\"dflash\",\"model\":\"models/z-lab/Qwen3.5-397B-A17B-DFlash\",\"num_speculative_tokens\":15}",
+    "--moe-backend triton",
+    "--disable-custom-all-reduce",
+    "--enable-auto-tool-choice",
+    "--tool-call-parser qwen3_xml",
+    "--reasoning-parser qwen3",
+    "--enable-prefix-caching",
+    "--trust-remote-code",
+    "--no-use-tqdm-on-load"
+   ],
+   "best_env": {
+    "DRAFT_PATH": "models/z-lab/Qwen3.5-397B-A17B-DFlash",
+    "GPU_MEM_UTIL": "0.96",
+    "MAX_MODEL_LEN": "262144",
+    "MAX_NUM_SEQS": "16",
+    "MI250_GATE_GEMV": "1",
+    "N_SPEC": "15",
+    "PORT": "8127",
+    "PP": "1",
+    "ROCM724": "/opt/rocm-7.2.4",
+    "TP": "8",
+    "VLLM_DISABLE_COMPILE_CACHE": "1",
+    "VLLM_ROCM_QUICK_REDUCE_QUANTIZATION": "NONE",
+    "VLLM_ROCM_SPLITKV_PA": "1",
+    "VLLM_ROCM_USE_AITER": "1",
+    "VLLM_ROCM_USE_AITER_LINEAR": "1",
+    "VRAM_FREE_MIN_GIB": "62"
+   },
+   "config_model_type": "qwen3_5_moe",
+   "engine": "vllm",
+   "entry": "无（实体脚本即入口；launcher/ 软链由 tools/sync_launcher_links.py 重建，该工具当前被 8119 文件名卡在解析上而退出 1）",
+   "env_path": "envs/vllm_0.28.0_rocm72",
+   "exclusive_with": [
+    "8117（同 checkpoint，8 die 全占）",
+    "8115",
+    "8116",
+    "8119",
+    "8121",
+    "8127 的另两条拓扑变体（同端口互斥）"
+   ],
+   "framework_version": "0.28.0+rocm723",
+   "gpus": "mi250dx8（TP8 全占；实验端口 8127）",
+   "lessons": [
+    {
+     "measured_impact": "97.28→168.03（count）/ 76.10→55.26（explain）",
+     "statement": "草稿收益 = 草稿深度 × 负载可预测性：同一份 DFlash 草稿，count 上 n=15 吃到接受长度 9.88（+72.7%），explain 上接受长度只有 3.0 却仍付 15 个位 ⇒ 净 −27.4%。"
+    },
+    {
+     "measured_impact": "v1/worker/gpu/model_runner.py + speculator.py: Capturing model for DFlash speculator",
+     "statement": "该臂是本机第一条跑通 Model Runner V2 的臂，且 AITER int8 线性补丁在 V2 下判据仍全绿 ⇒ 该补丁是后端级、与 runner 无关。"
+    }
+   ],
+   "model_dir": "models/ornith-ai/Ornith-1.5-397B-Quark-Int8-Attn",
+   "model_slug": "ornith-1-5-397b-int8-attn-dflash15",
+   "other_metrics": [
+    {
+     "name": "同 boot 对照 MTP(5)",
+     "note": "背靠背、除草稿外逐字同底座",
+     "value": "count 97.28 → 168.03（+72.7%）；explain 76.10 → 55.26（−27.4%）"
+    },
+    {
+     "name": "接受长度",
+     "note": "explain 上草稿吞吐 276 vs 125 tok/s ⇒ 12 个草稿位白付",
+     "value": "count 9.88（MTP 3.9）；explain 3.0（MTP 3.0）"
+    },
+    {
+     "name": "GPU KV cache size @262144",
+     "note": "含 Model Runner V2 口径差，未分解",
+     "value": "640,086 tokens（MTP 臂 352,826）"
+    },
+    {
+     "name": "并发 1/4/8 agg",
+     "note": "400-token prompt 稀释，只作相对比较",
+     "value": "14.89 / 30.55 / 56.08 t/s（MTP 19.36/31.90/46.62）"
+    }
+   ],
+   "patches": [
+    "patches/gfx90a/aiter_int8_patch/",
+    "patches/gfx90a/aiter_a8w8_tuned_gemm_gfx90a.csv"
+   ],
+   "pitfalls": [
+    {
+     "description": "强制 Model Runner V2：草稿 layer_types=5×sliding+1×full ⇒ _dflash_needs_multi_kv_group()（config/vllm.py:636）⇒ 与 V1 臂不可逐行对比编译耗时/图覆盖/显存账。",
+     "severity": "trap"
+    },
+    {
+     "description": "PP>1 时本臂不可用：草稿类声明 supports_pp=True 但 forward 不收 intermediate_tensors ⇒ 校验器判 False（interfaces.py:783）⇒ config/speculative.py:1383 硬拒。这是能力缺口不是平台门，不要补声明绕过。",
+     "severity": "crash"
+    }
+   ],
+   "port": "8127",
+   "precision": "int8_w8a8",
+   "primary_metric": {
+    "date": "2026-09-22",
+    "note": "固定 prompt + 丢首请求 + 中位数 n=5（count 口径，端到端含 prefill）。必须带 workload 标签：同臂 explain 只有 55.26 t/s ⇒ TPS 是负载相关的。",
+    "phase": "single-stream",
+    "unit": "tok/s",
+    "value": 168.03
+   },
+   "recipe_id": "8127-ornith-1-5-397b-int8-dflash15-vllm-tp8",
+   "remaining_gaps": [
+    {
+     "description": "n 扫描未做（n=3/7/15 × count/explain）；靶子 = explain 上不亏（MTP 76.10 t/s）。",
+     "metrics": "count/explain 各 5 次中位数 × 3 档 n"
+    }
+   ],
+   "sources": [
+    "docs/recipes/serving/8127-ornith-1-5-397b-int8-dflash15-vllm-tp8.md（配方本体）",
+    "hyperloom/reports/mi250x-ornith397b-int8-spec-and-topology-2026-09-22.md",
+    "$AI/bench/ornith-dflash-vs-mtp-20260922/{ANALYSIS.md,SUMMARY.md,M-mtp5.*,D-dflash15.*}",
+    "docs/recipes/serving/8117-ornith-1-5-397b-int8-attn-aiter-vllm-tp8-mtp5.md（同底座基线）"
+   ],
+   "stack_fingerprint": {
+    "aiter_commit": "0.1.19",
+    "rocm_version": "7.2.4",
+    "vllm_version": "0.28.0+rocm723"
+   },
+   "status": "experimental",
+   "tp": 8,
+   "verified": "2026-09-22",
+   "what_failed": [
+    {
+     "description": "把 DFlash 当无条件替代",
+     "reason": "explain 上 −27.4%（低接受率下 15 个草稿位白付）⇒ 必须按负载选 n"
+    }
+   ],
+   "what_worked": [
+    {
+     "description": "用社区同 base 草稿替换内置 MTP 头",
+     "measured_impact": "count +72.7%（接受长度 3.9→9.88）"
+    }
+   ]
+  },
+  {
+   "applies_to": {
+    "arch": "qwen3_5_moe",
+    "driver": "amdgpu-dkms-6.16.13.30300400",
+    "engine": "vllm-0.28.0+rocm723",
+    "host": "mi250x-gfx90a",
+    "model": "models/ornith-ai/Ornith-1.5-397B-Quark-Int8-Attn",
+    "quant": "int8-w8a8",
+    "rocm": "host-7.2.4",
+    "tier": "T3",
+    "topology": [
+     "tp4pp2"
+    ],
+    "torch": "2.12.0+git6bbd260"
+   },
+   "architectures": [
+    "Qwen3_5MoeForConditionalGeneration"
+   ],
+   "best_args": [
+    "--tensor-parallel-size 4",
+    "--pipeline-parallel-size 2",
+    "--moe-backend triton",
+    "--disable-custom-all-reduce",
+    "--enable-auto-tool-choice",
+    "--tool-call-parser qwen3_xml",
+    "--reasoning-parser qwen3",
+    "--enable-prefix-caching",
+    "--trust-remote-code",
+    "--no-use-tqdm-on-load"
+   ],
+   "best_env": {
+    "GPU_MEM_UTIL": "0.96",
+    "MAX_MODEL_LEN": "262144",
+    "MAX_NUM_SEQS": "16",
+    "MI250_GATE_GEMV": "1",
+    "PORT": "8127",
+    "PP": "2",
+    "ROCM724": "/opt/rocm-7.2.4",
+    "SPEC": "0",
+    "TP": "4",
+    "VLLM_DISABLE_COMPILE_CACHE": "1",
+    "VLLM_ROCM_QUICK_REDUCE_QUANTIZATION": "NONE",
+    "VLLM_ROCM_SPLITKV_PA": "1",
+    "VLLM_ROCM_USE_AITER": "1",
+    "VLLM_ROCM_USE_AITER_LINEAR": "1",
+    "VRAM_FREE_MIN_GIB": "62"
+   },
+   "config_model_type": "qwen3_5_moe",
+   "engine": "vllm",
+   "entry": "无（实体脚本即入口）",
+   "env_path": "envs/vllm_0.28.0_rocm72",
+   "exclusive_with": [
+    "8117",
+    "8115",
+    "8116",
+    "8119",
+    "8121",
+    "8127 的另两条变体"
+   ],
+   "framework_version": "0.28.0+rocm723",
+   "gpus": "mi250dx8（TP4 组=一个 NUMA node；PP2=两个 NUMA node）",
+   "lessons": [
+    {
+     "measured_impact": "23.33 → 24.28 ms/token",
+     "statement": "消掉 allreduce 的 SYS 腿确有真收益：TP4 组落在一个 NUMA node 内，几乎全额抵掉 2 级串行的代价（实测 −3.9% vs 朴素预测 −10%）。"
+    },
+    {
+     "measured_impact": "单流 −3.9%、并发 8 −27.7%",
+     "statement": "但仍不如 TP8 ⇒ 本机这个模型的最优并行拓扑是 TP8 flat；PP 的价值只在 KV（∝PP级数）。"
+    }
+   ],
+   "model_dir": "models/ornith-ai/Ornith-1.5-397B-Quark-Int8-Attn",
+   "model_slug": "ornith-1-5-397b-int8-attn-tp4pp2",
+   "other_metrics": [
+    {
+     "name": "对 TP8（SPEC=0, 同 boot）",
+     "note": "起服前预测 −5%±5% ⇒ 命中",
+     "value": "42.86 → 41.18（−3.9%）"
+    },
+    {
+     "name": "并发 4 / 8",
+     "note": "≤4 并发与 TP8 等价；并发 8 明显落后",
+     "value": "104.12（+1.8%）/ 147.51（−27.7%）"
+    },
+    {
+     "name": "GPU KV cache size @262144",
+     "note": "预测 748,908×2=1,497,816，偏差 −1.3%",
+     "value": "1,478,286 tokens（×2）"
+    }
+   ],
+   "patches": [
+    "patches/gfx90a/aiter_int8_patch/",
+    "patches/gfx90a/aiter_a8w8_tuned_gemm_gfx90a.csv"
+   ],
+   "pitfalls": [
+    {
+     "description": "只能 SPEC=0：--pipeline-parallel-size 2 + mtp/dflash 会在 config 校验期 NotImplementedError（speculative.py:1383）。PP 下唯一可用的是无草稿 CPU ngram。",
+     "severity": "crash"
+    },
+    {
+     "description": "起服脚本自带 TP×PP == die 数 自检，否则拒绝起服（模组边界会错位）。",
+     "severity": "trap"
+    }
+   ],
+   "port": "8127",
+   "precision": "int8_w8a8",
+   "primary_metric": {
+    "date": "2026-09-22",
+    "note": "SPEC=0（PP>1 拿不到 mtp/dflash 草稿）⇒ step_ms = 1000/tps = 24.28。与交付态（TP8+MTP5）不可直接比。",
+    "phase": "single-stream",
+    "unit": "tok/s",
+    "value": 41.18
+   },
+   "recipe_id": "8127-ornith-1-5-397b-int8-vllm-tp4pp2-spec0",
+   "remaining_gaps": [
+    {
+     "description": "ngram + TP4×PP2 未试（PP 下唯一能带投机解码的通路，同时可吃 KV×2）。",
+     "metrics": "未测"
+    }
+   ],
+   "sources": [
+    "docs/recipes/serving/8127-ornith-1-5-397b-int8-vllm-tp4pp2-spec0.md（配方本体）",
+    "hyperloom/reports/mi250x-ornith397b-int8-spec-and-topology-2026-09-22.md",
+    "$AI/bench/ornith-tp2pp4-ab-20260922/{ANALYSIS.md,SUMMARY-3arms.md,A-*,B-*,C-*}",
+    "docs/recipes/serving/8117-ornith-1-5-397b-int8-attn-aiter-vllm-tp8-mtp5.md（同底座基线）"
+   ],
+   "stack_fingerprint": {
+    "aiter_commit": "0.1.19",
+    "rocm_version": "7.2.4",
+    "vllm_version": "0.28.0+rocm723"
+   },
+   "status": "experimental",
+   "tp": 4,
+   "verified": "2026-09-22",
+   "what_failed": [
+    {
+     "description": "指望并发下 PP 翻盘",
+     "reason": "并发 8 落后 27.7%（单请求串行化未被 micro-batch 补回）"
+    }
+   ],
+   "what_worked": [
+    {
+     "description": "TP4（=一个 NUMA node）× PP2 的映射无需任何可见性变量：vLLM 约定 rank=pp*TP+tp 且 local_rank=die号",
+     "measured_impact": "日志出现 Worker_PP{0,1}_TP{0..3}"
+    }
+   ]
+  },
+  {
+   "applies_to": {
+    "arch": "qwen3_5_moe",
+    "driver": "amdgpu-dkms-6.16.13.30300400",
+    "engine": "vllm-0.28.0+rocm723",
+    "host": "mi250x-gfx90a",
+    "model": "models/ornith-ai/Ornith-1.5-397B-Quark-Int8-Attn",
+    "quant": "int8-w8a8",
+    "rocm": "host-7.2.4",
+    "tier": "T3",
+    "topology": [
+     "tp2pp4"
+    ],
+    "torch": "2.12.0+git6bbd260"
+   },
+   "architectures": [
+    "Qwen3_5MoeForConditionalGeneration"
+   ],
+   "best_args": [
+    "--tensor-parallel-size 2",
+    "--pipeline-parallel-size 4",
+    "--moe-backend triton",
+    "--disable-custom-all-reduce",
+    "--enable-auto-tool-choice",
+    "--tool-call-parser qwen3_xml",
+    "--reasoning-parser qwen3",
+    "--enable-prefix-caching",
+    "--trust-remote-code",
+    "--no-use-tqdm-on-load"
+   ],
+   "best_env": {
+    "GPU_MEM_UTIL": "0.96",
+    "MAX_MODEL_LEN": "262144",
+    "MAX_NUM_SEQS": "16",
+    "MI250_GATE_GEMV": "1",
+    "PORT": "8127",
+    "PP": "4",
+    "ROCM724": "/opt/rocm-7.2.4",
+    "SPEC": "0",
+    "TP": "2",
+    "VLLM_DISABLE_COMPILE_CACHE": "1",
+    "VLLM_ROCM_QUICK_REDUCE_QUANTIZATION": "NONE",
+    "VLLM_ROCM_SPLITKV_PA": "1",
+    "VLLM_ROCM_USE_AITER": "1",
+    "VLLM_ROCM_USE_AITER_LINEAR": "1",
+    "VRAM_FREE_MIN_GIB": "62"
+   },
+   "config_model_type": "qwen3_5_moe",
+   "engine": "vllm",
+   "entry": "无（实体脚本即入口）",
+   "env_path": "envs/vllm_0.28.0_rocm72",
+   "exclusive_with": [
+    "8117",
+    "8115",
+    "8116",
+    "8119",
+    "8121",
+    "8127 的另两条变体"
+   ],
+   "framework_version": "0.28.0+rocm723",
+   "gpus": "mi250dx8（TP2 组=一个 OAM 模组；PP4=四个模组）",
+   "lessons": [
+    {
+     "measured_impact": "解释了为何 4× 窄并行只慢 17.6% 而非 4×",
+     "statement": "步时成分反解：A(23.33=a+L) 与 B(4a+L'≈28.30) 联立 ⇒ 每 token 只有 a≈2.3 ms（~10%）是带宽可压部分，L≈21 ms（~90%）与并行宽度无关 ⇒ 瓶颈是每步固定延迟。"
+    },
+    {
+     "measured_impact": "TP8 748,908 → TP4×PP2 1,478,286 → TP2×PP4 2,712,793",
+     "statement": "KV 容量 ∝ PP 级数（TP 不切层）：三臂验证 748,908×PP级数 ⇒ 偏差 +0.0%/−1.3%/−9.4%。"
+    }
+   ],
+   "model_dir": "models/ornith-ai/Ornith-1.5-397B-Quark-Int8-Attn",
+   "model_slug": "ornith-1-5-397b-int8-attn-tp2pp4",
+   "other_metrics": [
+    {
+     "name": "对 TP8（SPEC=0, 同 boot）",
+     "value": "42.86 → 35.33（−17.6%）"
+    },
+    {
+     "name": "并发 4 / 8",
+     "note": "否证「PP 只在并发划算」",
+     "value": "60.75（−40.6%）/ 104.02（−49.0%）"
+    },
+    {
+     "name": "GPU KV cache size @262144",
+     "note": "预测 ×4=2,995,632，偏差 −9.4% ≈ 其自身 padding layers 9.09% 警告",
+     "value": "2,712,793 tokens（×3.62）"
+    }
+   ],
+   "patches": [
+    "patches/gfx90a/aiter_int8_patch/",
+    "patches/gfx90a/aiter_a8w8_tuned_gemm_gfx90a.csv"
+   ],
+   "pitfalls": [
+    {
+     "description": "只能 SPEC=0（同 TP4×PP2 的硬拒）；实验端口 8127 与另两条变体互斥。",
+     "severity": "crash"
+    },
+    {
+     "description": "VLLM_ROCM_SPLITKV_PA=1 在 SPEC=0 档会真接管（门要 max_query_len==1），而 8117 的 SPEC=5 档从不接管 ⇒ 与 8117 交付态基线不可直接比。",
+     "severity": "trap"
+    }
+   ],
+   "port": "8127",
+   "precision": "int8_w8a8",
+   "primary_metric": {
+    "date": "2026-09-22",
+    "note": "SPEC=0；step_ms=28.30。与交付态不可直接比：同 boot 的 TP8+SPEC=0 是 42.86，TP8+MTP5 是 97.28。",
+    "phase": "single-stream",
+    "unit": "tok/s",
+    "value": 35.33
+   },
+   "recipe_id": "8127-ornith-1-5-397b-int8-vllm-tp2pp4-spec0",
+   "remaining_gaps": [
+    {
+     "description": "并发 ≥8 时 micro-batch 填充情况未取证据（为何 PP 未把 stage 填满）。",
+     "metrics": "未测"
+    }
+   ],
+   "sources": [
+    "docs/recipes/serving/8127-ornith-1-5-397b-int8-vllm-tp2pp4-spec0.md（配方本体）",
+    "hyperloom/reports/mi250x-ornith397b-int8-spec-and-topology-2026-09-22.md",
+    "$AI/bench/ornith-tp2pp4-ab-20260922/{ANALYSIS.md,SUMMARY-3arms.md,A-*,B-*,C-*}",
+    "docs/recipes/serving/8117-ornith-1-5-397b-int8-attn-aiter-vllm-tp8-mtp5.md（同底座基线）"
+   ],
+   "stack_fingerprint": {
+    "aiter_commit": "0.1.19",
+    "rocm_version": "7.2.4",
+    "vllm_version": "0.28.0+rocm723"
+   },
+   "status": "experimental",
+   "tp": 2,
+   "verified": "2026-09-22",
+   "what_failed": [
+    {
+     "description": "TP2（同模组）× PP4 更快",
+     "reason": "单流 −17.6%、并发 8 −49%"
+    }
+   ],
+   "what_worked": [
+    {
+     "description": "用一条 TP8 与一条 TP2×PP4 的同 boot 对照把步时拆成 a/L 两部分",
+     "measured_impact": "a≈2.3 ms / L≈21 ms"
+    }
+   ]
   }
  ],
- "generated_at": "2026-09-21",
+ "generated_at": "2026-09-22",
  "hardware": "8x MI250X gfx90a, ROCm 7.2.4, power cap 560W/module",
  "scope_spec": "data/scope.json",
- "source": "/home/qiba/ai/docs/recipes/serving"
+ "source": "/home/qiba/ai/docs/recipes/serving（2026-09-22 由会话按实测手工合成 3 条）"
 }
