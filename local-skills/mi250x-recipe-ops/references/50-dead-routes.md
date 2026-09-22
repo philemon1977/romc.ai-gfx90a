@@ -293,3 +293,35 @@ table and raises `Memory access fault by GPU`, which looks exactly like a kernel
 2. **KV 容量 ≈ ∝ PP 级数**（TP **不切层** ⇒ 每 rank 只备本 stage 的注意力层）：
    三臂同时验证 `748,908 × PP级数` ⇒ 偏差 **+0.0% / −1.3% / −9.4%**（最后一项差额 ≈ 该臂自身的 `padding layers 9.09%` 警告）。
    ⇒ 需要 262k 满窗高并发时，**PP 是本机唯一能线性放大 KV 的旋钮**（代价是单流 −4%~−18% 与并发下滑）。
+
+### DCP（解码上下文并行）在本机**不可用**（2026-09-22 实测 + 源码定位）
+
+> 起因：PP>1 拿不到 mtp/dflash 草稿 ⇒ 想用与 PP 正交的 DCP 换"更大 KV + 保住投机解码"。
+> 结论：**本机 + vLLM 0.28 上没有任何受支持路径**。产物 `$AI/bench/ornith-dcp-vs-mtp-20260922/`。
+
+- ❌ **`--decode-context-parallel-size 2/4` + `MTP(5)`：worker 初始化期直接断言失败**（引擎自行退出，无静默算错）：
+  ```
+  RuntimeError: Decode Context Parallelism (DCP) requires attention implementations to return
+  the softmax LSE during decode, but RocmAttentionImpl does not.
+  Try a different backend by setting --attention-backend or disable DCP.
+  ```
+  断言位置 `v1/worker/cp_utils.py:47-55`（`assert layer_impl.need_to_return_lse_for_decode`）。
+- ❌ **报错里"换后端"那条建议在本平台无解**（源码级判定，未再烧机时）：`return_lse` / `cp_lse_ag_out_rs` /
+  `dcp_a2a_lse_reduce` 三者在 `rocm_attn.py`、`triton_attn.py`、`triton_attn_diffkv.py` **全为 0**，
+  只有 CUDA 的 `flash_attn.py` 有（2/2/2）；而 ROCm 平台只提供 `ROCM_ATTN` / `TRITON_ATTN` 两个候选
+  （`platforms/rocm.py:485/492`）。
+- ⚠️ **"config 校验通过 ≠ 能起"**：`SpeculativeConfig`/`ParallelConfig` 层面 `DCP=2/4 + MTP(5)` 完全合法
+  （CPU 侧已验证，上限 = TP/num_kv_heads = 4）；真正的门在 **worker 初始化期的 layer-impl 能力标志**上。
+  ⇒ 以后凡新增并行维度，零成本预检要一路查到 **layer impl**，别停在 config 层。
+- ⚠️ **另一条独立边界**：`v1/kv_cache_interface.py:575` 写着 **"DCP not support sliding window"**
+  ⇒ 任何带滑窗的模型（含 DFlash 草稿那 5 层 `sliding_attention`）连 config 都过不去。
+- 🔧 **"改内核能不能救"**：能，但是**特性移植而非补丁** —— 要 (1) 让本机分页 decode 核**输出 LSE**
+  （C++ `paged_attention_rocm`/Triton 都没有这个输出，最重的一块）、(2) 实现跨 rank 合并
+  （`cp_lse_ag_out_rs` / `dcp_a2a_lse_reduce`）、(3) 元数据按 DCP 交错感知并兼容 MTP 与 45 层 GDN。
+  且收益先要扣两笔账：`platforms/rocm.py:905` **DCP 会把 cudagraph 从 FULL_AND_PIECEWISE 降级为 PIECEWISE**
+  （本仓另有 PIECEWISE −8.7% 的记录）；每层多一次集合通信，而本模型步时 90% 是与并行宽度无关的延迟。
+  ⇒ **当前不建议投入**。
+- ✅ 顺带两条可复用结论：
+  1. 单流固定 prompt 口径的**同配置复现性是 ±0.4%**（97.54 vs 97.28 / 76.44 vs 76.10）⇒ 可作 A/B 判据；
+  2. **`bench_concurrency.py` 同配置重跑并发档差 43%**（conc8 46.62 vs 66.88）⇒ 并发列只能看量级，
+     **不能**当 ±10% 级判据用。
