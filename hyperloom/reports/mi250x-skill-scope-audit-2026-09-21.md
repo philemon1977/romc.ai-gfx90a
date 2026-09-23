@@ -400,7 +400,7 @@ harvest 覆盖                                      ✅32 🟡8 🔴0
 装之前先查了运行时到底怎么用这张表，结果是本轮最有价值的发现：
 `aiter/ops/gemm_op_a8w8.py:656-663` 显示该路径**只消费 `splitK` 一个字段**，取不到就 `splitK=0`；
 而 54 行 gfx90a 的 `splitK` **全 = 0** ⇒ **行为完全等价**。
-再看 `patches/gfx90a/README.md:20`——工作区早就写着「**只为消掉每次启动 432 行 `not found tuned config`，
+再看 `recipes/patches/vllm/vllm_0.28.0_rocm72/README.md:20`——工作区早就写着「**只为消掉每次启动 432 行 `not found tuned config`，
 性能恒等**」。
 
 ⇒ **本技能的 §9 把它写成"尚未回收的便宜杠杆"是错的**，而且

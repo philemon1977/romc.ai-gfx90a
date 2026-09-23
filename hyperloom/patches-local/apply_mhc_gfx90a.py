@@ -38,7 +38,7 @@ PATCHED = (
     '        # gfx942 on the existing torch/triton fallbacks until that path is fixed.\n'
     '        #\n'
     '        # --8<-- ' + MARKER + ' --8<--\n'
-    '        # 同 patches/gfx90a/ct_w4a16_dsv41/mhc.py（补丁组 12）：gfx90a 是 wave64，\n'
+    '        # 同 recipes/patches/vllm/vllm-openai-rocm-nightly/dsv41/mhc.py（补丁组 12）：gfx90a 是 wave64，\n'
     '        # TileLang 自报 [ThreadSync] Hoisting sync ... tx < 32，mhc_pre_delayed_tilelang\n'
     '        # 非确定算错 layer_input（同输入 4 次 maxabs 1.85/9.8e-4/2.17/1.97，量级约 1.2）。\n'
     '        if on_gfx90a():\n'

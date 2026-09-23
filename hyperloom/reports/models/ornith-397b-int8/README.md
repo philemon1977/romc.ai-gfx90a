@@ -123,5 +123,5 @@ grep -a 'GPU KV cache size'                       $LOG   # 期望 ≈ 0.37–0.4
 | `models/ornith-ai/launcher/ornith_1.5_397b_int8w8a8attn_aiter_vllm_rocm72_mtp5_256k_8117_ornith_mi250dx8.sh` | 本文件 + `quark-int8/RESULT.md`（深水量化/内核）+ `quark-int8/step_probe.py`、`measure_median.py`、`nll_probe.py` |
 | `docs/Ornith-397B-INT8Attn-提速-经验迁移-2026-09-18.md` | 本臂经验迁移原文（§0–§3 的原始出处） |
 | `docs/recipes/serving/8117-ornith-1-5-397b-int8-attn-aiter-vllm-tp8-mtp5.md` | 8117 配方卡（operational） |
-| `patches/gfx90a/aiter_int8_patch/`、`aiter_a8w8_tuned_gemm_gfx90a.csv` | 已入库（`git ls-files`） |
+| `recipes/patches/vllm/vllm_0.28.0_rocm72/aiter-int8/`、`aiter_a8w8_tuned_gemm_gfx90a.csv` | 已入库（`git ls-files`） |
 | `quark-int8/int8aiter_arm{D,E,F,G}.sh`、`int4_armH.sh` | 三臂/交付态/回测 runner（在 `quark-int8/`） |

@@ -57,7 +57,7 @@ for f in "v1/attention/ops/rocm_aiter_mla_sparse.py:WRITE_LSE" \
          "v1/attention/backends/mla/rocm_aiter_mla_sparse.py:supports_dcp = True" \
          "model_executor/layers/sparse_attn_indexer.py:_merge_dcp_topk_global_gfx90a"; do
   if [ "${SKIP_PATCH_CHECK:-0}" = "1" ]; then break; fi
-  path="$AI_HOME/recipes/patches/gfx90a/ct_w4a16_dsv41_n0918/tree/${f%%:*}"
+  path="$AI_HOME/recipes/patches/vllm/vllm-openai-rocm-nightly-0918/core/tree/${f%%:*}"
   want="${f##*:}"
   grep -q "$want" "$path" || fail "补丁缺失：$path 里找不到 [$want]（先按 dcp_patches/README.md 上树）"
   echo "   ✓ ${f%%:*} 含 [$want]"

@@ -1,6 +1,6 @@
 # `aiter-cpp_extension-pybind-abi.patch` 的来源与定位（2026-09-21 入库）
 
-**来源**：原本只存在于 `/home/qiba/ai/patches/gfx90a/aiter-cpp_extension-pybind-abi.patch`（补丁树 README 记为
+**来源**：原本只存在于 `/home/qiba/ai/recipes/patches/vllm/vllm_0.28.0_rocm72/aiter-cpp_extension-pybind-abi.patch`（补丁树 README 记为
 "手工修法"），2026-09-21 按"负结论也要入库"的纪律拷入本仓。
 
 **它解决什么**：AITER JIT 的 pybind11 internals 在 v11/v12 两版之间的分裂（改 `cpp_extension` 的 pybind 接口假设）。

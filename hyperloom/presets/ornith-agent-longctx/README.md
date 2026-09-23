@@ -138,20 +138,44 @@ TP8, `--language-model-only --max-num-seqs 16 --max-num-batched-tokens 8192
 
 ### Single-stream decode vs context  (CONC=1)
 
-| context | no spec tok/s (TPOT) | MTP k=2 tok/s (TPOT) | speedup | TTFT (no spec) |
-|---|---|---|---|---|
-| 1k | 21.6 (45.4 ms) | 45.2 (21.2 ms) | **2.14x** | 1.13 s |
-| 32k | 5.4 (171.1 ms) | 17.9 (55.9 ms) | **3.06x** | 11.05 s |
-| 128k | 1.81 (553.9 ms) | 4.79 (208.7 ms) | **2.65x** | 23.88 s |
-| 240k | 1.03 (967.9 ms) | 3.51 (284.9 ms) | **3.40x** | 68.27 s |
+Two baselines, because the answer changed: the *serial* attention path that runs
+by default, and `VLLM_ROCM_SPLITKV_PA=1` (the MI250X split-KV kernel that already
+ships in this wheel, see below).
 
-The collapse is a **law, not noise**: `TPOT ~= 45.4 ms + 3.97 ms x (ctx/1024)`
-reproduces 32k/128k/240k within **1.6 ms** (predicted 172.6 / 554.2 / 967.5 vs
-measured 171.1 / 553.9 / 967.9), and extrapolates to `262,144 -> 1063 ms =
-0.94 tok/s`. But at 128k a token only has to read ~2.0 GiB/die of KV and the
-kernel takes 0.509 s for it: **~4 GiB/s = 0.30% of HBM peak**. That is a
-`ROCM_ATTN` paged-attention signature (no split-KV / flash-decoding), not a
-hardware limit -- and it, not capacity, is what blocks 256k here.
+| context | serial, no spec | **split-KV, no spec (ship this)** | MTP k=2, split-KV | best tok/s |
+|---|---|---|---|---|
+| 1k | 45.4 ms (21.6/s) | **38.8 ms (25.8/s)** | 21.5 ms (46.5/s) | MTP: 46.5/s |
+| 32k | 171.1 ms (5.4/s) | ~40 ms (25/s, interpolated) | 53.8 ms (18.6/s) | split-KV |
+| 128k | 553.9 ms (1.81/s) | **42.7 ms (23.4/s)** | 155.9 ms (6.4/s) | split-KV, x3.65 over MTP |
+| 240k | 967.9 ms (1.03/s) | **44.7 ms (22.4/s)** | — | split-KV |
+
+The old "collapse is a law" statement (`TPOT ~= 45.4 ms + 3.97 ms x (ctx/1024)`,
+reproduced within 1.6 ms at 32k/128k/240k) describes the **serial** path only: at
+128k a token reads ~2.0 GiB/die of KV in 0.509 s = ~4 GiB/s = **0.30% of HBM
+peak**, i.e. a `ROCM_ATTN` paged-attention signature (no split-KV), not silicon.
+With split-KV the slope is 0.025 ms/1k and the same token takes 42.7 ms.
+
+### Speculation and split-KV are mutually exclusive at long context
+
+Measured per **engine step** (median TPOT x the server's own mean acceptance
+length, so the token counts are honest):
+
+| context | no spec + split-KV | MTP k=1 + split-KV | MTP k=2 + split-KV | MTP k=2, serial |
+|---|---|---|---|---|
+| 1k | 38.8 ms | 52.6 ms (2.00 tok/step) | 63.9 ms (2.98) | 62.4 ms |
+| 32k | ~40 ms | 148.8 ms (1.99) | 159.2 ms (2.96) | 166.1 ms |
+| 128k | 42.7 ms | **435.1 ms** (1.98) | **451.6 ms** (2.90) | 495.6 ms |
+| 240k | 44.7 ms | — | 772.5 ms (2.64) | 824.5 ms |
+
+L1 (k=1, everything else byte-identical to K3) is the discriminator: going from 2
+to 3 verify rows costs **+16.5 ms** (3.8%). The surcharge is therefore **one
+O(ctx) term per speculative step, independent of k**: +14 ms at 1k, +106-116 ms at
+32k, +392-409 ms at 128k (~2.85 ms per 1k of context). Two natural explanations
+were falsified on the way (per-draft-step work; per-verify-row GDN state), and
+with speculation on the step costs as much as the *serial* attention path, i.e.
+**turning MTP on throws away the whole split-KV gain**. Practical rule: split-KV
+always; MTP only below ~19k context (derived crossover of the two measured laws;
+1k and 32k endpoints measured, the crossing is not).
 
 ### MTP acceptance depends on content (quote it with the workload)
 
@@ -199,9 +223,17 @@ hybrid cache only reuses page-aligned prefixes -- candidate fix to test:
 | B | A + MTP k=2 | 2.00-2.61x on synthetic; nothing at conc 16 |
 | C3 | max-len 262144, no spec | 128k = 1.55 tok/s; the 256k point failed on client overshoot |
 | **D** | A minus prefix caching | **refuted the align-mode hypothesis** (5.25 vs A's 5.48 tok/s) -> the penalty is the attention kernel |
-| B2 | C3 + MTP | 128k = 3.27 tok/s (2.65x) |
+| B2 | C3 + MTP | 128k = 3.27 tok/s (2.65x over serial) |
 | F2 | ISL 237568 within 262144, no spec | 240k = 0.67 tok/s; real-content baseline 19.05 tok/s |
-| G | F2 + MTP | 240k = 1.18 tok/s (3.40x); real-content 35.86 tok/s |
+| G | F2 + MTP | 240k = 1.18 tok/s (3.40x over serial); real-content 35.86 tok/s |
+| **I** | no spec + `VLLM_ROCM_SPLITKV_PA=1` | **the win: 128k 153.9 -> 42.7 ms/token (x13.0), 240k x21.7** |
+| H | `VLLM_ATTENTION_BACKEND=TRITON_ATTN` | 128k is ~21% *slower* (201 s vs 166 s per request) |
+| K | I + MTP k=2 + q>1 patch | regressed to 161.2 ms @128k -> stacking is broken |
+| K2 | K + `MAX_SCRATCH_MIB=192` | 161.2 ms: **scratch budget is not the cause** |
+| K3 | K2 + `MAX_TOTAL_MIB=1024` | 155.9 ms, `takeover=6597`, zero scratch rejects -> still broken |
+| **L1** | K3 with `num_speculative_tokens=1` | **the surcharge is per step, not per token: 435.1 vs 451.6 ms/step** |
+| **N** | torch-profiler kernel tables, MTP vs no spec @145k | **named it: `_fwd_kernel` (Triton prefix-prefill) = 78.9% of the step, 288 x 26.0 ms, and its output is then overwritten by split-KV** |
+| P | N's finding + the dispatch patch | staged: official points 1k/32k/128k/240k + kernel table + output hash (needs the GPUs) |
 
 Reproduce: `.tmp/single_stream_lab/run_*.sh` (stages), `summarize.py` (table),
 `realcode_probe.py` (content-sensitive acceptance), and the KB row's
@@ -221,13 +253,22 @@ Reproduce: `.tmp/single_stream_lab/run_*.sh` (stages), `summarize.py` (table),
    | 240k | 967.9 ms | 44.7 ms | 22.4 | **x21.7** |
 
    `q>1` extension (so it can stack with MTP) lives with its tests and audit in
-   `hyperloom/kernels/gfx90a_flash_decode/`. Round K showed stacking regressing
-   (161.2 ms @128k) because the 3x scratch hits the default 32 MiB budget and
-   those shapes fall back to the serial kernel; K2 re-tests with
-   `MAX_SCRATCH_MIB=192`. `VLLM_ATTENTION_BACKEND=TRITON_ATTN` was measured and is
-   ~21% *slower* at 128k, so it is out.
-2. MTP with k>2 and adaptive `num_speculative_tokens_per_batch_size`.
-3. `--mamba-cache-mode all` for progressive prefix reuse.
-4. Weights kept 8-bit resident with tile-load dequant (capacity phase).
-5. No optimizer sealed baseline exists yet (`baseline_tput=0.0`), so
+   `hyperloom/kernels/gfx90a_flash_decode/`. Stacking with MTP was then measured
+   to fail for a different reason and is now closed: K3 cleared the scratch
+   budget (zero rejects, `takeover=6597`) and L1 showed the cost is a fixed
+   O(ctx) term per step that is independent of k (K). Keep speculation off at
+   long context.
+2. ~~Where the ~392 ms/step of the speculative long-context step goes.~~ **Answered
+   (round N): a redundant Triton prefix-prefill pass, 78.9% of the step.** With
+   `max_query_len > 1`, `chunked_prefill_paged_decode` runs `context_attention_fwd`
+   over the whole context for every layer and *then* lets split-KV overwrite the same
+   output rows: 288 calls x 26.0 ms in a 17-step, 145k-context window. The dispatch
+   fix is `hyperloom/kernels/gfx90a_flash_decode/multirow-skip-triton-prefill.patch`
+   (applied to the overlay). **Round P must still measure it** (staged in
+   `run_I_splitkv.py P`); until then treat the MTP numbers below as pre-fix.
+3. MTP with k>2 -- deprioritised: k=1 vs k=2 differ by 3.8% per step, so token
+   count is not the lever; fix the per-step term first.
+4. `--mamba-cache-mode all` for progressive prefix reuse.
+5. Weights kept 8-bit resident with tile-load dequant (capacity phase).
+6. No optimizer sealed baseline exists yet (`baseline_tput=0.0`), so
    `best_throughput` in the KB row stays 0.0 by design.

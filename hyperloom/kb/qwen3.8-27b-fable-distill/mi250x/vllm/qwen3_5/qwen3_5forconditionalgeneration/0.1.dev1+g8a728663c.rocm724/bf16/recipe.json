@@ -93,7 +93,7 @@
     }
   ],
   "patches": [
-    "patches/vllm-dsa-gfx90a/README.md\uff08\u6765\u6e90\u8bb0\u5f55\uff0c\u672c\u6a21\u578b Qwen3_5 \u4e0d\u8d70 DSA \u7d22\u5f15\u5668\uff0c\u8fd0\u884c\u65f6\u4e0d\u88ab launcher \u8c03\u7528\uff09",
+    "recipes/patches/vllm/vllm_0.28.0_rocm72/dsa-indexer/README.md\uff08\u6765\u6e90\u8bb0\u5f55\uff0c\u672c\u6a21\u578b Qwen3_5 \u4e0d\u8d70 DSA \u7d22\u5f15\u5668\uff0c\u8fd0\u884c\u65f6\u4e0d\u88ab launcher \u8c03\u7528\uff09",
     "patches/qwen4exp/local-nogds-gds-for-tp-gt1.patch\uff08AIS/nogds \u8865\u4e01\u53ea\u5728 master \u6811\uff0cVLLM_FST_KEEP_NOGDS \u8bfb\u53d6\u65b9\uff09"
   ],
   "pitfalls": [

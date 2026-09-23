@@ -77,7 +77,7 @@ docker run -d --name hyperloom-local \
 
 echo "== 6) 新容器自检 =="
 docker inspect hyperloom-local --format 'IMG={{.Config.Image}}'
-docker exec hyperloom-local bash -lc 'ls '"$STRIPE"'/ZhipuAI/GLM-5.3-Flash-Quark-Int8 | head -8'
+docker exec hyperloom-local bash -lc 'D="$STRIPE"/GLM/GLM-5.3-Flash-320B/Quark-Int8-W8A8; [ -d "$D" ] || { echo "❌ 容器内模型目录不存在: $D"; exit 1; }; echo "模型目录 $D: $(ls "$D" | wc -l) 项"; ls "$D" | head -4'
 docker exec hyperloom-local bash -lc "grep -c 'gfx90a-host patch' $VPKG/models/glm5next/amd/sparse_indexer.py $VPKG/model_executor/layers/mhc.py"
 docker exec hyperloom-local bash -lc 'ls -l /dev/kfd | head -2; id'
 echo "-- .env 的 HYPERLOOM_IMAGE 改成新 tag（留备份）--"

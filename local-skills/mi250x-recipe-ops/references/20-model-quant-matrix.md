@@ -148,7 +148,7 @@ ROCm 侧 `platforms/rocm.py:827` 先查 `_ROCM_DEVICE_ID_NAME_MAP`，本机 `dev
 
 ### 5. ~~便宜杠杆~~ **反噪音项（已装，性能恒等）**：aiter a8w8 调优表的 gfx90a 行
 
-`patches/gfx90a/aiter_a8w8_tuned_gemm_gfx90a.csv` 内有 **54 行 gfx90a**，但三个 env
+`recipes/patches/vllm/vllm_0.28.0_rocm72/aiter_a8w8_tuned_gemm_gfx90a.csv` 内有 **54 行 gfx90a**，但三个 env
 （`vllm_0.28.0_rocm72` / `vllm_master_rocm724` / `wu1w-int8-028`）里的
 `aiter/configs/a8w8_tuned_gemm.csv` 只有 gfx942=26 + gfx950=553 ⇒ **gfx90a 的调优从未生效**，
 生产日志里的 `not found tuned config in a8w8_tuned_gemm.csv, will use default config` 就是它。
@@ -165,7 +165,7 @@ ROCm 侧 `platforms/rocm.py:827` 先查 `_ROCM_DEVICE_ID_NAME_MAP`，本机 `dev
 - `docs/DeepSeek-V4.1-Flash-CT-INT4-W4A16-转换记录-2026-09-18.md`（175 KB / 2462 行）
   **全文只有 nightly 一条线**（`0.29.1rc1.dev47+gdc36fcce9` L3-4 → `nightly-0918` = `dee37d891` L1800/L1838）；
   **`0.28.0`、`master`、`748B`、`GLM-5.3` 在全文 0 命中**。
-  适用域：端口 **8119** / 补丁树 `ct_w4a16_dsv41_n0918` / 模型 **DeepSeek-V4.1-Flash** /
+  适用域：端口 **8119** / 补丁树 `vllm-openai-rocm-nightly-0918/core` / 模型 **DeepSeek-V4.1-Flash** /
   量化 **ct-int4 W4A16（uint4b8, g32）**；**与 GLM-5.3 int4（走 `deepseek_v32`）不是同一套补丁**。
 - `docs/MI250X-AITER-INT4-内核复核-2026-09-17.md` **全文无「ROCm 7.2.4」字样**（只隐含在脚本名
   `…_vllm_rocm72_…` 里）。

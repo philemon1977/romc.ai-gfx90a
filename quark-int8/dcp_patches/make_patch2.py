@@ -11,7 +11,7 @@ gfx90a 没有 CuteDSL ⇒ 起 DCP 必抛 "DCP sparse-indexer merge requires Cute
 """
 import difflib, os, shutil, sys, py_compile
 
-TREE = "/home/qiba/ai/recipes/patches/gfx90a/ct_w4a16_dsv41_n0918/tree"
+TREE = "/home/qiba/ai/recipes/patches/vllm/vllm-openai-rocm-nightly-0918/core/tree"
 REL = "model_executor/layers/sparse_attn_indexer.py"
 HERE = os.path.dirname(os.path.abspath(__file__))
 BASE, WORK = os.path.join(HERE, "base"), os.path.join(HERE, "work")

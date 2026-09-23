@@ -31,7 +31,7 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 BASE = HERE / "base"
-TREE = Path("/home/qiba/ai/recipes/patches/gfx90a/ct_w4a16_dsv41_n0918/tree")
+TREE = Path("/home/qiba/ai/recipes/patches/vllm/vllm-openai-rocm-nightly-0918/core/tree")
 
 # 队列覆盖面：树内路径 -> base 里的上游原件
 FILES = {

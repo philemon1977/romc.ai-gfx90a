@@ -42,7 +42,7 @@ from pathlib import Path
 
 SKILL = Path("/home/qiba/ROCm.AI/local-skills/mi250x-recipe-ops")
 AI = Path("/home/qiba/ai")
-RECIPES = AI / "docs" / "recipes"
+RECIPES = AI / "recipes" / "kinds"
 # 证据根不止一个：配方合法地引用 **ROCm.AI 仓**里的东西（hyperloom/reports、
 # quark-int8、patches…）。第一版只认 AI 一个根，于是把 8121 引用的
 # `hyperloom/reports/models/glm53-int4/*.md` 全报成「来源不存在」——三条误报。
@@ -338,8 +338,16 @@ def audit_scope() -> int:
     print(f"条目 {n_items} 条；各轴被用到的取值：")
     for ax in spec["axes"]:
         vals = sorted(v for v in used_values.get(ax, set()) if v != "*")
-        print(f"  {ax:9s} 词表 {len(vocab[ax]):2d}  实际用到 {len(vals):2d}"
-              f"{'  ← 词表里有但没人用的: ' + str(sorted(vocab[ax] - set(vals))) if vocab[ax] - set(vals) else ''}")
+        is_open = ax in open_axes
+        if is_open:
+            # 开集轴（权重 id 等）：词表**只登记需要特别标注的类别**，不穷举取值。
+            # 不写这句就会被误读成"词表只有 1 个值 ⇒ 覆盖不足"——2026-09-21 真实误读过。
+            note = f"词表 {len(vocab[ax])} 项（**开集轴：只登记需特别标注的类别，不穷举取值**）  实际用到 {len(vals):2d}"
+        else:
+            note = f"词表 {len(vocab[ax]):2d}  实际用到 {len(vals):2d}" + \
+                   (f"  ← 词表里有但没人用的: {sorted(vocab[ax] - set(vals))}"
+                    if vocab[ax] - set(vals) else "")
+        print(f"  {ax:9s} {note}")
 
     if findings:
         print(f"\n── 适用范围发现（{len(findings)}）──")

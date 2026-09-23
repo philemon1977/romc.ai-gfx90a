@@ -122,8 +122,8 @@
     }
   ],
   "patches": [
-    "patches/gfx90a/port_splitkv_pa.py\uff08\u7ee7\u627f 8301\uff0c\u5728\u4f4d\u95e8 ON\uff0c\u672c\u81c2\u9884\u671f\u5df2\u63a5\u7ba1=0\uff09",
-    "patches/gfx90a/rocm_splitkv_pa.py",
+    "recipes/patches/vllm/vllm_0.28.0_rocm72/port_splitkv_pa.py\uff08\u7ee7\u627f 8301\uff0c\u5728\u4f4d\u95e8 ON\uff0c\u672c\u81c2\u9884\u671f\u5df2\u63a5\u7ba1=0\uff09",
+    "recipes/patches/vllm/vllm_0.28.0_rocm72/rocm_splitkv_pa.py",
     "\u6295\u673a\u672c\u4f53\u65e0\u8865\u4e01\uff1a0.28 wheel \u539f\u751f dflash \u901a\u8def",
     "\u914d\u65b9: patches/splitkv-paged-decode"
   ],

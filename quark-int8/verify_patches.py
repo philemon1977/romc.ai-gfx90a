@@ -71,7 +71,7 @@ def reconstruct(tree, queue):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--tree", default="/home/qiba/ai/recipes/patches/gfx90a/ct_w4a16_dsv41_n0918/tree")
+    ap.add_argument("--tree", default="/home/qiba/ai/recipes/patches/vllm/vllm-openai-rocm-nightly-0918/core/tree")
     ap.add_argument("--queue", default="quark-int8/dcp_patches")
     ap.add_argument("--repo", default="quark-int8/moe_gemv_patch")
     ap.add_argument("--ctr", default="hyperloom-local")

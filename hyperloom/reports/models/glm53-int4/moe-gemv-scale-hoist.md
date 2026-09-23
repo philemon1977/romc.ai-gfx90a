@@ -104,6 +104,6 @@ gather 下标**让 Triton 无法向量化，把取指数放大 ~16 倍。把 sca
 
 | 本机路径 | 仓库内对应物 |
 |---|---|
-| /home/qiba/ai/patches/gfx90a/ct_w4a16_dsv41_n0918/moe_gemv/mi250_moe_gemv_gs.py（线上补丁，挂载进容器） | quark-int8/moe_gemv_patch/mi250_moe_gemv_gs.py |
+| /home/qiba/ai/recipes/patches/vllm/vllm-openai-rocm-nightly-0918/core/moe_gemv/mi250_moe_gemv_gs.py（线上补丁，挂载进容器） | quark-int8/moe_gemv_patch/mi250_moe_gemv_gs.py |
 | 同上 mi250_moe_gemv_v3.py、sitecustomize.py | quark-int8/moe_gemv_patch/ 同名文件 |
 | /home/qiba/ai/models/ZhipuAI/launcher/glm53_..._mi250dx8.sh（起服脚本，新增 3 个 env 透传） | 见 quark-int8/DCP_A_NOTES.md 的说明 |

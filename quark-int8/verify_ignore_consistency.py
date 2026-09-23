@@ -34,7 +34,7 @@ import convert_dsv41_ct_int4 as C  # noqa: E402
 
 SRC = "/src"
 NEW = "/new"
-PATCH_MODEL = "/w/../ai/patches/gfx90a/ct_w4a16_dsv41/dsv41_amd_model.py"
+PATCH_MODEL = "/w/../ai/recipes/patches/vllm/vllm-openai-rocm-nightly/dsv41/dsv41_amd_model.py"
 
 # 与本次转换一致的开关（run_convert.sh: OPT_SCALE/SHARED_BF16/ATTN_BF16/ATTN_MERGED 全开）
 C._SHARED_EXPERTS_BF16 = True

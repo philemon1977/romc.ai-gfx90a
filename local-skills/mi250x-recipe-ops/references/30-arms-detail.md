@@ -36,7 +36,7 @@
 
 ### 与补丁的关系
 
-- `patches/gfx90a/port_qwen4exp_eagle_annotate.py`（env 门 `VLLM_QWEN4EXP_EAGLE_ANNOTATE=1`）
+- `recipes/patches/vllm/vllm_0.28.0_rocm72/port_qwen4exp_eagle_annotate.py`（env 门 `VLLM_QWEN4EXP_EAGLE_ANNOTATE=1`）
   对本臂**吞吐中性**，只消 9 行误导性警告 ⇒ 见 `references/60-…` §9 与 `data/patches.json`。
 - `qwen4exp` 这条 arch **只有 `envs/vllm_master_rocm724` 注册**（0.28 裸轮 grep 得 0）
   ⇒ 换 env 不是调参问题。

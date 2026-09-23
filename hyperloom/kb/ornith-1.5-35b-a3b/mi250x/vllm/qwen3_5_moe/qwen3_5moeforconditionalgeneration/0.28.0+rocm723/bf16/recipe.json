@@ -86,8 +86,8 @@
   ],
   "patches": [
     "patches/native-env/vllm028-base-p1-qr.patch",
-    "patches/gfx90a/rocm_splitkv_pa.py",
-    "patches/gfx90a/port_splitkv_pa.py\uff08--check \u5728\u4f4d\u5224\u636e\uff09",
+    "recipes/patches/vllm/vllm_0.28.0_rocm72/rocm_splitkv_pa.py",
+    "recipes/patches/vllm/vllm_0.28.0_rocm72/port_splitkv_pa.py\uff08--check \u5728\u4f4d\u5224\u636e\uff09",
     "patches/native-env/NEW-rocm_splitkv_pa.py\uff08gitignore \u533a\u5916\u552f\u4e00\u526f\u672c\uff09",
     "recipes: patches/p1-gemv-c2c3-quickreduce.md",
     "recipes: patches/splitkv-paged-decode.md",

@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 """Lazy sitecustomize that routes vLLM's WNA16 MoE through the MI250X GEMV kernel.
 
-Follows the project's established pattern (patches/gfx90a: a module + a gate env var +
+Follows the project's established pattern (recipes/patches/vllm/vllm_0.28.0_rocm72: a module + a gate env var +
 a monkeypatch installed from the outside, never editing site-packages).
 
 Hook detail: vllm/model_executor/layers/fused_moe/experts/triton_moe.py imports the helper

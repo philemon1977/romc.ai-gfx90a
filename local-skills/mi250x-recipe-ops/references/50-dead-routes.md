@@ -120,7 +120,7 @@ table and raises `Memory access fault by GPU`, which looks exactly like a kernel
 
 ## 本会话新增（2026-09-20：DSV4.1-Flash CT-int4 根因、稀疏 indexer 内核与 engram 死路）
 
-来源：`DeepSeek-V4.1-Flash-CT-Int4-W4A16` 线（端口 8119 / 补丁树 `ct_w4a16_dsv41_n0918`）。
+来源：`DeepSeek-V4.1-Flash-CT-Int4-W4A16` 线（端口 8119 / 补丁树 `vllm-openai-rocm-nightly-0918/core`）。
 完整记录：`$AI/docs/DeepSeek-V4.1-Flash-CT-INT4-W4A16-转换记录-2026-09-18.md` §4.34–§4.39。
 以下四条此前在本技能 **0 命中**。
 
@@ -219,7 +219,7 @@ table and raises `Memory access fault by GPU`, which looks exactly like a kernel
 ### G. 与本技能既有条目的关系
 
 - 技能第三轮记的「`DSV41_IDX_AITER_KERNEL=1` +69.3%（conc32）」挂的**正是本会话改的那份文件**
-  （`ct_w4a16_dsv41_n0918/tree/v1/attention/ops/rocm_aiter_mla_sparse.py`，GLM-5.3 int4 的 8121 launcher 同源）
+  （`vllm-openai-rocm-nightly-0918/core/tree/v1/attention/ops/rocm_aiter_mla_sparse.py`，GLM-5.3 int4 的 8121 launcher 同源）
   ⇒ 该条既是速度证据，也**反证内核端到端可用**；但 DSV4.1 线路上的长上下文崩溃（§4.39）仍未闭。
 - ⚠️ 同名文件在工作区有 **4 份**，SHUFFLE 内核只在 ops 那一份里（`backends/mla/` 与旧树 `ct_w4a16_dsv41/`
   均为 0）⇒ 换补丁树/换线路前先核对：`grep -c USE_SHUFFLE <file>`。

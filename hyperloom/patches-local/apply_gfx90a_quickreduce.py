@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """在 gfx90a(MI250X) 上打开 QuickReduce（移植前人 C2+C3，2026-09-21）。
 
-出处：/home/qiba/ai/recipes/patches/gfx90a/port_p1_c2_c3.py（该文件开头即写"给 gfx90a(MI250X) 打开 QuickReduce"），
+出处：/home/qiba/ai/recipes/patches/vllm/vllm_0.28.0_rocm72/port_p1_c2_c3.py（该文件开头即写"给 gfx90a(MI250X) 打开 QuickReduce"），
 以及 /home/qiba/ai/recipes/patches/native-env/vllm028-base-p1-qr.patch。前人目标版本 vLLM 0.28，本仓镜像为
 0.3.1.dev85；两处锚点在本镜像里**逐字相同**，故可原样移植。
 

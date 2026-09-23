@@ -1,412 +1,421 @@
 {
- "env_hint": "KNOWLEDGE_LOCAL_ROOT=/home/qiba/ROCm.AI/hyperloom/kb",
- "generated_at": "2026-09-21T07:55:49+00:00",
- "kb_root": "/home/qiba/ROCm.AI/hyperloom/kb",
- "recipe_dirs": [
-  "deepseek-v4-flash-0731-gguf/mi250x/llama.cpp/unknown_model_type/unknown_arch/0.3.0-dev+a9e9c3c5f/ud-q8_k_xl",
-  "deepseek-v4.1-flash-gguf/mi250x/llama.cpp/unknown_model_type/unknown_arch/0.4.0-dev+f37da57/q4_k_m",
-  "glm-5.3-ct-int4-w4a16/mi250x/vllm/glm_moe_dsa/glmmoedsaforcausallm/0.3.1.dev85+gdee37d891/w4a16",
-  "glm-5.3-ct-int4-w4a16/mi300x/vllm/glm_moe_dsa/glmmoedsaforcausallm/0.3.1.dev85+gdee37d891/w4a16",
-  "glm-5.3-flash-gguf/mi250x/llama.cpp/unknown_model_type/unknown_arch/0.3.0-dev+629b50552/q8_0",
-  "ornith-1.5-35b-a3b/mi250x/vllm/qwen3_5_moe/qwen3_5moeforconditionalgeneration/0.28.0+rocm723/bf16",
-  "ornith-1.5-397b-fp8/mi250x/vllm/qwen3_5_moe/qwen3_5moeforconditionalgeneration/0.28.0/fp8",
-  "ornith-1.5-397b-fp8/unknown_gpu/vllm/qwen3_5_moe/qwen3_5moeforconditionalgeneration/0.28.0/fp8",
-  "ornith-1.5-397b-gguf/mi250x/llama.cpp/unknown_model_type/unknown_arch/0.3.0-dev+a9e9c3c5f/q8_0",
-  "qwen2.5-1.5b-instruct/mi250x/vllm/qwen2/qwen2forcausallm/0.28.0+rocm723/bf16",
-  "qwen3.5-397b-a17b-fp8/mi250x/vllm/qwen3_5_moe/qwen3_5moeforconditionalgeneration/0.28.0/fp8",
-  "qwen3.5-397b-a17b/mi250x/vllm/qwen3_5_moe/qwen3_5moeforconditionalgeneration/0.28.0/bf16",
-  "qwen3.8-27b-abliterated-w8a8-gdnint8/mi250x/vllm/qwen3_5/qwen3_5forconditionalgeneration/0.28.0+rocm723/int8_w8a8",
-  "qwen3.8-27b-fable-distill/mi250x/vllm/qwen3_5/qwen3_5forconditionalgeneration/0.1.dev1+g8a728663c.rocm724/bf16",
-  "qwen3.8-27b-fable-distill/mi250x/vllm/qwen3_5/qwen3_5forconditionalgeneration/0.28.0+rocm723/bf16",
-  "qwen3.8-27b/mi250x/vllm/qwen3_5/qwen3_5forconditionalgeneration/0.28.0+rocm723/bf16",
-  "qwen3.8-flash-next-bf16/mi250x/vllm/qwen4_exp/qwen4expforconditionalgeneration/0.1.dev1+g8a728663c.rocm724/bf16",
-  "qwen3.8-flash-next-gguf/mi250x/llama.cpp/unknown_model_type/unknown_arch/0.3.0-dev+a9e9c3c5f/ud-q4_k_xl"
- ],
- "rows": [
-  {
-   "authority": "EXPERIENTIAL",
-   "best_throughput": 22.1,
-   "canonical_id": "inference:deepseek-v4-flash-0731-gguf:mi250x:llama.cpp:unknown_model_type:unknown_arch:0.3.0-dev+a9e9c3c5f:ud-q8_k_xl",
-   "confidence": 0.85,
-   "counts": {
-    "lessons": 5,
-    "pitfalls": 10,
-    "remaining_gaps": 4,
-    "what_failed": 7,
-    "what_worked": 5
-   },
-   "dir": "deepseek-v4-flash-0731-gguf/mi250x/llama.cpp/unknown_model_type/unknown_arch/0.3.0-dev+a9e9c3c5f/ud-q8_k_xl",
-   "framework_version": "0.3.0-dev+a9e9c3c5f",
-   "hardware": "mi250x",
-   "model": "deepseek-v4-flash-0731-gguf",
-   "precision": "ud-q8_k_xl",
-   "status": "active"
-  },
-  {
-   "authority": "EXPERIENTIAL",
-   "best_throughput": 26.17,
-   "canonical_id": "inference:deepseek-v4.1-flash-gguf:mi250x:llama.cpp:unknown_model_type:unknown_arch:0.4.0-dev+f37da57:q4_k_m",
-   "confidence": 0.85,
-   "counts": {
-    "lessons": 3,
-    "pitfalls": 10,
-    "remaining_gaps": 4,
-    "what_failed": 7,
-    "what_worked": 5
-   },
-   "dir": "deepseek-v4.1-flash-gguf/mi250x/llama.cpp/unknown_model_type/unknown_arch/0.4.0-dev+f37da57/q4_k_m",
-   "framework_version": "0.4.0-dev+f37da57",
-   "hardware": "mi250x",
-   "model": "deepseek-v4.1-flash-gguf",
-   "precision": "q4_k_m",
-   "status": "active"
-  },
-  {
-   "authority": "EXPERIENTIAL",
-   "best_throughput": 59.5,
-   "canonical_id": "inference:glm-5.3-ct-int4-w4a16:mi250x:vllm:glm_moe_dsa:glmmoedsaforcausallm:0.3.1.dev85+gdee37d891:w4a16",
-   "confidence": 0.8,
-   "counts": {
-    "lessons": 4,
-    "pitfalls": 5,
-    "remaining_gaps": 7,
-    "what_failed": 5,
-    "what_worked": 4
-   },
-   "dir": "glm-5.3-ct-int4-w4a16/mi250x/vllm/glm_moe_dsa/glmmoedsaforcausallm/0.3.1.dev85+gdee37d891/w4a16",
-   "framework_version": "0.3.1.dev85+gdee37d891",
-   "hardware": "mi250x",
-   "model": "GLM-5.3-CT-Int4-W4A16",
-   "precision": "w4a16",
-   "status": "active"
-  },
-  {
-   "authority": "EXPERIENTIAL",
-   "best_throughput": 0.0,
-   "canonical_id": "inference:glm-5.3-ct-int4-w4a16:mi300x:vllm:glm_moe_dsa:glmmoedsaforcausallm:0.3.1.dev85+gdee37d891:w4a16",
-   "confidence": 0.85,
-   "counts": {
-    "lessons": 0,
-    "pitfalls": 0,
-    "remaining_gaps": 0,
-    "what_failed": 0,
-    "what_worked": 0
-   },
-   "dir": "glm-5.3-ct-int4-w4a16/mi300x/vllm/glm_moe_dsa/glmmoedsaforcausallm/0.3.1.dev85+gdee37d891/w4a16",
-   "framework_version": "0.3.1.dev85+gdee37d891",
-   "hardware": "mi300x",
-   "model": "GLM-5.3-CT-Int4-W4A16",
-   "precision": "w4a16",
-   "status": null
-  },
-  {
-   "authority": "EXPERIENTIAL",
-   "best_throughput": 50.8,
-   "canonical_id": "inference:glm-5.3-flash-gguf:mi250x:llama.cpp:unknown_model_type:unknown_arch:0.3.0-dev+629b50552:q8_0",
-   "confidence": 0.85,
-   "counts": {
-    "lessons": 5,
-    "pitfalls": 11,
-    "remaining_gaps": 4,
-    "what_failed": 7,
-    "what_worked": 6
-   },
-   "dir": "glm-5.3-flash-gguf/mi250x/llama.cpp/unknown_model_type/unknown_arch/0.3.0-dev+629b50552/q8_0",
-   "framework_version": "0.3.0-dev+629b50552",
-   "hardware": "mi250x",
-   "model": "glm-5.3-flash-gguf",
-   "precision": "q8_0",
-   "status": "active"
-  },
-  {
-   "authority": "EXPERIENTIAL",
-   "best_throughput": 1915.17,
-   "canonical_id": "inference:ornith-1.5-35b-a3b:mi250x:vllm:qwen3_5_moe:qwen3_5moeforconditionalgeneration:0.28.0+rocm723:bf16",
-   "confidence": 0.85,
-   "counts": {
-    "lessons": 3,
-    "pitfalls": 10,
-    "remaining_gaps": 3,
-    "what_failed": 5,
-    "what_worked": 4
-   },
-   "dir": "ornith-1.5-35b-a3b/mi250x/vllm/qwen3_5_moe/qwen3_5moeforconditionalgeneration/0.28.0+rocm723/bf16",
-   "framework_version": "0.28.0+rocm723",
-   "hardware": "mi250x",
-   "model": "ornith-1.5-35b-a3b",
-   "precision": "bf16",
-   "status": "active"
-  },
-  {
-   "authority": "EXPERIENTIAL",
-   "best_throughput": 0.0,
-   "canonical_id": "inference:ornith-1.5-397b-fp8:mi250x:vllm:qwen3_5_moe:qwen3_5moeforconditionalgeneration:0.28.0:fp8",
-   "confidence": 0.9,
-   "counts": {
-    "lessons": 12,
-    "pitfalls": 13,
-    "remaining_gaps": 16,
-    "what_failed": 5,
-    "what_worked": 17
-   },
-   "dir": "ornith-1.5-397b-fp8/mi250x/vllm/qwen3_5_moe/qwen3_5moeforconditionalgeneration/0.28.0/fp8",
-   "framework_version": "0.28.0",
-   "hardware": "mi250x",
-   "model": "Ornith-1.5-397B-FP8",
-   "precision": "fp8",
-   "status": "experimental"
-  },
-  {
-   "authority": "EXPERIENTIAL",
-   "best_throughput": 0.0,
-   "canonical_id": "inference:ornith-1.5-397b-fp8:unknown_gpu:vllm:qwen3_5_moe:qwen3_5moeforconditionalgeneration:0.28.0:fp8",
-   "confidence": 0.85,
-   "counts": {
-    "lessons": 0,
-    "pitfalls": 0,
-    "remaining_gaps": 0,
-    "what_failed": 0,
-    "what_worked": 0
-   },
-   "dir": "ornith-1.5-397b-fp8/unknown_gpu/vllm/qwen3_5_moe/qwen3_5moeforconditionalgeneration/0.28.0/fp8",
-   "framework_version": "0.28.0",
-   "hardware": "unknown_gpu",
-   "model": "Ornith-1.5-397B-FP8",
-   "precision": "fp8",
-   "status": null
-  },
-  {
-   "authority": "EXPERIENTIAL",
-   "best_throughput": 47.28,
-   "canonical_id": "inference:ornith-1.5-397b-gguf:mi250x:llama.cpp:unknown_model_type:unknown_arch:0.3.0-dev+a9e9c3c5f:q8_0",
-   "confidence": 0.85,
-   "counts": {
-    "lessons": 4,
-    "pitfalls": 9,
-    "remaining_gaps": 3,
-    "what_failed": 8,
-    "what_worked": 4
-   },
-   "dir": "ornith-1.5-397b-gguf/mi250x/llama.cpp/unknown_model_type/unknown_arch/0.3.0-dev+a9e9c3c5f/q8_0",
-   "framework_version": "0.3.0-dev+a9e9c3c5f",
-   "hardware": "mi250x",
-   "model": "ornith-1.5-397b-gguf",
-   "precision": "q8_0",
-   "status": "active"
-  },
-  {
-   "authority": "EXPERIENTIAL",
-   "best_throughput": 0.0,
-   "canonical_id": "inference:qwen2.5-1.5b-instruct:mi250x:vllm:qwen2:qwen2forcausallm:0.28.0+rocm723:bf16",
-   "confidence": 0.85,
-   "counts": {
-    "lessons": 3,
-    "pitfalls": 6,
-    "remaining_gaps": 1,
-    "what_failed": 3,
-    "what_worked": 4
-   },
-   "dir": "qwen2.5-1.5b-instruct/mi250x/vllm/qwen2/qwen2forcausallm/0.28.0+rocm723/bf16",
-   "framework_version": "0.28.0+rocm723",
-   "hardware": "mi250x",
-   "model": "qwen2.5-1.5b-instruct",
-   "precision": "bf16",
-   "status": "active"
-  },
-  {
-   "authority": "VENDOR_REFERENCE",
-   "best_throughput": 0.0,
-   "canonical_id": "inference:qwen3.5-397b-a17b:mi250x:vllm:qwen3_5_moe:qwen3_5moeforconditionalgeneration:0.28.0:bf16",
-   "confidence": 0.95,
-   "counts": {
-    "lessons": 3,
-    "pitfalls": 2,
-    "remaining_gaps": 1,
-    "what_failed": 1,
-    "what_worked": 0
-   },
-   "dir": "qwen3.5-397b-a17b/mi250x/vllm/qwen3_5_moe/qwen3_5moeforconditionalgeneration/0.28.0/bf16",
-   "framework_version": "0.28.0",
-   "hardware": "mi250x",
-   "model": "Qwen3.5-397B-A17B",
-   "precision": "bf16",
-   "status": "reference",
-   "vendor_support_gate": {
-    "on_this_hardware": "vendor recipe is NOT an MI250X-supported configuration; only its hardware-independent parts transfer",
-    "verified": [
-     "ascend_950dt",
-     "gb200",
-     "h200",
-     "mi300x",
-     "mi325x",
-     "mi355x"
-    ]
-   }
-  },
-  {
-   "authority": "VENDOR_REFERENCE",
-   "best_throughput": 0.0,
-   "canonical_id": "inference:qwen3.5-397b-a17b-fp8:mi250x:vllm:qwen3_5_moe:qwen3_5moeforconditionalgeneration:0.28.0:fp8",
-   "confidence": 0.95,
-   "counts": {
-    "lessons": 3,
-    "pitfalls": 2,
-    "remaining_gaps": 1,
-    "what_failed": 1,
-    "what_worked": 1
-   },
-   "dir": "qwen3.5-397b-a17b-fp8/mi250x/vllm/qwen3_5_moe/qwen3_5moeforconditionalgeneration/0.28.0/fp8",
-   "framework_version": "0.28.0",
-   "hardware": "mi250x",
-   "model": "Qwen3.5-397B-A17B-FP8",
-   "precision": "fp8",
-   "status": "reference",
-   "vendor_support_gate": {
-    "on_this_hardware": "vendor recipe is NOT an MI250X-supported configuration; only its hardware-independent parts transfer",
-    "verified": [
-     "ascend_950dt",
-     "gb200",
-     "h200",
-     "mi300x",
-     "mi325x",
-     "mi355x"
-    ]
-   }
-  },
-  {
-   "authority": "EXPERIENTIAL",
-   "best_throughput": 162.33,
-   "canonical_id": "inference:qwen3.8-27b:mi250x:vllm:qwen3_5:qwen3_5forconditionalgeneration:0.28.0+rocm723:bf16",
-   "confidence": 0.85,
-   "counts": {
-    "lessons": 3,
-    "pitfalls": 7,
-    "remaining_gaps": 3,
-    "what_failed": 4,
-    "what_worked": 4
-   },
-   "dir": "qwen3.8-27b/mi250x/vllm/qwen3_5/qwen3_5forconditionalgeneration/0.28.0+rocm723/bf16",
-   "framework_version": "0.28.0+rocm723",
-   "hardware": "mi250x",
-   "model": "qwen3.8-27b",
-   "precision": "bf16",
-   "status": "active"
-  },
-  {
-   "authority": "EXPERIENTIAL",
-   "best_throughput": 80.3,
-   "canonical_id": "inference:qwen3.8-27b-abliterated-w8a8-gdnint8:mi250x:vllm:qwen3_5:qwen3_5forconditionalgeneration:0.28.0+rocm723:int8_w8a8",
-   "confidence": 0.85,
-   "counts": {
-    "lessons": 4,
-    "pitfalls": 10,
-    "remaining_gaps": 4,
-    "what_failed": 6,
-    "what_worked": 5
-   },
-   "dir": "qwen3.8-27b-abliterated-w8a8-gdnint8/mi250x/vllm/qwen3_5/qwen3_5forconditionalgeneration/0.28.0+rocm723/int8_w8a8",
-   "framework_version": "0.28.0+rocm723",
-   "hardware": "mi250x",
-   "model": "qwen3.8-27b-abliterated-w8a8-gdnint8",
-   "precision": "int8_w8a8",
-   "status": "active"
-  },
-  {
-   "authority": "EXPERIENTIAL",
-   "best_throughput": 90.0,
-   "canonical_id": "inference:qwen3.8-27b-fable-distill:mi250x:vllm:qwen3_5:qwen3_5forconditionalgeneration:0.1.dev1+g8a728663c.rocm724:bf16",
-   "confidence": 0.85,
-   "counts": {
-    "lessons": 4,
-    "pitfalls": 9,
-    "remaining_gaps": 4,
-    "what_failed": 6,
-    "what_worked": 5
-   },
-   "dir": "qwen3.8-27b-fable-distill/mi250x/vllm/qwen3_5/qwen3_5forconditionalgeneration/0.1.dev1+g8a728663c.rocm724/bf16",
-   "framework_version": "0.1.dev1+g8a728663c.rocm724",
-   "hardware": "mi250x",
-   "model": "qwen3.8-27b-fable-distill",
-   "precision": "bf16",
-   "status": "active"
-  },
-  {
-   "authority": "EXPERIENTIAL",
-   "best_throughput": 55.04,
-   "canonical_id": "inference:qwen3.8-27b-fable-distill:mi250x:vllm:qwen3_5:qwen3_5forconditionalgeneration:0.28.0+rocm723:bf16",
-   "confidence": 0.6,
-   "counts": {
-    "lessons": 8,
-    "pitfalls": 18,
-    "remaining_gaps": 5,
-    "what_failed": 10,
-    "what_worked": 10
-   },
-   "dir": "qwen3.8-27b-fable-distill/mi250x/vllm/qwen3_5/qwen3_5forconditionalgeneration/0.28.0+rocm723/bf16",
-   "framework_version": "0.28.0+rocm723",
-   "hardware": "mi250x",
-   "model": "qwen3.8-27b-fable-distill",
-   "precision": "bf16",
-   "status": "experimental"
-  },
-  {
-   "authority": "EXPERIENTIAL",
-   "best_throughput": 296.86,
-   "canonical_id": "inference:qwen3.8-flash-next-bf16:mi250x:vllm:qwen4_exp:qwen4expforconditionalgeneration:0.1.dev1+g8a728663c.rocm724:bf16",
-   "confidence": 0.85,
-   "counts": {
-    "lessons": 8,
-    "pitfalls": 19,
-    "remaining_gaps": 6,
-    "what_failed": 15,
-    "what_worked": 10
-   },
-   "dir": "qwen3.8-flash-next-bf16/mi250x/vllm/qwen4_exp/qwen4expforconditionalgeneration/0.1.dev1+g8a728663c.rocm724/bf16",
-   "framework_version": "0.1.dev1+g8a728663c.rocm724",
-   "hardware": "mi250x",
-   "model": "qwen3.8-flash-next-bf16",
-   "precision": "bf16",
-   "status": "active"
-  },
-  {
-   "authority": "EXPERIENTIAL",
-   "best_throughput": 60.06,
-   "canonical_id": "inference:qwen3.8-flash-next-gguf:mi250x:llama.cpp:unknown_model_type:unknown_arch:0.3.0-dev+a9e9c3c5f:ud-q4_k_xl",
-   "confidence": 0.85,
-   "counts": {
-    "lessons": 4,
-    "pitfalls": 10,
-    "remaining_gaps": 4,
-    "what_failed": 7,
-    "what_worked": 5
-   },
-   "dir": "qwen3.8-flash-next-gguf/mi250x/llama.cpp/unknown_model_type/unknown_arch/0.3.0-dev+a9e9c3c5f/ud-q4_k_xl",
-   "framework_version": "0.3.0-dev+a9e9c3c5f",
-   "hardware": "mi250x",
-   "model": "qwen3.8-flash-next-gguf",
-   "precision": "ud-q4_k_xl",
-   "status": "active"
-  }
- ],
- "scope_spec": "data/scope.json",
- "seed_manifest": {
-  "canonical_ids": [
-   "inference:deepseek-v4-flash-0731-gguf:mi250x:llama.cpp:unknown_model_type:unknown_arch:0.3.0-dev+a9e9c3c5f:ud-q8_k_xl",
-   "inference:deepseek-v4.1-flash-gguf:mi250x:llama.cpp:unknown_model_type:unknown_arch:0.4.0-dev+f37da57:q4_k_m",
-   "inference:glm-5.3-flash-gguf:mi250x:llama.cpp:unknown_model_type:unknown_arch:0.3.0-dev+629b50552:q8_0",
-   "inference:ornith-1.5-35b-a3b:mi250x:vllm:qwen3_5_moe:qwen3_5moeforconditionalgeneration:0.28.0+rocm723:bf16",
-   "inference:ornith-1.5-397b-gguf:mi250x:llama.cpp:unknown_model_type:unknown_arch:0.3.0-dev+a9e9c3c5f:q8_0",
-   "inference:qwen2.5-1.5b-instruct:mi250x:vllm:qwen2:qwen2forcausallm:0.28.0+rocm723:bf16",
-   "inference:qwen3.8-27b-abliterated-w8a8-gdnint8:mi250x:vllm:qwen3_5:qwen3_5forconditionalgeneration:0.28.0+rocm723:int8_w8a8",
-   "inference:qwen3.8-27b-fable-distill:mi250x:vllm:qwen3_5:qwen3_5forconditionalgeneration:0.1.dev1+g8a728663c.rocm724:bf16",
-   "inference:qwen3.8-27b-fable-distill:mi250x:vllm:qwen3_5:qwen3_5forconditionalgeneration:0.28.0+rocm723:bf16",
-   "inference:qwen3.8-27b:mi250x:vllm:qwen3_5:qwen3_5forconditionalgeneration:0.28.0+rocm723:bf16",
-   "inference:qwen3.8-flash-next-bf16:mi250x:vllm:qwen4_exp:qwen4expforconditionalgeneration:0.1.dev1+g8a728663c.rocm724:bf16",
-   "inference:qwen3.8-flash-next-gguf:mi250x:llama.cpp:unknown_model_type:unknown_arch:0.3.0-dev+a9e9c3c5f:ud-q4_k_xl"
+  "env_hint": "KNOWLEDGE_LOCAL_ROOT=/home/qiba/ROCm.AI/hyperloom/kb",
+  "generated_at": "2026-09-23T14:45:55+00:00",
+  "kb_root": "/home/qiba/ROCm.AI/hyperloom/kb",
+  "recipe_dirs": [
+    "deepseek-v4-flash-0731-gguf/mi250x/llama.cpp/unknown_model_type/unknown_arch/0.3.0-dev+a9e9c3c5f/ud-q8_k_xl",
+    "deepseek-v4.1-flash-gguf/mi250x/llama.cpp/unknown_model_type/unknown_arch/0.4.0-dev+f37da57/q4_k_m",
+    "glm-5.3-ct-int4-w4a16/mi250x/vllm/glm_moe_dsa/glmmoedsaforcausallm/0.3.1.dev85+gdee37d891/w4a16",
+    "glm-5.3-ct-int4-w4a16/mi300x/vllm/glm_moe_dsa/glmmoedsaforcausallm/0.3.1.dev85+gdee37d891/w4a16",
+    "glm-5.3-flash-gguf/mi250x/llama.cpp/unknown_model_type/unknown_arch/0.3.0-dev+629b50552/q8_0",
+    "glm-5.3-flash-quark-int8/mi250x/vllm/glm5_next/glm5nextforconditionalgeneration/0.3.1.dev85+gdee37d891/int8",
+    "nope-such-model/mi250x/vllm/unknown_model_type/unknown_arch/0.3.1.dev85+gdee37d891/bf16",
+    "ornith-1.5-35b-a3b/mi250x/vllm/qwen3_5_moe/qwen3_5moeforconditionalgeneration/0.28.0+rocm723/bf16",
+    "ornith-1.5-397b-fp8/mi250x/vllm/qwen3_5_moe/qwen3_5moeforconditionalgeneration/0.28.0/fp8",
+    "ornith-1.5-397b-fp8/unknown_gpu/vllm/qwen3_5_moe/qwen3_5moeforconditionalgeneration/0.28.0/fp8",
+    "ornith-1.5-397b-gguf/mi250x/llama.cpp/unknown_model_type/unknown_arch/0.3.0-dev+a9e9c3c5f/q8_0",
+    "qwen2.5-1.5b-instruct/mi250x/vllm/qwen2/qwen2forcausallm/0.28.0+rocm723/bf16",
+    "qwen3.5-397b-a17b-fp8/mi250x/vllm/qwen3_5_moe/qwen3_5moeforconditionalgeneration/0.28.0/fp8",
+    "qwen3.5-397b-a17b/mi250x/vllm/qwen3_5_moe/qwen3_5moeforconditionalgeneration/0.28.0/bf16",
+    "qwen3.8-27b-abliterated-w8a8-gdnint8/mi250x/vllm/qwen3_5/qwen3_5forconditionalgeneration/0.28.0+rocm723/int8_w8a8",
+    "qwen3.8-27b-fable-distill/mi250x/vllm/qwen3_5/qwen3_5forconditionalgeneration/0.1.dev1+g8a728663c.rocm724/bf16",
+    "qwen3.8-27b-fable-distill/mi250x/vllm/qwen3_5/qwen3_5forconditionalgeneration/0.28.0+rocm723/bf16",
+    "qwen3.8-27b/mi250x/vllm/qwen3_5/qwen3_5forconditionalgeneration/0.28.0+rocm723/bf16",
+    "qwen3.8-flash-next-bf16/mi250x/vllm/qwen4_exp/qwen4expforconditionalgeneration/0.1.dev1+g8a728663c.rocm724/bf16",
+    "qwen3.8-flash-next-gguf/mi250x/llama.cpp/unknown_model_type/unknown_arch/0.3.0-dev+a9e9c3c5f/ud-q4_k_xl"
   ],
-  "hardware": "mi250x",
-  "rows": 12,
-  "seeded_at": "2026-09-15T08:06:40+00:00",
-  "source": "/home/qiba/ai/docs/recipes (serving arms)"
- }
+  "rows": [
+    {
+      "authority": "EXPERIENTIAL",
+      "best_throughput": 22.1,
+      "canonical_id": "inference:deepseek-v4-flash-0731-gguf:mi250x:llama.cpp:unknown_model_type:unknown_arch:0.3.0-dev+a9e9c3c5f:ud-q8_k_xl",
+      "confidence": 0.85,
+      "counts": {
+        "lessons": 5,
+        "pitfalls": 10,
+        "remaining_gaps": 4,
+        "what_failed": 7,
+        "what_worked": 5
+      },
+      "dir": "deepseek-v4-flash-0731-gguf/mi250x/llama.cpp/unknown_model_type/unknown_arch/0.3.0-dev+a9e9c3c5f/ud-q8_k_xl",
+      "framework_version": "0.3.0-dev+a9e9c3c5f",
+      "hardware": "mi250x",
+      "model": "deepseek-v4-flash-0731-gguf",
+      "precision": "ud-q8_k_xl",
+      "status": "active"
+    },
+    {
+      "authority": "EXPERIENTIAL",
+      "best_throughput": 26.17,
+      "canonical_id": "inference:deepseek-v4.1-flash-gguf:mi250x:llama.cpp:unknown_model_type:unknown_arch:0.4.0-dev+f37da57:q4_k_m",
+      "confidence": 0.85,
+      "counts": {
+        "lessons": 3,
+        "pitfalls": 10,
+        "remaining_gaps": 4,
+        "what_failed": 7,
+        "what_worked": 5
+      },
+      "dir": "deepseek-v4.1-flash-gguf/mi250x/llama.cpp/unknown_model_type/unknown_arch/0.4.0-dev+f37da57/q4_k_m",
+      "framework_version": "0.4.0-dev+f37da57",
+      "hardware": "mi250x",
+      "model": "deepseek-v4.1-flash-gguf",
+      "precision": "q4_k_m",
+      "status": "active"
+    },
+    {
+      "authority": "EXPERIENTIAL",
+      "best_throughput": 59.5,
+      "canonical_id": "inference:glm-5.3-ct-int4-w4a16:mi250x:vllm:glm_moe_dsa:glmmoedsaforcausallm:0.3.1.dev85+gdee37d891:w4a16",
+      "confidence": 0.8,
+      "counts": {
+        "lessons": 4,
+        "pitfalls": 5,
+        "remaining_gaps": 7,
+        "what_failed": 5,
+        "what_worked": 4
+      },
+      "dir": "glm-5.3-ct-int4-w4a16/mi250x/vllm/glm_moe_dsa/glmmoedsaforcausallm/0.3.1.dev85+gdee37d891/w4a16",
+      "framework_version": "0.3.1.dev85+gdee37d891",
+      "hardware": "mi250x",
+      "model": "GLM-5.3-CT-Int4-W4A16",
+      "precision": "w4a16",
+      "status": "active"
+    },
+    {
+      "authority": "EXPERIENTIAL",
+      "best_throughput": 0.0,
+      "canonical_id": "inference:glm-5.3-ct-int4-w4a16:mi300x:vllm:glm_moe_dsa:glmmoedsaforcausallm:0.3.1.dev85+gdee37d891:w4a16",
+      "confidence": 0.85,
+      "counts": {
+        "lessons": 0,
+        "pitfalls": 0,
+        "remaining_gaps": 0,
+        "what_failed": 0,
+        "what_worked": 0
+      },
+      "dir": "glm-5.3-ct-int4-w4a16/mi300x/vllm/glm_moe_dsa/glmmoedsaforcausallm/0.3.1.dev85+gdee37d891/w4a16",
+      "framework_version": "0.3.1.dev85+gdee37d891",
+      "hardware": "mi300x",
+      "model": "GLM-5.3-CT-Int4-W4A16",
+      "precision": "w4a16",
+      "status": null
+    },
+    {
+      "authority": "EXPERIENTIAL",
+      "best_throughput": 50.8,
+      "canonical_id": "inference:glm-5.3-flash-gguf:mi250x:llama.cpp:unknown_model_type:unknown_arch:0.3.0-dev+629b50552:q8_0",
+      "confidence": 0.85,
+      "counts": {
+        "lessons": 5,
+        "pitfalls": 11,
+        "remaining_gaps": 4,
+        "what_failed": 7,
+        "what_worked": 6
+      },
+      "dir": "glm-5.3-flash-gguf/mi250x/llama.cpp/unknown_model_type/unknown_arch/0.3.0-dev+629b50552/q8_0",
+      "framework_version": "0.3.0-dev+629b50552",
+      "hardware": "mi250x",
+      "model": "glm-5.3-flash-gguf",
+      "precision": "q8_0",
+      "status": "active"
+    },
+    {
+      "dir": "glm-5.3-flash-quark-int8/mi250x/vllm/glm5_next/glm5nextforconditionalgeneration/0.3.1.dev85+gdee37d891/int8",
+      "error": "[Errno 13] Permission denied: '/home/qiba/ROCm.AI/hyperloom/kb/glm-5.3-flash-quark-int8/mi250x/vllm/glm5_next/glm5nextforconditionalgeneration/0.3.1.dev85+gdee37d891/int8/recipe.json'"
+    },
+    {
+      "dir": "nope-such-model/mi250x/vllm/unknown_model_type/unknown_arch/0.3.1.dev85+gdee37d891/bf16",
+      "error": "[Errno 13] Permission denied: '/home/qiba/ROCm.AI/hyperloom/kb/nope-such-model/mi250x/vllm/unknown_model_type/unknown_arch/0.3.1.dev85+gdee37d891/bf16/recipe.json'"
+    },
+    {
+      "authority": "EXPERIENTIAL",
+      "best_throughput": 1915.17,
+      "canonical_id": "inference:ornith-1.5-35b-a3b:mi250x:vllm:qwen3_5_moe:qwen3_5moeforconditionalgeneration:0.28.0+rocm723:bf16",
+      "confidence": 0.85,
+      "counts": {
+        "lessons": 3,
+        "pitfalls": 10,
+        "remaining_gaps": 3,
+        "what_failed": 5,
+        "what_worked": 4
+      },
+      "dir": "ornith-1.5-35b-a3b/mi250x/vllm/qwen3_5_moe/qwen3_5moeforconditionalgeneration/0.28.0+rocm723/bf16",
+      "framework_version": "0.28.0+rocm723",
+      "hardware": "mi250x",
+      "model": "ornith-1.5-35b-a3b",
+      "precision": "bf16",
+      "status": "active"
+    },
+    {
+      "authority": "EXPERIENTIAL",
+      "best_throughput": 0.0,
+      "canonical_id": "inference:ornith-1.5-397b-fp8:mi250x:vllm:qwen3_5_moe:qwen3_5moeforconditionalgeneration:0.28.0:fp8",
+      "confidence": 0.9,
+      "counts": {
+        "lessons": 12,
+        "pitfalls": 13,
+        "remaining_gaps": 16,
+        "what_failed": 5,
+        "what_worked": 17
+      },
+      "dir": "ornith-1.5-397b-fp8/mi250x/vllm/qwen3_5_moe/qwen3_5moeforconditionalgeneration/0.28.0/fp8",
+      "framework_version": "0.28.0",
+      "hardware": "mi250x",
+      "model": "Ornith-1.5-397B-FP8",
+      "precision": "fp8",
+      "status": "experimental"
+    },
+    {
+      "authority": "EXPERIENTIAL",
+      "best_throughput": 0.0,
+      "canonical_id": "inference:ornith-1.5-397b-fp8:unknown_gpu:vllm:qwen3_5_moe:qwen3_5moeforconditionalgeneration:0.28.0:fp8",
+      "confidence": 0.85,
+      "counts": {
+        "lessons": 0,
+        "pitfalls": 0,
+        "remaining_gaps": 0,
+        "what_failed": 0,
+        "what_worked": 0
+      },
+      "dir": "ornith-1.5-397b-fp8/unknown_gpu/vllm/qwen3_5_moe/qwen3_5moeforconditionalgeneration/0.28.0/fp8",
+      "framework_version": "0.28.0",
+      "hardware": "unknown_gpu",
+      "model": "Ornith-1.5-397B-FP8",
+      "precision": "fp8",
+      "status": null
+    },
+    {
+      "authority": "EXPERIENTIAL",
+      "best_throughput": 47.28,
+      "canonical_id": "inference:ornith-1.5-397b-gguf:mi250x:llama.cpp:unknown_model_type:unknown_arch:0.3.0-dev+a9e9c3c5f:q8_0",
+      "confidence": 0.85,
+      "counts": {
+        "lessons": 4,
+        "pitfalls": 9,
+        "remaining_gaps": 3,
+        "what_failed": 8,
+        "what_worked": 4
+      },
+      "dir": "ornith-1.5-397b-gguf/mi250x/llama.cpp/unknown_model_type/unknown_arch/0.3.0-dev+a9e9c3c5f/q8_0",
+      "framework_version": "0.3.0-dev+a9e9c3c5f",
+      "hardware": "mi250x",
+      "model": "ornith-1.5-397b-gguf",
+      "precision": "q8_0",
+      "status": "active"
+    },
+    {
+      "authority": "EXPERIENTIAL",
+      "best_throughput": 0.0,
+      "canonical_id": "inference:qwen2.5-1.5b-instruct:mi250x:vllm:qwen2:qwen2forcausallm:0.28.0+rocm723:bf16",
+      "confidence": 0.85,
+      "counts": {
+        "lessons": 3,
+        "pitfalls": 6,
+        "remaining_gaps": 1,
+        "what_failed": 3,
+        "what_worked": 4
+      },
+      "dir": "qwen2.5-1.5b-instruct/mi250x/vllm/qwen2/qwen2forcausallm/0.28.0+rocm723/bf16",
+      "framework_version": "0.28.0+rocm723",
+      "hardware": "mi250x",
+      "model": "qwen2.5-1.5b-instruct",
+      "precision": "bf16",
+      "status": "active"
+    },
+    {
+      "authority": "VENDOR_REFERENCE",
+      "best_throughput": 0.0,
+      "canonical_id": "inference:qwen3.5-397b-a17b:mi250x:vllm:qwen3_5_moe:qwen3_5moeforconditionalgeneration:0.28.0:bf16",
+      "confidence": 0.95,
+      "counts": {
+        "lessons": 3,
+        "pitfalls": 2,
+        "remaining_gaps": 1,
+        "what_failed": 1,
+        "what_worked": 0
+      },
+      "dir": "qwen3.5-397b-a17b/mi250x/vllm/qwen3_5_moe/qwen3_5moeforconditionalgeneration/0.28.0/bf16",
+      "framework_version": "0.28.0",
+      "hardware": "mi250x",
+      "model": "Qwen3.5-397B-A17B",
+      "precision": "bf16",
+      "status": "reference",
+      "vendor_support_gate": {
+        "on_this_hardware": "vendor recipe is NOT an MI250X-supported configuration; only its hardware-independent parts transfer",
+        "verified": [
+          "ascend_950dt",
+          "gb200",
+          "h200",
+          "mi300x",
+          "mi325x",
+          "mi355x"
+        ]
+      }
+    },
+    {
+      "authority": "VENDOR_REFERENCE",
+      "best_throughput": 0.0,
+      "canonical_id": "inference:qwen3.5-397b-a17b-fp8:mi250x:vllm:qwen3_5_moe:qwen3_5moeforconditionalgeneration:0.28.0:fp8",
+      "confidence": 0.95,
+      "counts": {
+        "lessons": 3,
+        "pitfalls": 2,
+        "remaining_gaps": 1,
+        "what_failed": 1,
+        "what_worked": 1
+      },
+      "dir": "qwen3.5-397b-a17b-fp8/mi250x/vllm/qwen3_5_moe/qwen3_5moeforconditionalgeneration/0.28.0/fp8",
+      "framework_version": "0.28.0",
+      "hardware": "mi250x",
+      "model": "Qwen3.5-397B-A17B-FP8",
+      "precision": "fp8",
+      "status": "reference",
+      "vendor_support_gate": {
+        "on_this_hardware": "vendor recipe is NOT an MI250X-supported configuration; only its hardware-independent parts transfer",
+        "verified": [
+          "ascend_950dt",
+          "gb200",
+          "h200",
+          "mi300x",
+          "mi325x",
+          "mi355x"
+        ]
+      }
+    },
+    {
+      "authority": "EXPERIENTIAL",
+      "best_throughput": 162.33,
+      "canonical_id": "inference:qwen3.8-27b:mi250x:vllm:qwen3_5:qwen3_5forconditionalgeneration:0.28.0+rocm723:bf16",
+      "confidence": 0.85,
+      "counts": {
+        "lessons": 3,
+        "pitfalls": 7,
+        "remaining_gaps": 3,
+        "what_failed": 4,
+        "what_worked": 4
+      },
+      "dir": "qwen3.8-27b/mi250x/vllm/qwen3_5/qwen3_5forconditionalgeneration/0.28.0+rocm723/bf16",
+      "framework_version": "0.28.0+rocm723",
+      "hardware": "mi250x",
+      "model": "qwen3.8-27b",
+      "precision": "bf16",
+      "status": "active"
+    },
+    {
+      "authority": "EXPERIENTIAL",
+      "best_throughput": 80.3,
+      "canonical_id": "inference:qwen3.8-27b-abliterated-w8a8-gdnint8:mi250x:vllm:qwen3_5:qwen3_5forconditionalgeneration:0.28.0+rocm723:int8_w8a8",
+      "confidence": 0.85,
+      "counts": {
+        "lessons": 4,
+        "pitfalls": 10,
+        "remaining_gaps": 4,
+        "what_failed": 6,
+        "what_worked": 5
+      },
+      "dir": "qwen3.8-27b-abliterated-w8a8-gdnint8/mi250x/vllm/qwen3_5/qwen3_5forconditionalgeneration/0.28.0+rocm723/int8_w8a8",
+      "framework_version": "0.28.0+rocm723",
+      "hardware": "mi250x",
+      "model": "qwen3.8-27b-abliterated-w8a8-gdnint8",
+      "precision": "int8_w8a8",
+      "status": "active"
+    },
+    {
+      "authority": "EXPERIENTIAL",
+      "best_throughput": 90.0,
+      "canonical_id": "inference:qwen3.8-27b-fable-distill:mi250x:vllm:qwen3_5:qwen3_5forconditionalgeneration:0.1.dev1+g8a728663c.rocm724:bf16",
+      "confidence": 0.85,
+      "counts": {
+        "lessons": 4,
+        "pitfalls": 9,
+        "remaining_gaps": 4,
+        "what_failed": 6,
+        "what_worked": 5
+      },
+      "dir": "qwen3.8-27b-fable-distill/mi250x/vllm/qwen3_5/qwen3_5forconditionalgeneration/0.1.dev1+g8a728663c.rocm724/bf16",
+      "framework_version": "0.1.dev1+g8a728663c.rocm724",
+      "hardware": "mi250x",
+      "model": "qwen3.8-27b-fable-distill",
+      "precision": "bf16",
+      "status": "active"
+    },
+    {
+      "authority": "EXPERIENTIAL",
+      "best_throughput": 55.04,
+      "canonical_id": "inference:qwen3.8-27b-fable-distill:mi250x:vllm:qwen3_5:qwen3_5forconditionalgeneration:0.28.0+rocm723:bf16",
+      "confidence": 0.6,
+      "counts": {
+        "lessons": 8,
+        "pitfalls": 18,
+        "remaining_gaps": 5,
+        "what_failed": 10,
+        "what_worked": 10
+      },
+      "dir": "qwen3.8-27b-fable-distill/mi250x/vllm/qwen3_5/qwen3_5forconditionalgeneration/0.28.0+rocm723/bf16",
+      "framework_version": "0.28.0+rocm723",
+      "hardware": "mi250x",
+      "model": "qwen3.8-27b-fable-distill",
+      "precision": "bf16",
+      "status": "experimental"
+    },
+    {
+      "authority": "EXPERIENTIAL",
+      "best_throughput": 296.86,
+      "canonical_id": "inference:qwen3.8-flash-next-bf16:mi250x:vllm:qwen4_exp:qwen4expforconditionalgeneration:0.1.dev1+g8a728663c.rocm724:bf16",
+      "confidence": 0.85,
+      "counts": {
+        "lessons": 8,
+        "pitfalls": 19,
+        "remaining_gaps": 6,
+        "what_failed": 15,
+        "what_worked": 10
+      },
+      "dir": "qwen3.8-flash-next-bf16/mi250x/vllm/qwen4_exp/qwen4expforconditionalgeneration/0.1.dev1+g8a728663c.rocm724/bf16",
+      "framework_version": "0.1.dev1+g8a728663c.rocm724",
+      "hardware": "mi250x",
+      "model": "qwen3.8-flash-next-bf16",
+      "precision": "bf16",
+      "status": "active"
+    },
+    {
+      "authority": "EXPERIENTIAL",
+      "best_throughput": 60.06,
+      "canonical_id": "inference:qwen3.8-flash-next-gguf:mi250x:llama.cpp:unknown_model_type:unknown_arch:0.3.0-dev+a9e9c3c5f:ud-q4_k_xl",
+      "confidence": 0.85,
+      "counts": {
+        "lessons": 4,
+        "pitfalls": 10,
+        "remaining_gaps": 4,
+        "what_failed": 7,
+        "what_worked": 5
+      },
+      "dir": "qwen3.8-flash-next-gguf/mi250x/llama.cpp/unknown_model_type/unknown_arch/0.3.0-dev+a9e9c3c5f/ud-q4_k_xl",
+      "framework_version": "0.3.0-dev+a9e9c3c5f",
+      "hardware": "mi250x",
+      "model": "qwen3.8-flash-next-gguf",
+      "precision": "ud-q4_k_xl",
+      "status": "active"
+    }
+  ],
+  "seed_manifest": {
+    "canonical_ids": [
+      "inference:deepseek-v4-flash-0731-gguf:mi250x:llama.cpp:unknown_model_type:unknown_arch:0.3.0-dev+a9e9c3c5f:ud-q8_k_xl",
+      "inference:deepseek-v4.1-flash-gguf:mi250x:llama.cpp:unknown_model_type:unknown_arch:0.4.0-dev+f37da57:q4_k_m",
+      "inference:glm-5.3-flash-gguf:mi250x:llama.cpp:unknown_model_type:unknown_arch:0.3.0-dev+629b50552:q8_0",
+      "inference:ornith-1.5-35b-a3b:mi250x:vllm:qwen3_5_moe:qwen3_5moeforconditionalgeneration:0.28.0+rocm723:bf16",
+      "inference:ornith-1.5-397b-gguf:mi250x:llama.cpp:unknown_model_type:unknown_arch:0.3.0-dev+a9e9c3c5f:q8_0",
+      "inference:qwen2.5-1.5b-instruct:mi250x:vllm:qwen2:qwen2forcausallm:0.28.0+rocm723:bf16",
+      "inference:qwen3.8-27b-abliterated-w8a8-gdnint8:mi250x:vllm:qwen3_5:qwen3_5forconditionalgeneration:0.28.0+rocm723:int8_w8a8",
+      "inference:qwen3.8-27b-fable-distill:mi250x:vllm:qwen3_5:qwen3_5forconditionalgeneration:0.1.dev1+g8a728663c.rocm724:bf16",
+      "inference:qwen3.8-27b-fable-distill:mi250x:vllm:qwen3_5:qwen3_5forconditionalgeneration:0.28.0+rocm723:bf16",
+      "inference:qwen3.8-27b:mi250x:vllm:qwen3_5:qwen3_5forconditionalgeneration:0.28.0+rocm723:bf16",
+      "inference:qwen3.8-flash-next-bf16:mi250x:vllm:qwen4_exp:qwen4expforconditionalgeneration:0.1.dev1+g8a728663c.rocm724:bf16",
+      "inference:qwen3.8-flash-next-gguf:mi250x:llama.cpp:unknown_model_type:unknown_arch:0.3.0-dev+a9e9c3c5f:ud-q4_k_xl"
+    ],
+    "hardware": "mi250x",
+    "rows": 12,
+    "seeded_at": "2026-09-15T08:06:40+00:00",
+    "source": "/home/qiba/ai/docs/recipes (serving arms)"
+  }
 }

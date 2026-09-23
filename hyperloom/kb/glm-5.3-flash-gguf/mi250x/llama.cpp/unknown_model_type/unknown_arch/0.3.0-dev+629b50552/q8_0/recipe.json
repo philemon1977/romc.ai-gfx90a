@@ -6,7 +6,7 @@
       "GGML_CUDA_P2P": "1\uff08P2P=1 \u5b9a\u7a3f\uff1a\u5b9e\u6d4b \u00b10.3%=0 \u96f6\u589e\u76ca\u4f46\u514d\u8d39\u4fdd\u7559\uff1b\u5bf9\u7167\u7ec4 P2P=0\uff09",
       "LD_LIBRARY_PATH": "\u4e0d\u9700\u8981\u2014\u2014glm5next-rp RUNPATH \u56db\u683c\u81ea\u8db3\uff08\u65e7\u6784\u5efa\u7f3a $ORIGIN\u3001\u672b\u683c=cwd\uff0c\u4ece\u975e bin/ \u76ee\u5f55\u8d77\u5fc5\u5d29\uff09"
     },
-    "extra_server_args": "--split-mode layer\uff08\u672c\u673a\u552f\u4e00\u53ef\u8dd1\uff1arow \u65e0 split buffer\u3001tensor arch \u9ed1\u540d\u5355\uff09 --tensor-split 1,1,1,1,1,1,1,1 --n-gpu-layers 999 --fit off --load-mode dio -c 1048576 -np 1 -b 2048 -ub 128\uff08\u6545\u610f\u7684\uff1aub 128\u21922048 TTFT \u221240% \u4f46 decode \u221210%\uff0c8192 \u8170\u65a9\u5230 14.0\uff09 -t 24 -tb 24 --jinja --spec-type ngram-mod,draft-mtp\uff08agent \u753b\u50cf\uff1blongform \u7eaf draft-mtp\uff09 --spec-draft-n-max 2\uff08MTP_N=2\uff1b\u57fa\u811a\u672c\u9ed8\u8ba4 4 \u88ab\u4e24\u5c01\u88c5\u538b\u56de\uff09 --spec-ngram-mod-n-min 16 --spec-ngram-mod-n-max 64 --spec-ngram-mod-n-match 24 --cache-reuse 256\uff08np=1 \u5b9e\u6d4b\u96f6\u589e\u76ca\uff0c\u7559\u4f5c np>1 \u94fa\u8def\uff09 --mmproj models/unsloth/GLM-5.3-Flash-GGUF/mmproj-F16.gguf\uff08USE_VISION=0 \u9ed8\u8ba4\u5173\uff09 --alias glm-5.3-flash --host 0.0.0.0 --port 8108 \u5165\u53e3\u5fc5\u987b\u6307 Q8_0-00001-of-00008.gguf\uff0800001 \u4ec5 9.4 MB/n_tensors=0\uff0c\u662f unsloth \u5206\u7247\u5e03\u5c40\u7684\u5143\u6570\u636e/\u8bcd\u8868\u5165\u53e3\uff0c\u4e0d\u662f\u6b8b\u7f3a\uff09 MTP \u5403\u4e3b\u6587\u4ef6\u81ea\u5e26 nextn \u5934\uff08blk.45.nextn.*\uff09\uff0c\u65e0\u9700\u5916\u90e8 -md"
+    "extra_server_args": "--split-mode layer\uff08\u672c\u673a\u552f\u4e00\u53ef\u8dd1\uff1arow \u65e0 split buffer\u3001tensor arch \u9ed1\u540d\u5355\uff09 --tensor-split 1,1,1,1,1,1,1,1 --n-gpu-layers 999 --fit off --load-mode dio -c 1048576 -np 1 -b 2048 -ub 128\uff08\u6545\u610f\u7684\uff1aub 128\u21922048 TTFT \u221240% \u4f46 decode \u221210%\uff0c8192 \u8170\u65a9\u5230 14.0\uff09 -t 24 -tb 24 --jinja --spec-type ngram-mod,draft-mtp\uff08agent \u753b\u50cf\uff1blongform \u7eaf draft-mtp\uff09 --spec-draft-n-max 2\uff08MTP_N=2\uff1b\u57fa\u811a\u672c\u9ed8\u8ba4 4 \u88ab\u4e24\u5c01\u88c5\u538b\u56de\uff09 --spec-ngram-mod-n-min 16 --spec-ngram-mod-n-max 64 --spec-ngram-mod-n-match 24 --cache-reuse 256\uff08np=1 \u5b9e\u6d4b\u96f6\u589e\u76ca\uff0c\u7559\u4f5c np>1 \u94fa\u8def\uff09 --mmproj models/Base/GLM/GLM-5.3-Flash-320B/_shared/mmproj-F16.gguf\uff08USE_VISION=0 \u9ed8\u8ba4\u5173\uff09 --alias glm-5.3-flash --host 0.0.0.0 --port 8108 \u5165\u53e3\u5fc5\u987b\u6307 Q8_0-00001-of-00008.gguf\uff0800001 \u4ec5 9.4 MB/n_tensors=0\uff0c\u662f unsloth \u5206\u7247\u5e03\u5c40\u7684\u5143\u6570\u636e/\u8bcd\u8868\u5165\u53e3\uff0c\u4e0d\u662f\u6b8b\u7f3a\uff09 MTP \u5403\u4e3b\u6587\u4ef6\u81ea\u5e26 nextn \u5934\uff08blk.45.nextn.*\uff09\uff0c\u65e0\u9700\u5916\u90e8 -md"
   },
   "best_throughput": 50.8,
   "canonical_id": "inference:glm-5.3-flash-gguf:mi250x:llama.cpp:unknown_model_type:unknown_arch:0.3.0-dev+629b50552:q8_0",
@@ -66,7 +66,7 @@
     }
   ],
   "model": "glm-5.3-flash-gguf",
-  "model_dir": "models/unsloth/GLM-5.3-Flash-GGUF",
+  "model_dir": "models/Base/GLM/GLM-5.3-Flash-320B",
   "other_metrics": [
     {
       "name": "agent A/B \u51e0\u4f55\u5e73\u5747\uff08ctx131k temp0\uff09",

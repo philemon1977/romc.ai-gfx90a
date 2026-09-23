@@ -126,8 +126,8 @@
     }
   ],
   "patches": [
-    "patches/gfx90a/port_p1_c2_c3.py\uff08C2/C3 QR \u67b6\u6784\u95e8\u5728\u5f79\uff1b--with-p1 \u6545\u610f\u4e0d\u88c5\uff09",
-    "patches/vllm-dsa-gfx90a/README.md\uff08DSA \u7d22\u5f15\u5668 fp32 \u53c2\u8003\u7248\u6765\u6e90\u8bb0\u5f55\uff0ccommit 9349d08\uff0c\u8fd0\u884c\u65f6\u4e0d\u88ab launcher \u8c03\u7528\uff09",
+    "recipes/patches/vllm/vllm_0.28.0_rocm72/port_p1_c2_c3.py\uff08C2/C3 QR \u67b6\u6784\u95e8\u5728\u5f79\uff1b--with-p1 \u6545\u610f\u4e0d\u88c5\uff09",
+    "recipes/patches/vllm/vllm_0.28.0_rocm72/dsa-indexer/README.md\uff08DSA \u7d22\u5f15\u5668 fp32 \u53c2\u8003\u7248\u6765\u6e90\u8bb0\u5f55\uff0ccommit 9349d08\uff0c\u8fd0\u884c\u65f6\u4e0d\u88ab launcher \u8c03\u7528\uff09",
     "patches/qwen4exp/local-nogds-gds-for-tp-gt1.patch\uff08VLLM_FST_KEEP_NOGDS \u8bfb\u53d6\u65b9\uff09",
     "patches/qwen4exp/local-ple-fp8-resident.patch\uff08PLE fp8 \u9a7b\u7559 + dtype \u62a4\u680f N25\uff09",
     "src/hipais-shim\uff08LD_PRELOAD shim\uff1b7.2.4 \u7f3a hipAmdFileRead \u7684\u8f6c\u63a5\uff0cserve \u4fa7\u672c\u81c2\u9ed8\u8ba4\u4e0d\u7528 AIS\uff09"
@@ -318,7 +318,7 @@
     },
     {
       "description": "P1 \u95e8\u63a7 GEMV\uff08--with-p1\uff09",
-      "reason": "\u6545\u610f\u4e0d\u88c5\uff1a\u5bf9 qwen4_exp \u4ec5 +0.2%\uff0c\u4f4e\u4e8e\u566a\u58f0\u5e95\uff08patches/gfx90a README L18-20\uff09"
+      "reason": "\u6545\u610f\u4e0d\u88c5\uff1a\u5bf9 qwen4_exp \u4ec5 +0.2%\uff0c\u4f4e\u4e8e\u566a\u58f0\u5e95\uff08recipes/patches/vllm/vllm_0.28.0_rocm72 README L18-20\uff09"
     },
     {
       "description": "split-KV \u79fb\u690d\u5230 Flash-Next \u5e95\u5ea7\uff08SPLITKV=1\uff09",

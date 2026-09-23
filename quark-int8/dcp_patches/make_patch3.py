@@ -7,7 +7,7 @@
 """
 import difflib, os, shutil, sys, py_compile
 
-TREE = "/home/qiba/ai/recipes/patches/gfx90a/ct_w4a16_dsv41_n0918/tree"
+TREE = "/home/qiba/ai/recipes/patches/vllm/vllm-openai-rocm-nightly-0918/core/tree"
 REL = "v1/attention/backends/mla/rocm_aiter_mla_sparse.py"
 HERE = os.path.dirname(os.path.abspath(__file__))
 BASE1 = os.path.join(HERE, "work", "backend.py")          # 0001 的输出

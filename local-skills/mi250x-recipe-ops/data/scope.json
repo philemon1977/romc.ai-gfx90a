@@ -233,7 +233,7 @@
      ],
      "facts": [
       "**本机唯一能起 `glm_moe_dsa`（GLM-5.3）与 CT-int4 W4A16 MoE 的 vLLM**。",
-      "补丁以 bind-mount 逐文件 `:ro` 注入 `patches/gfx90a/ct_w4a16_dsv41_n0918/tree`，**不改镜像**。",
+      "补丁以 bind-mount 逐文件 `:ro` 注入 `recipes/patches/vllm/vllm-openai-rocm-nightly-0918/tree`，**不改镜像**。",
       "容器内 dist-packages 路径 `/usr/local/lib/python3.12/dist-packages/vllm/…` 写死在 launcher 挂载里 ⇒ **换镜像 tag 会让全部挂载点落空**。",
       "必须 `VLLM_ROCM_USE_AITER=0`、`VLLM_ROCM_USE_AITER_MOE=0`（AITER MoE/MLA-CK decode 是 gfx942/950 专属）。"
      ],
