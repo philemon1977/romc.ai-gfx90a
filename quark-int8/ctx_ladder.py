@@ -1,32 +1,33 @@
 #!/usr/bin/env python3
 """ctx 阶梯探针：固定确定性 prompt 在多个上下文档位上量 step_ms / 解码 TPS / accept。
 
-方法论沿用 step_probe.py 的 /metrics 计数器差分（2026-09-24），并针对长 prompt 做两点修正：
-  ① 计数器差分跨**整个请求**（服务器空闲前提下，Δdraft/SPEC = 精确步数，与接受率无关）；
-  ② 步时用**流式首末 chunk 之间的解码窗**（last−first），把 tokenize/prefill 排除在
-     step_ms 之外——长 prompt 的 tokenize 随 ctx 增长，不排除会污染"步时 ∝ ctx"的斜率。
-  ③ TTFT = 首 chunk − 发送时刻（含 tokenize+prefill+第一步；warmup 后 prefill 走前缀缓存）。
+方法论（2026-09-24 定稿）：
+  ① 步数口径 = `vllm:spec_decode_num_drafts_total` 差分。
+     ⚠️ **2026-09-24 实测更正**：该计数实际是**每序列每步 +1**（上游 `SpecDecodingStats` 的
+     docstring 写"跨请求聚合"，与实测不符：并发 C=4 时 Δ=46，而日志用 accepted/drafted 吞吐
+     反推的真实步数只有 ~11.4）⇒ **单流（C=1）下它 = 调度步数**，本脚本用法成立；
+     并发场景请用 `ctx_concurrency.py`（按在跑序列数折算，且以内层 span 口径为准）。
+  ② 步时用**流式首末 chunk 之间的解码窗**（last−first），把 tokenize/prefill 排除在 step_ms
+     之外——长 prompt 的 tokenize 随 ctx 增长，不排除会污染"步时 ∝ ctx"的斜率。
+  ③ TTFT = 首 chunk − 发送时刻（warmup 后 prefill 走前缀缓存）。
 
 每个档位：两遍校准把 prompt 调到目标 token 数（±2%），warmup 一发（付冷 prefill，丢弃），
 再跑 N 发取中位数。prompt 内容确定性生成（无 RNG）⇒ 跨 boot 同 ctx 同内容，接受率可比。
 
 用法: ctx_ladder.py PORT TAG SPEC [LEVELS_K=8,32,64] [N=3] [MAXTOK=64]
 输出: 每档位一行 JSON（便于回填 launcher 头注释/配方）。
-⚠️ 前提：跑探针期间服务器上没有其它并发请求（计数器差分是全局的）。
+⚠️ 前提：跑探针期间服务器上没有其它并发请求（差分是全局的）。
+也可被 ctx_concurrency.py 导入复用（设置模块级 PORT 后调 calibrate/_send_stream/counters）。
 """
 import json
+import os
 import re
 import statistics
 import sys
 import time
 import urllib.request
 
-PORT = int(sys.argv[1])
-TAG = sys.argv[2]
-SPEC = int(sys.argv[3])
-LEVELS_K = [int(x) for x in (sys.argv[4] if len(sys.argv) > 4 else "8,32,64").split(",")]
-N = int(sys.argv[5]) if len(sys.argv) > 5 else 3
-MAXTOK = int(sys.argv[6]) if len(sys.argv) > 6 else 64
+PORT = int(os.environ.get("CTX_LADDER_PORT", "8117"))
 MODEL = "ornith"
 
 # 确定性填充文本：12 句中性技术句轮转 + 行号前缀（避免纯重复文本的高接受假象）。
@@ -96,30 +97,40 @@ def calibrate(target_tokens: int):
     return build_prompt(target_tokens, lines), got
 
 
+_METRIC_KEYS = ("spec_decode_num_drafts_total",
+                "spec_decode_num_draft_tokens_total",
+                "spec_decode_num_accepted_tokens_total")
+
+
 def counters():
     txt = urllib.request.urlopen(f"http://127.0.0.1:{PORT}/metrics", timeout=60).read().decode()
     out = {}
-    for key in ("spec_decode_num_draft_tokens_total", "spec_decode_num_accepted_tokens_total"):
+    for key in _METRIC_KEYS:
         m = re.search(rf"^(?:vllm:)?{key}\{{[^}}]*\}}\s+([0-9.eE+]+)$", txt, re.M)
         out[key] = float(m.group(1)) if m else 0.0
     return out
 
 
-print(f"# ctx_ladder port={PORT} tag={TAG} SPEC={SPEC} levels={LEVELS_K}K n={N} maxtok={MAXTOK}",
-      flush=True)
-for lvl in LEVELS_K:
-    target = lvl * 1000
-    prompt, ptok = calibrate(target)
-    _u, ttft_cold, _s = _send_stream(prompt, MAXTOK)     # warmup：付冷 prefill，丢弃
+def steps_between(c0, c1, spec):
+    """两次取数之间的**序列-步数**（num_drafts 每序列每步 +1；C=1 时 = 调度步数）。"""
+    steps = c1["spec_decode_num_drafts_total"] - c0["spec_decode_num_drafts_total"]
+    if steps <= 0 and spec > 0:                     # 旧版/缺指标时回退
+        steps = (c1["spec_decode_num_draft_tokens_total"]
+                 - c0["spec_decode_num_draft_tokens_total"]) / spec
+    return steps
+
+
+def measure_level(spec: int, target_tokens: int, n: int, maxtok: int):
+    """跑一个 ctx 档位，返回记录 dict。调用前需设好模块级 PORT。"""
+    prompt, _ptok = calibrate(target_tokens)
+    _u, ttft_cold, _s = _send_stream(prompt, maxtok)      # warmup：付冷 prefill，丢弃
     rows = []
-    for _ in range(N):
-        c0 = counters() if SPEC > 0 else None
-        u, ttft, span = _send_stream(prompt, MAXTOK)
+    for _ in range(n):
+        c0 = counters() if spec > 0 else None
+        u, ttft, span = _send_stream(prompt, maxtok)
         ntok = u["completion_tokens"]
-        if SPEC > 0:
-            c1 = counters()
-            drafted = c1["spec_decode_num_draft_tokens_total"] - c0["spec_decode_num_draft_tokens_total"]
-            steps = drafted / SPEC
+        if spec > 0:
+            steps = steps_between(c0, counters(), spec)
         else:
             steps = ntok                                  # 无投机：1 tok/step
         span_steps = max(steps - 1, 1)                    # 首 chunk 落在第 1 步末
@@ -131,14 +142,33 @@ for lvl in LEVELS_K:
             "ttft_s": ttft,
         })
     med = lambda k: statistics.median(r[k] for r in rows)
-    acc = (med("tok_per_step") - 1) / SPEC if SPEC > 0 else 0.0
-    rec = {
-        "tag": TAG, "spec": SPEC, "level_k": lvl, "prompt_tokens": rows[-1]["prompt_tokens"],
+    acc = (med("tok_per_step") - 1) / spec if spec > 0 else 0.0
+    return {
+        "spec": spec, "level_k": target_tokens // 1000, "prompt_tokens": rows[-1]["prompt_tokens"],
         "step_ms_med": round(med("step_ms"), 2),
         "step_ms_spread_pct": round((max(r["step_ms"] for r in rows) -
                                      min(r["step_ms"] for r in rows)) / med("step_ms") * 100, 1),
         "tok_per_step": round(med("tok_per_step"), 3), "accept_pct": round(acc * 100, 1),
         "decode_tps_med": round(med("tps"), 2), "ttft_s_med": round(med("ttft_s"), 2),
-        "ttft_cold_s": round(ttft_cold, 2), "n": N,
+        "ttft_cold_s": round(ttft_cold, 2), "n": n,
     }
-    print(json.dumps(rec, ensure_ascii=False), flush=True)
+
+
+def main(argv=None):
+    global PORT
+    argv = sys.argv[1:] if argv is None else argv
+    PORT = int(argv[0])
+    tag, spec = argv[1], int(argv[2])
+    levels = [int(x) for x in (argv[3] if len(argv) > 3 else "8,32,64").split(",")]
+    n = int(argv[4]) if len(argv) > 4 else 3
+    maxtok = int(argv[5]) if len(argv) > 5 else 64
+    print(f"# ctx_ladder port={PORT} tag={tag} SPEC={spec} levels={levels}K n={n} maxtok={maxtok}",
+          flush=True)
+    for lvl in levels:
+        rec = measure_level(spec, lvl * 1000, n, maxtok)
+        rec["tag"] = tag
+        print(json.dumps(rec, ensure_ascii=False), flush=True)
+
+
+if __name__ == "__main__":
+    main()
