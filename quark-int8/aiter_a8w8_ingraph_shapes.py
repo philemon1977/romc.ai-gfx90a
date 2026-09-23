@@ -21,7 +21,7 @@ from aiter.ops.gemm_op_a8w8 import gemm_a8w8_CK
 
 VENV_CSV = ("/home/qiba/ai/envs/vllm_0.28.0_rocm72/lib/python3.12/site-packages/"
             "aiter/configs/a8w8_tuned_gemm.csv")
-OUT = "/home/qiba/ai/recipes/patches/gfx90a/aiter_a8w8_tuned_gemm_gfx90a.csv"
+OUT = "/home/qiba/ai/recipes/patches/vllm/vllm_0.28.0_rocm72/aiter_a8w8_tuned_gemm_gfx90a.csv"
 SHAPES = [(2560, 4096, "in_proj_qkvz"), (4096, 1024, "out_proj")]
 MS = [6, 12, 16, 18, 24, 36, 42, 48, 60, 66, 72, 84, 90, 96, 108, 114, 120,
       132, 138, 144, 156, 162, 168, 180, 186, 192, 2048]
