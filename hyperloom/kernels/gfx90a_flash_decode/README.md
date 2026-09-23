@@ -113,62 +113,11 @@ Mechanism gain (`bench_in_tree_splitkv.py` style, one Q=3 launch vs three Q=1):
   for `Z`, and put a `timeout` on every blocking call
   (`.tmp/watchdog/watch.sh` + `check.sh` implement the dead-man switch).
 
-## 4b. Where speculation's long-context cost actually was (round N, 2026-09-16)
-
-Six rounds of end-to-end A/B had narrowed it to "one O(ctx) term per speculative step,
-independent of k" and nothing more: raising the scratch budget (K2/K3) changed nothing,
-and `k=1` vs `k=2` differed by 3.8% (L1: 435.1 vs 451.6 ms/step at 128k, against 42.7 ms
-for split-KV with no speculation). One profiled window named it.
-
-Method: `--profiler-config.profiler torch --profiler-config.torch_profiler_dir <dir>`
-plus `POST /start_profile` / `POST /stop_profile`; each worker writes
-`<dir>/profiler_out_<rank>.txt` = `key_averages().table(sort_by=self_cuda_time_total)`.
-(`rocprofv3 --attach` is unusable on this host: it prints `:: success` and writes nothing,
-with or without `LD_PRELOAD=librocprofiler-register.so`.) The window is one 145,426-token
-prompt sent twice with prefix caching on, so the profiled request is almost pure decode.
-
-| kernel (145k ctx, 48 greedy tokens) | MTP k=2 window | no speculation window |
-|---|---|---|
-| `_fwd_kernel.kd` (Triton prefix-prefill, `prefix_prefill.py:107`) | **7.485 s = 78.9%, 288 calls × 26.0 ms** | 376.9 ms, 15 calls × 25.1 ms (the one-time prefill — legitimate) |
-| `kernel_paged_attention_splitkv.kd` | 81.8 ms, 290 calls × 0.28 ms | 194.0 ms, 705 calls × 0.275 ms = 4.1 ms/step |
-
-Both kernels run on **every** speculative step. The reason is branch order in
-`v1/attention/ops/chunked_prefill_paged_decode.py`:
-
-```python
-if max_query_len > 1:                       # a spec verify step has q = k+1 >= 2
-    context_attention_fwd(...)              # Triton: scans the WHOLE context, per layer
-                                            # ... and then execution FALLS THROUGH
-...
-elif _rocm_splitkv_pa.try_paged_decode(...):
-    return                                  # split-KV overwrites those same output rows
-```
-
-So the Triton pass is 100% redundant whenever split-KV takes over, and it costs
-16 layers × 26.0 ms per step. Arithmetic closes on the measured number:
-`16 × 26.0 + 17 × 0.28 + ~16 ≈ 437 ms/step` vs `451.6 ms` measured (3%).
-
-**Fix, and it is a dispatch fix rather than a new kernel** —
-`multirow-skip-triton-prefill.patch` (137 lines, 1 file) adds
-`_splitkv_multirow_takeover()` and calls it *before* `context_attention_fwd`; it returns
-`False` for every shape the decode path would not have handed to split-KV anyway (native
-ROCm paged attention available for the shape, `causal=False`/cross attention, q outside
-`MAX_Q`, non-uniform rows), so default behaviour is unchanged. The behaviour it changes is
-provably redundant work: the unpatched path's final output already comes from split-KV.
-
-Status: applied to the overlay (`py_compile` clean, original kept as `.py.orig`),
-**not yet measured end-to-end** — round P (official client at 1k/32k/128k/240k + the same
-profiled window + a greedy-output hash comparison) is staged in
-`.tmp/single_stream_lab/run_I_splitkv.py P` and is waiting for the GPUs, which another
-container held at the operator's request. Expected: 451.6 ms/step → 40-60 ms at 128k,
-i.e. ~2.9 tok/step ≈ 50-70 tok/s against today's best 23.4 tok/s.
-
 ## 5. Files
 
 | file | role |
 |---|---|
 | `splitkv-q3.patch` | the reviewable patch (applies clean: `patch -p1 --dry-run` in the vllm dir) |
-| `multirow-skip-triton-prefill.patch` | dispatch fix for multi-row (q>1) batches: try split-KV before the redundant Triton prefix-prefill (section 4b); regenerate with `make_multirow_patch.py [--apply]` |
 | `draft_splitkv_q3.py` / `rocm_splitkv_pa.py.orig` | patched module (installed over the tree) and its backup |
 | `test_splitkv_q3.py` | oracle-vs-patch correctness (the harness upstream is missing: no `tests/`, and the `bench/pa_splitkv.py`, `pa256_golden.py` the module cites are not on disk) |
 | `bench_in_tree_splitkv.py`, `probe_splitkv.py` | kernel-level correctness/timing; `probe_splitkv.py` runs one config per process for crash bisection |
@@ -176,12 +125,10 @@ i.e. ~2.9 tok/step ≈ 50-70 tok/s against today's best 23.4 tok/s.
 
 ## 6. Open
 
-1. ~~Round K showed speculation regressing long-context decode and the stats blamed a 3×
-   scratch growth hitting the default 32 MiB budget.~~ **Closed, and the attribution was
-   wrong twice over**: K2/K3 raised the budgets and changed nothing (scratch rejects went
-   to zero, split-KV kept taking over), and section 4b shows the cost was a redundant
-   Triton prefix-prefill pass, not a fallback. Remaining work is round P's end-to-end
-   verification of the dispatch patch.
+1. Round K showed speculation **regressing** long-context decode (128k: 161.2 ms with
+   split-KV+MTP vs 42.7 ms split-KV alone) and the stats blamed a 3× scratch growth
+   hitting the default 32 MiB budget (`scratch 102236160 超预算` ×210) ⇒ shapes fell
+   back to the serial kernel. Round K2 (`MAX_SCRATCH_MIB=192`) tests that.
 2. Host hygiene, both currently NOT done and both measurable in round M: cpufreq
    governor is `schedutil` (measured spread 2944–3509 MHz across policies at one
    instant; the Hyperloom preflight warned about it and it was ignored) and no rank

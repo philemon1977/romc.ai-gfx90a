@@ -51,44 +51,10 @@
         "oracle": "bit-identical (max_abs=0.0000)",
         "vs_three_q1_launches": "x2.83-2.92"
       },
-      "spec_multirow_waste_N": {
-        "arithmetic": "16 layers x 26.0 ms + 17 x 0.28 ms + ~16 ms = 437 ms/step vs measured 451.6 ms",
-        "cause": "chunked_prefill_paged_decode: `if max_query_len > 1:` runs context_attention_fwd over the whole context, then falls through to the decode branch where split-KV overwrites the same rows",
-        "evidence": "vLLM torch profiler kernel tables, ctx=145,426 tokens, 48 greedy tokens",
-        "fix": "hyperloom/kernels/gfx90a_flash_decode/multirow-skip-triton-prefill.patch (137 lines/1 file, applied to the overlay)",
-        "mtp_k2_window": {
-          "_fwd_kernel_triton_prefix_prefill": {
-            "calls": 288,
-            "ms_per_call": 26.0,
-            "share_pct": 78.9,
-            "total_s": 7.485
-          },
-          "decode_steps": 17,
-          "kernel_paged_attention_splitkv": {
-            "calls": 290,
-            "ms_per_call": 0.28,
-            "total_ms": 81.8
-          },
-          "total_gpu_s": 9.4
-        },
-        "nospec_window": {
-          "_fwd_kernel": {
-            "calls": 15,
-            "note": "one-time prefill, legitimate",
-            "total_ms": 376.9
-          },
-          "kernel_paged_attention_splitkv": {
-            "calls": 705,
-            "per_decode_step_ms": 4.1,
-            "total_ms": 194.0
-          }
-        },
-        "status": "APPLIED, NOT YET MEASURED (GPUs held by another container at the user's request)"
-      },
       "splitkv_env": "VLLM_ROCM_SPLITKV_PA=1 (wheel already contains v1/attention/ops/rocm_splitkv_pa.py)",
       "wall_cause": "kernel_paged_attention_2d at grid=(num_seqs=1,num_kv_heads=1): 1 of 104 CUs, serial over ctx"
     },
-    "measured_at": "2026-09-16T11:45Z",
+    "measured_at": "2026-09-16T05:35Z",
     "protocol": "InferenceX vllm_mi250x.sh client-only (random dataset, --ignore-eos, --num-warmups 2*CONC)",
     "real_content_probe": {
       "acceptance_rate_pct_real": 75.3,
@@ -100,22 +66,11 @@
       "speedup": 1.88
     },
     "single_stream_decode_tps": {
-      "crossover_ctx_tokens_derived": 19000,
-      "mtp_k1_splitkv": {
-        "1024": 37.88,
-        "131072": 4.55,
-        "32768": 13.35
-      },
       "mtp_k2": {
         "1024": 47.17,
         "131072": 4.79,
         "237568": 3.51,
         "32768": 17.89
-      },
-      "mtp_k2_splitkv": {
-        "1024": 46.51,
-        "131072": 6.41,
-        "32768": 18.59
       },
       "no_spec": {
         "1024": 22.03,
@@ -123,52 +78,12 @@
         "237568": 1.03,
         "32768": 5.84
       },
-      "no_spec_splitkv": {
-        "1024": 25.77,
-        "131072": 23.42,
-        "237568": 22.37
-      },
       "speedup": {
         "1024": 2.14,
         "131072": 2.65,
         "237568": 3.4,
         "32768": 3.06
       }
-    },
-    "spec_step_cost_ms": {
-      "method": "median_tpot_ms x mean acceptance length measured from the server's SpecDecoding metrics",
-      "mtp_k1_splitkv_L1": {
-        "1024": 52.6,
-        "131072": 435.1,
-        "32768": 148.8,
-        "mean_accept_len": {
-          "1024": 1.996,
-          "131072": 1.977,
-          "32768": 1.987
-        }
-      },
-      "mtp_k2_serial_B2_G": {
-        "1024": 62.4,
-        "131072": 495.6,
-        "237568": 824.5,
-        "32768": 166.1
-      },
-      "mtp_k2_splitkv_K3": {
-        "1024": 63.9,
-        "131072": 451.6,
-        "32768": 159.2,
-        "mean_accept_len": {
-          "1024": 2.979,
-          "131072": 2.897,
-          "32768": 2.961
-        }
-      },
-      "no_spec_splitkv": {
-        "1024": 38.8,
-        "131072": 42.7,
-        "237568": 44.7
-      },
-      "verdict": "the MTP surcharge is one O(ctx) term per step, k-independent: +14 / +106-116 / +392-409 ms at 1k / 32k / 128k over the split-KV step"
     },
     "tpot_law_ms": {
       "fits": [
@@ -198,7 +113,7 @@
       "32k": 11050.2
     }
   },
-  "agent_lane_note_at": "2026-09-16T11:43:15.425471+00:00",
+  "agent_lane_note_at": "2026-09-16T09:29:46.141668+00:00",
   "architectures": [
     "Qwen3_5MoeForConditionalGeneration"
   ],
@@ -214,7 +129,7 @@
     "extra_server_args": "--language-model-only --max-num-seqs 16 --max-num-batched-tokens 8192 --enable-prefix-caching",
     "isl": 32768,
     "max_model_len": 262144,
-    "note": "KB \u901a\u9053\u80fd\u5e26\u7684\u53ea\u6709\u8fd9\u4e9b\uff08PYTHONPATH \u88ab blocklist \u62e6\uff09\uff1b\u8865\u4e01\u6811\u5728 hyperloom/patches/fp8-w8a8-emulation-gfx90a/vllm\uff0c\u7531\u5305\u88c5\u5668\u6ce8\u5165\u3002lane \u5f62\u72b6\uff1a--tp 8 --conc 1 --isl 32768 --osl 1024 --max-model-len 262144 --precision fp8 --gpu-type mi250x\u3002**\u4e0d\u8981\u5728\u957f\u4e0a\u4e0b\u6587\u4e0a\u5f00\u6295\u673a**\uff08MTP \u6bcf\u6b65 +392 ms@128k\uff0c\u4e14\u4e0e k \u65e0\u5173\uff09\uff0c\u6295\u673a\u53ea\u5728 ctx \u227219k \u7528 --speculative-config '{\"method\":\"qwen3_5_mtp\",\"num_speculative_tokens\":2}'",
+    "note": "KB \u901a\u9053\u80fd\u5e26\u7684\u53ea\u6709\u8fd9\u4e9b\uff08PYTHONPATH \u88ab blocklist \u62e6\uff09\uff1b\u8865\u4e01\u6811\u5728 hyperloom/patches/fp8-w8a8-emulation-gfx90a/vllm\uff0c\u7531\u5305\u88c5\u5668\u6ce8\u5165\u3002lane \u5f62\u72b6\uff1a--tp 8 --conc 1 --isl 32768 --osl 1024 --max-model-len 262144 --precision fp8 --gpu-type mi250x",
     "osl": 1024,
     "tp": 8
   },
@@ -342,7 +257,7 @@
   "image_digest": "rocm-ai/vllm:0.28.0-rocm7.2.4",
   "isl": 1024,
   "kernel_optimizations": [],
-  "last_profiled": "2026-09-16T11:45Z",
+  "last_profiled": "2026-09-16T05:35Z",
   "lessons": [
     {
       "measured_impact": "torch._scaled_mm \u95e8\u662f\u5f15\u64ce\u7ea7\uff0c\u4e0e TP/\u5e76\u53d1/\u53c2\u6570\u65e0\u5173",
@@ -379,18 +294,6 @@
     {
       "measured_impact": "\u5148\u67e5\u201c\u6709\u6ca1\u6709\u9ed8\u8ba4\u5173\u6389\u7684\u5185\u6838\u201d\uff0c\u518d\u8c08\u5199\u5185\u6838\uff1a\u8fd9\u53f0\u673a\u5668\u4e0a\u7b54\u6848\u5df2\u7ecf\u5728 wheel \u91cc",
       "statement": "\u8fd9\u6761 lane \u957f\u4e0a\u4e0b\u6587\u6536\u76ca\u7684\u5b9e\u6d4b\u6392\u5e8f\uff1asplit-KV \u5f00\u5173\uff08\u00d713 @128k\uff09**\u8fdc\u5927\u4e8e** MTP\uff08\u00d72.1 @1k\uff0c\u957f\u4e0a\u4e0b\u6587\u5904\u4e0e split-KV \u56e0 scratch \u9884\u7b97\u4e92\u65a5\u800c\u672a\u53e0\u52a0\uff09**\u8fdc\u5927\u4e8e** \u6362\u540e\u7aef\uff08TRITON_ATTN \u5728 128k \u53cd\u800c\u6162 ~21%\uff1a\u5355\u8bf7\u6c42 201 s vs 166 s\uff09**\u4e14**\u6362\u7f13\u5b58\u6a21\u5f0f\u65e0\u6548\uff08D \u8f6e\u5173\u6389 prefix caching\uff1a5.25 vs 5.48 tok/s\uff0calign \u5047\u8bbe\u88ab\u8bc1\u4f2a\uff09"
-    },
-    {
-      "measured_impact": "\u5148\u67e5\u201c\u6709\u6ca1\u6709\u9ed8\u8ba4\u5173\u6389\u7684\u5185\u6838\u201d\uff0c\u518d\u8c08\u5199\u5185\u6838\uff1a\u8fd9\u53f0\u673a\u5668\u4e0a\u7b54\u6848\u5df2\u7ecf\u5728 wheel \u91cc\uff1b\u4e14\u522b\u6307\u671b\u7528\u6295\u673a\u53bb\u6551\u957f\u4e0a\u4e0b\u6587\u2014\u2014\u5148\u4fee attention\uff0c\u518d\u8c08\u6295\u673a",
-      "statement": "\u8fd9\u6761 lane \u957f\u4e0a\u4e0b\u6587\u6536\u76ca\u7684\u5b9e\u6d4b\u6392\u5e8f\uff1asplit-KV \u5f00\u5173\uff08\u00d713 @128k\uff09**\u8fdc\u5927\u4e8e** \u6362\u540e\u7aef\uff08TRITON_ATTN \u5728 128k \u53cd\u800c\u6162 ~21%\uff1a\u5355\u8bf7\u6c42 201 s vs 166 s\uff09**\u4e14**\u6362\u7f13\u5b58\u6a21\u5f0f\u65e0\u6548\uff08D \u8f6e\u5173\u6389 prefix caching\uff1a5.25 vs 5.48 tok/s\uff0calign \u5047\u8bbe\u88ab\u8bc1\u4f2a\uff09\u3002**\u6295\u673a\u89e3\u7801\u4e0e split-KV \u5728\u957f\u4e0a\u4e0b\u6587\u4e92\u65a5**\uff1aMTP \u6bcf\u6b65 435-452 ms @128k\uff0c\u4e0e k \u65e0\u5173\uff0c\u7b49\u4e8e\u4e32\u884c attention \u7684\u91cf\u7ea7 \u21d2 \u5f00\u6295\u673a\u5373\u56de\u5230 kernel \u5899\uff08L1/K3\uff09"
-    },
-    {
-      "measured_impact": "1k/32k/128k \u6bcf\u6b65\uff1a\u65e0\u6295\u673a+splitKV 38.8/\u224840/42.7 ms vs MTP k=1 52.6/148.8/435.1 vs MTP k=2 63.9/159.2/451.6",
-      "statement": "**\u6295\u673a\u6b65\u7684\u4ee3\u4ef7\u5f8b\uff08\u65b0\uff09**\uff1a\u628a TPOT \u4e58\u4ee5\u5b9e\u6d4b\u5e73\u5747\u63a5\u53d7\u957f\u5ea6\u5f97\u5230\u6bcf\u6b65\u8017\u65f6\u540e\uff0cMTP \u7684\u989d\u5916\u4ee3\u4ef7 = \u4e00\u4e2a\u4e0e k \u65e0\u5173\u3001\u968f\u4e0a\u4e0b\u6587\u7ebf\u6027\u589e\u957f\u7684\u56fa\u5b9a\u9879 \u2248 14 ms + 2.85 ms\u00d7(ctx/1024)\uff0c128k \u5904\u7ea6 392-409 ms\u3002\u4e24\u4e2a\u81ea\u7136\u5047\u8bbe\uff08\u6bcf\u4e2a\u8349\u7a3f\u6b65\u4ed8\u4e00\u6b21\uff1b\u6bcf\u9a8c\u8bc1\u884c\u4ed8\u4e00\u6b21\uff09\u90fd\u88ab L1 \u8bc1\u4f2a\uff1ak=1 \u4e0e k=2 \u7684\u6bcf\u6b65\u8017\u65f6\u5728 128k \u53ea\u5dee 3.8%\u3002\u6240\u4ee5\u4e0d\u8981\u5728\u957f\u4e0a\u4e0b\u6587\u4e0a\u505a\u201c\u51cf\u5c11\u6295\u673a token \u6570\u201d\u7684\u8c03\u4f18\u2014\u2014\u90a3\u4e70\u4e0d\u5230\u4e1c\u897f\uff1b\u8981\u4e48\u5b9a\u4f4d\u8fd9\u4e00\u9879\u7684\u5185\u6838\uff08round N\uff1atorch profiler \u5185\u6838\u8017\u65f6\u8868\uff09\uff0c\u8981\u4e48\u5728\u8be5\u4e0a\u4e0b\u6587\u76f4\u63a5\u5173\u6389\u6295\u673a"
-    },
-    {
-      "measured_impact": "N \u8f6e 40 \u5206\u949f\uff08\u4e24\u6b21\u8d77\u670d\uff09\u5b9a\u4f4d\u5230 78.9% \u7684\u6d6a\u8d39\uff1b\u6b64\u524d 6 \u8f6e\u7aef\u5230\u7aef A/B \u53ea\u5f97\u5230\u300c\u4e0d\u662f scratch \u9884\u7b97\u300d",
-      "statement": "**\u7aef\u5230\u7aef A/B \u8bf4\u4e0d\u6e05\u7684\u4e1c\u897f\uff0c\u5185\u6838\u7ea7 profile \u4e00\u773c\u5c31\u770b\u6e05**\uff1aL1/K3 \u4e24\u8f6e\u53ea\u80fd\u544a\u8bc9\u6211\u300c\u4ee3\u4ef7\u662f\u6bcf\u6b65\u4e00\u6b21 O(ctx)\u3001\u4e0e k \u65e0\u5173\u300d\uff0c\u5176\u4f59\u5168\u662f\u731c\u6d4b\uff1btorch profiler \u7684\u5185\u6838\u8017\u65f6\u8868\u76f4\u63a5\u7ed9\u51fa\u7b54\u6848\uff08Triton `_fwd_kernel` \u5360 78.9%\uff0c\u800c split-KV \u53ea\u5360 0.9%\uff0c\u4e24\u8005\u5728\u540c\u4e00\u6b65\u90fd\u8dd1\u4e86\uff09\u3002\u672c\u673a `rocprofv3 --attach` \u4e0d\u53ef\u7528\uff08\u62a5 success \u4f46\u4e0d\u843d\u76d8\uff0c`LD_PRELOAD=librocprofiler-register.so` \u4e5f\u65e0\u6548\uff09\uff0c\u53ef\u7528\u8def\u5f84\u662f vLLM \u81ea\u5e26 `--profiler-config.profiler torch --profiler-config.torch_profiler_dir <dir>` + `POST /start_profile` / `POST /stop_profile`\uff0cworker \u4f1a\u628a `key_averages().table()` \u5199\u8fdb `<dir>/profiler_out_<rank>.txt`\uff1b\u7a97\u53e3\u8bbe\u8ba1\u8981\u7528\u300c\u540c\u4e00 prompt \u53d1\u4e24\u6b21\u300d\u8ba9\u7b2c\u4e8c\u6b21 prefill \u547d\u4e2d\u524d\u7f00\u7f13\u5b58\uff0c\u5426\u5219 prefill \u4f1a\u6c61\u67d3 decode \u5f52\u56e0"
     }
   ],
   "max_model_len": 6144,
@@ -505,22 +408,6 @@
     {
       "description": "per-rank NUMA \u7ed1\u5b9a\u4ecd\u672a\u6d4b\uff08\u7f3a\u53ef\u4fe1 rank\u2192die \u6620\u5c04\uff0c\u4e71\u7ed1\u4f1a\u5f97\u51fa\u9519\u8bef\u7ed3\u8bba\uff09\u3002\u672c\u673a\u73b0\u72b6\uff1agovernor=schedutil\uff08\u540c\u4e00\u77ac\u95f4 policy \u95f4 2944-3509 MHz\uff09\u3001\u8fdb\u7a0b Cpus_allowed=0-47 \u672a\u7ed1\u3001\u5bbf\u4e3b\u9875 ~86% \u843d\u5728 node0 \u800c 4/8 GCD \u5728 node1\uff1b\u62d3\u6251 node0=PCI 11/14/31/34\u3001node1=8e/93/ae/b3\uff08NPS1\uff0c2 \u57df\uff09",
       "metrics": "N/A"
-    },
-    {
-      "description": "**\u6253\u5f00\u4e2d\u7684\u95ee\u9898\uff1a\u6295\u673a\u6b65\u90a3 ~392 ms@128k \u5230\u5e95\u82b1\u5728\u54ea\u4e2a\u5185\u6838**\u3002\u5df2\u77e5\uff1a\u4e0e k \u65e0\u5173\u3001\u968f ctx \u7ebf\u6027\uff08~2.85 ms/1k\uff09\u3001\u4e00\u5f00\u6295\u673a\u5c31\u51fa\u73b0\u3001split-KV \u5bf9\u5b83\u65e0\u6548\u3002round N \u6b63\u7528 vLLM torch profiler\uff08`--profiler-config.profiler torch` \u2192 `profiler_out_0.txt` \u7684 self_cuda_time_total \u8868\uff09\u5728 128k \u5bf9\u6bd4 MTP k=2 \u4e0e\u65e0\u6295\u673a\uff1b`rocprofv3 --attach` \u5728\u672c\u673a\u4e0d\u53ef\u7528\uff08\u62a5 success \u4f46\u4e0d\u843d\u76d8\uff09",
-      "metrics": "MTP k=2 128k \u6bcf\u6b65 451.6 ms vs \u65e0\u6295\u673a 42.7 ms"
-    },
-    {
-      "description": "**round P \u672a\u8dd1\uff1a\u5df2\u5e94\u7528\u7684\u8c03\u5ea6\u8865\u4e01\u9700\u8981\u7aef\u5230\u7aef\u9a8c\u8bc1**\uff08GPU \u88ab\u53e6\u4e00\u5bb9\u5668 ornith-int8-serve \u5360\u7528\uff0c\u7528\u6237 19:45 CST \u660e\u786e\u8981\u6c42\u5148\u522b\u52a8\uff09\u3002\u8981\u6d4b\u7684\u5c31\u662f\u4e09\u4ef6\u4e8b\uff1a(1) \u5b98\u65b9\u70b9\u4f4d 1k/32k/128k/240k \u7684 TPOT\uff08\u5bf9\u7167 K3 \u7684 21.5/53.8/155.9\uff09\uff1b(2) \u540c\u4e00 145k \u7a97\u53e3\u7684\u5185\u6838\u8868\u91cc `_fwd_kernel` \u662f\u5426\u6d88\u5931\u3001`kernel_paged_attention_splitkv` \u662f\u5426\u63a5\u7ba1\uff1b(3) \u8d2a\u5fc3\u8f93\u51fa\u54c8\u5e0c\u4e0e\u672a\u6253\u8865\u4e01\u65f6\u662f\u5426\u4e00\u81f4\uff08\u7b49\u4ef7\u6027\uff09\u3002\u8dd1\u6cd5\u5df2\u5199\u597d\uff1a`run_I_splitkv.py P`\uff08cfg \u91cc `prof`+`prof_probe` \u5df2\u914d\u597d\uff0c\u542b prof_client \u7684 text_sha\uff09",
-      "metrics": "\u9884\u671f 128k \u6bcf\u6b65 451.6 ms \u2192 40-60 ms \u91cf\u7ea7\uff08\u5373 ~2.9 token/\u6b65 \u2248 50-70 tok/s\uff09"
-    },
-    {
-      "description": "\u8865\u4e01\u7684\u53e6\u4e00\u534a\u98ce\u9669\u672a\u8bc4\u4f30\uff1a`_splitkv_multirow_takeover` \u653e\u5bbd\u4e86\u300c\u591a\u884c query \u8d70 split-KV\u300d\u7684\u9002\u7528\u8303\u56f4\uff0c\u5bf9**\u771f\u6b63\u7684 chunked-prefill \u6df7\u5408\u6279**\uff08q \u5404\u4e0d\u76f8\u540c\u7684\u6279\uff09\u5fc5\u987b\u4ecd\u7136\u56de\u843d\u5230\u539f\u8def\u5f84\u2014\u2014\u4ee3\u7801\u91cc\u9760\u300c\u6bcf\u5e8f\u5217\u884c\u6570\u5fc5\u987b\u4e00\u81f4\u300d\u8fd9\u6761\u95e8\u62d2\u7edd\uff0c\u4f46\u6ca1\u6709\u4efb\u4f55\u6d4b\u8bd5\u8986\u76d6\u8fd9\u4e2a\u5f62\u72b6\uff1b\u53e6\u5916 FA/beam-search \u7c7b q\u22643 \u7684\u6279\u73b0\u5728\u4e5f\u4f1a\u8d70 split-KV\uff0c\u9700\u4e0e\u4e32\u884c\u6838\u9010\u4f4d\u5bf9\u7167",
-      "metrics": "\u672a\u6d4b"
-    },
-    {
-      "description": "**\u6253\u5f00\u4e2d\u7684\u95ee\u9898\uff1a\u6295\u673a\u6b65\u90a3 ~392 ms@128k \u5230\u5e95\u82b1\u5728\u54ea\u4e2a\u5185\u6838** \u2014\u2014 \u5df2\u7531 N \u8f6e\u56de\u7b54\uff08Triton prefix-prefill \u5197\u4f59\u626b\u63cf 78.9%\uff09\uff0c\u4fdd\u7559\u6b64\u884c\u4ec5\u4e3a\u8bb0\u5f55\u5224\u636e\uff1a\u4e0e k \u65e0\u5173\u3001\u968f ctx \u7ebf\u6027\uff08~2.85 ms/1k\uff09\u3001\u4e00\u5f00\u6295\u673a\u5c31\u51fa\u73b0\u3001split-KV \u5bf9\u5b83\u65e0\u6548",
-      "metrics": "\u5df2\u56de\u7b54\uff1a`_fwd_kernel` 288 \u6b21 \u00d7 26.0 ms / 17 \u6b65"
     }
   ],
   "rocm_version": "7.2.4",
@@ -555,9 +442,9 @@
     "vllm_version": "0.28.0+rocm723"
   },
   "status": "experimental",
-  "status_note": "gfx90a \u4e0a\u552f\u4e00\u80fd\u52a0\u8f7d\u672c checkpoint \u7684 vLLM \u8def\u7ebf\uff08\u8865\u4e01 001+002\uff0c\u7ecf VLLM_BIN \u5305\u88c5\u5668\u8fdb\u5165\u5b98\u65b9\u57fa\u51c6\u811a\u672c\uff09\u3002agent lane \u5df2\u5b9a\u91cf\uff1a\u957f\u4e0a\u4e0b\u6587\u5355\u6d41\u9760 wheel \u91cc\u9ed8\u8ba4\u5173\u95ed\u7684 split-KV \u5185\u6838\uff08128k 553.9\u219242.7 ms/token\uff0c23.4 tok/s\uff09\uff1b\u6295\u673a\u89e3\u7801\u5728\u957f\u4e0a\u4e0b\u6587\u88ab\u4e00\u6761\u5197\u4f59\u7684 Triton prefix-prefill \u62d6\u6b7b\uff08\u6bcf\u6b65 +392 ms \u4e14\u4e0e k \u65e0\u5173\uff1bN \u8f6e profile \u5b9a\u4f4d\u4e3a `_fwd_kernel` \u5360 78.9%\uff0c\u5176\u8f93\u51fa\u968f\u540e\u88ab split-KV \u8986\u76d6\uff09\uff0c\u8c03\u5ea6\u8865\u4e01\u5df2\u5e94\u7528\u4f46\u5c1a\u672a\u7aef\u5230\u7aef\u9a8c\u8bc1\u3002\u65e0 optimizer sealed baseline\uff0c\u6545 best_throughput \u4ecd\u4e3a 0.0",
+  "status_note": "gfx90a \u4e0a\u552f\u4e00\u80fd\u52a0\u8f7d\u672c checkpoint \u7684 vLLM \u8def\u7ebf\uff08\u8865\u4e01 001+002\uff0c\u7ecf VLLM_BIN \u5305\u88c5\u5668\u8fdb\u5165\u5b98\u65b9\u57fa\u51c6\u811a\u672c\uff09\u3002agent lane \u5df2\u5b9a\u91cf\uff1a\u5355\u6d41 1k 45.4ms/token\u3001TPOT \u968f\u4e0a\u4e0b\u6587\u7ebf\u6027 +3.95ms/1k\uff080.30% HBM \u5cf0\u503c \u21d2 kernel \u5899\uff09\uff0cMTP k=2 \u63d0\u901f 2.14x(1k)\u21923.40x(240k)\u3001\u771f\u5b9e\u5185\u5bb9 1.88x\u3002\u65e0 optimizer sealed baseline\uff0c\u6545 best_throughput \u4ecd\u4e3a 0.0",
   "tp": 8,
-  "updated_at": "2026-09-16T11:43:15.425745+00:00",
+  "updated_at": "2026-09-16T09:29:46.141863+00:00",
   "vendor_reference": {
     "artifact": ".tmp/kb_extract/qwen3_5_397b_reference.json",
     "date_updated": "2026-09-14",
@@ -585,7 +472,7 @@
       "--enable-expert-parallel / -dp 8 style MoE parallelism: architecture-level, but xGMI all-to-all cost on MI250X is unmeasured"
     ]
   },
-  "version": 20,
+  "version": 18,
   "what_failed": [
     {
       "description": "fp8 stock \u8def\u7ebf\uff1avllm serve \u5b50\u8fdb\u7a0b\u975e\u96f6\u9000\u51fa \u2014\u2014 \u9996\u4e2a fp8 linear apply \u5c31\u649e torch._scaled_mm \u5f15\u64ce\u7ea7\u95e8\uff08'only supported on CUDA devices with compute capability >= 9.0 or 8.9, or ROCm MI300+'\uff09\uff0cgfx90a \u65e0 FP8 \u77e9\u9635\u6838",
@@ -604,8 +491,8 @@
       "reason": "client_request_rejected"
     },
     {
-      "description": "K \u8f6e\uff08split-KV q=3 + MTP\uff09128k \u53cd\u800c 161.2 ms\uff08split-KV \u5355\u72ec 42.7 ms\uff09\u3002\u4e24\u6b21\u5f52\u56e0\u90fd\u88ab\u81ea\u5df1\u7684\u5b9e\u9a8c\u8bc1\u4f2a\uff0c\u6700\u7ec8\u7ed3\u8bba\u662f**\u6295\u673a\u89e3\u7801\u672c\u8eab\u4f5c\u5e9f\u4e86 split-KV**\uff1aK3 \u8bc1\u4f2a\u4e86 scratch \u9884\u7b97\uff08MAX_SCRATCH_MIB=192 + MAX_TOTAL_MIB=1024 \u540e scratch \u62d2\u7edd\u6e05\u96f6\u3001takeover=6597\uff0c128k \u4ecd 155.9 ms\uff09\uff1bL1\uff08k=1\uff0c\u5176\u4f59\u53c2\u6570\u4e0e K3 \u9010\u5b57\u8282\u76f8\u540c\uff09\u8bc1\u4f2a\u4e86\u201c\u4ee3\u4ef7\u968f\u8349\u7a3f token \u6570\u589e\u957f\u201d\u548c\u201c\u4ee3\u4ef7\u968f\u9a8c\u8bc1\u884c\u6570\u589e\u957f\u201d\u2014\u2014\u6309\u5b9e\u6d4b\u63a5\u53d7\u957f\u5ea6\u6362\u7b97\u7684**\u6bcf\u6b65**\u8017\u65f6 k=1 \u4e3a 435.1 ms\u3001k=2 \u4e3a 451.6 ms\uff08\u591a\u4e00\u4e2a\u8349\u7a3f token \u53ea +16.5 ms = +3.8%\uff09\uff0c\u800c 1k/32k/128k \u7684\u6bcf\u6b65\u503c\u5206\u522b\u662f 52.6-63.9 / 148.8-159.2 / 435.1-451.6 ms \u21d2 \u5b58\u5728\u4e00\u4e2a**\u6bcf\u4e2a\u6295\u673a\u6b65\u4e00\u6b21\u3001O(ctx)\u3001\u4e0e k \u65e0\u5173**\u7684\u5f00\u9500\uff081k +14\u300132k +106-116\u3001128k +393-409 ms\uff0c\u659c\u7387 ~2.85 ms/1k ctx\uff09\u3002\u540e\u679c\uff1aMTP \u6bcf\u6b65\u8017\u65f6\u51e0\u4e4e\u7b49\u4e8e\u4e32\u884c attention \u7684\u6bcf\u6b65\u8017\u65f6\uff0832k/128k\uff1a148.8/435.1 vs \u4e32\u884c 170.8/553.9\uff1b240k\uff1a772.5 vs 967.9\uff09\uff0c\u5373\u4e00\u5f00\u6295\u673a\u5c31\u628a split-KV \u7684 \u00d713/\u00d721.7 \u5168\u90e8\u4e22\u6389\uff0c\u957f\u4e0a\u4e0b\u6587\u5355\u6d41\u56e0\u6b64\u5fc5\u987b**\u5173\u6295\u673a**",
-      "reason": "spec_decode_kills_splitkv"
+      "description": "K \u8f6e\uff08split-KV q=3 + MTP\uff09128k \u53cd\u800c 161.2 ms\uff08split-KV \u5355\u72ec 42.7 ms\uff09\u3002**\u6700\u521d\u5f52\u56e0\u4e8e scratch \u9884\u7b97\uff0c\u5df2\u88ab K3 \u8bc1\u4f2a**\uff1aMAX_SCRATCH_MIB \u62ac\u5230 192\uff08K2\uff09\u518d\u62ac MAX_TOTAL_MIB \u5230 1024\uff08K3\uff09\u4e4b\u540e\uff0cstats \u91cc scratch \u7c7b\u62d2\u7edd\u6e05\u96f6\u3001takeover=6597\uff08q=3 \u7684 decode \u6b65\u786e\u5b9e\u88ab\u63a5\u7ba1\uff09\uff0c128k \u4ecd\u53ea\u964d\u5230 155.9 ms\u3002\u771f\u6b63\u7279\u5f81\u662f MTP \u7684\u6bcf\u6b65\u4ee3\u4ef7\u968f\u4e0a\u4e0b\u6587\u7206\u70b8\uff1a1k +57%\uff0861 vs 38.8 ms/\u6b65\uff09\u3001128k +936%\uff08443 vs 42.7 ms/\u6b65\uff09\u21d2 \u90a3 ~400 ms \u4e0d\u5728 attention \u5185\u6838\u91cc\uff1b\u9996\u5acc 45 \u5c42 GDN \u5728\u6bcf\u6b65 3 token \u4e0b\u7684\u987a\u5e8f\u72b6\u6001\u63a8\u8fdb\uff0c\u6216\u8349\u7a3f\u5c42\u6ce8\u610f\u529b\u672a\u8d70 split-KV \u95e8",
+      "reason": "perf_regression_not_scratch"
     }
   ],
   "what_worked": [
@@ -664,18 +551,6 @@
     {
       "description": "`q>1` \u6269\u5c55\u8865\u4e01\u8ba9 split-KV \u63a5\u53d7\u6295\u673a\u52a8\u673a\u6b65\u7684 3 \u884c query\uff08`nqp=4 \u00d7 Q=3 = 12` \u884c\u4ecd\u843d\u5728\u539f 16 \u884c padding \u5185 \u21d2 \u4e00\u6b21 KV \u626b\u63cf\u670d\u52a1 3 \u4e2a token\uff09\uff1a\u5185\u6838\u7ea7\u6bd4\u4e09\u53d1 Q=1 \u5feb **2.83-2.92\u00d7**\uff0c\u4e0e oracle\uff08\u672a\u4fee\u6539\u6a21\u5757\u8dd1 3 \u6b21 Q=1\uff09**\u9010\u4f4d\u4e00\u81f4 max_abs=0.0000**",
       "measured_impact": "\u8865\u4e01 `hyperloom/kernels/gfx90a_flash_decode/splitkv-q3.patch`\uff08226 \u884c/1 \u6587\u4ef6\uff0c`patch -p1 --dry-run` \u9a8c\u8bc1\u5e72\u51c0\uff1b`VLLM_ROCM_SPLITKV_PA_MAX_Q` \u9ed8\u8ba4 1 \u21d2 \u4e0d\u8bbe\u5c31\u884c\u4e3a\u4e0d\u53d8\uff09"
-    },
-    {
-      "description": "**\u957f\u4e0a\u4e0b\u6587\u5355\u6d41\u7684\u6700\u4f18\u5f62\u6001\u662f\u300c\u5173\u6295\u673a + split-KV\u300d**\uff1a128k 23.4 tok/s\u3001240k 22.4 tok/s\u30011k 25.8 tok/s\uff08TPOT 42.7/44.7/38.8 ms\uff0c\u5747\u4e3a 1000/TPOT\uff09\uff0c\u5bf9\u6bd4\u540c\u673a MTP k=2 \u5728 128k \u53ea\u6709 6.4 tok/s\uff08155.9 ms/token\uff09\u2014\u2014 \u5dee 3.65x\u3002\u6295\u673a\u53ea\u5728\u77ed\u4e0a\u4e0b\u6587\uff08\u22724k\uff09\u5212\u7b97\uff1a1k \u65f6 MTP k=2 = 46.5 tok/s vs \u65e0\u6295\u673a 25.8 tok/s\uff081.80x\uff09\u3002\u81ea\u9002\u5e94\u5f00\u5173\u7684\u5224\u636e\u662f\u6bcf\u6761 lane \u5b9e\u6d4b\u7684\u6bcf\u6b65\u4ee3\u4ef7\uff0c\u4e0d\u662f\u63a5\u53d7\u7387",
-      "measured_impact": "MTP \u6bcf\u6b65 435-452 ms@128k \u4e14\u4e0e k \u65e0\u5173\uff08L1/K3\uff09\uff0csplit-KV \u6bcf\u6b65 42.7 ms@128k"
-    },
-    {
-      "description": "**\u7528\u5185\u6838\u7ea7 profile \u800c\u4e0d\u662f\u7ee7\u7eed A/B\uff0c\u627e\u5230\u4e86 MTP \u957f\u4e0a\u4e0b\u6587\u5899\u7684\u771f\u8eab**\uff08N \u8f6e\uff1b145,426 token \u4e0a\u4e0b\u6587\u300148 \u4e2a\u8d2a\u5fc3 token\u300117 \u4e2a decode \u6b65\uff1bvLLM torch profiler \u7684 `profiler_out_0.txt` \u5185\u6838\u8017\u65f6\u8868\uff09\uff1a\u6295\u673a\u6b65\u91cc `_fwd_kernel.kd`\uff08Triton prefix-prefill\uff0c`v1/attention/ops/prefix_prefill.py:107`\uff09\u5360\u8be5\u7a97\u53e3 GPU \u65f6\u95f4 **78.9%** \u2014\u2014 7.485 s / 288 \u6b21 / 26.0 ms \u6bcf\u6b21 \u2248 \u6bcf\u6b65 16.9 \u6b21\uff0815 \u5c42 full-attention + 1 \u5c42 MTP\uff09\u3002\u673a\u5236\u5728 `chunked_prefill_paged_decode`\uff1a`if max_query_len > 1:` \u5148\u8dd1 Triton prefix-prefill \u626b\u5168\u4e0a\u4e0b\u6587\uff08\u6295\u673a\u9a8c\u8bc1\u6b65 q=k+1\u22652 \u5fc5\u7136\u547d\u4e2d\uff09\uff0c\u968f\u540e\u4ee3\u7801\u7ee7\u7eed\u4e0b\u843d\u5230 decode \u5206\u652f\uff0c**split-KV \u53c8\u628a\u540c\u4e00\u6279\u8f93\u51fa\u884c\u8986\u76d6\u4e00\u904d** \u21d2 Triton \u90a3\u4e00\u904d\u662f\u7eaf\u6d6a\u8d39\u3002\u7b97\u672f\u95ed\u5408\uff1a16\u00d726.0 + 17\u00d70.28 + ~16 \u2248 437 ms/\u6b65 vs \u5b9e\u6d4b K3 451.6 ms\uff08\u5dee 3%\uff09",
-      "measured_impact": "\u5bf9\u7167\u81c2\uff08\u540c\u4e0a\u4e0b\u6587\u3001\u65e0\u6295\u673a\uff09\uff1a`_fwd_kernel` \u53ea\u6709 15 \u6b21 \u00d7 25.1 ms = 377 ms\uff0c\u90a3\u662f**\u4e00\u6b21\u6027\u771f prefill**\uff1bdecode \u5168\u8d70 split-KV = 705 \u6b21 \u00d7 0.275 ms / 47 \u6b65 = 4.1 ms/\u6b65"
-    },
-    {
-      "description": "\u6d88\u9664\u8fd9\u4efd\u6d6a\u8d39\u4e0d\u7528\u5199\u5185\u6838\uff0c\u53ea\u8981\u6539\u8c03\u5ea6\u987a\u5e8f\uff1a\u5728 `if max_query_len > 1` \u5206\u652f\u91cc**\u5148\u8bd5 split-KV \u63a5\u7ba1**\uff08\u65b0\u51fd\u6570 `_splitkv_multirow_takeover`\uff0c\u6761\u4ef6\u4e0e decode \u5206\u652f\u9010\u6761\u5bf9\u9f50\uff1a\u539f\u751f ROCm \u8def\u5f84\u53ef\u7528/\u975e\u56e0\u679c/\u4ea4\u53c9\u6ce8\u610f\u529b\u7b49\u60c5\u5f62\u4e00\u5f8b return False\uff09\uff0c\u63a5\u7ba1\u6210\u529f\u5373 return\uff0c\u4e0d\u518d\u8dd1\u90a3\u904d\u4f1a\u88ab\u8986\u76d6\u7684 Triton\u3002\u8865\u4e01 `hyperloom/kernels/gfx90a_flash_decode/multirow-skip-triton-prefill.patch`\uff08137 \u884c/1 \u6587\u4ef6\uff0c`py_compile` \u901a\u8fc7\uff0c\u5df2\u5e94\u7528\u5230 `hyperloom/patches/fp8-w8a8-emulation-gfx90a/vllm`\uff0c\u539f\u6587\u4ef6\u7559 `.orig`\uff09",
-      "measured_impact": "**\u5c1a\u672a\u7aef\u5230\u7aef\u9a8c\u8bc1**\uff1aGPU \u88ab\u53e6\u4e00\u5bb9\u5668\uff08Ornith-1.5-397B-Quark-Int8 @8100\uff09\u5360\u7528\uff0c\u7528\u6237\u8981\u6c42\u5148\u522b\u52a8\u3002\u9884\u671f 128k \u6bcf\u6b65\u4ece 451.6 ms \u964d\u5230 ~40-60 ms \u91cf\u7ea7\uff1bsplit-KV q>1 \u7684\u9010\u4f4d\u4e00\u81f4\u6027\u6b64\u524d\u5df2\u9a8c\uff08max_abs=0.0000\uff09"
     }
   ]
 }
