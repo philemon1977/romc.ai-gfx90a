@@ -8,7 +8,7 @@ Triton 分支返回真实 lse（缓冲复用，cudagraph 安全）。
 AITER opus / 非 ragged 分支被要求 LSE 时显式 NotImplementedError（不许静默 None）。
 
 生成/重生成：python3 make_patch.py（锚点不唯一会硬失败；树被并行会话改动后需重生成）。
-应用：cd /home/qiba/ai/recipes/patches/vllm/vllm-openai-rocm-nightly-0918/tree && patch -p1 < ...0001...
+应用：cd /home/qiba/ai/recipes/patches/vllm/vllm-openai-rocm-nightly-0918/core/tree && patch -p1 < ...0001...
 （先 --dry-run）；回滚 patch -p1 -R。
 
 ### 上树后的尺子（按序，全部在空闲卡窗口跑）
