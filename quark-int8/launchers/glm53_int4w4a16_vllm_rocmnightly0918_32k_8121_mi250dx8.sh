@@ -9,8 +9,8 @@ set -euo pipefail
 PORT="${PORT:-8121}"
 AI_HOME="${AI_HOME:-/home/qiba/ai}"
 REPO=/home/qiba/ROCm.AI
-PATCH_ROOT="$AI_HOME/recipes/patches/gfx90a/ct_w4a16_dsv41_n0918/tree"
-GEMV_PATCH="$AI_HOME/recipes/patches/gfx90a/ct_w4a16_dsv41_n0918/moe_gemv"
+PATCH_ROOT="${AI_HOME}/recipes/patches/vllm/vllm-openai-rocm-nightly-0918/core/tree"
+GEMV_PATCH="${AI_HOME}/recipes/patches/vllm/vllm-openai-rocm-nightly-0918/core/moe_gemv"
 MODEL_PATH="${MODEL_PATH:-/mnt/kioxia-cm6-3t8/ai/models/ZhipuAI/GLM-5.3-CT-Int4-W4A16}"
 IMAGE="${IMAGE:-vllm/vllm-openai-rocm:nightly-0918}"
 MAX_MODEL_LEN="${MAX_MODEL_LEN:-32768}"

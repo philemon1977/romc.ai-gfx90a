@@ -20,7 +20,8 @@ AI_HOME="${AI_HOME:-/home/qiba/ai}"
 REPO=/home/qiba/ROCm.AI
 IMAGE="${IMAGE:-rocm-ai/vllm:glm53-int4-gfx90a-0918}"
 MODEL_PATH="${MODEL_PATH:-/mnt/stripe-3mix-3t2/models/ZhipuAI/GLM-5.3-Flash-Quark-Int8}"
-PATCH_ROOT="$AI_HOME/recipes/patches/gfx90a/ct_w4a16_dsv41_n0918/tree"
+PATCH_ROOT="${AI_HOME}/recipes/patches/vllm/vllm-openai-rocm-nightly-0918/core/tree"
+PATCH_ROOT_MODEL="${AI_HOME}/recipes/patches/vllm/vllm-openai-rocm-nightly-0918/GLM/GLM-5.3-Flash-320B/tree"
 MAX_MODEL_LEN="${MAX_MODEL_LEN:-32768}"
 MAX_NUM_SEQS="${MAX_NUM_SEQS:-8}"
 GPU_MEM_UTIL="${GPU_MEM_UTIL:-0.95}"
@@ -59,7 +60,7 @@ if [ "$MHC_PATCH" = "1" ]; then
   grep -q 'if on_gfx90a():' "$M" || { echo '❌ 补丁 mhc.py 里没有 gfx90a 排除（fail-closed）'; exit 1; }
 fi
 if [ "$IDX_PATCH" = "1" ]; then
-  X="$PATCH_ROOT/models/glm5next/amd/sparse_indexer.py"
+  X="${PATCH_ROOT_MODEL}/models/glm5next/amd/sparse_indexer.py"
   [ -f "$X" ] || { echo "❌ 第 8 件补丁不在：$X"; exit 1; }
   grep -q 'gfx90a-host patch: glm5next' "$X" || { echo '❌ indexer 补丁缺标记（fail-closed）'; exit 1; }
   grep -q 'or on_gfx90a()' "$X" || { echo '❌ indexer 补丁没放行 gfx90a（fail-closed）'; exit 1; }
@@ -80,7 +81,7 @@ fi
 MOUNT=(-v "$MODEL_PATH:/models:ro"
        -v "$LOG_DIR:/logs")
 [ "$MHC_PATCH" = "1" ] && MOUNT+=(-v "$PATCH_ROOT/model_executor/layers/mhc.py:/usr/local/lib/python3.12/dist-packages/vllm/model_executor/layers/mhc.py:ro")
-[ "$IDX_PATCH" = "1" ] && MOUNT+=(-v "$PATCH_ROOT/models/glm5next/amd/sparse_indexer.py:/usr/local/lib/python3.12/dist-packages/vllm/models/glm5next/amd/sparse_indexer.py:ro")
+[ "$IDX_PATCH" = "1" ] && MOUNT+=(-v "${PATCH_ROOT_MODEL}/models/glm5next/amd/sparse_indexer.py:/usr/local/lib/python3.12/dist-packages/vllm/models/glm5next/amd/sparse_indexer.py:ro")
 
 ENVS=(-e VLLM_ENGINE_READY_TIMEOUT_S=3600
       -e HF_HUB_OFFLINE=1

@@ -3,11 +3,12 @@
 # 自己引入了 3 处语法错误（悬空 elif / 引号不配对 / 未定义变量），每次都是"跑一下"才发现。
 # 用法：任何改动后 `bash check_my_code.sh`（不需要 GPU；守门测试在容器内跑，不碰卡）
 set -u
-P=/home/qiba/ai/recipes/patches/gfx90a/ct_w4a16_dsv41_n0918/tree
+P=${AI_HOME}/recipes/patches/vllm/vllm-openai-rocm-nightly-0918/core/tree
+P_MODEL="${AI_HOME}/recipes/patches/vllm/vllm-openai-rocm-nightly-0918/DeepSeek/DeepSeek-V4.1-Flash-748B/tree"
 Q=/home/qiba/ROCm.AI/quark-int8
 bad=0
 echo "== 1) 补丁文件严格编译（py_compile：能抓 ast.parse 抓不到的 global 顺序/未定义名） =="
-for f in "$P/models/deepseek_v41/common/engram.py" "$P/models/deepseek_v41/amd/vl_model.py" \
+for f in "${P_MODEL}/models/deepseek_v41/common/engram.py" "${P_MODEL}/models/deepseek_v41/amd/vl_model.py" \
          "$P/v1/attention/ops/rocm_aiter_mla_sparse.py" "$P/model_executor/layers/sparse_attn_indexer.py" \
          "$P/_aiter_ops.py" "$P/model_executor/layers/mhc.py"; do
   [ -f "$f" ] || continue

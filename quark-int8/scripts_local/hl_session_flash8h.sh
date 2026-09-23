@@ -76,13 +76,21 @@ echo "   PYTHON=${PYTHON:-$(command -v python3)}"
 # 2b) 证明那个 env 真的进了 raylet（不证明就等于没改：install.sh 可能复用了旧集群）。
 #     raylet 的节点级配置只在 `ray start --head` 那一刻从环境读，读 /proc/<pid>/environ
 #     是唯一能区分"我导出了"与"raylet 真拿到了"的尺子。
-RAYLET_PID="$(pgrep -f '[r]aylet' | head -1)"
-[ -n "$RAYLET_PID" ] || bail "install.sh 之后没有 raylet 进程（Ray 没起来，baseline/内核车道都会挂）"
-if tr '\0' '\n' < "/proc/$RAYLET_PID/environ" | grep -qx 'RAY_memory_monitor_refresh_ms=0'; then
-  echo "   raylet(pid=$RAYLET_PID) 已带 RAY_memory_monitor_refresh_ms=0：PASS"
-else
-  bail "raylet 没继承 RAY_memory_monitor_refresh_ms=0 —— monitor 还会误杀 baseline，别开跑"
-fi
+# ⚠️ 尺子本身踩过一次（09-21 21:4x，误杀了一轮好端端的会话）：
+#   pgrep -f '[r]aylet' | head -1 会挑到**上一次 ray stop --force 留下的僵尸 raylet**
+#   （Z 态还没被回收），而僵尸的 /proc/<pid>/environ 读出来是**空串**，
+#   于是"env 没继承"的判决出现，而真正的新 raylet 其实带着这个 env 跑着。
+#   ⇒ 必须跳过 Z/X 态，并逐个试到命中为止；stat 的第 3 列要先剔掉 "(comm) " 再取。
+RAYLET_OK=""
+for rp in $(pgrep -f '[r]aylet'); do
+  st="$(sed 's/.*) //' "/proc/$rp/stat" 2>/dev/null | cut -d' ' -f1)"
+  case "$st" in Z|X) continue ;; esac
+  if tr '\0' '\n' < "/proc/$rp/environ" 2>/dev/null | grep -qx 'RAY_memory_monitor_refresh_ms=0'; then
+    RAYLET_OK="$rp"; break
+  fi
+done
+[ -n "$RAYLET_OK" ] || bail "没有一个**活的** raylet 带上 RAY_memory_monitor_refresh_ms=0（monitor 还会误杀 baseline，别开跑）"
+echo "   raylet(pid=$RAYLET_OK) 已带 RAY_memory_monitor_refresh_ms=0：PASS"
 
 echo "== 3) 重打 mi250x 三处（install.sh 之后必须重来） =="
 python3 "$INSTALL_DIR/patches-local/apply_mi250x_runner.py" || bail "apply_mi250x_runner"

@@ -5,7 +5,7 @@
 # 依据：disk_diag 实测（单流 O_DIRECT 3.5 GB/s / 8 路 4.67 GB/s / 装载仅 0.52 GB/s）。
 set -uo pipefail
 AI_HOME=/home/qiba/ai
-TREE=$AI_HOME/recipes/patches/gfx90a/ct_w4a16_dsv41_n0918/tree
+TREE=${AI_HOME}/recipes/patches/vllm/vllm-openai-rocm-nightly-0918/core/tree
 GEMV=$AI_HOME/recipes/patches/gfx90a/ct_w4a16_dsv41_n0918/moe_gemv
 MODEL="${MODEL:-/mnt/kioxia-cm6-3t8/ai/models/ZhipuAI/GLM-5.3-CT-Int4-W4A16}"
 OUT_ROOT=/mnt/stripe-3mix-3t2/ai/sharded

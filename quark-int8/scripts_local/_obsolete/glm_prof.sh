@@ -12,8 +12,8 @@ set -o pipefail
 [ -n "$EAGER" ] || EAGER=0
 [ -n "$ROWS" ] || ROWS=28
 [ -n "$MOE_TUNED_DIR" ] || MOE_TUNED_DIR=/home/qiba/ai/config/moe-tuned
-PATCH_ROOT="$AI_HOME/recipes/patches/gfx90a/ct_w4a16_dsv41_n0918/tree"
-GEMV_PATCH="$AI_HOME/recipes/patches/gfx90a/ct_w4a16_dsv41_n0918/moe_gemv"
+PATCH_ROOT="${AI_HOME}/recipes/patches/vllm/vllm-openai-rocm-nightly-0918/core/tree"
+GEMV_PATCH="${AI_HOME}/recipes/patches/vllm/vllm-openai-rocm-nightly-0918/core/moe_gemv"
 DP=/usr/local/lib/python3.12/dist-packages/vllm
 
 # 显存硬门：等释放（最多 5 分钟）。注意 stop 容器后显存释放有滞后，实测会滞后数秒到数十秒。
