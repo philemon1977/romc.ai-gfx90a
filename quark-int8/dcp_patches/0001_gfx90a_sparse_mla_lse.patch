@@ -1,0 +1,159 @@
+# DCP-A: gfx90a Triton sparse MLA writes LSE (per token x head, ln base, empty=-inf).
+# APPLY: cd /home/qiba/ai/patches/gfx90a/ct_w4a16_dsv41_n0918/tree && patch -p1 --dry-run < PATCH   (dry-run first; real apply only after gate 0)
+# REVERT: patch -p1 -R < PATCH
+--- a/v1/attention/ops/rocm_aiter_mla_sparse.py
++++ b/v1/attention/ops/rocm_aiter_mla_sparse.py
+@@ -2053,11 +2053,15 @@
+     out_stride_t,
+     out_stride_h,
+     out_stride_d,
++    lse_ptr,
++    lse_stride_t,
++    lse_stride_h,
+     num_heads,
+     head_dim,
+     num_kv,
+     scale,
+     HAS_ATTN_SINK: tl.constexpr,
++    WRITE_LSE: tl.constexpr,
+     BLOCK_H: tl.constexpr,
+     BLOCK_D: tl.constexpr,
+     BLOCK_K: tl.constexpr,
+@@ -2138,9 +2142,21 @@
+             (acc * alpha[:, None]) / denom[:, None],
+             0.0,
+         )
++        if WRITE_LSE:
++            lse = tl.where(l_final > 0.0, m_final + tl.log(l_final), float("-inf"))
+     else:
+         denom = tl.maximum(l_i, 1.0e-30)
+         out = tl.where(l_i[:, None] > 0.0, acc / denom[:, None], 0.0)
++        if WRITE_LSE:
++            lse = tl.where(l_i > 0.0, m_i + tl.log(l_i), float("-inf"))
++
++    # DCP-A：每 (query, head) 一个 ln 底 LSE；空行 -inf（sink 分支在上方各自折叠）。
++    if WRITE_LSE:
++        tl.store(
++            lse_ptr + query_idx * lse_stride_t + head_offsets * lse_stride_h,
++            lse,
++            mask=head_mask,
++        )
+ 
+     tl.store(
+         out_ptr
+@@ -3240,6 +3256,7 @@
+     attn_sink: torch.Tensor | None,
+     nope_head_dim: int,
+     rope_head_dim: int,
++    lse: torch.Tensor | None = None,
+ ) -> torch.Tensor:
+     assert q.ndim == 3, f"expected q=[sq,h,d], got {q.shape}"
+     assert kv.ndim == 2, f"expected kv=[skv,d], got {kv.shape}"
+@@ -3271,6 +3288,16 @@
+     block_k = 16 if head_dim >= 256 else 32
+     num_warps = 4
+     out = torch.empty_like(q)
++    write_lse = lse is not None
++    if write_lse:
++        assert (
++            lse.dtype == torch.float32
++            and lse.shape == (num_queries, num_heads)
++            and lse.is_contiguous()
++        ), "lse must be contiguous fp32 [%d,%d]" % (num_queries, num_heads)
++        lse_arg = lse
++    else:
++        lse_arg = out  # WRITE_LSE=False 时不会被解引用，占位即可
+     _sparse_attn_prefill_ragged_kernel[(num_queries, triton.cdiv(num_heads, block_h))](
+         q,
+         kv,
+@@ -3286,11 +3313,15 @@
+         out.stride(0),
+         out.stride(1),
+         out.stride(2),
++        lse_arg,
++        lse_arg.stride(0),
++        lse_arg.stride(1),
+         num_heads,
+         head_dim,
+         kv.shape[0],
+         float(scale),
+         HAS_ATTN_SINK=has_attn_sink,
++        WRITE_LSE=write_lse,
+         BLOCK_H=block_h,
+         BLOCK_D=block_d,
+         BLOCK_K=block_k,
+@@ -3944,6 +3975,7 @@
+     output: torch.Tensor,
+     ragged_indices: torch.Tensor | None = None,
+     ragged_indptr: torch.Tensor | None = None,
++    output_lse: torch.Tensor | None = None,
+ ) -> None:
+     _dsv41_mla_probe("prefill-in", q=q, kv=kv, indices=indices, attn_sink=attn_sink,
+                      ragged_indices=locals().get("ragged_indices"),
+@@ -3973,6 +4005,11 @@
+                 num_rows=kv.shape[0],
+             )
+         assert opus_attn_sink is not None
++        if output_lse is not None:
++            raise NotImplementedError(
++                "AITER opus sparse prefill does not produce LSE; DCP needs "
++                "the Triton ragged path (do not route DCP here)."
++            )
+         if _rocm_sparse_attn_prefill_ragged_aiter_opus(
+             q=q,
+             kv=kv.squeeze(1),
+@@ -3994,8 +4031,14 @@
+             attn_sink=None if attn_sink is None else attn_sink[: q.shape[1]],
+             nope_head_dim=nope_head_dim,
+             rope_head_dim=rope_head_dim,
++            lse=output_lse,
+         )
+     else:
++        if output_lse is not None:
++            raise NotImplementedError(
++                "LSE is only produced by the ragged Triton sparse prefill; "
++                "DCP must pass ragged_indices/ragged_indptr."
++            )
+         assert indices is not None
+         indices_2d = indices.reshape(indices.shape[0], -1)
+         output_chunk = _rocm_sparse_attn_prefill_triton(
+--- a/v1/attention/backends/mla/rocm_aiter_mla_sparse.py
++++ b/v1/attention/backends/mla/rocm_aiter_mla_sparse.py
+@@ -879,6 +879,22 @@
+                     self.sinks.reshape(1, self.num_heads, 1),
+                     q.shape[1],
+                 ).reshape(-1)
++            # DCP 改造 A：Triton 分支产出每 (token, head) 的 LSE（ln 底，sink 已折叠）。
++            # 缓冲复用（cudagraph 安全）；返回契约与 AITER 分支一致（第二元是 LSE）。
++            buf = getattr(self, "_triton_lse_buf", None)
++            if (
++                buf is None
++                or buf.shape[0] < num_tokens
++                or buf.shape[1] != q.shape[1]
++                or buf.device != q.device
++            ):
++                buf = torch.empty(
++                    (max(num_tokens, 512), q.shape[1]),
++                    dtype=torch.float32,
++                    device=q.device,
++                )
++                self._triton_lse_buf = buf
++            lse = buf[:num_tokens]
+             rocm_sparse_attn_prefill(
+                 q=q,
+                 kv=kv_c_and_k_pe_cache.view(-1, 1, q.shape[-1]),
+@@ -892,9 +908,13 @@
+                 output=output,
+                 ragged_indices=attn_metadata.paged_kv_indices,
+                 ragged_indptr=attn_metadata.paged_kv_indptr,
++                output_lse=lse,
+             )
+             output = AiterMLAHelper.get_mla_unpadded_o(self.num_heads, output)
+-            return output, None
++            lse = AiterMLAHelper.get_mla_unpadded_o(
++                self.num_heads, lse.unsqueeze(-1)
++            ).squeeze(-1)
++            return output, lse
+ 
+         # AITER's nonpersistent return-LSE dispatch has discrete head kernels.
+         supported_head_buckets: tuple[int, ...] | None = None

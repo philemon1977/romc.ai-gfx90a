@@ -405,7 +405,7 @@
      "value": "四个开 QR 的臂全部死在启动显存门（`Free memory 54.9 < desired 0.97`）；~9 GiB/卡 是 `ops.init_custom_qr()` 的固定分配，本模型 KV 预算只有 8.17 GiB ⇒ 算不过账",
      "when": {
       "model": [
-       "ZhipuAI/GLM-5.3-CT-Int4-W4A16"
+       "GLM/GLM-5.3-753B/CT-Int4-W4A16"
       ],
       "quant": [
        "ct-int4-w4a16"
@@ -423,7 +423,7 @@
        "vllm-0.3.1.dev85+gdee37d891"
       ],
       "model": [
-       "ZhipuAI/GLM-5.3-CT-Int4-W4A16"
+       "GLM/GLM-5.3-753B/CT-Int4-W4A16"
       ],
       "quant": [
        "ct-int4-w4a16"
@@ -680,7 +680,7 @@
   {
    "applies_to": {
     "arch": "glm5next",
-    "model": "ZhipuAI/GLM-5.3-Flash-Quark-Int8",
+    "model": "GLM/GLM-5.3-Flash-320B/Quark-Int8-W8A8",
     "preset": "generic-vllm",
     "quant": "int8-w8a8",
     "topology": [
@@ -688,7 +688,7 @@
     ]
    },
    "commands": [
-    "# 对象：models/ZhipuAI/GLM-5.3-Flash-Quark-Int8（314 G / 331.41 GB，quant_method=quark）\n# 底座：envs/vllm_master_rocm724（editable → src/vllm-master）；端口 8127（实验臂专用）\nexport PYTHONPATH=$AI/patches/gfx90a/aiter_int8_patch   # 站点补丁：注册 vllm.rocm_aiter_w8a8_gemm + 恢复 is_linear_enabled\nexport VLLM_ROCM_USE_AITER=1 VLLM_ROCM_USE_AITER_LINEAR=1\nexport HSA_NO_SCRATCH_RECLAIM=1 HIP_FORCE_DEV_KERNARG=1     # 8114 钉过、我漏抄的两个 env（§3）\nexport PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True\nexport VLLM_CACHE_ROOT=\"$AI/cache/vllm-<臂名>\"              # 编译缓存隔离：否则日志写 AITER 实际仍走 Triton\n# 必须给的 CLI：--kv-cache-dtype bfloat16（不是 bf16）· --block-size 128 · --safetensors-load-strategy eager\n# 必须不给的 env：AITER_CONFIG_GEMM_A8W8（只在 0.28 系用；master 上给了会在权重装完后 build_tune_dict 崩）",
+    "# 对象：models/Base/GLM/GLM-5.3-Flash-320B/Quark-Int8-W8A8（314 G / 331.41 GB，quant_method=quark）\n# 底座：envs/vllm_master_rocm724（editable → src/vllm-master）；端口 8127（实验臂专用）\nexport PYTHONPATH=$AI/patches/gfx90a/aiter_int8_patch   # 站点补丁：注册 vllm.rocm_aiter_w8a8_gemm + 恢复 is_linear_enabled\nexport VLLM_ROCM_USE_AITER=1 VLLM_ROCM_USE_AITER_LINEAR=1\nexport HSA_NO_SCRATCH_RECLAIM=1 HIP_FORCE_DEV_KERNARG=1     # 8114 钉过、我漏抄的两个 env（§3）\nexport PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True\nexport VLLM_CACHE_ROOT=\"$AI/cache/vllm-<臂名>\"              # 编译缓存隔离：否则日志写 AITER 实际仍走 Triton\n# 必须给的 CLI：--kv-cache-dtype bfloat16（不是 bf16）· --block-size 128 · --safetensors-load-strategy eager\n# 必须不给的 env：AITER_CONFIG_GEMM_A8W8（只在 0.28 系用；master 上给了会在权重装完后 build_tune_dict 崩）",
     "source /home/qiba/ROCm.AI/quark-int8/gpu_gate.sh && gate 8127   # 起服前的门用库里标准件，别手搓 monitor",
     "kill -TERM -$(cat logs/glm53flash-int8-8127.pid)   # 停服只按把手；⚠️ engine init 失败会留孤儿 VLLM::Worker，pgrep api_server 查不到"
    ],

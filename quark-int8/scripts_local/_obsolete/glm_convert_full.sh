@@ -12,6 +12,6 @@ docker run --rm --entrypoint bash --device /dev/kfd --device /dev/dri --group-ad
    --model /mdl/GLM-5.3 --out /mdl/GLM-5.3-CT-Int4-W4A16 \
    --device cuda --skip-existing --device-budget-gib 12 --min-free-gib 4"
 echo "CONVERT_EXIT=$?"
-echo "=== 产物 ==="; du -sh /mnt/kioxia-cm6-3t8/ai/models/ZhipuAI/GLM-5.3-CT-Int4-W4A16 2>/dev/null
-ls /mnt/kioxia-cm6-3t8/ai/models/ZhipuAI/GLM-5.3-CT-Int4-W4A16/*.safetensors 2>/dev/null | wc -l
+echo "=== 产物 ==="; du -sh /mnt/kioxia-cm6-3t8/ai/models/GLM/GLM-5.3-753B/CT-Int4-W4A16 2>/dev/null
+ls /mnt/kioxia-cm6-3t8/ai/models/GLM/GLM-5.3-753B/CT-Int4-W4A16/*.safetensors 2>/dev/null | wc -l
 echo "GLM53_CONVERT_DONE $(date +%T)"

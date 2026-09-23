@@ -19,6 +19,13 @@ GPU=${GPU-}
 EXTRA=()
 [ -n "${SKIP_EXISTING:-}" ] && EXTRA+=(--skip-existing)
 [ -n "${ALLOW_CPU:-}" ] && EXTRA+=(--allow-cpu)
+# 逐组最优 int4 scale：实测把 int4 相对误差 10.0%→6.8%（fp4 专家最好 1.6×，见转换记录 §4.16）。
+# 步长默认 0.05（6 点）：实测相对 15 点仅变差 +1.887%，但这段 CPU 耗时降到 0.46×（§4.20）。
+[ -n "${ATTN_MERGED:-}" ] && EXTRA+=(--attn-merged-bf16)
+[ -n "${ATTN_BF16:-}" ] && EXTRA+=(--attn-bf16)
+[ -n "${SHARED_BF16:-}" ] && EXTRA+=(--shared-experts-bf16)
+[ -n "${OPT_SCALE:-}" ] && EXTRA+=(--optimal-scale
+  --opt-scale-lo "${OPT_LO:-0.72}" --opt-scale-hi "${OPT_HI:-1.00}" --opt-scale-step "${OPT_STEP:-0.05}")
 
 mkdir -p "$HOST_OUT"
 

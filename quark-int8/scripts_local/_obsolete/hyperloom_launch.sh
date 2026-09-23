@@ -17,7 +17,7 @@ RUN_LOG="$RUN_DIR/run_${RUN_TAG}.log"; PID_FILE="$RUN_DIR/run_${RUN_TAG}.pid"
 LAUNCH_INFO="$RUN_DIR/launch_${RUN_TAG}.json"
 
 echo "=== launch optimize $(date +%T) ==="
-echo "  model   : /mnt/kioxia-cm6-3t8/ai/models/ZhipuAI/GLM-5.3-CT-Int4-W4A16"
+echo "  model   : /mnt/kioxia-cm6-3t8/ai/models/GLM/GLM-5.3-753B/CT-Int4-W4A16"
 echo "  image   : $HYPERLOOM_IMAGE"
 echo "  tp/ep   : 8/1   precision: w4a16"
 echo "  workload: isl=1024 osl=1024 conc=8 (+conc sweep 1,4,8,16,32)"
@@ -25,7 +25,7 @@ echo "  target  : 最大化 TPS，下限 --target-tput 30   预算 3h"
 echo "  log     : $RUN_LOG"
 
 nohup python3 -m hyperloom.inference_optimizer.cli optimize \
-  --model /mnt/kioxia-cm6-3t8/ai/models/ZhipuAI/GLM-5.3-CT-Int4-W4A16 \
+  --model /mnt/kioxia-cm6-3t8/ai/models/GLM/GLM-5.3-753B/CT-Int4-W4A16 \
   --framework vllm --tp 8 --ep 1 --precision w4a16 \
   --conc 8 --isl 1024 --osl 1024 \
   --max-hours 3 --target-tput 30 --tick-interval-sec 30 \

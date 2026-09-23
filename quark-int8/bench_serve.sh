@@ -30,7 +30,8 @@ echo "[bench] log -> $LOG"
 # --- phase 1: safetensors -> GPU
 LOAD_DONE=""
 for _ in $(seq 1 "$READY_TIMEOUT"); do
-  if grep -qa "Loading safetensors checkpoint shards: 100%" "$LOG" 2>/dev/null; then
+  # 本 loader（v14c 流式）不打上游那行进度，用它自己的里程碑
+  if grep -qa "Model loading took" "$LOG" 2>/dev/null; then
     LOAD_DONE=$(date +%s); break
   fi
   if grep -qaE "KeyError|ValueError|RuntimeError|OutOfMemory" "$LOG" 2>/dev/null; then

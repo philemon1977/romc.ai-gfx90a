@@ -1,0 +1,71 @@
+# 0005_gfx90a_rocm_indexer_dcp_topk.patch  (see quark-int8/DCP_A_NOTES.md)
+# APPLY: cd /home/qiba/ai/patches/gfx90a/ct_w4a16_dsv41_n0918/tree && patch -p1 < PATCH   (dry-run first)
+# REVERT: patch -p1 -R < PATCH
+--- a/v1/attention/ops/rocm_aiter_mla_sparse.py
++++ b/v1/attention/ops/rocm_aiter_mla_sparse.py
+@@ -1222,6 +1222,42 @@
+     return min(num_batched_tokens, max_num_seqs * (1 + num_spec))
+ 
+ 
++def _dcp_merge_topk_if_needed(
++    logits: torch.Tensor,
++    topk_indices: torch.Tensor,
++    topk_tokens: int,
++    row_starts: torch.Tensor | None = None,
++) -> None:
++    # DCP 缺陷①（2026-09-20 取证，见 DCP_A_NOTES.md）：ROCm 走
++    # rocm_aiter_sparse_attn_indexer，不经过 CUDA 侧 sparse_attn_indexer 里的
++    # _merge_dcp_topk_global；而 DCP 下 index-K 也是分片的，所以这里选出的 top-K
++    # 是**本 rank 的本地位置**。注意力侧按全局 id 过滤 ⇒ 除 rank0 外有效槽全为 0
++    # ⇒ 内核读到空（out=0、lse=-inf）⇒ 输出确定性乱码。
++    # dcp 参数就地取，不改 op 签名（改签名要连带动 fake/注册/调用方三处）。
++    from vllm.config import get_current_vllm_config
++
++    parallel_config = get_current_vllm_config().parallel_config
++    dcp_world_size = int(parallel_config.decode_context_parallel_size)
++    if dcp_world_size <= 1:
++        return
++
++    from vllm.distributed import get_dcp_group
++    # 复用 0002 已写好并通过审查的实现（Triton pack + torch stable-topk）。
++    from vllm.model_executor.layers.sparse_attn_indexer import (
++        _merge_dcp_topk_global_gfx90a,
++    )
++
++    _merge_dcp_topk_global_gfx90a(
++        logits,
++        topk_indices,
++        topk_tokens,
++        get_dcp_group().rank_in_group,
++        dcp_world_size,
++        int(parallel_config.cp_kv_cache_interleave_size),
++        row_starts,
++    )
++
++
+ def rocm_aiter_sparse_attn_indexer_fake(
+     hidden_states: torch.Tensor,
+     k_cache_prefix: LayerNameType,
+@@ -1471,6 +1507,12 @@
+                     logits.stride(1),
+                     topk_tokens,
+                 )
++
++            # DCP 缺陷①：本地 top-K -> 全局 token id。prefill 的行在打包 logits 里
++            # 从 chunk.cu_seqlen_ks 起，故要传 row_starts。
++            _dcp_merge_topk_if_needed(
++                logits, topk_indices, topk_tokens, row_starts=chunk.cu_seqlen_ks
++            )
+ 
+             if os.environ.get("DSV41_IDX_DUMP", "0") == "1" and k_cache_prefix not in _DSV41_IDX_DUMPED:
+                 _DSV41_IDX_DUMPED.add(k_cache_prefix)
+@@ -1602,6 +1644,9 @@
+                 logits.stride(1),
+                 topk_tokens,
+             )
++
++        # DCP 缺陷①：decode 侧同样要换成全局 id（logits 行从 0 起 => 无 row_starts）。
++        _dcp_merge_topk_if_needed(logits, topk_indices, topk_tokens)
+ 
+         global _DSV41_IDX_DBG_DONE
+         if os.environ.get("DSV41_IDX_DEBUG", "0") == "1" and not _DSV41_IDX_DBG_DONE:

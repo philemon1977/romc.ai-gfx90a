@@ -2,7 +2,7 @@
 # 全量重转：indexer wk 改未量化(bf16) + 融合名 ignore
 set -u
 R=/home/qiba/ROCm.AI/quark-int8
-O=/mnt/kioxia-cm6-3t8/ai/models/ZhipuAI/GLM-5.3-CT-Int4-W4A16
+O=/mnt/kioxia-cm6-3t8/ai/models/GLM/GLM-5.3-753B/CT-Int4-W4A16
 LOG=$R/logs/glm53_reconvert_$(date +%m%d_%H%M).log
 exec > >(tee -a "$LOG") 2>&1
 echo "=== 全量重转 $(date +%T) ==="

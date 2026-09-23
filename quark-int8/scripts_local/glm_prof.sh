@@ -5,7 +5,7 @@
 #       EAGER=1 CTX=8192 bash quark-int8/scripts_local/glm_prof.sh      # eager（kernel 明细更干净）
 set -o pipefail
 [ -n "$AI_HOME" ] || AI_HOME=/home/qiba/ai
-[ -n "$MODEL_PATH" ] || MODEL_PATH=/mnt/kioxia-cm6-3t8/ai/models/ZhipuAI/GLM-5.3-CT-Int4-W4A16
+[ -n "$MODEL_PATH" ] || MODEL_PATH=/mnt/kioxia-cm6-3t8/ai/models/GLM/GLM-5.3-753B/CT-Int4-W4A16
 [ -n "$IMG" ] || IMG=rocm-ai/vllm:glm53-int4-gfx90a-0918
 [ -n "$CTX" ] || CTX=8192
 [ -n "$GEN" ] || GEN=32

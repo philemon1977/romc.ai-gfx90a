@@ -1072,7 +1072,7 @@
     "driver": "amdgpu-dkms-6.16.13.30300400",
     "engine": "llamacpp-0.3.0-dev@629b50552",
     "host": "mi250x-gfx90a",
-    "model": "models/unsloth/GLM-5.3-Flash-GGUF",
+    "model": "models/Base/GLM/GLM-5.3-Flash-320B",
     "quant": "gguf-q8_0",
     "rocm": "host-7.2.4",
     "tier": "T3",
@@ -1098,7 +1098,7 @@
     "--spec-draft-n-max 2（MTP_N=2；基脚本默认 4 被两封装压回）",
     "--spec-ngram-mod-n-min 16 --spec-ngram-mod-n-max 64 --spec-ngram-mod-n-match 24",
     "--cache-reuse 256（np=1 实测零增益，留作 np>1 铺路）",
-    "--mmproj models/unsloth/GLM-5.3-Flash-GGUF/mmproj-F16.gguf（USE_VISION=0 默认关）",
+    "--mmproj models/Base/GLM/GLM-5.3-Flash-320B/mmproj-F16.gguf（USE_VISION=0 默认关）",
     "--alias glm-5.3-flash --host 0.0.0.0 --port 8108",
     "入口必须指 Q8_0-00001-of-00008.gguf（00001 仅 9.4 MB/n_tensors=0，是 unsloth 分片布局的元数据/词表入口，不是残缺）",
     "MTP 吃主文件自带 nextn 头（blk.45.nextn.*），无需外部 -md"
@@ -1148,7 +1148,7 @@
      "statement": "报数硬规矩：分形态测 + 几何平均 + 同 boot 成对；'聚合÷单流 <1.5 = 串行'可当场识破假吞吐"
     }
    ],
-   "model_dir": "models/unsloth/GLM-5.3-Flash-GGUF",
+   "model_dir": "models/Base/GLM/GLM-5.3-Flash-320B",
    "model_slug": "glm-5.3-flash-gguf",
    "other_metrics": [
     {
@@ -3433,7 +3433,7 @@
     "driver": "amdgpu-dkms-6.16.13.30300400",
     "engine": "vllm-0.3.1.dev85+gdee37d891",
     "host": "mi250x-gfx90a",
-    "model": "ZhipuAI/GLM-5.3-CT-Int4-W4A16",
+    "model": "GLM/GLM-5.3-753B/CT-Int4-W4A16",
     "quant": "ct-int4-w4a16",
     "rocm": "container-7.2.3-nightly0918",
     "tier": "T3",
@@ -3505,7 +3505,7 @@
      "statement": "**MoE 调优表名不是本机常量**：本臂日志里的 device_name 是 `AMD_INSTINCT_MI250_(MCM)_OAM_AC_MBA`，而 2026-09-17 的 Ornith 臂是 `AMD_Instinct_MI250X_MI250`。表名只能由该臂镜像里的 `get_config_file_name()` 现场生成。"
     }
    ],
-   "model_dir": "/mnt/kioxia-cm6-3t8/ai/models/ZhipuAI/GLM-5.3-CT-Int4-W4A16",
+   "model_dir": "/mnt/kioxia-cm6-3t8/ai/models/GLM/GLM-5.3-753B/CT-Int4-W4A16",
    "model_slug": "glm-5.3-ct-int4-w4a16",
    "other_metrics": [
     {

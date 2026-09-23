@@ -6,8 +6,8 @@
 set -uo pipefail
 AI_HOME=/home/qiba/ai
 TREE=${AI_HOME}/recipes/patches/vllm/vllm-openai-rocm-nightly-0918/core/tree
-GEMV=$AI_HOME/recipes/patches/gfx90a/ct_w4a16_dsv41_n0918/moe_gemv
-MODEL="${MODEL:-/mnt/kioxia-cm6-3t8/ai/models/ZhipuAI/GLM-5.3-CT-Int4-W4A16}"
+GEMV=$AI_HOME/vllm/vllm-openai-rocm-nightly-0918/core/moe_gemv
+MODEL="${MODEL:-/mnt/kioxia-cm6-3t8/ai/models/GLM/GLM-5.3-753B/CT-Int4-W4A16}"
 OUT_ROOT=/mnt/stripe-3mix-3t2/ai/sharded
 OUT="$OUT_ROOT/GLM-5.3-CT-Int4-W4A16-TP8"
 IMAGE=vllm/vllm-openai-rocm:nightly-0918

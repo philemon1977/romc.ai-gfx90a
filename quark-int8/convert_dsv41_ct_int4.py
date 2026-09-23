@@ -50,6 +50,26 @@ from safetensors.torch import save_file
 
 GROUP_SIZE = 32
 
+# 逐组最优 scale 的搜索栅格（空 tuple = 关闭，走原来的 s=amax/7）。
+# 动机与实测（见 int4_scale_optimality.py / 转换记录 §4.15 C）：
+#   uint4b8 的栅格是**不对称**的 [-8s, +7s]，取 s=amax/7 虽不削顶，却把步长撑大；
+#   对源权重逐组做 1 维 scale 搜索后，相对误差由 10.0% 降到 ~6.8%（1.47×）。
+#   最优倍数实测稳定落在 0.90 附近，故栅格取 0.78..1.00、步长 0.02（覆盖两侧）。
+_OPT_SCALE_FGRID: tuple[float, ...] = ()
+
+# 共享专家是否留 bf16（见 classify 里的依据）
+_SHARED_EXPERTS_BF16 = False
+
+# 注意力三个**非合并**投影是否留 bf16（wq_a/wkv 是合并模块 fused_wqa_wkv，不动）
+_ATTN_BF16 = False
+
+# 合并模块 fused_wqa_wkv 的两个源张量（wq_a/wkv）是否也留 bf16。
+# 依据（§4.19 F，读 load_weights 实测代码）：合并模块的 checkpoint 张量**可以是分开的**
+# wq_a.weight/wkv.weight —— 加载器按 stacked_params_mapping + shard_id 写入合并参数的对应段。
+# §4.10 D 那次 KeyError 的真因是 ignore 写了 checkpoint 名（没命中模块名 ⇒ 模块仍量化 ⇒
+# params 里只有 .weight_packed）。故这里 ignore 必须写**模块名** *attn.fused_wqa_wkv。
+_ATTN_MERGED_BF16 = False
+
 
 # ---------------------------------------------------------------- precision policy
 def st_tensor_names(path: str) -> list[str]:
@@ -88,11 +108,26 @@ def classify(module: str) -> str:
         return "fp4_expert"
     # attention projections (MLA q/kv/o + indexer q)
     if re.search(r"(^|\.)attn\.(wq_a|wq_b|wkv|wo_a|wo_b)$", module):
+        # ★ wq_a/wkv 在 vLLM 里被合并成 fused_wqa_wkv：未量化路径要求 checkpoint 提供**合并名**
+        #   张量，而合并名与源张量名不同（§4.10 D 那次 dense-bf16 实验就栽在这），
+        #   所以这两个保持 int4。wq_b/wo_a/wo_b 是独立模块，可安全升 bf16。
+        if _ATTN_BF16 and re.search(r"\.attn\.(wq_b|wo_a|wo_b)$", module):
+            return "fp8_to_bf16"
+        if _ATTN_MERGED_BF16 and re.search(r"\.attn\.(wq_a|wkv)$", module):
+            # 写成各自原名的 bf16 `weight`（不拼接）；配合 ignore 里的**模块名** glob
+            return "fp8_to_bf16"
         return "fp8_block"
     if re.search(r"(^|\.)attn\.indexer\.wq_b$", module):
-        return "fp8_block"
+        return "fp8_to_bf16" if _ATTN_BF16 else "fp8_block"
     if re.search(r"\.ffn\.shared_experts\.(w1|w2|w3)$", module):
-        return "fp8_block"
+        # ★ 共享专家用 bf16 而非 int4（--shared-experts-bf16）。
+        # 依据（v67 实测，quant_damage.py，真请求 dump 的 layer0 ffn_in）：
+        #   源(理想)权重下 routed rms=0.01914 / shared rms=0.09410 —— 共享专家贡献是路由专家的 **4.9 倍**
+        #   而共享专家是 fp8 源、被 int4 化后最优 scale 只能改善 1.13×
+        #   ⇒ layer0 MoE 输出相对理想的偏差 9.30% 里，约 98% 来自共享专家。
+        # 代价：40 层 × 3 个 [2304,5120] = 1.4e9 值，int4→bf16 只增 ~2 GB 全仓（+0.25 GiB/rank）。
+        # 命名风险低：该模块非 merged，checkpoint 名与 vLLM 模块名一致，ignore 用通配 `*shared_expert*`。
+        return "fp8_to_bf16" if _SHARED_EXPERTS_BF16 else "fp8_block"
     if module.endswith(".main_proj"):
         return "fp8_block"
     # ``engram.embed`` is a ParallelEngramEmbedding: vLLM gives it
@@ -135,9 +170,19 @@ def dequant_fp4_expert(packed: torch.Tensor, scale: torch.Tensor,
     assert packed.shape[0] == scale.shape[0], (packed.shape, scale.shape)
     assert packed.shape[1] == scale.shape[1] * 16, (packed.shape, scale.shape)
     b = packed.contiguous().view(torch.uint8)
-    hi = (b >> 4) & 0x0F                       # element 2j
-    lo = b & 0x0F                              # element 2j+1
-    q = torch.stack((hi, lo), dim=-1).reshape(packed.shape[0], packed.shape[1] * 2)
+    # ★★ nibble 序 = 低 nibble 为偶数元素（2026-09-20 修正）
+    #   权威依据（两处独立）:
+    #     1) 源模型目录自带的官方 inference/convert.py::cast_e2m1fn_to_e4m3fn
+    #        low = x & 0x0F ; high = (x >> 4) & 0x0F ; stack([FP4_TABLE[low], FP4_TABLE[high]])
+    #     2) 运行时解包 vLLM .../compressed_tensors_moe_w4a16_flydsl.py::
+    #        _unpack_gptq_int32_to_signed_int4 —— shifts = arange(8)*4, nibbles-8（低 nibble 先）
+    #   原实现写成 hi=偶数(即相邻元素对互换)，使全部 CT-int4 仓的 47,232 个专家权重
+    #   成为源行的「相邻对互换」版本：模型仍流畅但质量退化（复读吸引子），
+    #   而官方编码臂（同一批源文件、vLLM 自带 loader）健康。详见
+    #   /home/qiba/ai/docs/DeepSeek-V4.1-Flash-CT-INT4-W4A16-转换记录-2026-09-18.md §4.34
+    lo = b & 0x0F                              # element 2j
+    hi = (b >> 4) & 0x0F                       # element 2j+1
+    q = torch.stack((lo, hi), dim=-1).reshape(packed.shape[0], packed.shape[1] * 2)
     lut = torch.tensor(_FP4_LUT, dtype=torch.float32, device=packed.device)
     val = lut[(q & 0x07).long()]
     val = torch.where((q & 0x08) != 0, -val, val)
@@ -176,6 +221,26 @@ def pack_int4_rows(w: torch.Tensor, group_size: int = GROUP_SIZE,
     assert k % group_size == 0, f"K={k} not divisible by group_size={group_size}"
     wg = w.to(torch.float32).reshape(n, k // group_size, group_size)
     scale = (wg.abs().amax(dim=-1) / 7.0).clamp_min(1e-8)
+    if _OPT_SCALE_FGRID:
+        # 逐组 1 维搜索：在 s0=amax/7 的倍数上取组内平方误差最小者。
+        # 允许轻微削顶以换取更小的步长——这是 10.0%→6.8% 的来源（实测，非估计）。
+        s0 = scale.unsqueeze(-1)
+        best_err = None
+        best_f = None
+        for f in _OPT_SCALE_FGRID:
+            s = s0 * f
+            err = (torch.round(wg / s).clamp_(-8, 7) * s - wg).pow(2).sum(dim=-1)
+            if best_err is None:
+                best_err, best_f = err, torch.full_like(err, float(f))
+            else:
+                m = err < best_err
+                # ★ torch.where(cond, A, B) 是「cond 为真取 A」。本轮更优时要取**本轮**的 f；
+                #   第一版写反成 (m, best_f, 新f)，语义变成「更优则保留旧 f、更差则采用新 f」
+                #   ⇒ 选出的 f 与最优无关，实测 --optimal-scale 反而变差（10.08%→10.15%）。
+                best_err = torch.where(m, err, best_err)
+                best_f = torch.where(m, torch.full_like(err, float(f)), best_f)
+        scale = (scale * best_f).clamp_min(1e-8)
+        del best_err, best_f, s0
     q = torch.round(wg / scale.unsqueeze(-1)).clamp_(-8, 7).to(torch.int32).reshape(n, k) + 8
     q = q.reshape(n, k // 8, 8)
     shifts = torch.arange(0, 32, 4, dtype=torch.int32, device=q.device)
@@ -403,7 +468,50 @@ def main() -> None:
     ap.add_argument("--shards", default="", help="comma-separated shard numbers; empty = all")
     ap.add_argument("--skip-existing", action="store_true")
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--attn-merged-bf16", action="store_true",
+                    help="合并模块 fused_wqa_wkv 的 wq_a/wkv 也留 bf16（checkpoint 保持分开命名，"
+                         "ignore 写模块名 *attn.fused_wqa_wkv）。实测它占注意力参数 7.2% 却贡献 4.62% 输出偏差")
+    ap.add_argument("--attn-bf16", action="store_true",
+                    help="注意力 wq_b/wo_a/wo_b（非合并投影）留 bf16；实测注意力输出 int4 损伤 10.687%%，"
+                         "而它占该层输出的 57%%（见 quant_damage_attn.py）")
+    ap.add_argument("--shared-experts-bf16", action="store_true",
+                    help="共享专家留 bf16 不量化（依据：它贡献是路由专家的 4.9 倍，"
+                         "却只占 1.47%% 的数值量、代价 +0.25 GiB/rank）")
+    ap.add_argument("--optimal-scale", action="store_true",
+                    help="逐组搜索最优 int4 scale（实测相对误差 10.0%% -> ~6.8%%；"
+                         "见 _OPT_SCALE_FGRID 注释）")
+    ap.add_argument("--opt-scale-lo", type=float, default=0.72)
+    ap.add_argument("--opt-scale-hi", type=float, default=1.00)
+    ap.add_argument("--opt-scale-step", type=float, default=0.05)  # 0.02 更准但慢 2.2×；实测 0.05 仅变差 +1.887%（§4.20）
     args = ap.parse_args()
+
+    if args.attn_merged_bf16:
+        global _ATTN_MERGED_BF16
+        _ATTN_MERGED_BF16 = True
+        print("[convert] 合并模块 wq_a/wkv: bf16（分开命名 + ignore 用模块名 *attn.fused_wqa_wkv）",
+              flush=True)
+
+    if args.attn_bf16:
+        global _ATTN_BF16
+        _ATTN_BF16 = True
+        print("[convert] 注意力 wq_b/wo_a/wo_b: bf16"
+              + ("；wq_a/wkv 亦 bf16（合并模块，见 --attn-merged-bf16）" if _ATTN_MERGED_BF16
+                 else "；wq_a/wkv 保持 int4"), flush=True)
+
+    if args.shared_experts_bf16:
+        global _SHARED_EXPERTS_BF16
+        _SHARED_EXPERTS_BF16 = True
+        print("[convert] 共享专家: bf16（不量化）", flush=True)
+
+    if args.optimal_scale:
+        global _OPT_SCALE_FGRID
+        grid, f = [], args.opt_scale_lo
+        while f <= args.opt_scale_hi + 1e-9:
+            grid.append(round(f, 4))
+            f += args.opt_scale_step
+        _OPT_SCALE_FGRID = tuple(grid)
+        print(f"[convert] 逐组最优 scale: 开（{len(grid)} 点，{grid[0]:.2f}..{grid[-1]:.2f}）"
+              f" —— 允许轻微削顶换更小步长", flush=True)
 
     if args.group_size != GROUP_SIZE:
         raise SystemExit(f"this converter implements group_size={GROUP_SIZE} only "
@@ -578,6 +686,14 @@ def main() -> None:
         "*hc_attn*", "*hc_ffn*", "*attn_sink*",
     ]
     ignore += ["*engram*"]
+    if _ATTN_MERGED_BF16:
+        # ★ 必须写**模块名**（合并后的 fused_wqa_wkv），写 checkpoint 名不会命中 ⇒ 重演 §4.10 D
+        ignore += ["*attn.fused_wqa_wkv"]
+    if _ATTN_BF16:
+        ignore += ["*attn.wq_b", "*attn.wo_a", "*attn.wo_b", "*attn.indexer.wq_b"]
+    if _SHARED_EXPERTS_BF16:
+        # 通配同时覆盖 shared_experts.* 与 shared_expert_gate（后者本就该忽略）
+        ignore += ["*shared_expert*"]
     cfg["quantization_config"] = {
         "quant_method": "compressed-tensors",
         "format": "pack-quantized",
@@ -620,8 +736,26 @@ def main() -> None:
     # counters: with --skip-existing, shards converted by an earlier run are
     # already in the index but were never re-processed here.  Finalisation above
     # must therefore happen before this sanity check, never after it.
-    global_converted = sum(1 for k in index if k.endswith(".weight_packed"))
-    this_run = stats["fp4_expert"] + stats["fp8_block"]
+    #
+    # ★ 同一陷阱的第二处：回读"已存在分片"来统计 converted 数时，`fp8_to_bf16` 模块
+    #   既没有 weight_packed 也没有 weight_shape，只留一个 bf16 `.weight` ⇒ 旧逻辑认不出
+    #   ⇒ 全 bf16 化跑完后 self-check 报 `ERROR: 47235 vs 47587`（差额恰等于 bf16 模块数），
+    #   但产物逐个模块核对是完整的（audit_checkpoint_complete.py：缺失=0、冗余=0）。
+    #   即：**计数是代理指标，别拿它当正确性判据**；这里补上 bf16 的识别以免假警报。
+    # `fp8_to_bf16` modules (engram.wkv) are converted but produce NO
+    # `.weight_packed` (they emit a dense bf16 `.weight` instead), so they must
+    # be counted separately -- otherwise a complete checkpoint looks short by
+    # exactly their number.
+    packed_n = sum(1 for k in index if k.endswith(".weight_packed"))
+    # ★ 修正：原先把"bf16 化的模块"硬编码成只认 `engram.wkv`（历史上只有它一个），
+    #   于是 --shared-experts-bf16/--attn-bf16/--attn-merged-bf16 新增的 352 个
+    #   fp8_to_bf16 模块一律不被计数 ⇒ 完整产物反而报 `ERROR: 47235 vs 47587`，
+    #   差额恰好等于 bf16 模块数（本会话实测：47587-47235=352）。
+    #   正确做法是用权威判据 classify()，**不要靠猜名字**。
+    bf16_n = sum(1 for k in index
+                 if k.endswith(".weight") and classify(k[: -len(".weight")]) == "fp8_to_bf16")
+    global_converted = packed_n + bf16_n
+    this_run = stats["fp4_expert"] + stats["fp8_block"] + stats["fp8_to_bf16"]
     print(f"[convert] counters      : {stats}")
     print(f"[convert] converted     : {this_run} this run, {global_converted} in checkpoint "
           f"(expected {expected} for this selection)")

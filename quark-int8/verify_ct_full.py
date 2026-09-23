@@ -27,7 +27,8 @@ def classify(module):
         return "fp8_block"
     if module.endswith(".main_proj"):
         return "fp8_block"
-    # converter keeps engram tables by default (they are Embedding modules)
+    if module.endswith(".engram.wkv"):
+        return "fp8_to_bf16"
     return "keep"
 
 
@@ -66,7 +67,14 @@ def main():
         for n in s_names:
             mod = n[: -len(".weight")] if n.endswith(".weight") else (
                 n[: -len(".scale")] if n.endswith(".scale") else None)
-            if mod is not None and classify(mod) != "keep":
+            k = classify(mod) if mod is not None else "keep"
+            if k == "fp8_to_bf16":
+                if n.endswith(".weight"):
+                    exp.add(n)          # dense bf16 weight, same name
+                    conv.append(mod)
+                # .scale is intentionally dropped
+                continue
+            if mod is not None and k != "keep":
                 if n.endswith(".weight"):
                     exp |= {f"{mod}.weight_packed", f"{mod}.weight_scale", f"{mod}.weight_shape"}
                     conv.append(mod)
@@ -77,8 +85,20 @@ def main():
         if miss or extra:
             fails.append(f"{shard}: missing={len(miss)} {sorted(miss)[:3]} extra={len(extra)} {sorted(extra)[:3]}")
         for mod in conv:
-            s = sh[f"{mod}.weight"] if f"{mod}.weight" in sh else sh[f"{mod}.scale"]
             kind = classify(mod)
+            if kind == "fp8_to_bf16":
+                # dense bf16 weight under the SAME name; scale must be gone
+                ow = oh.get(f"{mod}.weight")
+                sw = sh.get(f"{mod}.weight")
+                if ow is None or ow["dtype"] != "BF16":
+                    fails.append(f"{shard}:{mod}: expected BF16 weight, got {ow}")
+                elif sw is not None and tuple(ow["shape"]) != tuple(sw["shape"]):
+                    fails.append(f"{shard}:{mod}: bf16 shape {tuple(ow['shape'])} != source {tuple(sw['shape'])}")
+                if f"{mod}.scale" in oh:
+                    fails.append(f"{shard}:{mod}: scale should have been dropped")
+                n_conv += 1
+                continue
+            s = sh[f"{mod}.weight"] if f"{mod}.weight" in sh else sh[f"{mod}.scale"]
             # K from the source tensor that carries it
             if f"{mod}.weight" in sh:
                 wd = sh[f"{mod}.weight"]
@@ -97,8 +117,10 @@ def main():
                 continue
             if pk["dtype"] != "I32" or tuple(pk["shape"]) != (n, k // 8):
                 fails.append(f"{shard}:{mod}: packed {pk['dtype']}{tuple(pk['shape'])} != I32{(n, k // 8)}")
-            if sc["dtype"] != "F32" or tuple(sc["shape"]) != (n, k // GROUP):
-                fails.append(f"{shard}:{mod}: scale {sc['dtype']}{tuple(sc['shape'])} != F32{(n, k // GROUP)}")
+            # scale dtype is bf16 by design (vLLM builds weight_scale with
+            # params_dtype=bf16); only the shape must match.
+            if sc["dtype"] not in ("F32", "BF16") or tuple(sc["shape"]) != (n, k // GROUP):
+                fails.append(f"{shard}:{mod}: scale {sc['dtype']}{tuple(sc['shape'])} != F32/BF16{(n, k // GROUP)}")
             if shp["dtype"] != "I64" or tuple(shp["shape"]) != (2,):
                 fails.append(f"{shard}:{mod}: weight_shape {shp['dtype']}{tuple(shp['shape'])}")
             n_conv += 1

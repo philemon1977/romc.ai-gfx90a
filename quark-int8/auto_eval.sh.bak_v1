@@ -1,0 +1,37 @@
+#!/bin/bash
+# 无人值守端到端：等模型就绪 → 起【新】模型评测 → 停 → 起【旧】模型取基线 → 停 → 出对比。
+#
+# 为什么串成一条：目标轮次有限，必须让整条链自己跑完，我只需读结果。
+# 优先级：先跑【新】（要回答的问题），再跑【旧】（同尺子的基线，且只跑固定题组省时间）。
+set -u
+OUT=${OUT:-/mnt/kioxia-cm6-3t8/ai/models/deepseek-ai/DeepSeek-V4.1-Flash-CT-Int4-W4A16-engram4-opt-allbf16}
+OLD=/home/qiba/ai/models/deepseek-ai/DeepSeek-V4.1-Flash-CT-Int4-W4A16-engram4
+REPO=/home/qiba/ROCm.AI/quark-int8
+CL=${CL:?需传入收尾日志路径}
+echo "chain log = $CL"
+
+echo "=== $(date +%T) 等 engram requant 完成 ==="
+for i in $(seq 1 480); do
+  if grep -qa "完毕" "$CL" 2>/dev/null; then echo "✅ $(date +%T) 收尾完成"; break; fi
+  sleep 30
+done
+tail -14 "$CL"
+n=$(ls "$OUT"/model-000*-of-00048.safetensors 2>/dev/null | wc -l)
+sz=$(du -sh "$OUT" 2>/dev/null | cut -f1)
+echo "分片数=$n 体积=$sz（预期 48 / ≈399 GiB）"
+if [ "$n" -ne 48 ]; then echo "❌ 分片不全，终止"; exit 1; fi
+
+cd "$REPO"
+
+echo "=== $(date +%T) 起【新】模型评测 ==="
+LABEL=new MODEL_PATH="$OUT" NGSM8K=4 bash serve_and_eval.sh
+
+echo "=== $(date +%T) 起【旧】模型取基线（只跑固定题组）==="
+LABEL=old MODEL_PATH="$OLD" NGSM8K=0 bash serve_and_eval.sh
+
+echo "=== $(date +%T) 全部完毕；A/B 对比 ==="
+NEWJ=$(ls -t "$REPO"/logs/quality_new_*.json 2>/dev/null | head -1)
+OLDJ=$(ls -t "$REPO"/logs/quality_old_*.json 2>/dev/null | head -1)
+echo "new=$NEWJ"; echo "old=$OLDJ"
+[ -n "$NEWJ" ] && [ -n "$OLDJ" ] && python3 "$REPO/eval_quality_ab.py" --compare "$OLDJ" "$NEWJ"
+echo "=== $(date +%T) 链结束 ==="

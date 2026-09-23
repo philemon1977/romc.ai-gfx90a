@@ -1,0 +1,1 @@
+{"来源":"/home/qiba/ROCm.AI/hyperloom/session/Qwen3.8-27B-ABLITERATED-W8A8-gdnint8/20260915T103412Z-bf20aced/runs/baseline/51ac28ff8aed4ad59746fdb889fae7bb/benchmark_vllm_20260915_103510/samples_gsm8k_2026-09-15T11-30-23.287028.jsonl","取法":"前 16 行","用途":"eval_quality_ab.py 的固定 GSM8K 子集，A/B 必须用同一份"}

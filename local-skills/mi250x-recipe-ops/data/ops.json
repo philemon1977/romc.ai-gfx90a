@@ -202,13 +202,13 @@
   {
    "applies_to": {
     "arch": "glm5next",
-    "model": "ZhipuAI/GLM-5.3-Flash-Quark-Int8",
+    "model": "GLM/GLM-5.3-Flash-320B/Quark-Int8-W8A8",
     "preset": "generic-vllm",
     "quant": "int8-w8a8"
    },
    "commands": [
-    "cd /home/qiba/ai && envs/vllm_0.28.0_rocm72/bin/python tools/quark_int8_glm53flash.py \\\n  --model /mnt/kioxia-cm6-3t8/ai/models/ZhipuAI/GLM-5.3-Flash-BF16 \\\n  --out   /mnt/stripe-3mix-3t2/models/ZhipuAI/GLM-5.3-Flash-Quark-Int8 \\\n  --coverage c0mtp --device cpu",
-    "# 产物：models/ZhipuAI/GLM-5.3-Flash-Quark-Int8（软链）= 331.41 GB / 120 分片 / 75922 张量（37152 量化 + 37152 scale + 1618 原样）\n# 耗时实测：GPU 14.5–17.6 min；CPU 同结果**逐字节相同**，但 ~121 min",
+    "cd /home/qiba/ai && envs/vllm_0.28.0_rocm72/bin/python tools/quark_int8_glm53flash.py \\\n  --model /mnt/kioxia-cm6-3t8/ai/models/GLM/GLM-5.3-Flash-320B/BF16 \\\n  --out   /mnt/stripe-3mix-3t2/models/GLM/GLM-5.3-Flash-320B/Quark-Int8-W8A8 \\\n  --coverage c0mtp --device cpu",
+    "# 产物：models/Base/GLM/GLM-5.3-Flash-320B/Quark-Int8-W8A8（软链）= 331.41 GB / 120 分片 / 75922 张量（37152 量化 + 37152 scale + 1618 原样）\n# 耗时实测：GPU 14.5–17.6 min；CPU 同结果**逐字节相同**，但 ~121 min",
     "python3 tools/wait_and_run_quark_int8.py   # 等卡后自动跑（同目录其它工具：probe_nll.py / verify_modelscope_snapshot.sh / verify_ms_snapshot_sha256.py）"
    ],
    "decision_rules": [

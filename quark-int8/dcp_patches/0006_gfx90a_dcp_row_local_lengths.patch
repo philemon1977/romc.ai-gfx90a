@@ -1,0 +1,138 @@
+# NOTE: the new @triton.jit kernel must be inserted BEFORE the existing decorator line.
+# Inserting after it double-decorates and strips the original function decorator
+# (observed: TypeError ... expected, got JITFunction).
+--- a/v1/attention/backends/mla/rocm_aiter_mla_sparse.py
++++ b/v1/attention/backends/mla/rocm_aiter_mla_sparse.py
+@@ -293,6 +293,73 @@
+ 
+ 
+ @triton.jit
++def _generate_sparse_seqlen_dcp_kernel(
++    seq_len_ptr,  # [num_seq] 全局上下文长度
++    cu_query_lens_ptr,  # [num_seq]
++    out_ptr,  # [num_query_tokens] 本 rank 可见长度（已 clamp 到 topk）
++    topk_token: tl.constexpr,
++    DCP_WORLD: tl.constexpr,
++    DCP_RANK: tl.constexpr,
++    INTERLEAVE: tl.constexpr,
++    BLOCK_SIZE: tl.constexpr,
++):
++    # DCP 缺陷②（2026-09-20 取证）：原写法把"总长"先本地化再减 query_len，
++    # 当本 rank 分到的 token 数小于 query_len 时（3-token prompt、dcp=8 => rank0
++    # 本地长度 1）context_start = 1-3 = -2 => 行长度为负、paged_kv_indptr 非单调，
++    # 还会把有效槽截掉（实测 valid>len）。正确做法：先算每行的全局前缀长度
++    # prefix = (seq_len - query_len) + offset + 1，再按 get_dcp_local_seq_lens 同一公式本地化。
++    seq_id = tl.program_id(0)
++    query_offset = tl.program_id(1) * BLOCK_SIZE + tl.arange(0, BLOCK_SIZE)
++    query_start = tl.load(cu_query_lens_ptr + seq_id)
++    query_end = tl.load(cu_query_lens_ptr + seq_id + 1)
++    if query_start + tl.program_id(1) * BLOCK_SIZE > query_end:
++        return
++    query_len = query_end - query_start
++    query_mask = query_offset + query_start < query_end
++    seq_len = tl.load(seq_len_ptr + seq_id)
++    if seq_len == 0:
++        return
++    prefix = (seq_len - query_len) + query_offset + 1
++
++    base = (prefix // INTERLEAVE // DCP_WORLD) * INTERLEAVE
++    remainder = prefix - base * DCP_WORLD - DCP_RANK * INTERLEAVE
++    remainder = tl.minimum(tl.maximum(remainder, 0), INTERLEAVE)
++    local = base + remainder
++
++    out = tl.minimum(local, topk_token)
++    tl.store(out_ptr + query_start + query_offset, out.to(tl.int32), mask=query_mask)
++
++
++def generate_sparse_seqlen_dcp_triton(
++    query_lens: torch.Tensor,
++    seq_lens: torch.Tensor,
++    cu_query_lens: torch.Tensor,
++    topk_token: int,
++    num_tokens: int,
++    max_query_len: int,
++    dcp_world: int,
++    dcp_rank: int,
++    interleave: int,
++) -> torch.Tensor:
++    """generate_sparse_seqlen_triton 的 DCP 版（见上方内核说明）。"""
++    num_seqs = query_lens.size(0)
++    out = torch.zeros([num_tokens], dtype=torch.int32, device=query_lens.device)
++    block_size = 64
++    grid = (num_seqs, triton.cdiv(max_query_len, block_size))
++    _generate_sparse_seqlen_dcp_kernel[grid](
++        seq_lens,
++        cu_query_lens,
++        out,
++        topk_token,
++        DCP_WORLD=dcp_world,
++        DCP_RANK=dcp_rank,
++        INTERLEAVE=interleave,
++        BLOCK_SIZE=block_size,
++    )
++    return out
++
++
++@triton.jit
+ def fetch_id_to_ragged_kernel(
+     in_tensor_ptr,  # [num_seq, topk]
+     cumsum_ptr,  # [num_seq + 1]
+@@ -629,24 +696,39 @@
+             - common_attn_metadata.query_start_loc[:-1]
+         )
+         seq_lens = common_attn_metadata.seq_lens
++        # 层的 dcp_manager.combine 需要**本地**分片长度（空分片权重 0）。
++        local_seq_lens = seq_lens
+         if self.dcp_world_size > 1:
+-            # 上游公式（与 indexer 的 Triton 侧逐位一致）：interleave 感知的本 rank 分片长度。
+             from vllm.v1.attention.backends.utils import get_dcp_local_seq_lens
+ 
+-            seq_lens = get_dcp_local_seq_lens(
++            local_seq_lens = get_dcp_local_seq_lens(
+                 seq_lens,
+                 self.dcp_world_size,
+                 self.dcp_rank,
+                 self.cp_interleave,
+             )
+-        sparse_seqlen = generate_sparse_seqlen_triton(
+-            query_lens,
+-            seq_lens,
+-            common_attn_metadata.query_start_loc,
+-            self.topk_tokens,
+-            num_tokens,
+-            common_attn_metadata.max_query_len,
+-        )
++        if self.dcp_world_size > 1:
++            # 缺陷②：行长度按"每行自己的全局前缀长度"本地化，不能拿本地总长减 query_len。
++            sparse_seqlen = generate_sparse_seqlen_dcp_triton(
++                query_lens,
++                seq_lens,
++                common_attn_metadata.query_start_loc,
++                self.topk_tokens,
++                num_tokens,
++                common_attn_metadata.max_query_len,
++                self.dcp_world_size,
++                self.dcp_rank,
++                self.cp_interleave,
++            )
++        else:
++            sparse_seqlen = generate_sparse_seqlen_triton(
++                query_lens,
++                seq_lens,
++                common_attn_metadata.query_start_loc,
++                self.topk_tokens,
++                num_tokens,
++                common_attn_metadata.max_query_len,
++            )
+ 
+         torch.cumsum(sparse_seqlen, dim=0, out=self.paged_kv_indptr[1 : num_tokens + 1])
+         self.paged_kv_indptr[num_tokens + 1 :].fill_(self.paged_kv_indptr[num_tokens])
+@@ -742,7 +824,7 @@
+             max_seq_len=common_attn_metadata.max_seq_len,
+             num_actual_tokens=common_attn_metadata.num_actual_tokens,
+             query_start_loc=common_attn_metadata.query_start_loc,
+-            seq_lens=seq_lens,
++            seq_lens=local_seq_lens,
+             slot_mapping=common_attn_metadata.slot_mapping,
+             block_table=common_attn_metadata.block_table_tensor,
+             req_id_per_token=req_id_per_token,

@@ -12,8 +12,8 @@
 以下三块此前在本技能 **0 命中**。
 
 ### 臂 8121 的实物坐标（Serving arms 表里那一行，这里给路径与判据）
-- 产物 `/mnt/kioxia-cm6-3t8/ai/models/ZhipuAI/GLM-5.3-CT-Int4-W4A16` = **402 GB / 141 分片 /
-  401.3 GiB / 177,173 张量**（审计 PASS）；源 FP8 `/mnt/kioxia-cm6-3t8/ai/models/ZhipuAI/GLM-5.3`（704 GB）。
+- 产物 `/mnt/kioxia-cm6-3t8/ai/models/GLM/GLM-5.3-753B/CT-Int4-W4A16` = **402 GB / 141 分片 /
+  401.3 GiB / 177,173 张量**（审计 PASS）；源 FP8 `/mnt/kioxia-cm6-3t8/ai/models/GLM/GLM-5.3-753B/FP8`（704 GB）。
 - 结构：`glm_moe_dsa` → vLLM 走 `vllm.models.deepseek_v32`（**不是** `deepseek_v41`）⇒ DSV4.1 的
   `models/deepseek_v41/*` 补丁对本臂**不适用**；78 层 = 3 dense + 75 稀疏 MoE（+1 MTP），256 专家 top-8。
 - 启动器 `$AI/models/ZhipuAI/launcher/glm53_int4w4a16_vllm_rocmnightly0918_32k_8121_mi250dx8.sh`

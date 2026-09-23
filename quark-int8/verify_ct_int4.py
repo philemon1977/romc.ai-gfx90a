@@ -51,7 +51,7 @@ def dequant_fp8_block(w, scale):
 def unpack_int4(packed, scale):
     sh = torch.arange(0, 32, 4, dtype=torch.int32)
     q = ((packed.unsqueeze(-1) >> sh) & 0xF).reshape(packed.shape[0], -1).to(torch.float32) - 8
-    return q * scale.repeat_interleave(GROUP, dim=1)
+    return q * scale.to(torch.float32).repeat_interleave(GROUP, dim=1)
 
 
 def classify(module):
@@ -66,7 +66,11 @@ def classify(module):
     if module.endswith(".main_proj"):
         return "fp8_block"
     if module.endswith(".engram.wkv") or module.endswith(".engram.embed"):
-        return "fp8_block"
+        # engram 表由 requant_engram_int4.py 单独改写为 int4（U8 [rows, dim/2]
+        # + E8M0 scale，走 common_engram.py 的 INT4 分支），不是 CT pack-quantized
+        # 布局 ⇒ 本脚本只做"同名同 dtype"的 keep 校验，数值由
+        # verify_engram_int4.py 独立覆盖。
+        return "engram_int4"
     return "keep"
 
 
@@ -89,7 +93,7 @@ def main():
     for n in s_names:
         mod = n[: -len(".weight")] if n.endswith(".weight") else (
             n[: -len(".scale")] if n.endswith(".scale") else None)
-        if mod is not None and classify(mod) != "keep":
+        if mod is not None and classify(mod) in ("fp8_block", "fp4_expert"):
             # consumed by conversion; replaced by packed/scale/shape
             if n.endswith(".weight"):
                 exp |= {f"{mod}.weight_packed", f"{mod}.weight_scale", f"{mod}.weight_shape"}
@@ -106,7 +110,12 @@ def main():
 
     fails = []
     rng = random.Random(a.seed)
-    sample = set(rng.sample([m for m, _ in conv], min(a.sample, len(conv))))
+    # 覆盖面优先：所有非专家族（attn/indexer/shared_experts/main_proj）全测，
+    # 专家只随机抽样（1152 个/层，形状相同，抽样信息量已饱和）。
+    engram_mods = {m for m, _ in conv if ".engram." in m}
+    sensitive = {m for m, k in conv if k == "fp8_block" and m not in engram_mods}
+    experts = [m for m, k in conv if k == "fp4_expert"]
+    sample = sensitive | set(rng.sample(experts, min(a.sample, len(experts))))
     with safe_open(os.path.join(a.out, a.shard), framework="pt") as fo, \
          safe_open(os.path.join(a.src, a.shard), framework="pt") as fs:
         for mod, kind in conv:
@@ -122,13 +131,16 @@ def main():
             if str(pk.get_dtype()) != "I32" or tuple(pk.get_shape()) != (n, k_log // 8):
                 fails.append(f"{mod}: packed {pk.get_dtype()} {tuple(pk.get_shape())} != I32 {(n, k_log//8)}")
                 continue
-            if str(sc.get_dtype()) != "F32" or tuple(sc.get_shape()) != (n, k_log // GROUP):
+            if str(sc.get_dtype()) not in ("F32", "F16", "BF16") or tuple(sc.get_shape()) != (n, k_log // GROUP):
                 fails.append(f"{mod}: scale {sc.get_dtype()} {tuple(sc.get_shape())} != F32 {(n, k_log//GROUP)}")
                 continue
             if k_log % GROUP:
                 fails.append(f"{mod}: K={k_log} % {GROUP} != 0")
                 continue
 
+            if mod in engram_mods:
+                print(f"    --  skip(int4-engram) {mod[:60]}  (由 verify_engram_int4.py 覆盖)")
+                continue
             if mod not in sample:
                 continue
             ref = (dequant_fp4_expert(fs.get_tensor(f"{mod}.weight"), fs.get_tensor(f"{mod}.scale"))

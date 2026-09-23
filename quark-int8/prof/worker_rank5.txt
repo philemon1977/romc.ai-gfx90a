@@ -1,0 +1,67 @@
+# execute_model #25..#32 (共 8 步)
+-------------------------------------------------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  
+                                                   Name    Self CPU %      Self CPU   CPU total %     CPU total  CPU time avg     Self CUDA   Self CUDA %    CUDA total  CUDA time avg    # of Calls  
+-------------------------------------------------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  
+ncclDevKernel_Generic_4(ncclDevKernelArgsStorage<409...         0.00%       0.000us         0.00%       0.000us       0.000us     522.504ms        37.74%     522.504ms     254.136us          2056  
+                            triton_w4a16_gemm_kernel.kd         0.00%       0.000us         0.00%       0.000us       0.000us     275.996ms        19.93%     275.996ms     132.182us          2088  
+                  _sparse_attn_prefill_ragged_kernel.kd         0.00%       0.000us         0.00%       0.000us       0.000us     101.746ms         7.35%     101.746ms     163.054us           624  
+Cijk_Alik_Bljk_BSS_BH_UserArgs_MT64x16x16_MI16x16x1_...         0.00%       0.000us         0.00%       0.000us       0.000us      92.178ms         6.66%      92.178ms     153.630us           600  
+                                        _gemv_moe_v3.kd         0.00%       0.000us         0.00%       0.000us       0.000us      28.159ms         2.03%      28.159ms      46.931us           600  
+void at::native::warptopk::warpMergeSortTopK<1, 1, 2...         0.00%       0.000us         0.00%       0.000us       0.000us      21.424ms         1.55%      21.424ms      17.853us          1200  
+                           fused_moe_kernel_gptq_awq.kd         0.00%       0.000us         0.00%       0.000us       0.000us      19.476ms         1.41%      19.476ms      32.460us           600  
+                             __amd_rocclr_copyBuffer.kd         0.00%       0.000us         0.00%       0.000us       0.000us      19.311ms         1.39%      19.311ms       4.406us          4383  
+Cijk_Ailk_Bljk_BBS_BH_Bias_HA_S_SAV_UserArgs_MT128x1...         0.00%       0.000us         0.00%       0.000us       0.000us      18.874ms         1.36%      18.874ms      30.247us           624  
+               _dsv41_paged_mqa_logits_gfx90a_kernel.kd         0.00%       0.000us         0.00%       0.000us       0.000us      15.452ms         1.12%      15.452ms      91.977us           168  
+void wvSplitK_hf_sml_<__hip_bfloat16, 64, 2, 16, 8, ...         0.00%       0.000us         0.00%       0.000us       0.000us      14.494ms         1.05%      14.494ms      11.998us          1208  
+Cijk_Ailk_Bljk_BBS_BH_Bias_HA_S_SAV_UserArgs_MT64x16...         0.00%       0.000us         0.00%       0.000us       0.000us      12.839ms         0.93%      12.839ms      20.576us           624  
+void at::native::elementwise_kernel_manual_unroll<12...         0.00%       0.000us         0.00%       0.000us       0.000us      12.407ms         0.90%      12.407ms       6.628us          1872  
+_ZN4vllm18act_and_mul_kernelIN3c108BFloat16E15__hip_...         0.00%       0.000us         0.00%       0.000us       0.000us      10.879ms         0.79%      10.879ms       8.888us          1224  
+std::enable_if<(((8)>(0)))&&_typeConvert<c10::BFloat...         0.00%       0.000us         0.00%       0.000us       0.000us      10.718ms         0.77%      10.718ms       8.588us          1248  
+void at::native::reduce_kernel<128, 4, at::native::R...         0.00%       0.000us         0.00%       0.000us       0.000us      10.094ms         0.73%      10.094ms       8.089us          1248  
+void at::native::vectorized_templated_elementwise_ke...         0.00%       0.000us         0.00%       0.000us       0.000us       9.457ms         0.68%       9.457ms      56.290us           168  
+void at::native::bitonicSortKVInPlace<-2, -1, 16, 16...         0.00%       0.000us         0.00%       0.000us       0.000us       8.687ms         0.63%       8.687ms      14.479us           600  
+void vllm::rms_norm_kernel<c10::BFloat16, 8, 2, true...         0.00%       0.000us         0.00%       0.000us       0.000us       7.031ms         0.51%       7.031ms       5.598us          1256  
+void at::native::elementwise_kernel_manual_unroll<12...         0.00%       0.000us         0.00%       0.000us       0.000us       6.765ms         0.49%       6.765ms       5.352us          1264  
+void at::native::elementwise_kernel_manual_unroll<12...         0.00%       0.000us         0.00%       0.000us       0.000us       6.208ms         0.45%       6.208ms       7.769us           799  
+void at::native::reduce_kernel<128, 4, at::native::R...         0.00%       0.000us         0.00%       0.000us       0.000us       6.156ms         0.44%       6.156ms       9.866us           624  
+void vllm::moe::moe_align_block_size_kernel<int>(int...         0.00%       0.000us         0.00%       0.000us       0.000us       6.131ms         0.44%       6.131ms      10.218us           600  
+void at::native::warptopk::warpMergeSortTopK<1, 1, 6...         0.00%       0.000us         0.00%       0.000us       0.000us       5.667ms         0.41%       5.667ms       9.445us           600  
+void at::native::vectorized_elementwise_kernel<4, at...         0.00%       0.000us         0.00%       0.000us       0.000us       5.541ms         0.40%       5.541ms       4.440us          1248  
+void at::native::(anonymous namespace)::cunn_Spatial...         0.00%       0.000us         0.00%       0.000us       0.000us       5.188ms         0.37%       5.188ms       8.315us           624  
+void vllm::rotary_embedding_kernel<c10::BFloat16, c1...         0.00%       0.000us         0.00%       0.000us       0.000us       5.114ms         0.37%       5.114ms       6.457us           792  
+                           _dcp_a2a_pack_send_kernel.kd         0.00%       0.000us         0.00%       0.000us       0.000us       4.971ms         0.36%       4.971ms       7.966us           624  
+                      _dcp_a2a_unpack_combine_kernel.kd         0.00%       0.000us         0.00%       0.000us       0.000us       4.742ms         0.34%       4.742ms       7.600us           624  
+                                              kernel.kd         0.00%       0.000us         0.00%       0.000us       0.000us       4.609ms         0.33%       4.609ms       7.293us           632  
+void at::native::elementwise_kernel_manual_unroll<12...         0.00%       0.000us         0.00%       0.000us       0.000us       4.603ms         0.33%       4.603ms       7.377us           624  
+void at::native::elementwise_kernel_manual_unroll<12...         0.00%       0.000us         0.00%       0.000us       0.000us       4.089ms         0.30%       4.089ms       6.553us           624  
+triton_per_fused__to_copy_div_gather_sigmoid_sum_3.k...         0.00%       0.000us         0.00%       0.000us       0.000us       4.071ms         0.29%       4.071ms       6.785us           600  
+void at::native::vectorized_elementwise_kernel<4, at...         0.00%       0.000us         0.00%       0.000us       0.000us       3.913ms         0.28%       3.913ms       4.796us           816  
+void vllm::moe::moe_sum_vec_kernel<c10::BFloat16, in...         0.00%       0.000us         0.00%       0.000us       0.000us       3.741ms         0.27%       3.741ms       6.235us           600  
+void at::native::(anonymous namespace)::CatArrayBatc...         0.00%       0.000us         0.00%       0.000us       0.000us       3.659ms         0.26%       3.659ms       5.863us           624  
+void at::native::vectorized_elementwise_kernel<4, at...         0.00%       0.000us         0.00%       0.000us       0.000us       3.551ms         0.26%       3.551ms       4.444us           799  
+void at::native::vectorized_elementwise_kernel<4, at...         0.00%       0.000us         0.00%       0.000us       0.000us       3.500ms         0.25%       3.500ms       4.420us           792  
+void at::native::vectorized_elementwise_kernel<4, at...         0.00%       0.000us         0.00%       0.000us       0.000us       3.415ms         0.25%       3.415ms       5.473us           624  
+void rocprim::ROCPRIM_400200_NS::detail::trampoline_...         0.00%       0.000us         0.00%       0.000us       0.000us       3.176ms         0.23%       3.176ms       4.726us           672  
+void vllm::concat_and_cache_mla_kernel<__hip_bfloat1...         0.00%       0.000us         0.00%       0.000us       0.000us       3.027ms         0.22%       3.027ms       4.851us           624  
+void at::native::elementwise_kernel_manual_unroll<12...         0.00%       0.000us         0.00%       0.000us       0.000us       3.019ms         0.22%       3.019ms       4.838us           624  
+void rocprim::ROCPRIM_400200_NS::detail::trampoline_...         0.00%       0.000us         0.00%       0.000us       0.000us       2.998ms         0.22%       2.998ms      17.844us           168  
+void at::native::vectorized_elementwise_kernel<4, at...         0.00%       0.000us         0.00%       0.000us       0.000us       2.934ms         0.21%       2.934ms       4.701us           624  
+void at::native::vectorized_elementwise_kernel<4, at...         0.00%       0.000us         0.00%       0.000us       0.000us       2.912ms         0.21%       2.912ms       4.608us           632  
+void vllm::moe::count_and_sort_expert_tokens_kernel<...         0.00%       0.000us         0.00%       0.000us       0.000us       2.901ms         0.21%       2.901ms       4.835us           600  
+void at::native::vectorized_elementwise_kernel<4, at...         0.00%       0.000us         0.00%       0.000us       0.000us       2.852ms         0.21%       2.852ms       4.570us           624  
+void at::native::elementwise_kernel_manual_unroll<12...         0.00%       0.000us         0.00%       0.000us       0.000us       2.844ms         0.21%       2.844ms       4.557us           624  
+void (anonymous namespace)::elementwise_kernel_with_...         0.00%       0.000us         0.00%       0.000us       0.000us       2.785ms         0.20%       2.785ms       4.463us           624  
+void at::native::elementwise_kernel_manual_unroll<12...         0.00%       0.000us         0.00%       0.000us       0.000us       2.778ms         0.20%       2.778ms       4.451us           624  
+void at::native::vectorized_elementwise_kernel<4, at...         0.00%       0.000us         0.00%       0.000us       0.000us       2.765ms         0.20%       2.765ms       4.430us           624  
+                           fetch_id_to_ragged_kernel.kd         0.00%       0.000us         0.00%       0.000us       0.000us       2.757ms         0.20%       2.757ms       4.419us           624  
+void at::native::vectorized_elementwise_kernel<4, at...         0.00%       0.000us         0.00%       0.000us       0.000us       2.750ms         0.20%       2.750ms       4.407us           624  
+            triton_poi_fused_add_sigmoid_unsqueeze_0.kd         0.00%       0.000us         0.00%       0.000us       0.000us       2.649ms         0.19%       2.649ms       4.414us           600  
+void at::native::vectorized_elementwise_kernel<4, at...         0.00%       0.000us         0.00%       0.000us       0.000us       2.648ms         0.19%       2.648ms       4.243us           624  
+void at::native::vectorized_elementwise_kernel<4, at...         0.00%       0.000us         0.00%       0.000us       0.000us       2.635ms         0.19%       2.635ms       4.223us           624  
+                              triton_poi_fused_sum_1.kd         0.00%       0.000us         0.00%       0.000us       0.000us       2.622ms         0.19%       2.622ms       4.370us           600  
+void at::native::vectorized_elementwise_kernel<4, at...         0.00%       0.000us         0.00%       0.000us       0.000us       2.558ms         0.18%       2.558ms      15.226us           168  
+triton_poi_fused__to_copy_arange_bitwise_not_eq_expa...         0.00%       0.000us         0.00%       0.000us       0.000us       2.533ms         0.18%       2.533ms       4.221us           600  
+void at::native::vectorized_elementwise_kernel<8, at...         0.00%       0.000us         0.00%       0.000us       0.000us       2.153ms         0.16%       2.153ms       3.588us           600  
+-------------------------------------------------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  
+Self CPU time total: 1.516s
+Self CUDA time total: 1.385s

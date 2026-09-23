@@ -19,7 +19,7 @@ set -uo pipefail
 NAME=verify-aiter-linear
 PORT=8128
 IMAGE=rocm-ai/vllm:glm53-int4-hl-fl1
-MODEL=/mnt/stripe-3mix-3t2/models/ZhipuAI/GLM-5.3-Flash-Quark-Int8
+MODEL=/mnt/stripe-3mix-3t2/models/GLM/GLM-5.3-Flash-320B/Quark-Int8-W8A8
 # AITER=1 = 实验臂（复刻会话里那条 KEEP）；AITER=0 = **对照组**。
 # 两者只差下面两个 0/1，其余（镜像、挂载、runner preamble 的那串 env、server args）逐字节相同，
 # 这样"数值有没有变坏"才是有对照的结论，而不是拿另一个模型的基线当尺子。

@@ -1,0 +1,103 @@
+# DCP-C: attention-side DCP (per-rank slot filtering + fp32 LSE merge).
+# REQUIRES 0001 applied first (baseline = post-0001 backend file).
+# APPLY: cd /home/qiba/ai/patches/gfx90a/ct_w4a16_dsv41_n0918/tree && patch -p1 < PATCH
+# REVERT: patch -p1 -R < PATCH
+--- a/v1/attention/backends/mla/rocm_aiter_mla_sparse.py
++++ b/v1/attention/backends/mla/rocm_aiter_mla_sparse.py
+@@ -772,7 +772,14 @@
+ ):
+     is_sparse = True
+     supports_dense_mha_prefill = False
+-    supports_dcp = False
++    supports_dcp = True
++    # DCP 需要每 token 的 softmax LSE；**合并由层完成**（mla_attention.py 里
++    # `attn_out = self.dcp_manager.combine(attn_out, lse, ...)`），后端只负责把
++    # (out, lse) 返回出去 —— 后端若自己再合并一次，就是双重合并、静默算错。
++    can_return_lse_for_decode = True
++    # 我们的内核写的是**自然对数底** LSE（m_final + log(l_final)）；基类注释明确警告
++    # 底数写错会静默污染跨分片 softmax 分母，故显式声明而不依赖默认值。
++    lse_base_on_e = True
+ 
+     def __init__(
+         self,
+@@ -821,6 +828,26 @@
+         q_concat_shape = (max_tokens, num_heads, head_size)
+         (self.q_concat_buffer,) = current_workspace_manager().get_simultaneous(
+             (q_concat_shape, vllm_config.model_config.dtype),
++        )
++
++        # ---- DCP（0003）：本 rank 只持有 1/N 的 latent KV 分片 ----
++        # 注意：合并**不在这里做** —— 层 mla_attention.py 拿到 (out, lse) 后调
++        # dcp_manager.combine(...) 完成跨分片合并；后端再做一次就是双重合并。
++        parallel_config = vllm_config.parallel_config
++        self.dcp_world_size = int(parallel_config.decode_context_parallel_size)
++        self.cp_interleave = int(parallel_config.cp_kv_cache_interleave_size)
++        if self.dcp_world_size > 1:
++            from vllm.distributed import get_dcp_group
++
++            self.dcp_rank = get_dcp_group().rank_in_group
++        else:
++            self.dcp_rank = 0
++        # GLM-5.3 无 sinks（config 无键、deepseek_v2.py 全文无 sinks）；其它模型若
++        # 同时开 sinks 与 DCP，本 rank 折一次 sink 会让全局分母多算 ⇒ 直接拒绝，
++        # 别让它静默算错（正确做法是分片内核不折 sink、合并后再折，见 DCP_A_NOTES.md）。
++        assert not (self.dcp_world_size > 1 and self.sinks is not None), (
++            "DCP + attention sinks is not implemented: folding the sink per shard "
++            "double-counts it in the merged softmax denominator."
+         )
+ 
+     def record_logical_topk_ready(self) -> None:
+@@ -1086,15 +1113,44 @@
+             self.topk_indices_buffer[:num_actual_toks], attn_metadata.topk_tokens
+         )
+ 
+-        triton_convert_req_index_to_global_index(
+-            attn_metadata.req_id_per_token,
+-            attn_metadata.block_table,
+-            topk_indices,
+-            attn_metadata.paged_kv_indptr,
+-            attn_metadata.paged_kv_indices,
+-            BLOCK_SIZE=attn_metadata.block_size,
+-            NUM_TOPK_TOKENS=attn_metadata.topk_tokens,
+-        )
++        if self.dcp_world_size > 1:
++            # DCP：indexer 给的是**全局** token id（各 rank 本地 top-K 已在
++            # sparse_attn_indexer 侧合并成全局 top-K），这里只保留本 rank 拥有的、
++            # 并换算成本 rank 的物理槽位；compaction 把有效项压到行首，行尾留 -1。
++            # 行长度契约（paged_kv_indptr，按 min(ctx, topk) 生成）不变：
++            # 行内多出来的位置就是 -1 空洞，稀疏内核本来就掩 slot < 0。
++            from vllm.v1.attention.backends.mla.sparse_utils import (
++                triton_filter_and_convert_dcp_index,
++            )
++
++            local_slots, _valid_counts = triton_filter_and_convert_dcp_index(
++                attn_metadata.req_id_per_token,
++                attn_metadata.block_table,
++                topk_indices,
++                dcp_size=self.dcp_world_size,
++                dcp_rank=self.dcp_rank,
++                cp_kv_cache_interleave_size=self.cp_interleave,
++                BLOCK_SIZE=attn_metadata.block_size,
++                NUM_TOPK_TOKENS=attn_metadata.topk_tokens,
++                compact_valid_to_front=True,
++                return_valid_counts=True,
++            )
++            fetch_id_to_ragged_triton(
++                local_slots,
++                attn_metadata.paged_kv_indptr,
++                attn_metadata.paged_kv_indices,
++                attn_metadata.topk_tokens,
++            )
++        else:
++            triton_convert_req_index_to_global_index(
++                attn_metadata.req_id_per_token,
++                attn_metadata.block_table,
++                topk_indices,
++                attn_metadata.paged_kv_indptr,
++                attn_metadata.paged_kv_indices,
++                BLOCK_SIZE=attn_metadata.block_size,
++                NUM_TOPK_TOKENS=attn_metadata.topk_tokens,
++            )
+ 
+         # write the latent and rope to kv cache
+         if fp8_attention:
