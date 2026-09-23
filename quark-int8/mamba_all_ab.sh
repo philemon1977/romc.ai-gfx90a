@@ -61,9 +61,9 @@ stop_8117_mine
 run_arm align-long 5 "--enable-prefix-caching" ""
 # ② 打补丁（三处）
 echo; echo "######## apply port_mamba_all.py ########"
-python3 /home/qiba/ai/patches/gfx90a/port_mamba_all.py --env vllm_0.28.0_rocm72 --apply 2>&1 | tail -12 | sed 's/^/  /'
+python3 /home/qiba/ai/recipes/patches/gfx90a/port_mamba_all.py --env vllm_0.28.0_rocm72 --apply 2>&1 | tail -12 | sed 's/^/  /'
 echo "######## post-apply --check ########"
-python3 /home/qiba/ai/patches/gfx90a/port_mamba_all.py --env vllm_0.28.0_rocm72 --check 2>&1 | tail -8 | sed 's/^/  /'
+python3 /home/qiba/ai/recipes/patches/gfx90a/port_mamba_all.py --env vllm_0.28.0_rocm72 --check 2>&1 | tail -8 | sed 's/^/  /'
 # ③ all
 run_arm all-long 5 "--enable-prefix-caching --mamba-cache-mode all" "1"
 

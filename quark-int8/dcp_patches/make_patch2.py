@@ -1,0 +1,245 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""生成 0002_gfx90a_indexer_dcp_topk.patch（DCP-B 的 indexer 侧）。
+
+上游把「各 rank 本地 top-K → 全局 top-K」写成 CuteDSL-only（无 PyTorch fallback）：
+  _merge_dcp_topk_global → pack(CuteDSL 包着的 Triton) + all_gather + CuteDSL radix-select
+gfx90a 没有 CuteDSL ⇒ 起 DCP 必抛 "DCP sparse-indexer merge requires CuteDSL"。
+本补丁：把上游那个 **Triton pack 原样搬进来**（它本身与 CuteDSL 无关），
+再用 torch.topk 复现 stable-topk 语义，构成 gfx90a 分支；CUDA 侧仍走 CuteDSL 原路。
+只改一个文件（launcher 已挂载，无需动挂载表）。
+"""
+import difflib, os, shutil, sys, py_compile
+
+TREE = "/home/qiba/ai/recipes/patches/gfx90a/ct_w4a16_dsv41_n0918/tree"
+REL = "model_executor/layers/sparse_attn_indexer.py"
+HERE = os.path.dirname(os.path.abspath(__file__))
+BASE, WORK = os.path.join(HERE, "base"), os.path.join(HERE, "work")
+
+def sub(text, old, new, tag):
+    n = text.count(old)
+    if n != 1:
+        sys.exit("ANCHOR FAIL [%s]: count=%d" % (tag, n))
+    return text.replace(old, new)
+
+os.makedirs(BASE, exist_ok=True); os.makedirs(WORK, exist_ok=True)
+src = open(os.path.join(TREE, REL), encoding="utf8").read()
+
+GFX90A_BLOCK = '''# ---------------------------------------------------------------------------
+# gfx90a DCP 分支（2026-09-20 移植）
+#
+# 上游 _merge_dcp_topk_global 只有 CuteDSL 实现，gfx90a 上起 DCP 会直接
+# RuntimeError("DCP sparse-indexer merge requires CuteDSL")。但该路径里
+# **pack 本身就是 Triton**（dcp_indexer_cutedsl.PackDCPTopkCandidatesKernel），
+# 只有最后的 stable-topk 选择器是 CuteDSL。这里把 Triton pack 原样搬过来，
+# 并用 torch.topk 复现同样的语义，凑齐 gfx90a 分支；CUDA 侧行为不变。
+#
+# 算法（上游 docstring 的精确性论证，照抄不改）：
+#   全局 top-K 里的 token，必然属于它所在 rank 的本地 top-K
+#   （全局排在它前面的 token 至多 topk-1 个，落在本 rank 的就更少），
+#   所以只交换各 rank 的本地候选就与 all-gather 整个 logits 矩阵等价。
+# ---------------------------------------------------------------------------
+
+
+@triton.jit
+def _pack_dcp_topk_candidates_kernel(
+    logits,
+    topk_indices,
+    packed,
+    row_starts,
+    logits_stride0,
+    logits_stride1,
+    topk_stride0,
+    topk_stride1,
+    packed_stride0,
+    packed_stride1,
+    packed_stride2,
+    num_cols,
+    DCP_RANK: tl.constexpr,
+    DCP_WORLD_SIZE: tl.constexpr,
+    CP_INTERLEAVE: tl.constexpr,
+    HAS_ROW_STARTS: tl.constexpr,
+    TOPK: tl.constexpr,
+    BLOCK_SIZE: tl.constexpr,
+):
+    """把 (本地 logits 分数, 全局 token id) 打成 [rows, topk, 2]；无效候选 score=-inf/id=-1。
+
+    与上游 PackDCPTopkCandidatesKernel.kernel 逐行一致（仅去掉 VllmTritonJitKernel 外壳）。
+    """
+    row = tl.program_id(0)
+    tile = tl.program_id(1)
+    cols = tile * BLOCK_SIZE + tl.arange(0, BLOCK_SIZE)
+    mask = cols < TOPK
+
+    local_idx = tl.load(
+        topk_indices + row * topk_stride0 + cols * topk_stride1,
+        mask=mask,
+        other=-1,
+    )
+    valid = local_idx >= 0
+    safe_local_idx = tl.maximum(local_idx, 0)
+
+    row_start = 0
+    if HAS_ROW_STARTS:
+        row_start = tl.load(row_starts + row)
+
+    score_col = safe_local_idx + row_start
+    score_col = tl.minimum(score_col, tl.maximum(num_cols - 1, 0))
+    score = tl.load(
+        logits + row * logits_stride0 + score_col * logits_stride1,
+        mask=mask & valid,
+        other=-float("inf"),
+    )
+
+    global_id = (
+        (safe_local_idx // CP_INTERLEAVE) * (DCP_WORLD_SIZE * CP_INTERLEAVE)
+        + DCP_RANK * CP_INTERLEAVE
+        + safe_local_idx % CP_INTERLEAVE
+    )
+    global_id = tl.where(valid, global_id, -1)
+
+    packed_base = packed + row * packed_stride0 + cols * packed_stride1
+    tl.store(packed_base, score, mask=mask)
+    tl.store(packed_base + packed_stride2, global_id.to(tl.float32), mask=mask)
+
+
+def _pack_dcp_topk_candidates_triton(
+    logits: torch.Tensor,
+    topk_indices: torch.Tensor,
+    packed: torch.Tensor,
+    dcp_rank: int,
+    dcp_world_size: int,
+    cp_interleave: int,
+    row_starts: torch.Tensor | None,
+) -> None:
+    topk = topk_indices.shape[1]
+    block_size = 512
+    grid = (topk_indices.shape[0], triton.cdiv(topk, block_size))
+    row_starts_arg = row_starts if row_starts is not None else topk_indices
+    _pack_dcp_topk_candidates_kernel[grid](
+        logits,
+        topk_indices,
+        packed,
+        row_starts_arg,
+        logits.stride(0),
+        logits.stride(1),
+        topk_indices.stride(0),
+        topk_indices.stride(1),
+        packed.stride(0),
+        packed.stride(1),
+        packed.stride(2),
+        logits.shape[1],
+        DCP_RANK=dcp_rank,
+        DCP_WORLD_SIZE=dcp_world_size,
+        CP_INTERLEAVE=cp_interleave,
+        HAS_ROW_STARTS=row_starts is not None,
+        TOPK=topk,
+        BLOCK_SIZE=block_size,
+    )
+
+
+def _stable_topk_from_gathered_candidates_gfx90a(
+    gathered: torch.Tensor,
+    topk: int,
+    out: torch.Tensor | None = None,
+) -> torch.Tensor:
+    """gathered [rows, dcp*topk, 2] fp32 = (score, 全局 id) → [rows, topk] int32 全局 id。
+
+    语义对齐 CUDA 侧 CuteDSL radix-select：按 score 降序取前 topk；无效候选（-inf）写 -1。
+    已知差异（记录在案，不隐瞒）：score 完全相等时的并列次序由各自实现决定。
+    真实 fp32 logits 下并列概率极低；若 DCP parity 测试因此抖动，再换 u64 单调 key
+    的稳定选择（DCP_A_NOTES.md 里的 0004 备选）。
+    """
+    assert gathered.dim() == 3 and gathered.shape[-1] == 2, gathered.shape
+    scores = gathered[..., 0]
+    ids = gathered[..., 1]
+    rows, num_cand = scores.shape
+    if out is None:
+        out = torch.empty((rows, topk), dtype=torch.int32, device=scores.device)
+    k = min(int(topk), int(num_cand))
+    vals, sel = torch.topk(scores, k, dim=1, largest=True, sorted=True)
+    picked = torch.gather(ids, 1, sel)
+    picked = torch.where(vals > float("-inf"), picked, torch.full_like(picked, -1.0))
+    out[:, :k] = picked.to(torch.int32)
+    if k < topk:
+        out[:, k:] = -1
+    return out
+
+
+def _merge_dcp_topk_global_gfx90a(
+    logits: torch.Tensor,
+    topk_indices: torch.Tensor,
+    topk_tokens: int,
+    dcp_rank: int,
+    dcp_world_size: int,
+    cp_interleave: int,
+    row_starts: torch.Tensor | None = None,
+) -> None:
+    """gfx90a 版 _merge_dcp_topk_global：就地覆盖 topk_indices 为全局 token id。"""
+    assert logits.dtype == torch.float32, logits.dtype
+    assert topk_indices.dtype == torch.int32, topk_indices.dtype
+    rows, topk = topk_indices.shape
+    # 内存：packed = rows*topk*2*4B，gathered = rows*(world*topk)*2*4B（交换后每个 rank 都有）。
+    # prefill 长上下文时这是本路径最大的一块临时显存，已记入 DCP_A_NOTES.md 的显存账。
+    packed = torch.empty(
+        (rows, topk, 2), dtype=torch.float32, device=topk_indices.device
+    )
+    _pack_dcp_topk_candidates_triton(
+        logits,
+        topk_indices,
+        packed,
+        dcp_rank,
+        dcp_world_size,
+        cp_interleave,
+        row_starts,
+    )
+    gathered = get_dcp_group().all_gather(packed, dim=1)
+    return _stable_topk_from_gathered_candidates_gfx90a(
+        gathered, topk_tokens, out=topk_indices
+    )
+
+
+'''
+src = sub(src, "def _merge_dcp_topk_global(\n", GFX90A_BLOCK + "def _merge_dcp_topk_global(\n", "insert-gfx90a-block")
+
+src = sub(src, """    # CuteDSL-only path (no PyTorch fallback): Triton-pack each rank's
+    # (score, global_id) candidates on-device, all-gather, then the CuteDSL
+    # stable-topk selector.
+    _assert_cutedsl_dcp_merge_supported(logits, topk_indices, topk_tokens)""",
+"""    # gfx90a（无 CuteDSL）：走本地 Triton pack + torch stable-topk 的等价实现。
+    # CUDA 侧仍走下方 CuteDSL 原路，行为不变。
+    if not has_cutedsl():
+        _merge_dcp_topk_global_gfx90a(
+            logits,
+            topk_indices,
+            topk_tokens,
+            dcp_rank,
+            dcp_world_size,
+            cp_interleave,
+            row_starts,
+        )
+        return
+
+    # CuteDSL path (no PyTorch fallback): Triton-pack each rank's
+    # (score, global_id) candidates on-device, all-gather, then the CuteDSL
+    # stable-topk selector.
+    _assert_cutedsl_dcp_merge_supported(logits, topk_indices, topk_tokens)""", "dispatch-branch")
+
+orig = open(os.path.join(TREE, REL), encoding="utf8").read()
+new = src
+shutil.copyfile(os.path.join(TREE, REL), os.path.join(BASE, "indexer.py.orig"))
+wf = os.path.join(WORK, "indexer.py")
+open(wf, "w", encoding="utf8").write(new)
+
+patch = "".join(difflib.unified_diff(
+    orig.splitlines(keepends=True), new.splitlines(keepends=True),
+    fromfile="a/" + REL, tofile="b/" + REL, n=3))
+hdr = ("# DCP-B(indexer): gfx90a 上把「各 rank 本地 top-K -> 全局 top-K」补齐（CuteDSL-only 的替代）。\n"
+       "# APPLY: cd " + TREE + " && patch -p1 < PATCH\n# REVERT: patch -p1 -R < PATCH\n")
+out = os.path.join(HERE, "0002_gfx90a_indexer_dcp_topk.patch")
+open(out, "w", encoding="utf8").write(hdr + patch)
+
+cc = os.path.join(WORK, "indexer.compilecheck.py")
+shutil.copyfile(wf, cc)
+py_compile.compile(cc, doraise=True)
+print("OK patch=%s hunks=%d lines=%d" % (out, sum(1 for l in patch.splitlines() if l.startswith("@@ ")), len(patch.splitlines())))

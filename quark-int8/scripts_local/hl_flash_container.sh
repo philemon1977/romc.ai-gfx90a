@@ -19,7 +19,7 @@ set -euo pipefail
 OLD=hyperloom-local
 IMG_OUT=rocm-ai/vllm:glm53-int4-hl-fl1
 VPKG=/usr/local/lib/python3.12/dist-packages/vllm
-PT=/home/qiba/ai/patches/gfx90a/ct_w4a16_dsv41_n0918/tree
+PT=/home/qiba/ai/recipes/patches/gfx90a/ct_w4a16_dsv41_n0918/tree
 STRIPE=/mnt/stripe-3mix-3t2/models
 KIOXIA=/mnt/kioxia-cm6-3t8/ai/models
 WS=/home/qiba/ROCm.AI

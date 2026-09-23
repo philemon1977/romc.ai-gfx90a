@@ -67,7 +67,7 @@ def timeit(fn, iters=60, warmup=15):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--quick", action="store_true")
-    ap.add_argument("--out", default="/home/qiba/ai/patches/gfx90a/aiter_a8w8_tuned_gemm_gfx90a.csv")
+    ap.add_argument("--out", default="/home/qiba/ai/recipes/patches/gfx90a/aiter_a8w8_tuned_gemm_gfx90a.csv")
     ap.add_argument("--err", type=float, default=0.05)
     args = ap.parse_args()
 
